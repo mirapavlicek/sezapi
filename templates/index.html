@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEZ API Web UI</title>
+<style>
+:root {
+  --bg: #0f1117; --bg2: #1a1d27; --bg3: #242837; --bg4: #2e3348;
+  --fg: #e4e6eb; --fg2: #a0a4b8; --fg3: #6b7089;
+  --accent: #5b8def; --accent2: #4a7ae0; --green: #43b581; --red: #f04747;
+  --orange: #faa61a; --border: #2e3348; --radius: 8px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--fg); display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-header { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+.sidebar-header h1 { font-size: 16px; font-weight: 700; color: var(--accent); }
+.sidebar-header small { color: var(--fg3); font-size: 11px; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.ok { background: var(--green); }
+.status-dot.err { background: var(--red); }
+.nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+.nav-item { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; color: var(--fg2); font-size: 13px; transition: all .15s; border-left: 3px solid transparent; }
+.nav-item:hover { background: var(--bg3); color: var(--fg); }
+.nav-item.active { background: var(--bg3); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.nav-item .icon { width: 20px; margin-right: 10px; text-align: center; font-size: 14px; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 48px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+.topbar h2 { font-size: 14px; font-weight: 600; flex: 1; }
+.btn { padding: 6px 14px; border: none; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: var(--font); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--fg2); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-red { background: var(--red); color: #fff; }
+
+/* Content */
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* Cards */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--fg2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* Form */
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: end; }
+.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.form-group label { font-size: 11px; font-weight: 600; color: var(--fg3); text-transform: uppercase; letter-spacing: .5px; }
+input, select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; color: var(--fg); font-size: 13px; font-family: var(--font); outline: none; transition: border-color .15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { font-family: var(--mono); font-size: 12px; resize: vertical; }
+select { cursor: pointer; }
+
+/* JSON viewer */
+.json-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6; overflow: auto; max-height: 600px; white-space: pre-wrap; word-break: break-all; }
+.json-key { color: #7ec8e3; }
+.json-str { color: #98c379; }
+.json-num { color: #d19a66; }
+.json-bool { color: #c678dd; }
+.json-null { color: var(--fg3); }
+
+/* Status badge */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.badge-ok { background: rgba(67,181,129,.15); color: var(--green); }
+.badge-err { background: rgba(240,71,71,.15); color: var(--red); }
+.badge-warn { background: rgba(250,166,26,.15); color: var(--orange); }
+.badge-info { background: rgba(91,141,239,.15); color: var(--accent); }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--fg3); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: var(--bg3); }
+td.mono { font-family: var(--mono); font-size: 12px; }
+
+/* Dashboard stats */
+.stat-card { text-align: center; padding: 24px; }
+.stat-value { font-size: 32px; font-weight: 700; }
+.stat-label { font-size: 12px; color: var(--fg3); margin-top: 4px; }
+
+/* Toast */
+.toast-container { position: fixed; top: 60px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 10px 16px; border-radius: var(--radius); font-size: 13px; color: #fff; animation: slideIn .3s; }
+.toast-ok { background: var(--green); }
+.toast-err { background: var(--red); }
+@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Log bar */
+.logbar { height: 160px; background: var(--bg2); border-top: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; font-family: var(--mono); font-size: 11px; padding: 8px 16px; }
+.log-entry { display: flex; gap: 12px; padding: 2px 0; color: var(--fg3); }
+.log-method { font-weight: 700; min-width: 50px; }
+.log-status { min-width: 30px; font-weight: 700; }
+.log-status.s2 { color: var(--green); }
+.log-status.s4 { color: var(--orange); }
+.log-status.s5 { color: var(--red); }
+.log-time { color: var(--fg3); min-width: 50px; text-align: right; }
+.log-path { flex: 1; color: var(--fg2); }
+
+/* Loading */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Quick-select chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { padding: 4px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; cursor: pointer; color: var(--fg2); transition: all .15s; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Tabs within section */
+.sub-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.sub-tab { padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--fg3); border-bottom: 2px solid transparent; transition: all .15s; }
+.sub-tab:hover { color: var(--fg); }
+.sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.sub-panel { display: none; }
+.sub-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>SEZ API</h1>
+    <small><span class="status-dot" id="statusDot"></span><span id="statusText">Connecting...</span></small>
+  </div>
+  <div class="nav" id="nav">
+    <div class="nav-item active" data-section="dashboard"><span class="icon">&#9632;</span> Dashboard</div>
+    <div class="nav-item" data-section="krp"><span class="icon">&#9823;</span> KRP Pacienti</div>
+    <div class="nav-item" data-section="du"><span class="icon">&#9993;</span> Dočasné úložiště</div>
+    <div class="nav-item" data-section="szz"><span class="icon">&#10010;</span> SZZ Zdravotní záznam</div>
+    <div class="nav-item" data-section="elp"><span class="icon">&#9997;</span> ELP Posudky</div>
+    <div class="nav-item" data-section="ez"><span class="icon">&#10148;</span> eŽádanky</div>
+    <div class="nav-item" data-section="notif"><span class="icon">&#9881;</span> Notifikace</div>
+    <div class="nav-item" data-section="tests"><span class="icon">&#10004;</span> Testy</div>
+    <div class="nav-item" data-section="raw"><span class="icon">&gt;_</span> Raw Request</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <h2 id="pageTitle">Dashboard</h2>
+    <span id="loadingIndicator" style="display:none"><span class="spinner"></span></span>
+    <button class="btn btn-outline btn-sm" onclick="runTests()">Spustit testy</button>
+  </div>
+
+  <div class="content">
+
+    <!-- Dashboard -->
+    <div class="section active" id="sec-dashboard">
+      <div class="grid-3" id="dashCards"></div>
+      <div class="card">
+        <div class="card-title">Certifikát</div>
+        <div id="certInfo" style="font-family:var(--mono);font-size:12px;color:var(--fg2)">Načítám...</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Testovací pacienti</div>
+        <table>
+          <thead><tr><th>RID</th><th>Jméno</th><th>Akce</th></tr></thead>
+          <tbody id="patientTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- KRP -->
+    <div class="section" id="sec-krp">
+      <div class="card">
+        <div class="card-title">Hledání pacienta</div>
+        <div class="sub-tabs">
+          <div class="sub-tab active" data-panel="krp-rid">Podle RID</div>
+          <div class="sub-tab" data-panel="krp-jmeno">Podle jména a RČ</div>
+        </div>
+        <div class="sub-panel active" id="krp-rid">
+          <div class="card-title" style="margin-top:0">Rychlý výběr</div>
+          <div class="chips" id="krpChips"></div>
+          <div class="form-row">
+            <div class="form-group"><label>RID</label><input id="krpRid" placeholder="např. 7653800856"></div>
+            <div class="form-group"><label>Účel</label>
+              <select id="krpUcel"><option value="LECBA">LECBA</option><option value="STATISTIKA">STATISTIKA</option><option value="POJISTENI">POJISTENI</option></select>
+            </div>
+            <button class="btn btn-primary" onclick="krpHledatRid()">Hledat</button>
+          </div>
+        </div>
+        <div class="sub-panel" id="krp-jmeno">
+          <div class="form-row">
+            <div class="form-group"><label>Jméno</label><input id="krpJmeno" placeholder="Jméno"></div>
+            <div class="form-group"><label>Příjmení</label><input id="krpPrijmeni" placeholder="Příjmení"></div>
+            <div class="form-group"><label>Rodné číslo</label><input id="krpRc" placeholder="RRMMDD/XXXX"></div>
+            <button class="btn btn-primary" onclick="krpHledatJmeno()">Hledat</button>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krpResult">-</div></div>
+    </div>
+
+    <!-- DÚ -->
+    <div class="section" id="sec-du">
+      <div class="sub-tabs" id="duMainTabs">
+        <div class="sub-tab active" data-panel="du-read-panel">Vyhledat zásilky</div>
+        <div class="sub-tab" data-panel="du-create-panel">Uložit zásilku</div>
+      </div>
+
+      <!-- DU READ -->
+      <div class="sub-panel active" id="du-read-panel">
+        <div class="card">
+          <div class="card-title">Vyhledání zásilek</div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum od</label><input type="date" id="duOd"></div>
+            <div class="form-group"><label>Datum do</label><input type="date" id="duDo"></div>
+            <div class="form-group"><label>Pacient (RID)</label><input id="duPacient" placeholder="volitelné"></div>
+            <div class="form-group"><label>Velikost stránky</label><input type="number" id="duSize" value="10"></div>
+            <button class="btn btn-primary" onclick="duVyhledej()">Hledat</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Detail zásilky</div>
+          <div class="form-row">
+            <div class="form-group"><label>ID zásilky</label><input id="duZasilkaId" placeholder="UUID"></div>
+            <button class="btn btn-primary" onclick="duDej()">Načíst (DejZasilku)</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="duResult">-</div></div>
+      </div>
+
+      <!-- DU CREATE -->
+      <div class="sub-panel" id="du-create-panel">
+        <div class="card">
+          <div class="card-title">Zásilka</div>
+          <div class="form-row">
+            <div class="form-group"><label>Název zásilky</label><input id="duCrNazev" value="Lékařská zpráva z vyšetření"></div>
+            <div class="form-group"><label>Popis</label><input id="duCrPopis" value="Testovací zásilka"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Typ dokumentu</label>
+              <select id="duCrTyp">
+                <option value="11506-3">11506-3 – Lékařská zpráva</option>
+                <option value="67781-5">67781-5 – Zpráva z vyšetření</option>
+                <option value="34748-4">34748-4 – Nález</option>
+                <option value="74207-2">74207-2 – Žádanka</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Kategorie</label>
+              <select id="duCrKlasifikace">
+                <option value="11503-0">11503-0 – Klinický</option>
+                <option value="26436-6">26436-6 – Laboratorní</option>
+                <option value="18682-5">18682-5 – Zobrazovací</option>
+                <option value="57133-1">57133-1 – ePreskripce</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum od</label><input type="datetime-local" id="duCrDatumOd"></div>
+            <div class="form-group"><label>Datum do</label><input type="datetime-local" id="duCrDatumDo"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Identity</div>
+          <div class="chips" id="duCreateChips"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Pacient (RID)</label><input id="duCrPacient" placeholder="RID"></div>
+            <div class="form-group"><label>Autor (KRZPID)</label><input id="duCrAutor" value="102129137"></div>
+            <div class="form-group"><label>Poskytovatel (IČO)</label><input id="duCrPoskytovatel" value="25488627"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Adresát</label><input id="duCrAdresat" value="25488627"></div>
+            <div class="form-group"><label>Typ adresáta</label>
+              <select id="duCrAdresatTyp"><option value="PZS">PZS</option><option value="PAT">PAT</option></select>
+            </div>
+            <div class="form-group"><label>ISPZS</label><input id="duCrIspzs" value="NIS Krajska zdravotni"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Dokument (příloha)</div>
+          <div class="form-row">
+            <div class="form-group"><label>Název dokumentu</label><input id="duCrDocNazev" value="Testovací dokument"></div>
+            <div class="form-group"><label>MIME typ</label>
+              <select id="duCrDocMime">
+                <option value="text/plain">text/plain</option>
+                <option value="application/pdf">application/pdf</option>
+                <option value="application/fhir+json">application/fhir+json</option>
+                <option value="image/gif">image/gif</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Důvěrnost</label>
+              <select id="duCrDocDuvernost"><option value="N">N – normální</option><option value="M">M – omezená</option></select>
+            </div>
+            <div class="form-group"><label>Jazyk</label>
+              <select id="duCrDocJazyk"><option value="cs">cs – čeština</option><option value="cs-CZ">cs-CZ</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Obsah dokumentu (text nebo Base64)</label>
+              <textarea id="duCrDocContent" rows="4" placeholder="Text dokumentu – bude automaticky zakódován do Base64">Testovací dokument – zpráva z vyšetření pro ověření API.</textarea>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">JSON náhled</div>
+          <div class="json-box" id="duCreatePreview" style="max-height:400px;margin-bottom:12px">-</div>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="duPreview()">Náhled JSON</button>
+            <button class="btn btn-green" onclick="duCreateSubmit()">Odeslat (UlozZasilku)</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Odpověď API</div><div class="json-box" id="duCreateResult">-</div></div>
+      </div>
+    </div>
+
+    <!-- SZZ -->
+    <div class="section" id="sec-szz">
+      <!-- Top-level toggle: Read / Create -->
+      <div class="sub-tabs" id="szzMainTabs">
+        <div class="sub-tab active" data-panel="szz-read-panel">Číst záznamy</div>
+        <div class="sub-tab" data-panel="szz-create-panel">Vytvořit záznam</div>
+      </div>
+
+      <!-- READ PANEL -->
+      <div class="sub-panel active" id="szz-read-panel">
+        <div class="card">
+          <div class="card-title">Sdílený zdravotní záznam pacienta</div>
+          <div class="chips" id="szzChips"></div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="szzRid" placeholder="např. 7706120004"></div>
+          </div>
+          <div class="sub-tabs" style="margin-top:12px">
+            <div class="sub-tab active" data-panel="szz-alergie">Alergie</div>
+            <div class="sub-tab" data-panel="szz-leciva">Léčivé přípravky</div>
+            <div class="sub-tab" data-panel="szz-krevni">Krevní skupina</div>
+            <div class="sub-tab" data-panel="szz-prihody">Nežádoucí příhody</div>
+            <div class="sub-tab" data-panel="szz-reakce">Nežádoucí reakce</div>
+            <div class="sub-tab" data-panel="szz-ucinky">Nežádoucí účinky</div>
+            <div class="sub-tab" data-panel="szz-udalosti">Nežádoucí události</div>
+            <div class="sub-tab" data-panel="szz-emergentni">Emergentní záznam</div>
+          </div>
+          <button class="btn btn-primary" onclick="szzLoad()">Načíst</button>
+          <button class="btn btn-outline" onclick="szzLoadAll()" style="margin-left:8px">Načíst vše</button>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="szzResult">-</div></div>
+      </div>
+
+      <!-- CREATE PANEL -->
+      <div class="sub-panel" id="szz-create-panel">
+        <div class="card">
+          <div class="card-title">Typ záznamu</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 300px">
+              <label>Typ</label>
+              <select id="szzCreateType" onchange="szzCreateTypeChanged()">
+                <option value="alergie">Alergie</option>
+                <option value="krevni-skupina">Krevní skupina</option>
+                <option value="lecivy-pripravek">Léčivý přípravek</option>
+                <option value="nezadouci-prihoda">Nežádoucí příhoda</option>
+                <option value="nezadouci-reakce">Nežádoucí reakce</option>
+                <option value="nezadouci-ucinek">Nežádoucí účinek</option>
+                <option value="nezadouci-udalost">Nežádoucí událost</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Společné údaje</div>
+          <div class="chips" id="szzCreateChips"></div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="szzCrRid" placeholder="RID"></div>
+            <div class="form-group"><label>IČO poskytovatele</label><input id="szzCrIco" value="25488627"></div>
+            <div class="form-group"><label>KRZP ID pracovníka</label><input id="szzCrKrzp" value="102129137"></div>
+          </div>
+        </div>
+
+        <!-- ALERGIE form -->
+        <div class="card szz-form-card" id="szzForm-alergie">
+          <div class="card-title">Alergie</div>
+          <div class="form-row">
+            <div class="form-group"><label>Název</label><input id="szzAlNazev" placeholder="např. Penicilin"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Alergen (alergie-latka)</label>
+              <input id="szzAlAlergenSearch" placeholder="Hledat alergen..." oninput="szzSearchCodelist('alergie-latka','szzAlAlergenSearch','szzAlAlergenList')">
+              <select id="szzAlAlergenList" size="4" style="display:none;max-height:120px" onchange="szzPickFromList('szzAlAlergenList','szzAlAlergenSearch')"></select>
+              <input type="hidden" id="szzAlAlergenKod">
+            </div>
+            <div class="form-group">
+              <label>Kategorie alergenu</label>
+              <select id="szzAlKategorie"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Kritičnost</label><select id="szzAlKriticnost"></select></div>
+            <div class="form-group"><label>Typ reakce</label><select id="szzAlTypReakce"></select></div>
+            <div class="form-group"><label>Závažnost reakce</label><select id="szzAlZavaznost"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Manifestace reakce</label><select id="szzAlManifestace" multiple size="4"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzAlDatum"></div>
+            <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzAlCas"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Poznámka</label><textarea id="szzAlPoznamka" rows="2" placeholder="volitelné"></textarea></div>
+          </div>
+        </div>
+
+        <!-- KREVNI SKUPINA form -->
+        <div class="card szz-form-card" id="szzForm-krevni-skupina" style="display:none">
+          <div class="card-title">Krevní skupina</div>
+          <div class="form-row">
+            <div class="form-group"><label>Krevní skupina</label><select id="szzKsSkupina"></select></div>
+          </div>
+        </div>
+
+        <!-- LECIVY PRIPRAVEK form -->
+        <div class="card szz-form-card" id="szzForm-lecivy-pripravek" style="display:none">
+          <div class="card-title">Léčivý přípravek</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Přípravek (lecivy-pripravek)</label>
+              <input id="szzLpSearch" placeholder="Hledat přípravek..." oninput="szzSearchCodelist('lecivy-pripravek','szzLpSearch','szzLpList')">
+              <select id="szzLpList" size="4" style="display:none;max-height:120px" onchange="szzPickFromList('szzLpList','szzLpSearch')"></select>
+              <input type="hidden" id="szzLpKod">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Dávkování</label><input id="szzLpDavkovani" placeholder="např. 500mg 2x denně"></div>
+            <div class="form-group"><label>Datum podání</label><input type="date" id="szzLpDatum"></div>
+          </div>
+        </div>
+
+        <!-- NEZADOUCI PRIHODA form -->
+        <div class="card szz-form-card" id="szzForm-nezadouci-prihoda" style="display:none">
+          <div class="card-title">Nežádoucí příhoda</div>
+          <div class="form-row">
+            <div class="form-group"><label>Typ nežádoucí příhody</label><select id="szzNpTyp"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Popis</label><textarea id="szzNpPopis" rows="2" placeholder="Popis příhody"></textarea></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNpDatum"></div>
+            <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNpCas"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Poznámka</label><textarea id="szzNpPoznamka" rows="2" placeholder="volitelné"></textarea></div>
+          </div>
+        </div>
+
+        <!-- NEZADOUCI REAKCE form -->
+        <div class="card szz-form-card" id="szzForm-nezadouci-reakce" style="display:none">
+          <div class="card-title">Nežádoucí reakce</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Typ nežádoucí reakce (podezrela-substance)</label>
+              <select id="szzNrTyp"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Popis</label><textarea id="szzNrPopis" rows="2" placeholder="Popis reakce"></textarea></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNrDatum"></div>
+            <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNrCas"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Poznámka</label><textarea id="szzNrPoznamka" rows="2" placeholder="volitelné"></textarea></div>
+          </div>
+        </div>
+
+        <!-- NEZADOUCI UCINEK form -->
+        <div class="card szz-form-card" id="szzForm-nezadouci-ucinek" style="display:none">
+          <div class="card-title">Nežádoucí účinek</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Typ nežádoucího účinku (podezrela-substance)</label>
+              <select id="szzNuTyp"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Popis</label><textarea id="szzNuPopis" rows="2" placeholder="Popis účinku"></textarea></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNuDatum"></div>
+            <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNuCas"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Poznámka</label><textarea id="szzNuPoznamka" rows="2" placeholder="volitelné"></textarea></div>
+          </div>
+        </div>
+
+        <!-- NEZADOUCI UDALOST form -->
+        <div class="card szz-form-card" id="szzForm-nezadouci-udalost" style="display:none">
+          <div class="card-title">Nežádoucí událost</div>
+          <div class="form-row">
+            <div class="form-group"><label>Typ nežádoucí události</label><select id="szzNudTyp"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Popis</label><textarea id="szzNudPopis" rows="2" placeholder="Popis události"></textarea></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNudDatum"></div>
+            <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNudCas"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Poznámka</label><textarea id="szzNudPoznamka" rows="2" placeholder="volitelné"></textarea></div>
+          </div>
+        </div>
+
+        <!-- JSON preview + submit -->
+        <div class="card">
+          <div class="card-title">JSON náhled</div>
+          <div class="json-box" id="szzCreatePreview" style="max-height:300px;margin-bottom:12px">-</div>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="szzPreview()">Náhled JSON</button>
+            <button class="btn btn-green" onclick="szzCreateSubmit()">Odeslat na API</button>
+          </div>
+        </div>
+
+        <div class="card"><div class="card-title">Odpověď API</div><div class="json-box" id="szzCreateResult">-</div></div>
+      </div>
+    </div>
+
+    <!-- ELP -->
+    <div class="section" id="sec-elp">
+      <div class="sub-tabs" id="elpMainTabs">
+        <div class="sub-tab active" data-panel="elp-read-panel">Vyhledat posudky</div>
+        <div class="sub-tab" data-panel="elp-create-panel">Vytvořit posudek</div>
+      </div>
+
+      <!-- ELP READ -->
+      <div class="sub-panel active" id="elp-read-panel">
+        <div class="card">
+          <div class="card-title">Vyhledání posudků</div>
+          <div class="form-row">
+            <div class="form-group"><label>Stránka</label><input type="number" id="elpPage" value="0"></div>
+            <div class="form-group"><label>Velikost</label><input type="number" id="elpSize" value="10"></div>
+            <button class="btn btn-primary" onclick="elpVyhledej()">Vyhledat posudky</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Detail posudku</div>
+          <div class="form-row">
+            <div class="form-group"><label>ID posudku</label><input id="elpId" placeholder="UUID"></div>
+            <button class="btn btn-primary" onclick="elpDetail()">Načíst detail</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="elpResult">-</div></div>
+      </div>
+
+      <!-- ELP CREATE -->
+      <div class="sub-panel" id="elp-create-panel">
+        <div class="card">
+          <div class="card-title">Posudek pro řidičské oprávnění</div>
+          <div class="chips" id="elpCreateChips"></div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="elpCrRid" placeholder="RID"></div>
+            <div class="form-group"><label>KRZP ID lékaře</label><input id="elpCrKrzp" value="102129137"></div>
+            <div class="form-group"><label>IČO poskytovatele</label><input id="elpCrIco" value="25488627"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Údaje posudku</div>
+          <div class="form-row">
+            <div class="form-group"><label>Typ akce</label><select id="elpCrAkce"></select></div>
+            <div class="form-group"><label>Druh posudku</label><select id="elpCrDruh"></select></div>
+            <div class="form-group"><label>Druh prohlídky</label><select id="elpCrProhlidka"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Odbornost lékaře</label><select id="elpCrOdbornost"></select></div>
+            <div class="form-group"><label>Skupina žadatel/řidič</label><select id="elpCrSkupina"></select></div>
+            <div class="form-group"><label>Výsledek</label><select id="elpCrVysledek"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stav posudku</label><select id="elpCrStav"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum vyšetření</label><input type="date" id="elpCrDatumVysetreni"></div>
+            <div class="form-group"><label>Datum vystavení</label><input type="date" id="elpCrDatumVystaveni"></div>
+            <div class="form-group"><label>Platnost do</label><input type="date" id="elpCrPlatnostDo"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Zdůvodnění</label><textarea id="elpCrZduvodneni" rows="2" placeholder="volitelné"></textarea></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">JSON náhled</div>
+          <div class="json-box" id="elpCreatePreview" style="max-height:300px;margin-bottom:12px">-</div>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="elpPreview()">Náhled JSON</button>
+            <button class="btn btn-green" onclick="elpCreateSubmit()">Odeslat na API</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Odpověď API</div><div class="json-box" id="elpCreateResult">-</div></div>
+      </div>
+    </div>
+
+    <!-- eŽádanky -->
+    <div class="section" id="sec-ez">
+      <div class="sub-tabs" id="ezMainTabs">
+        <div class="sub-tab active" data-panel="ez-read-panel">Prohlížet žádanky</div>
+        <div class="sub-tab" data-panel="ez-create-panel">Uložit žádanku</div>
+      </div>
+
+      <!-- EZ READ -->
+      <div class="sub-panel active" id="ez-read-panel">
+        <div class="card">
+          <div class="card-title">eŽádanky</div>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="ezToken()">DejToken</button>
+            <button class="btn btn-outline" onclick="ezVyhledej()">Vyhledat žádanky</button>
+            <button class="btn btn-outline" onclick="ezAktivni()">Aktivní žádanky</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Detail žádanky</div>
+          <div class="form-row">
+            <div class="form-group"><label>ID žádanky</label><input id="ezId" placeholder="UUID"></div>
+            <button class="btn btn-primary" onclick="ezNacti()">Načíst</button>
+            <button class="btn btn-outline" onclick="ezVizual()">Vizuál</button>
+            <button class="btn btn-outline" onclick="ezPrilohy()">Přílohy</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Vlastní JSON</div>
+          <textarea id="ezBody" rows="6" placeholder='{"strankovani": {"page": 0, "size": 10}}'></textarea>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="ezResult">-</div></div>
+      </div>
+
+      <!-- EZ CREATE -->
+      <div class="sub-panel" id="ez-create-panel">
+        <div class="card">
+          <div class="card-title">Uložit žádanku (vlastní JSON)</div>
+          <p style="color:var(--fg2);font-size:12px;margin-bottom:12px">
+            eŽádanky mají složitou datovou strukturu. Předdefinovaný vzor můžete upravit podle potřeby.
+          </p>
+          <div class="form-row">
+            <div class="form-group"><label>Šablona</label>
+              <select id="ezCrTemplate" onchange="ezTemplateChanged()">
+                <option value="empty">Prázdná žádanka</option>
+                <option value="lab">Laboratorní vyšetření</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:8px">
+            <label>JSON žádanky</label>
+            <textarea id="ezCrBody" rows="20" style="font-size:11px"></textarea>
+          </div>
+          <div class="form-row" style="margin-top:12px">
+            <button class="btn btn-green" onclick="ezCreateSubmit()">Odeslat (UlozZadanku)</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Odpověď API</div><div class="json-box" id="ezCreateResult">-</div></div>
+      </div>
+    </div>
+
+    <!-- Notifikace -->
+    <div class="section" id="sec-notif">
+      <div class="card">
+        <div class="card-title">Notifikace</div>
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="notifPing()">Ping</button>
+          <button class="btn btn-outline" onclick="notifKanaly()">Katalog kanálů</button>
+          <button class="btn btn-outline" onclick="notifSablony()">Katalog šablon</button>
+          <button class="btn btn-outline" onclick="notifZdroje()">Katalog zdrojů</button>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="notifResult">-</div></div>
+    </div>
+
+    <!-- Testy -->
+    <div class="section" id="sec-tests">
+      <div class="card">
+        <div class="card-title">Ověření dokumentace a služeb</div>
+        <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">Spustí test_dokumentace.py, který ověří všech 38 testů proti reálnému API.</p>
+        <button class="btn btn-green" onclick="runTests()" id="btnRunTests">Spustit kompletní testy</button>
+        <div id="testSummary" style="margin-top:16px"></div>
+      </div>
+      <div class="card" id="testResultsCard" style="display:none">
+        <div class="card-title">Výsledky testů</div>
+        <table>
+          <thead><tr><th>Status</th><th>Test</th><th>Detail</th></tr></thead>
+          <tbody id="testTableBody"></tbody>
+        </table>
+      </div>
+      <div class="card" id="testOutputCard" style="display:none">
+        <div class="card-title">Kompletní výstup</div>
+        <div class="json-box" id="testOutput" style="max-height:400px"></div>
+      </div>
+    </div>
+
+    <!-- Raw Request -->
+    <div class="section" id="sec-raw">
+      <div class="card">
+        <div class="card-title">Vlastní API request</div>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 120px">
+            <label>Metoda</label>
+            <select id="rawMethod"><option>GET</option><option>POST</option><option>PATCH</option><option>PUT</option><option>DELETE</option></select>
+          </div>
+          <div class="form-group">
+            <label>Cesta (bez gateway)</label>
+            <input id="rawPath" placeholder="/notifikace/api/v1/notifikace/ping">
+          </div>
+          <button class="btn btn-primary" onclick="rawSend()">Odeslat</button>
+        </div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Body (JSON)</label>
+          <textarea id="rawBody" rows="8" placeholder='{"key": "value"}'></textarea>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">Response</div><div class="json-box" id="rawResult">-</div></div>
+    </div>
+
+  </div>
+
+  <!-- Log bar -->
+  <div class="logbar" id="logbar">
+    <div style="color:var(--fg3);padding:2px 0">Request log...</div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let currentSection = 'dashboard';
+let activeSzzTab = 'szz-alergie';
+let testPatients = [];
+const logEntries = [];
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  initNav();
+  initSubTabs();
+  initDates();
+  loadStatus();
+});
+
+function initNav() {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      const sec = el.dataset.section;
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('sec-' + sec).classList.add('active');
+      document.getElementById('pageTitle').textContent = el.textContent.trim();
+      currentSection = sec;
+    });
+  });
+}
+
+function initSubTabs() {
+  document.querySelectorAll('.sub-tabs').forEach(container => {
+    container.querySelectorAll('.sub-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const parent = tab.closest('.card') || tab.closest('.section');
+        const tabGroup = tab.closest('.sub-tabs');
+        tabGroup.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const siblings = Array.from(tabGroup.querySelectorAll('.sub-tab')).map(t => t.dataset.panel);
+        siblings.forEach(pid => {
+          const p = parent.querySelector('#' + pid);
+          if (p) p.classList.remove('active');
+        });
+        const panel = parent.querySelector('#' + tab.dataset.panel);
+        if (panel) panel.classList.add('active');
+
+        if (tab.dataset.panel && tab.dataset.panel.startsWith('szz-') && !tab.dataset.panel.includes('panel')) {
+          activeSzzTab = tab.dataset.panel;
+        }
+        if (tab.dataset.panel === 'szz-create-panel') szzCreateInit();
+        if (tab.dataset.panel === 'du-create-panel') duInitCreate();
+        if (tab.dataset.panel === 'elp-create-panel') elpCreateInit();
+        if (tab.dataset.panel === 'ez-create-panel') ezCreateInitOnce();
+      });
+    });
+  });
+}
+
+function initDates() {
+  const today = new Date();
+  const monthAgo = new Date(today);
+  monthAgo.setMonth(monthAgo.getMonth() - 2);
+  document.getElementById('duOd').value = monthAgo.toISOString().split('T')[0];
+  document.getElementById('duDo').value = today.toISOString().split('T')[0];
+}
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+async function api(method, url, body) {
+  const loading = document.getElementById('loadingIndicator');
+  loading.style.display = '';
+  const t0 = performance.now();
+  try {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const resp = await fetch(url, opts);
+    const data = await resp.json();
+    const elapsed = Math.round(performance.now() - t0);
+    addLog(method, url, data.status || resp.status, elapsed);
+    loading.style.display = 'none';
+    return data;
+  } catch (e) {
+    loading.style.display = 'none';
+    addLog(method, url, 0, Math.round(performance.now() - t0));
+    toast('Chyba: ' + e.message, true);
+    return { status: 0, error: e.message };
+  }
+}
+
+function showResult(elId, data) {
+  const el = document.getElementById(elId);
+  if (data.status && data.status >= 200 && data.status < 300) {
+    toast(data.status + ' OK (' + (data.elapsed_ms || 0) + 'ms)');
+  } else if (data.status >= 400) {
+    toast(data.status + ' Error', true);
+  }
+  el.innerHTML = syntaxHighlight(data.data !== undefined ? data.data : data);
+}
+
+function syntaxHighlight(obj) {
+  if (obj === null || obj === undefined) return '<span class="json-null">null</span>';
+  const json = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+  return json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="json-str">"$1"</span>')
+    .replace(/: (\d+\.?\d*)/g, ': <span class="json-num">$1</span>')
+    .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
+    .replace(/: (null)/g, ': <span class="json-null">$1</span>');
+}
+
+function addLog(method, url, status, elapsed) {
+  const time = new Date().toLocaleTimeString('cs');
+  const sc = status >= 500 ? 's5' : status >= 400 ? 's4' : 's2';
+  const path = url.replace(/^\/api\//, '');
+  const html = `<div class="log-entry"><span class="log-time">${time}</span><span class="log-method">${method}</span><span class="log-status ${sc}">${status}</span><span class="log-path">${path}</span><span class="log-time">${elapsed}ms</span></div>`;
+  logEntries.unshift(html);
+  if (logEntries.length > 100) logEntries.pop();
+  document.getElementById('logbar').innerHTML = logEntries.join('');
+}
+
+function toast(msg, isError) {
+  const div = document.createElement('div');
+  div.className = 'toast ' + (isError ? 'toast-err' : 'toast-ok');
+  div.textContent = msg;
+  document.getElementById('toasts').appendChild(div);
+  setTimeout(() => div.remove(), 3000);
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard / Status
+// ---------------------------------------------------------------------------
+async function loadStatus() {
+  const data = await api('GET', '/api/status');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  if (data.connected) {
+    dot.className = 'status-dot ok';
+    txt.textContent = 'Připojeno k T2';
+  } else {
+    dot.className = 'status-dot err';
+    txt.textContent = 'Nepřipojeno';
+  }
+  testPatients = data.test_patients || [];
+  renderDashboard(data);
+  renderPatientChips();
+}
+
+function renderDashboard(data) {
+  const services = [
+    { name: 'Notifikace', fn: checkNotif },
+    { name: 'KRP', fn: checkKRP },
+    { name: 'SZZ', fn: checkSZZ },
+    { name: 'ELP', fn: checkELP },
+    { name: 'eŽádanky', fn: checkEZ },
+    { name: 'DÚ', fn: checkDU },
+  ];
+
+  const container = document.getElementById('dashCards');
+  container.innerHTML = services.map(s =>
+    `<div class="card stat-card" id="dash-${s.name}"><div class="stat-value"><span class="spinner"></span></div><div class="stat-label">${s.name}</div></div>`
+  ).join('');
+
+  services.forEach(s => s.fn(s.name));
+
+  const cert = data.cert || {};
+  document.getElementById('certInfo').innerHTML = Object.entries(cert).map(([k,v]) =>
+    `<div><span class="json-key">${k}</span>: <span class="json-str">${v}</span></div>`
+  ).join('');
+
+  const tbody = document.getElementById('patientTable');
+  tbody.innerHTML = testPatients.map(p =>
+    `<tr><td class="mono">${p.rid}</td><td>${p.name}</td><td><button class="btn btn-sm btn-outline" onclick="goKRP('${p.rid}')">KRP</button> <button class="btn btn-sm btn-outline" onclick="goSZZ('${p.rid}')">SZZ</button></td></tr>`
+  ).join('');
+}
+
+function renderPatientChips() {
+  ['krpChips', 'szzChips'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = testPatients.map(p =>
+      `<div class="chip" onclick="document.getElementById('${id === 'krpChips' ? 'krpRid' : 'szzRid'}').value='${p.rid}'">${p.rid} ${p.name}</div>`
+    ).join('');
+  });
+}
+
+async function checkNotif(name) {
+  const r = await api('GET', '/api/notifikace/ping');
+  setDashCard(name, r.status === 200);
+}
+async function checkKRP(name) {
+  const r = await api('POST', '/api/krp/hledat-rid', {rid: '7653800856'});
+  setDashCard(name, r.status === 200);
+}
+async function checkSZZ(name) {
+  const r = await api('GET', '/api/szz/alergie/7706120004');
+  setDashCard(name, r.status === 200);
+}
+async function checkELP(name) {
+  const r = await api('POST', '/api/elp/vyhledej', {page: 0, size: 1});
+  setDashCard(name, r.status === 200);
+}
+async function checkEZ(name) {
+  const r = await api('GET', '/api/ezadanky/token');
+  setDashCard(name, r.status === 200);
+}
+async function checkDU(name) {
+  const now = new Date();
+  const ago = new Date(now); ago.setMonth(ago.getMonth() - 1);
+  const r = await api('POST', '/api/du/vyhledej', {datum_od: ago.toISOString(), datum_do: now.toISOString(), size: 1});
+  setDashCard(name, r.status === 200);
+}
+function setDashCard(name, ok) {
+  const el = document.getElementById('dash-' + name);
+  if (!el) return;
+  el.querySelector('.stat-value').innerHTML = ok
+    ? '<span class="badge badge-ok" style="font-size:16px;padding:6px 16px">OK</span>'
+    : '<span class="badge badge-err" style="font-size:16px;padding:6px 16px">FAIL</span>';
+}
+
+function goKRP(rid) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('[data-section="krp"]').classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-krp').classList.add('active');
+  document.getElementById('pageTitle').textContent = 'KRP Pacienti';
+  document.getElementById('krpRid').value = rid;
+  krpHledatRid();
+}
+function goSZZ(rid) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('[data-section="szz"]').classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-szz').classList.add('active');
+  document.getElementById('pageTitle').textContent = 'SZZ Zdravotní záznam';
+  document.getElementById('szzRid').value = rid;
+  szzLoad();
+}
+
+// ---------------------------------------------------------------------------
+// KRP
+// ---------------------------------------------------------------------------
+async function krpHledatRid() {
+  const rid = document.getElementById('krpRid').value.trim();
+  if (!rid) return toast('Zadejte RID', true);
+  const ucel = document.getElementById('krpUcel').value;
+  const data = await api('POST', '/api/krp/hledat-rid', { rid, ucel });
+  showResult('krpResult', data);
+}
+async function krpHledatJmeno() {
+  const j = document.getElementById('krpJmeno').value.trim();
+  const p = document.getElementById('krpPrijmeni').value.trim();
+  const rc = document.getElementById('krpRc').value.trim();
+  if (!j || !p || !rc) return toast('Vyplňte jméno, příjmení a RČ', true);
+  const data = await api('POST', '/api/krp/hledat-jmeno', { jmeno: j, prijmeni: p, rodne_cislo: rc });
+  showResult('krpResult', data);
+}
+
+// ---------------------------------------------------------------------------
+// DÚ
+// ---------------------------------------------------------------------------
+async function duVyhledej() {
+  const od = document.getElementById('duOd').value;
+  const doD = document.getElementById('duDo').value;
+  if (!od || !doD) return toast('Zadejte datum od/do', true);
+  const pac = document.getElementById('duPacient').value.trim() || null;
+  const size = parseInt(document.getElementById('duSize').value) || 10;
+  const data = await api('POST', '/api/du/vyhledej', {
+    datum_od: od + 'T00:00:00+01:00',
+    datum_do: doD + 'T23:59:59+01:00',
+    pacient: pac, size
+  });
+  showResult('duResult', data);
+}
+async function duDej() {
+  const id = document.getElementById('duZasilkaId').value.trim();
+  if (!id) return toast('Zadejte ID zásilky', true);
+  const data = await api('GET', '/api/du/zasilka/' + id);
+  showResult('duResult', data);
+}
+
+// ---------------------------------------------------------------------------
+// DÚ – Create
+// ---------------------------------------------------------------------------
+function duInitCreate() {
+  const now = new Date();
+  const inMonth = new Date(now); inMonth.setMonth(inMonth.getMonth() + 1);
+  document.getElementById('duCrDatumOd').value = now.toISOString().slice(0, 16);
+  document.getElementById('duCrDatumDo').value = inMonth.toISOString().slice(0, 16);
+  const el = document.getElementById('duCreateChips');
+  if (el) el.innerHTML = testPatients.map(p =>
+    `<div class="chip" onclick="document.getElementById('duCrPacient').value='${p.rid}'">${p.rid} ${p.name}</div>`
+  ).join('');
+}
+
+function duBuildBody() {
+  const rid = document.getElementById('duCrPacient').value.trim();
+  if (!rid) { toast('Zadejte RID pacienta', true); return null; }
+  const content = document.getElementById('duCrDocContent').value || '';
+  const contentBytes = new TextEncoder().encode(content);
+  const contentB64 = btoa(String.fromCharCode(...contentBytes));
+
+  async function sha256hex(data) {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  return sha256hex(contentBytes).then(hash => ({
+    nazev: document.getElementById('duCrNazev').value,
+    popis: document.getElementById('duCrPopis').value,
+    typ: {ciselnikKod: 'medical-document-type', kod: document.getElementById('duCrTyp').value, verze: '1.0.0'},
+    klasifikace: {ciselnikKod: 'document-category', kod: document.getElementById('duCrKlasifikace').value, verze: '1.0.0'},
+    datumOd: document.getElementById('duCrDatumOd').value ? new Date(document.getElementById('duCrDatumOd').value).toISOString() : null,
+    datumDo: document.getElementById('duCrDatumDo').value ? new Date(document.getElementById('duCrDatumDo').value).toISOString() : null,
+    autor: document.getElementById('duCrAutor').value,
+    zdravotnickyPracovnik: document.getElementById('duCrAutor').value,
+    poskytovatel: document.getElementById('duCrPoskytovatel').value,
+    pacient: rid,
+    ispzs: document.getElementById('duCrIspzs').value,
+    adresat: document.getElementById('duCrAdresat').value,
+    adresatTyp: {ciselnikKod: 'typ-adresata', kod: document.getElementById('duCrAdresatTyp').value, verze: '1.0.0'},
+    dostupnost: true,
+    dokument: [{
+      nazev: document.getElementById('duCrDocNazev').value,
+      popis: 'Dokument',
+      jazyk: {ciselnikKod: 'languages', kod: document.getElementById('duCrDocJazyk').value, verze: '5.0.0'},
+      typ: {ciselnikKod: 'medical-document-type', kod: document.getElementById('duCrTyp').value, verze: '1.0.0'},
+      klasifikace: {ciselnikKod: 'document-category', kod: document.getElementById('duCrKlasifikace').value, verze: '1.0.0'},
+      autor: document.getElementById('duCrAutor').value,
+      poskytovatel: document.getElementById('duCrPoskytovatel').value,
+      pacient: rid,
+      dostupnost: true,
+      duvernost: {ciselnikKod: 'v3-Confidentiality', kod: document.getElementById('duCrDocDuvernost').value, verze: '2.0.0'},
+      format: {ciselnikKod: 'format-code', kod: 'urn:ihe:iti:xds:2017:mimeTypeSufficient', verze: '1.0.0'},
+      mime: {ciselnikKod: 'media-type', kod: document.getElementById('duCrDocMime').value, verze: '1.0.0'},
+      hash: hash,
+      velikost: contentBytes.length,
+      soubor: {soubor: contentB64},
+    }],
+  }));
+}
+
+async function duPreview() {
+  const body = await duBuildBody();
+  if (!body) return;
+  document.getElementById('duCreatePreview').innerHTML = syntaxHighlight(body);
+}
+
+async function duCreateSubmit() {
+  const body = await duBuildBody();
+  if (!body) return;
+  document.getElementById('duCreatePreview').innerHTML = syntaxHighlight(body);
+  const data = await api('POST', '/api/du/uloz', body);
+  showResult('duCreateResult', data);
+  if (data.status >= 200 && data.status < 300) toast('Zásilka úspěšně uložena!');
+}
+
+// ---------------------------------------------------------------------------
+// SZZ – Read
+// ---------------------------------------------------------------------------
+async function szzLoad() {
+  const rid = document.getElementById('szzRid').value.trim();
+  if (!rid) return toast('Zadejte RID pacienta', true);
+  const endpoints = {
+    'szz-alergie': '/api/szz/alergie/',
+    'szz-leciva': '/api/szz/lecive-pripravky/',
+    'szz-krevni': '/api/szz/krevni-skupina/',
+    'szz-prihody': '/api/szz/nezadouci-prihody/',
+    'szz-reakce': '/api/szz/nezadouci-reakce/',
+    'szz-ucinky': '/api/szz/nezadouci-ucinky/',
+    'szz-udalosti': '/api/szz/nezadouci-udalosti/',
+    'szz-emergentni': '/api/szz/emergentni-zaznam/',
+  };
+  const url = endpoints[activeSzzTab];
+  if (!url) return;
+  const data = await api('GET', url + rid);
+  showResult('szzResult', data);
+}
+async function szzLoadAll() {
+  const rid = document.getElementById('szzRid').value.trim();
+  if (!rid) return toast('Zadejte RID pacienta', true);
+  const endpoints = [
+    ['Alergie', '/api/szz/alergie/'],
+    ['Léčivé přípravky', '/api/szz/lecive-pripravky/'],
+    ['Krevní skupina', '/api/szz/krevni-skupina/'],
+    ['Nežádoucí příhody', '/api/szz/nezadouci-prihody/'],
+    ['Nežádoucí reakce', '/api/szz/nezadouci-reakce/'],
+    ['Nežádoucí účinky', '/api/szz/nezadouci-ucinky/'],
+    ['Nežádoucí události', '/api/szz/nezadouci-udalosti/'],
+    ['Emergentní záznam', '/api/szz/emergentni-zaznam/'],
+  ];
+  const results = {};
+  for (const [name, url] of endpoints) {
+    const data = await api('GET', url + rid);
+    results[name] = { status: data.status, data: data.data };
+  }
+  const el = document.getElementById('szzResult');
+  el.innerHTML = syntaxHighlight(results);
+  toast('Načteno ' + endpoints.length + ' kategorií');
+}
+
+// ---------------------------------------------------------------------------
+// SZZ – Create: codelist loading & caching
+// ---------------------------------------------------------------------------
+const szzCodelistCache = {};
+let szzSearchTimeout = null;
+
+async function szzLoadCodelist(kod) {
+  if (szzCodelistCache[kod]) return szzCodelistCache[kod];
+  const r = await api('GET', '/api/szz/ciselniky/' + kod + '/polozky');
+  if (r.status === 200 && Array.isArray(r.data)) {
+    szzCodelistCache[kod] = r.data;
+    return r.data;
+  }
+  return [];
+}
+
+function szzCodelistLabel(item) {
+  const cs = (item.preklady || {}).cs || {};
+  return cs.nazev || item.kod;
+}
+
+async function szzFillSelect(selectId, codelistKod, emptyLabel) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = emptyLabel ? '<option value="">-- ' + esc(emptyLabel) + ' --</option>' : '';
+  const items = await szzLoadCodelist(codelistKod);
+  for (const it of items) {
+    const opt = document.createElement('option');
+    opt.value = it.kod;
+    opt.textContent = it.kod + ' – ' + szzCodelistLabel(it);
+    sel.appendChild(opt);
+  }
+}
+
+async function szzSearchCodelist(codelistKod, inputId, listId) {
+  clearTimeout(szzSearchTimeout);
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  const q = input.value.trim().toLowerCase();
+  if (q.length < 2) { list.style.display = 'none'; return; }
+  szzSearchTimeout = setTimeout(async () => {
+    const items = await szzLoadCodelist(codelistKod);
+    const matches = items.filter(it => {
+      const label = szzCodelistLabel(it).toLowerCase();
+      return label.includes(q) || it.kod.toLowerCase().includes(q);
+    }).slice(0, 50);
+    list.innerHTML = '';
+    for (const it of matches) {
+      const opt = document.createElement('option');
+      opt.value = it.kod;
+      opt.textContent = it.kod + ' – ' + szzCodelistLabel(it);
+      list.appendChild(opt);
+    }
+    list.style.display = matches.length ? '' : 'none';
+  }, 300);
+}
+
+function szzPickFromList(listId, inputId) {
+  const list = document.getElementById(listId);
+  const input = document.getElementById(inputId);
+  const kodInput = document.getElementById(listId.replace('List', 'Kod'));
+  if (list.selectedIndex >= 0) {
+    const opt = list.options[list.selectedIndex];
+    input.value = opt.textContent;
+    if (kodInput) kodInput.value = opt.value;
+    list.style.display = 'none';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SZZ – Create: form switching & init
+// ---------------------------------------------------------------------------
+let szzCreateInited = false;
+
+async function szzCreateInit() {
+  if (szzCreateInited) return;
+  szzCreateInited = true;
+
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toTimeString().slice(0, 5);
+
+  document.querySelectorAll('#szz-create-panel input[type="date"]').forEach(el => el.value = today);
+  document.querySelectorAll('#szz-create-panel input[type="time"]').forEach(el => el.value = now);
+
+  await Promise.all([
+    szzFillSelect('szzAlKategorie', 'kategorie-alergenu', 'vyberte'),
+    szzFillSelect('szzAlKriticnost', 'kriticnost-alergie', 'vyberte'),
+    szzFillSelect('szzAlTypReakce', 'typ-reakce-alergie', 'vyberte'),
+    szzFillSelect('szzAlZavaznost', 'zavaznost-reakce', 'vyberte'),
+    szzFillSelect('szzAlManifestace', 'manifestace-reakce', null),
+    szzFillSelect('szzKsSkupina', 'krevni-skupina', 'vyberte'),
+    szzFillSelect('szzNpTyp', 'podezrela-substance', 'vyberte'),
+    szzFillSelect('szzNrTyp', 'podezrela-substance', 'vyberte'),
+    szzFillSelect('szzNuTyp', 'podezrela-substance', 'vyberte'),
+    szzFillSelect('szzNudTyp', 'typ-udalosti', 'vyberte'),
+  ]);
+
+  renderSzzCreateChips();
+  toast('Číselníky SZZ načteny');
+}
+
+function renderSzzCreateChips() {
+  const el = document.getElementById('szzCreateChips');
+  if (!el) return;
+  el.innerHTML = testPatients.map(p =>
+    `<div class="chip" onclick="document.getElementById('szzCrRid').value='${p.rid}'">${p.rid} ${p.name}</div>`
+  ).join('');
+}
+
+function szzCreateTypeChanged() {
+  const type = document.getElementById('szzCreateType').value;
+  document.querySelectorAll('.szz-form-card').forEach(el => el.style.display = 'none');
+  const target = document.getElementById('szzForm-' + type);
+  if (target) target.style.display = '';
+}
+
+// ---------------------------------------------------------------------------
+// SZZ – Create: build JSON body
+// ---------------------------------------------------------------------------
+function szzBuildBody() {
+  const type = document.getElementById('szzCreateType').value;
+  const rid = document.getElementById('szzCrRid').value.trim();
+  const ico = document.getElementById('szzCrIco').value.trim();
+  const krzp = document.getElementById('szzCrKrzp').value.trim();
+
+  if (!rid) { toast('Zadejte RID pacienta', true); return null; }
+
+  const base = { rid, ico, krzpId: krzp };
+  const ver = '1.0.0';
+  const cp = (kod) => ({ kod, verze: ver });
+
+  if (type === 'alergie') {
+    const alergenKod = document.getElementById('szzAlAlergenKod').value || null;
+    const body = {
+      ...base,
+      nazev: document.getElementById('szzAlNazev').value || null,
+      alergen: alergenKod ? cp(alergenKod) : null,
+      kategorieAlergenu: document.getElementById('szzAlKategorie').value ? cp(document.getElementById('szzAlKategorie').value) : null,
+      kriticnost: document.getElementById('szzAlKriticnost').value ? cp(document.getElementById('szzAlKriticnost').value) : null,
+      typReakce: document.getElementById('szzAlTypReakce').value ? cp(document.getElementById('szzAlTypReakce').value) : null,
+      zavaznostReakce: document.getElementById('szzAlZavaznost').value ? cp(document.getElementById('szzAlZavaznost').value) : null,
+      datumZjisteni: document.getElementById('szzAlDatum').value || null,
+      casZjisteni: document.getElementById('szzAlCas').value || null,
+      poznamka: document.getElementById('szzAlPoznamka').value || null,
+    };
+    const manif = document.getElementById('szzAlManifestace');
+    const selected = Array.from(manif.selectedOptions).map(o => cp(o.value));
+    if (selected.length) body.manifestaceReakce = selected;
+    return body;
+  }
+
+  if (type === 'krevni-skupina') {
+    return {
+      ...base,
+      krevniSkupina: document.getElementById('szzKsSkupina').value ? cp(document.getElementById('szzKsSkupina').value) : null,
+    };
+  }
+
+  if (type === 'lecivy-pripravek') {
+    const lpKod = document.getElementById('szzLpKod').value || null;
+    return {
+      ...base,
+      identifikace: lpKod ? cp(lpKod) : null,
+      davkovani: document.getElementById('szzLpDavkovani').value || null,
+      datumPodani: document.getElementById('szzLpDatum').value || null,
+    };
+  }
+
+  if (type === 'nezadouci-prihoda') {
+    return {
+      ...base,
+      typNezadouciPrihody: document.getElementById('szzNpTyp').value ? cp(document.getElementById('szzNpTyp').value) : null,
+      popis: document.getElementById('szzNpPopis').value || null,
+      datumZjisteni: document.getElementById('szzNpDatum').value || null,
+      casZjisteni: document.getElementById('szzNpCas').value || null,
+      poznamka: document.getElementById('szzNpPoznamka').value || null,
+    };
+  }
+
+  if (type === 'nezadouci-reakce') {
+    return {
+      ...base,
+      typNezadouciReakce: document.getElementById('szzNrTyp').value ? cp(document.getElementById('szzNrTyp').value) : null,
+      popis: document.getElementById('szzNrPopis').value || null,
+      datumZjisteni: document.getElementById('szzNrDatum').value || null,
+      casZjisteni: document.getElementById('szzNrCas').value || null,
+      poznamka: document.getElementById('szzNrPoznamka').value || null,
+    };
+  }
+
+  if (type === 'nezadouci-ucinek') {
+    return {
+      ...base,
+      typNezadoucihoUcinku: document.getElementById('szzNuTyp').value ? cp(document.getElementById('szzNuTyp').value) : null,
+      popis: document.getElementById('szzNuPopis').value || null,
+      datumZjisteni: document.getElementById('szzNuDatum').value || null,
+      casZjisteni: document.getElementById('szzNuCas').value || null,
+      poznamka: document.getElementById('szzNuPoznamka').value || null,
+    };
+  }
+
+  if (type === 'nezadouci-udalost') {
+    return {
+      ...base,
+      typNezadouciUdalosti: document.getElementById('szzNudTyp').value ? cp(document.getElementById('szzNudTyp').value) : null,
+      popis: document.getElementById('szzNudPopis').value || null,
+      datumZjisteni: document.getElementById('szzNudDatum').value || null,
+      casZjisteni: document.getElementById('szzNudCas').value || null,
+      poznamka: document.getElementById('szzNudPoznamka').value || null,
+    };
+  }
+
+  return null;
+}
+
+function szzPreview() {
+  const body = szzBuildBody();
+  if (!body) return;
+  document.getElementById('szzCreatePreview').innerHTML = syntaxHighlight(body);
+}
+
+async function szzCreateSubmit() {
+  const body = szzBuildBody();
+  if (!body) return;
+  const type = document.getElementById('szzCreateType').value;
+
+  const endpointMap = {
+    'alergie': '/api/szz/vytvor-alergii',
+    'krevni-skupina': '/api/szz/vytvor-krevni-skupinu',
+    'lecivy-pripravek': '/api/szz/vytvor-lecivy-pripravek',
+    'nezadouci-prihoda': '/api/szz/vytvor-nezadouci-prihodu',
+    'nezadouci-reakce': '/api/szz/vytvor-nezadouci-reakci',
+    'nezadouci-ucinek': '/api/szz/vytvor-nezadouci-ucinek',
+    'nezadouci-udalost': '/api/szz/vytvor-nezadouci-udalost',
+  };
+
+  const url = endpointMap[type];
+  if (!url) return toast('Neznámý typ záznamu', true);
+
+  document.getElementById('szzCreatePreview').innerHTML = syntaxHighlight(body);
+  const data = await api('POST', url, body);
+  showResult('szzCreateResult', data);
+
+  if (data.status >= 200 && data.status < 300) {
+    toast('Záznam úspěšně vytvořen!');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ELP
+// ---------------------------------------------------------------------------
+async function elpVyhledej() {
+  const page = parseInt(document.getElementById('elpPage').value) || 0;
+  const size = parseInt(document.getElementById('elpSize').value) || 10;
+  const data = await api('POST', '/api/elp/vyhledej', { page, size });
+  showResult('elpResult', data);
+}
+async function elpDetail() {
+  const id = document.getElementById('elpId').value.trim();
+  if (!id) return toast('Zadejte ID posudku', true);
+  const data = await api('GET', '/api/elp/posudek/' + id);
+  showResult('elpResult', data);
+}
+
+// ---------------------------------------------------------------------------
+// ELP – Create
+// ---------------------------------------------------------------------------
+const elpCodelistCache = {};
+let elpCreateInited = false;
+
+async function elpLoadCodelist(kod) {
+  if (elpCodelistCache[kod]) return elpCodelistCache[kod];
+  const r = await api('GET', '/api/elp/ciselniky/' + kod + '/polozky');
+  if (r.status === 200 && Array.isArray(r.data)) {
+    elpCodelistCache[kod] = r.data;
+    return r.data;
+  }
+  return [];
+}
+
+async function elpFillSelect(selectId, codelistKod) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '';
+  const items = await elpLoadCodelist(codelistKod);
+  for (const it of items) {
+    const opt = document.createElement('option');
+    opt.value = it.kod;
+    const cs = (it.preklady || {}).cs || {};
+    opt.textContent = it.kod + ' – ' + (cs.nazev || it.kod);
+    sel.appendChild(opt);
+  }
+}
+
+async function elpCreateInit() {
+  if (elpCreateInited) return;
+  elpCreateInited = true;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('elpCrDatumVysetreni').value = today;
+  document.getElementById('elpCrDatumVystaveni').value = today;
+
+  await Promise.all([
+    elpFillSelect('elpCrAkce', 'akce-ro'),
+    elpFillSelect('elpCrDruh', 'druh-posudku-ro'),
+    elpFillSelect('elpCrProhlidka', 'druh-prohlidky-ro'),
+    elpFillSelect('elpCrOdbornost', 'odbornost-lekare-ro'),
+    elpFillSelect('elpCrSkupina', 'skupina-zadatel-ridic-ro'),
+    elpFillSelect('elpCrVysledek', 'vysledek-posudku-ro'),
+    elpFillSelect('elpCrStav', 'stav-posudku'),
+  ]);
+
+  const el = document.getElementById('elpCreateChips');
+  if (el) el.innerHTML = testPatients.map(p =>
+    `<div class="chip" onclick="document.getElementById('elpCrRid').value='${p.rid}'">${p.rid} ${p.name}</div>`
+  ).join('');
+  toast('ELP číselníky načteny');
+}
+
+function elpBuildBody() {
+  const rid = document.getElementById('elpCrRid').value.trim();
+  if (!rid) { toast('Zadejte RID pacienta', true); return null; }
+  const cp = (kod) => ({ kod, verze: '1.0.0' });
+  return {
+    rid,
+    krzpId: document.getElementById('elpCrKrzp').value.trim() || null,
+    ico: document.getElementById('elpCrIco').value.trim() || null,
+    typAkce: cp(document.getElementById('elpCrAkce').value),
+    druhPosudku: cp(document.getElementById('elpCrDruh').value),
+    druhProhlidky: cp(document.getElementById('elpCrProhlidka').value),
+    odbornostLekare: cp(document.getElementById('elpCrOdbornost').value),
+    skupinaZadatelRidic: cp(document.getElementById('elpCrSkupina').value),
+    vysledek: cp(document.getElementById('elpCrVysledek').value),
+    stavPosudku: cp(document.getElementById('elpCrStav').value),
+    datumVysetreni: document.getElementById('elpCrDatumVysetreni').value,
+    datumVystaveni: document.getElementById('elpCrDatumVystaveni').value,
+    platnostDo: document.getElementById('elpCrPlatnostDo').value || null,
+    zduvodneni: document.getElementById('elpCrZduvodneni').value || null,
+  };
+}
+
+function elpPreview() {
+  const body = elpBuildBody();
+  if (!body) return;
+  document.getElementById('elpCreatePreview').innerHTML = syntaxHighlight(body);
+}
+
+async function elpCreateSubmit() {
+  const body = elpBuildBody();
+  if (!body) return;
+  document.getElementById('elpCreatePreview').innerHTML = syntaxHighlight(body);
+  const data = await api('POST', '/api/elp/vytvor', body);
+  showResult('elpCreateResult', data);
+  if (data.status >= 200 && data.status < 300) toast('Posudek úspěšně vytvořen!');
+}
+
+// ---------------------------------------------------------------------------
+// eŽádanky
+// ---------------------------------------------------------------------------
+async function ezToken() {
+  const data = await api('GET', '/api/ezadanky/token');
+  showResult('ezResult', data);
+}
+async function ezVyhledej() {
+  let body;
+  try { body = JSON.parse(document.getElementById('ezBody').value || '{"strankovani":{"page":0,"size":10}}'); }
+  catch(e) { return toast('Neplatný JSON', true); }
+  const data = await api('POST', '/api/ezadanky/vyhledej', body);
+  showResult('ezResult', data);
+}
+async function ezAktivni() {
+  let body;
+  try { body = JSON.parse(document.getElementById('ezBody').value || '{"strankovani":{"page":0,"size":10}}'); }
+  catch(e) { return toast('Neplatný JSON', true); }
+  const data = await api('POST', '/api/ezadanky/vyhledej-aktivni', body);
+  showResult('ezResult', data);
+}
+async function ezNacti() {
+  const id = document.getElementById('ezId').value.trim();
+  if (!id) return toast('Zadejte ID žádanky', true);
+  const data = await api('GET', '/api/ezadanky/zadanka/' + id);
+  showResult('ezResult', data);
+}
+async function ezVizual() {
+  const id = document.getElementById('ezId').value.trim();
+  if (!id) return toast('Zadejte ID žádanky', true);
+  const data = await api('GET', '/api/ezadanky/vizual/' + id);
+  showResult('ezResult', data);
+}
+async function ezPrilohy() {
+  const id = document.getElementById('ezId').value.trim();
+  if (!id) return toast('Zadejte ID žádanky', true);
+  const data = await api('GET', '/api/ezadanky/prilohy/' + id);
+  showResult('ezResult', data);
+}
+
+// ---------------------------------------------------------------------------
+// eŽádanky – Create
+// ---------------------------------------------------------------------------
+const EZ_TEMPLATES = {
+  empty: {
+    zadanka: {
+      kod: null,
+      stav: null,
+      urgentnost: null,
+      pacientPojistovna: null,
+      samoplatce: false,
+      prilozenVzorek: false,
+      omezeniMobility: false,
+      instrukceProPacienta: null,
+      zpusobVyrizeni: null,
+      vzorekData: null,
+      zasilka: null
+    }
+  },
+  lab: {
+    zadanka: {
+      kod: null,
+      stav: null,
+      urgentnost: null,
+      pacientPojistovna: "111",
+      samoplatce: false,
+      prilozenVzorek: true,
+      omezeniMobility: false,
+      instrukceProPacienta: "Odběr nalačno",
+      zpusobVyrizeni: null,
+      vzorekData: null,
+      zasilka: {
+        nazev: "Laboratorní žádanka",
+        popis: "Žádanka o laboratorní vyšetření",
+        typ: {ciselnikKod: "medical-document-type", kod: "74207-2", verze: "1.0.0"},
+        klasifikace: {ciselnikKod: "document-category", kod: "26436-6", verze: "1.0.0"},
+        autor: "102129137",
+        zdravotnickyPracovnik: "102129137",
+        poskytovatel: "25488627",
+        pacient: "DOPLNIT_RID",
+        ispzs: "NIS Krajska zdravotni",
+        adresat: "25488627",
+        adresatTyp: {ciselnikKod: "typ-adresata", kod: "PZS", verze: "1.0.0"},
+        dostupnost: true,
+        dokument: []
+      }
+    }
+  }
+};
+
+function ezTemplateChanged() {
+  const tpl = document.getElementById('ezCrTemplate').value;
+  const body = EZ_TEMPLATES[tpl] || EZ_TEMPLATES.empty;
+  document.getElementById('ezCrBody').value = JSON.stringify(body, null, 2);
+}
+
+function ezCreateInitOnce() {
+  if (!document.getElementById('ezCrBody').value) {
+    ezTemplateChanged();
+  }
+}
+
+async function ezCreateSubmit() {
+  let body;
+  try {
+    body = JSON.parse(document.getElementById('ezCrBody').value);
+  } catch(e) {
+    return toast('Neplatný JSON: ' + e.message, true);
+  }
+  const data = await api('POST', '/api/ezadanky/uloz', body);
+  showResult('ezCreateResult', data);
+  if (data.status >= 200 && data.status < 300) toast('Žádanka úspěšně uložena!');
+}
+
+// ---------------------------------------------------------------------------
+// Notifikace
+// ---------------------------------------------------------------------------
+async function notifPing() {
+  const data = await api('GET', '/api/notifikace/ping');
+  showResult('notifResult', data);
+}
+async function notifKanaly() {
+  const data = await api('GET', '/api/notifikace/kanaly');
+  showResult('notifResult', data);
+}
+async function notifSablony() {
+  const data = await api('GET', '/api/notifikace/sablony');
+  showResult('notifResult', data);
+}
+async function notifZdroje() {
+  const data = await api('GET', '/api/notifikace/zdroje');
+  showResult('notifResult', data);
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+async function runTests() {
+  const btn = document.getElementById('btnRunTests');
+  const summary = document.getElementById('testSummary');
+  btn.disabled = true;
+  btn.textContent = 'Probíhá testování...';
+  summary.innerHTML = '<span class="spinner"></span> Spouštím testy (může trvat ~60s)...';
+
+  const data = await api('POST', '/api/test/run');
+  btn.disabled = false;
+  btn.textContent = 'Spustit kompletní testy';
+
+  if (data.error) {
+    summary.innerHTML = `<span class="badge badge-err">CHYBA</span> ${data.error}`;
+    return;
+  }
+
+  const pct = data.total > 0 ? Math.round(data.passed / data.total * 100) : 0;
+  summary.innerHTML = `
+    <span class="badge ${data.failed === 0 ? 'badge-ok' : 'badge-err'}" style="font-size:14px;padding:6px 16px">
+      ${data.failed === 0 ? 'PASS' : 'FAIL'} ${data.passed}/${data.total} (${pct}%)
+    </span>`;
+
+  const tbody = document.getElementById('testTableBody');
+  tbody.innerHTML = (data.tests || []).map(t => `
+    <tr>
+      <td><span class="badge ${t.passed ? 'badge-ok' : 'badge-err'}">${t.passed ? 'PASS' : 'FAIL'}</span></td>
+      <td>${esc(t.name)}</td>
+      <td class="mono" style="color:var(--fg3);font-size:11px">${esc(t.detail)}</td>
+    </tr>`).join('');
+  document.getElementById('testResultsCard').style.display = '';
+
+  if (data.stdout) {
+    document.getElementById('testOutput').textContent = data.stdout;
+    document.getElementById('testOutputCard').style.display = '';
+  }
+
+  // Switch to tests section
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('[data-section="tests"]').classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-tests').classList.add('active');
+  document.getElementById('pageTitle').textContent = 'Testy';
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// ---------------------------------------------------------------------------
+// Raw request
+// ---------------------------------------------------------------------------
+async function rawSend() {
+  const method = document.getElementById('rawMethod').value;
+  const path = document.getElementById('rawPath').value.trim();
+  if (!path) return toast('Zadejte cestu', true);
+  let body = undefined;
+  const bodyStr = document.getElementById('rawBody').value.trim();
+  if (bodyStr && method !== 'GET') {
+    try { body = JSON.parse(bodyStr); }
+    catch(e) { return toast('Neplatný JSON body', true); }
+  }
+  const data = await api('POST', '/api/raw', { method, path, body });
+  showResult('rawResult', data);
+}
+</script>
+
+</body>
+</html>
