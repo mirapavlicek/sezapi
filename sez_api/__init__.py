@@ -6,7 +6,8 @@ Podporované služby:
   - KRZP (Kmenový registr zdravotnických pracovníků)
   - DÚ (Dočasné úložiště)
   - SZZ (Sdílený zdravotní záznam)
-  - ELP (Elektronické posudky)
+  - ELP (Elektronické posudky v1)
+  - ELPv2 (Elektronické posudky v2)
   - eŽádanky (vč. simulačního enginu)
   - Notifikace
   - EZCA2 (Služby vytvářející důvěru)
@@ -22,12 +23,13 @@ from sez_api.client import (
     DocasneUloziste,
     SZZ,
     ELP,
+    ELPv2,
     EZadanky,
     Notifikace,
     EZCA2,
 )
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
@@ -39,6 +41,7 @@ __all__ = [
     "DocasneUloziste",
     "SZZ",
     "ELP",
+    "ELPv2",
     "EZadanky",
     "Notifikace",
     "EZCA2",

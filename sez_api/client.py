@@ -1279,6 +1279,7 @@ class SZZ:
 
 
 class ELP:
+    """ELP v1 – zachováno pro zpětnou kompatibilitu."""
     BASE = "/elektronickePosudky"
 
     def __init__(self, client: SEZClient):
@@ -1312,6 +1313,49 @@ class ELP:
         kw = {}
         if etag: kw["extra_headers"] = {"If-Match": etag}
         return self.c.patch(f"{self.BASE}/api/v1/posudky/ridicskeOpravneni/{posudek_id}/zneplatnit", {}, **kw)
+
+
+class ELPv2:
+    """ELP v2.0 – Elektronické posudky pro řidičská oprávnění (nové rozhraní)."""
+    BASE = "/elektronickePosudky"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # -- Číselníky --
+    def ciselniky(self):
+        return self.c.get(f"{self.BASE}/api/v2/ciselniky")
+
+    def ciselnik_polozky(self, kod: str):
+        return self.c.get(f"{self.BASE}/api/v2/ciselniky/{kod}/polozky")
+
+    # -- CRUD Posudky ŘO --
+    def vytvor(self, body: dict):
+        return self.c.post(f"{self.BASE}/api/v2/posudky/ridicskeOpravneni", body)
+
+    def vyhledej(self, body: dict):
+        return self.c.post(f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/vyhledat", body)
+
+    def detail(self, posudek_id: str):
+        return self.c.get(f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/{posudek_id}")
+
+    def historie(self, posudek_id: str):
+        return self.c.get(f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/{posudek_id}/historie")
+
+    def pdf(self, posudek_id: str):
+        return self.c.get(f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/{posudek_id}/pdf")
+
+    def zneplatnit(self, posudek_id: str, etag: str = ""):
+        kw = {}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
+        return self.c.patch(
+            f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/{posudek_id}/zneplatnit", {}, **kw)
+
+    # -- Oprávnění --
+    def over_opravneni(self, body: dict):
+        return self.c.post(
+            f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni", body)
 
 
 class EZadanky:

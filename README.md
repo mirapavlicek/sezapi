@@ -19,31 +19,156 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 - Certifikát EZCA II (`.pfx` / `.p12`) registrovaný v JSU
 - Přístup k SEZ API Gateway (síťová konektivita do CSEZ)
 
-## Instalace
+---
+
+## Návod: vybudování a spuštění
+
+### Lokální spuštění (vývoj / testování)
+
+1. **Stažení projektu**
+   ```bash
+   git clone https://github.com/mirapavlicek/sezapi.git
+   cd sezapi
+   ```
+
+2. **Vytvoření virtuálního prostředí**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate    # Linux / macOS
+   # .venv\Scripts\activate    # Windows (PowerShell)
+   ```
+
+3. **Instalace závislostí**
+   ```bash
+   pip install -e .
+   # nebo: pip install -r requirements.txt
+   ```
+
+4. **Konfigurace**
+   ```bash
+   cp .env.example .env
+   ```
+   Upravte `.env` – povinné položky:
+   - `SEZ_CLIENT_ID` – Client ID z JSU
+   - `SEZ_P12_PATH` – cesta k certifikátu (např. `./krajska_zdravotni.pfx`)
+   - `SEZ_P12_PASSWORD` – heslo k certifikátu
+
+5. **Umístění certifikátu**
+   Certifikát `.pfx` / `.p12` zkopírujte do složky projektu (nebo zadejte absolutní cestu v `.env`).
+
+6. **Spuštění**
+   ```bash
+   sez-api serve
+   ```
+   Otevřete v prohlížeči: **http://localhost:8004**
+
+   Volitelně s automatickým reloadem při změnách:
+   ```bash
+   sez-api serve --reload
+   ```
+
+7. **Ověření připojení**
+   ```bash
+   sez-api ping
+   ```
+
+---
+
+### Spuštění na serveru (Linux / systemd)
+
+#### Varianta A: Instalační skript (doporučeno)
+
+1. **Připravte projekt na serveru** (např. přes `git clone` nebo `scp`)
+   ```bash
+   git clone https://github.com/mirapavlicek/sezapi.git
+   cd sezapi
+   ```
+
+2. **Připravte konfiguraci a certifikát**
+   ```bash
+   cp .env.example .env
+   # Upravte .env (SEZ_CLIENT_ID, SEZ_P12_PATH, SEZ_P12_PASSWORD)
+   # Zkopírujte certifikát .pfx do složky projektu
+   ```
+
+3. **Spusťte instalátor jako root**
+   ```bash
+   sudo ./deploy/install.sh
+   ```
+   Skript:
+   - vytvoří uživatele `sezapi`
+   - nainstaluje aplikaci do `/opt/sez-api`
+   - vytvoří virtuální prostředí a nainstaluje závislosti
+   - zaregistruje a spustí systemd službu `sez-api`
+
+4. **Služba běží na portu 8004**
+   - URL: `http://<IP-serveru>:8004`
+   - Logy: `journalctl -u sez-api -f`
+   - Restart: `sudo systemctl restart sez-api`
+
+#### Varianta B: Ruční nasazení
+
+Předpoklad: jste na serveru v kořenu projektu (např. po `git clone`).
+
+1. **Vytvořte adresář a zkopírujte soubory**
+   ```bash
+   sudo mkdir -p /opt/sez-api
+   sudo cp -r sez_api/ deploy/ requirements.txt pyproject.toml .env.example /opt/sez-api/
+   sudo cp .env /opt/sez-api/          # váš konfigurovaný .env
+   sudo cp *.pfx /opt/sez-api/         # certifikát
+   ```
+
+2. **Vytvořte uživatele a virtuální prostředí**
+   ```bash
+   sudo useradd --system --no-create-home --shell /sbin/nologin sezapi
+   cd /opt/sez-api
+   sudo python3 -m venv .venv
+   sudo .venv/bin/pip install -r requirements.txt
+   ```
+
+3. **Upravte cestu k certifikátu v `.env`** (např. `SEZ_P12_PATH=/opt/sez-api/krajska_zdravotni.pfx`)
+
+4. **Nainstalujte systemd službu**
+   ```bash
+   sudo cp deploy/sez-api.service /etc/systemd/system/sez-api.service
+   sudo systemctl daemon-reload
+   sudo systemctl enable sez-api
+   sudo systemctl start sez-api
+   ```
+
+5. **Nastavte oprávnění**
+   ```bash
+   sudo chown -R sezapi:sezapi /opt/sez-api
+   sudo chmod 600 /opt/sez-api/.env /opt/sez-api/*.pfx
+   ```
+
+#### Upgrade na serveru (po změnách v kódu)
+
+```bash
+cd sezapi
+git pull
+# Zkopírujte nové soubory na server (scp/rsync) nebo spusťte install.sh znovu
+sudo ./deploy/install.sh
+```
+
+---
+
+## Instalace (stručný přehled)
 
 ### Ze zdrojového kódu (doporučeno)
 
 ```bash
 git clone https://github.com/mirapavlicek/sezapi.git
 cd sezapi
-
-# Vytvoření virtuálního prostředí
 python3 -m venv .venv
 source .venv/bin/activate    # Linux/macOS
-# .venv\Scripts\activate     # Windows
-
-# Instalace závislostí
 pip install -e .
-
-# Konfigurace – zkopírujte .env.example do .env a doplňte certifikát
 cp .env.example .env
 # Upravte .env: SEZ_P12_PATH, SEZ_P12_PASSWORD, SEZ_CLIENT_ID
-
-# Spuštění webového rozhraní
 sez-api serve
 ```
 
-Otevřete http://localhost:8000 (nebo port z .env).
+Otevřete http://localhost:8004 (nebo port z `.env`).
 
 ## Konfigurace
 

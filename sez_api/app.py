@@ -27,7 +27,7 @@ from pydantic import BaseModel
 from sez_api import config as cfg
 from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
-    KRP, KRZP, RegistrOpravneni, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace, EZCA2,
+    KRP, KRZP, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, EZadanky, Notifikace, EZCA2,
 )
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -86,6 +86,7 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["du"] = DocasneUloziste(_client)
     _modules["szz"] = SZZ(_client)
     _modules["elp"] = ELP(_client)
+    _modules["elp2"] = ELPv2(_client)
     _modules["ez"] = EZadanky(_client)
     _modules["notif"] = Notifikace(_client)
     _modules["ezca"] = EZCA2(_client)
@@ -898,6 +899,51 @@ async def elp_zneplatnit(id: str, request: Request):
 
 
 # ---------------------------------------------------------------------------
+# ELP v2 – Elektronické posudky v2.0
+# ---------------------------------------------------------------------------
+
+@app.get("/api/elp2/ciselniky")
+async def elp2_ciselniky():
+    return timed_call(_modules["elp2"].ciselniky)
+
+@app.get("/api/elp2/ciselniky/{kod}/polozky")
+async def elp2_ciselnik_polozky(kod: str):
+    return timed_call(_modules["elp2"].ciselnik_polozky, kod)
+
+@app.post("/api/elp2/vyhledej")
+async def elp2_vyhledej(request: Request):
+    body = await request.json()
+    return timed_call(_modules["elp2"].vyhledej, body)
+
+@app.get("/api/elp2/posudek/{posudek_id}")
+async def elp2_detail(posudek_id: str):
+    return timed_call(_modules["elp2"].detail, posudek_id)
+
+@app.post("/api/elp2/vytvor")
+async def elp2_vytvor(request: Request):
+    body = await request.json()
+    return timed_call(_modules["elp2"].vytvor, body)
+
+@app.get("/api/elp2/posudek/{id}/historie")
+async def elp2_historie(id: str):
+    return timed_call(_modules["elp2"].historie, id)
+
+@app.get("/api/elp2/posudek/{id}/pdf")
+async def elp2_pdf(id: str):
+    return timed_call(_modules["elp2"].pdf, id)
+
+@app.patch("/api/elp2/posudek/{id}/zneplatnit")
+async def elp2_zneplatnit(id: str, request: Request):
+    etag = request.headers.get("If-Match", "")
+    return timed_call(_modules["elp2"].zneplatnit, id, etag)
+
+@app.post("/api/elp2/opravneni")
+async def elp2_opravneni(request: Request):
+    body = await request.json()
+    return timed_call(_modules["elp2"].over_opravneni, body)
+
+
+# ---------------------------------------------------------------------------
 # eŽádanky – Simulation Engine
 # ---------------------------------------------------------------------------
 
@@ -1618,18 +1664,24 @@ async def debug_jwt():
                 ],
             },
             "ELP": {
-                "name": "Elektronické posudky",
+                "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
                 "endpoints": [
-                    {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek"},
-                    {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky"},
-                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{posudekId}", "desc": "Detail posudku"},
-                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/ciselniky", "desc": "Číselníky ELP"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek (v2)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v2)"},
+                    {"method": "PATCH","path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v2)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v2)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/historie", "desc": "Historie (v2)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni", "desc": "Ověřit oprávnění (v2)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/ciselniky", "desc": "Číselníky (v2)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/ciselniky/{kod}/polozky", "desc": "Položky číselníku (v2)"},
                 ],
                 "full_urls": [
-                    f"{gw}/elektronickePosudky/api/v1/posudky/ridicskeOpravneni",
-                    f"{gw}/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/vyhledat",
-                    f"{gw}/elektronickePosudky/api/v1/ciselniky",
+                    f"{gw}/elektronickePosudky/api/v2/posudky/ridicskeOpravneni",
+                    f"{gw}/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat",
+                    f"{gw}/elektronickePosudky/api/v2/ciselniky",
+                    f"{gw}/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni",
                 ],
             },
             "eZadanky": {

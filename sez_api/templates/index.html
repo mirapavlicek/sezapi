@@ -1911,126 +1911,165 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
       </div>
     </div>
 
-    <!-- ELP -->
+    <!-- ELP v2 -->
     <div class="section" id="sec-elp">
       <div class="card" style="background:linear-gradient(135deg,#fdf4ff 0%,#fef9ff 100%);border-color:#e9d5ff;margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#9333ea;margin-bottom:8px">Elektronické posudky (ELP)</div>
+        <div style="font-weight:700;font-size:14px;color:#9333ea;margin-bottom:8px">Elektronické posudky (ELP) <span style="font-size:11px;background:#9333ea;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:500">v2.0</span></div>
         <div style="font-size:13px;color:var(--fg2);line-height:1.7">
-          Systém elektronických lékařských posudků — např. <strong>posudky pro řidičské průkazy</strong>,
-          <strong>posudky o zdravotní způsobilosti</strong> k práci, sportovní posudky apod.
+          Systém elektronických lékařských posudků pro <strong>řidičská oprávnění</strong> dle nového API v2.0.
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
-            <span><strong>Vyhledat</strong> — dle RID pacienta a typu posudku</span>
-            <span><strong>Vytvořit</strong> — nový posudek s kompletními daty</span>
-            <span><strong>Historie</strong> — verze a změny konkrétního posudku</span>
-            <span><strong>PDF</strong> — export posudku do PDF k tisku</span>
-            <span><strong>Seznam</strong> — filtrovatelný přehled všech posudků</span>
-            <span><strong>Zneplatnění</strong> — deaktivace chybného posudku</span>
-          </div>
-          <div style="margin-top:6px;font-size:12px;color:var(--fg3)">
-            Editace posudku vyžaduje <code>If-Match</code> (ETag). Zneplatnění je nevratné.
+            <span><strong>Vyhledat</strong> — dle RID, data, stavu, fulltextu, IČO</span>
+            <span><strong>Vytvořit</strong> — nový posudek se způsobilostmi</span>
+            <span><strong>Oprávnění</strong> — ověření oprávnění k založení</span>
+            <span><strong>PDF</strong> — export posudku do PDF</span>
+            <span><strong>Historie</strong> — verze a změny posudku</span>
+            <span><strong>Zneplatnění</strong> — deaktivace (vyžaduje ETag)</span>
           </div>
         </div>
       </div>
 
       <div class="sub-tabs" id="elpMainTabs">
-        <div class="sub-tab active" data-panel="elp-read-panel">Vyhledat posudky</div>
+        <div class="sub-tab active" data-panel="elp-read-panel">Vyhledat</div>
         <div class="sub-tab" data-panel="elp-create-panel">Vytvořit posudek</div>
-        <div class="sub-tab" data-panel="elp-historie-panel">Historie &amp; akce</div>
-        <div class="sub-tab" data-panel="elp-list-panel">Seznam posudků</div>
+        <div class="sub-tab" data-panel="elp-opravneni-panel">Oprávnění</div>
+        <div class="sub-tab" data-panel="elp-historie-panel">Detail / Historie</div>
+        <div class="sub-tab" data-panel="elp-ciselniky-panel">Číselníky</div>
       </div>
 
-      <!-- ELP READ -->
+      <!-- ELP VYHLEDAT -->
       <div class="sub-panel active" id="elp-read-panel">
         <div class="card">
-          <div class="card-title">Vyhledání posudků</div>
+          <div class="card-title">Vyhledání posudků ŘO (v2)</div>
+          <div class="chips" id="elpSearchChips"></div>
           <div class="form-row">
-            <div class="form-group"><label>Stránka</label><input type="number" id="elpPage" value="0"></div>
-            <div class="form-group"><label>Velikost</label><input type="number" id="elpSize" value="10"></div>
-            <button class="btn btn-primary" onclick="elpVyhledej()">Vyhledat posudky</button>
+            <div class="form-group"><label>RID pacienta</label><input id="elpSrchRid" placeholder="volitelné"></div>
+            <div class="form-group"><label>IČO poskytovatele</label><input id="elpSrchIco" placeholder="volitelné"></div>
+            <div class="form-group"><label>Fulltext</label><input id="elpSrchFulltext" placeholder="volitelné"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Datum od</label><input type="date" id="elpSrchDatumOd"></div>
+            <div class="form-group"><label>Datum do</label><input type="date" id="elpSrchDatumDo"></div>
+            <div class="form-group"><label>Jen platné</label><select id="elpSrchJenPlatne"><option value="">--</option><option value="true">Ano</option><option value="false">Ne</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stránka</label><input type="number" id="elpPage" value="0" min="0"></div>
+            <div class="form-group"><label>Velikost</label><input type="number" id="elpSize" value="10" min="1" max="100"></div>
+            <div class="form-group"><label>Řazení</label><select id="elpSrchSort"><option value="">--</option><option value="datumVystaveni">Datum vystavení</option><option value="datumVytvoreni">Datum vytvoření</option><option value="platnostDo">Platnost do</option></select></div>
+            <div class="form-group"><label>Směr</label><select id="elpSrchOrder"><option value="desc">Sestupně</option><option value="asc">Vzestupně</option></select></div>
+            <button class="btn btn-primary" onclick="elp2Vyhledej()">Vyhledat</button>
           </div>
         </div>
         <div class="card">
-          <div class="card-title">Detail posudku</div>
+          <div class="card-title">Detail posudku podle ID</div>
           <div class="form-row">
-            <div class="form-group"><label>ID posudku</label><input id="elpId" placeholder="UUID"></div>
-            <button class="btn btn-primary" onclick="elpDetail()">Načíst detail</button>
+            <div class="form-group"><label>ID posudku (UUID)</label><input id="elpId" placeholder="UUID"></div>
+            <button class="btn btn-primary" onclick="elp2Detail()">Načíst detail</button>
           </div>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-dasta" onclick="exportDasta('elpResult','elp')" title="Export do DASTA DS4 XML">DASTA</button><button class="btn-iris" onclick="irisGenerate('elpResult','elp')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="elpResult">-</div></div>
       </div>
 
-      <!-- ELP CREATE -->
+      <!-- ELP CREATE v2 -->
       <div class="sub-panel" id="elp-create-panel">
         <div class="card">
-          <div class="card-title">Posudek pro řidičské oprávnění</div>
+          <div class="card-title">Nový posudek ŘO (v2)</div>
           <div class="chips" id="elpCreateChips"></div>
           <div class="form-row">
-            <div class="form-group"><label>RID pacienta</label><input id="elpCrRid" placeholder="RID"></div>
-            <div class="form-group"><label>KRZP ID lékaře</label><input id="elpCrKrzp" value="102129137"></div>
-            <div class="form-group"><label>IČO poskytovatele</label><input id="elpCrIco" value="25488627"></div>
+            <div class="form-group"><label>RID pacienta *</label><input id="elpCrRid" placeholder="RID"></div>
+            <div class="form-group"><label>KRZP ID lékaře *</label><input id="elpCrKrzp" value="102129137"></div>
           </div>
         </div>
         <div class="card">
-          <div class="card-title">Údaje posudku</div>
+          <div class="card-title">Hlavička posudku</div>
           <div class="form-row">
-            <div class="form-group"><label>Typ akce</label><select id="elpCrAkce"></select></div>
-            <div class="form-group"><label>Druh posudku</label><select id="elpCrDruh"></select></div>
-            <div class="form-group"><label>Druh prohlídky</label><select id="elpCrProhlidka"></select></div>
+            <div class="form-group"><label>Typ akce *</label><select id="elpCrAkce"></select></div>
+            <div class="form-group"><label>Druh posudku *</label><select id="elpCrDruh"></select></div>
+            <div class="form-group"><label>Druh prohlídky *</label><select id="elpCrProhlidka"></select></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Odbornost lékaře</label><select id="elpCrOdbornost"></select></div>
-            <div class="form-group"><label>Skupina žadatel/řidič</label><select id="elpCrSkupina"></select></div>
-            <div class="form-group"><label>Výsledek</label><select id="elpCrVysledek"></select></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Stav posudku</label><select id="elpCrStav"></select></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Datum vyšetření</label><input type="date" id="elpCrDatumVysetreni"></div>
-            <div class="form-group"><label>Datum vystavení</label><input type="date" id="elpCrDatumVystaveni"></div>
+            <div class="form-group"><label>Stav posudku *</label><select id="elpCrStav"></select></div>
+            <div class="form-group"><label>Datum vystavení *</label><input type="date" id="elpCrDatumVystaveni"></div>
             <div class="form-group"><label>Platnost do</label><input type="date" id="elpCrPlatnostDo"></div>
           </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Způsobilost (zpusobilosti[0])</div>
           <div class="form-row">
-            <div class="form-group"><label>Zdůvodnění</label><textarea id="elpCrZduvodneni" rows="2" placeholder="volitelné"></textarea></div>
+            <div class="form-group"><label>Skupina žadatel/řidič *</label><select id="elpCrSkupina"></select></div>
+            <div class="form-group"><label>Výsledek *</label><select id="elpCrVysledek"></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Skupiny ŘO (čárkou, např. B,AM)</label><input id="elpCrSkupinyRo" value="B" placeholder="B,AM,C"></div>
+          </div>
+          <div style="margin-top:8px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px">
+            <div style="font-weight:600;font-size:12px;margin-bottom:6px">Harmonizované kódy (volitelné)</div>
+            <div class="form-row">
+              <div class="form-group"><label>Kód</label><input id="elpCrHarmKod" placeholder="např. 01.06"></div>
+              <div class="form-group"><label>Upřesnění</label><input id="elpCrHarmText" placeholder="volitelný text"></div>
+            </div>
+            <div style="font-weight:600;font-size:12px;margin-bottom:6px;margin-top:8px">Národní kódy (volitelné)</div>
+            <div class="form-row">
+              <div class="form-group"><label>Kód</label><input id="elpCrNarKod" placeholder="např. 105"></div>
+              <div class="form-group"><label>Upřesnění</label><input id="elpCrNarText" placeholder="volitelný text"></div>
+            </div>
           </div>
         </div>
         <div class="card">
           <div class="card-title">JSON náhled</div>
           <div class="json-box" id="elpCreatePreview" style="max-height:300px;margin-bottom:12px">-</div>
           <div class="form-row">
-            <button class="btn btn-primary" onclick="elpPreview()">Náhled JSON</button>
-            <button class="btn btn-green" onclick="elpCreateSubmit()">Odeslat na API</button>
+            <button class="btn btn-primary" onclick="elp2Preview()">Náhled JSON</button>
+            <button class="btn btn-green" onclick="elp2CreateSubmit()">Odeslat na API</button>
           </div>
         </div>
-        <div class="card"><div class="card-header"><span class="card-title">Odpověď API</span><button class="btn-dasta" onclick="exportDasta('elpCreateResult','elp')" title="Export do DASTA DS4 XML">DASTA</button><button class="btn-iris" onclick="irisGenerate('elpCreateResult','elp')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="elpCreateResult">-</div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Odpověď API</span><button class="btn-dasta" onclick="exportDasta('elpCreateResult','elp')" title="DASTA">DASTA</button><button class="btn-iris" onclick="irisGenerate('elpCreateResult','elp')" title="IRIS">IRIS</button></div><div class="json-box" id="elpCreateResult">-</div></div>
       </div>
 
-      <!-- ELP HISTORIE & AKCE -->
+      <!-- ELP OPRAVNENI v2 -->
+      <div class="sub-panel" id="elp-opravneni-panel">
+        <div class="card">
+          <div class="card-title">Ověření oprávnění k založení posudku</div>
+          <div style="font-size:12px;color:var(--fg3);margin-bottom:12px">POST /api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni</div>
+          <div class="form-row">
+            <div class="form-group"><label>IČO poskytovatele</label><input id="elpOprIco" value="25488627"></div>
+            <div class="form-group"><label>KRZP ID pracovníka</label><input id="elpOprKrzp" value="102129137"></div>
+            <button class="btn btn-primary" onclick="elp2Opravneni()">Ověřit oprávnění</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="elpOprResult">-</div></div>
+      </div>
+
+      <!-- ELP HISTORIE / DETAIL v2 -->
       <div class="sub-panel" id="elp-historie-panel">
         <div class="card">
-          <div class="card-title">Historie, PDF a zneplatnění posudku</div>
+          <div class="card-title">Detail, historie, PDF a zneplatnění</div>
           <div class="form-row">
-            <div class="form-group"><label>ID posudku</label><input id="elpHistId" placeholder="UUID posudku"></div>
+            <div class="form-group"><label>ID posudku (UUID)</label><input id="elpHistId" placeholder="UUID"></div>
           </div>
           <div class="form-row" style="margin-top:8px">
-            <button class="btn btn-primary" onclick="elpHistorie()">Historie</button>
-            <button class="btn btn-outline" onclick="elpPdf()">PDF</button>
-            <button class="btn" style="background:var(--red);color:#fff" onclick="elpZneplatnit()">Zneplatnit</button>
+            <button class="btn btn-primary" onclick="elp2HistDetail()">Detail</button>
+            <button class="btn btn-outline" onclick="elp2Historie()">Historie</button>
+            <button class="btn btn-outline" onclick="elp2Pdf()">PDF</button>
+            <button class="btn" style="background:var(--red);color:#fff" onclick="elp2Zneplatnit()">Zneplatnit</button>
+          </div>
+          <div class="form-row" style="margin-top:4px">
+            <div class="form-group"><label>ETag (If-Match) pro zneplatnění</label><input id="elpHistEtag" placeholder="např. AAAAAAAAB+8="></div>
           </div>
         </div>
-        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="elpHistResult">-</div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-iris" onclick="irisGenerate('elpHistResult','elp')" title="IRIS">IRIS</button></div><div class="json-box" id="elpHistResult">-</div></div>
       </div>
 
-      <!-- ELP LIST -->
-      <div class="sub-panel" id="elp-list-panel">
+      <!-- ELP CISELNIKY v2 -->
+      <div class="sub-panel" id="elp-ciselniky-panel">
         <div class="card">
-          <div class="card-title">Seznam posudků pacienta</div>
+          <div class="card-title">Číselníky ELP v2</div>
           <div class="form-row">
-            <div class="form-group"><label>RID pacienta (volitelné)</label><input id="elpListRid" placeholder="RID"></div>
-            <button class="btn btn-primary" onclick="elpList()">Načíst posudky</button>
+            <button class="btn btn-primary" onclick="elp2LoadCiselniky()">Načíst všechny číselníky</button>
+            <div class="form-group"><label>Kód číselníku</label><input id="elpCisKod" placeholder="např. akce-ro"></div>
+            <button class="btn btn-outline" onclick="elp2LoadPolozky()">Načíst položky</button>
           </div>
         </div>
-        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="elpListResult">-</div></div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="elpCisResult">-</div></div>
       </div>
     </div>
 
@@ -3674,7 +3713,7 @@ function initSubTabs() {
         }
         if (tab.dataset.panel === 'szz-create-panel') szzCreateInit();
         if (tab.dataset.panel === 'du-create-panel') duInitCreate();
-        if (tab.dataset.panel === 'elp-create-panel') elpCreateInit();
+        if (tab.dataset.panel === 'elp-create-panel') elp2CreateInit();
         if (tab.dataset.panel === 'ez-create-panel') ezCreateInitOnce();
       });
     });
@@ -3697,15 +3736,15 @@ function escHtml(s) {
 
 // API helpers
 // ---------------------------------------------------------------------------
-async function api(method, url, body) {
+async function api(method, url, body, extraHeaders) {
   const loading = document.getElementById('loadingIndicator');
   loading.style.display = '';
   const t0 = performance.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 30000);
   try {
-    const opts = { method, headers: { 'Content-Type': 'application/json' }, signal: ac.signal };
-    if (body !== undefined) opts.body = JSON.stringify(body);
+    const opts = { method, headers: { 'Content-Type': 'application/json', ...extraHeaders }, signal: ac.signal };
+    if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
     const resp = await fetch(url, opts);
     clearTimeout(timer);
     const data = await resp.json();
@@ -4229,6 +4268,8 @@ async function loadStatus() {
   renderPatientChips();
   renderWorkerTable();
   renderPzsTable();
+  elp2PopulateChips('elpSearchChips', 'elpSrchRid');
+  elp2PopulateChips('elpCreateChips', 'elpCrRid');
   iropInit();
 }
 
@@ -6015,42 +6056,26 @@ async function szzEmergPdf() {
 }
 
 // ---------------------------------------------------------------------------
-// ELP
+// ELP v2 – Elektronické posudky
 // ---------------------------------------------------------------------------
-async function elpVyhledej() {
-  const page = parseInt(document.getElementById('elpPage').value) || 0;
-  const size = parseInt(document.getElementById('elpSize').value) || 10;
-  const data = await api('POST', '/api/elp/vyhledej', { page, size });
-  showResult('elpResult', data);
-}
-async function elpDetail() {
-  const id = document.getElementById('elpId').value.trim();
-  if (!id) return toast('Zadejte ID posudku', true);
-  const data = await api('GET', '/api/elp/posudek/' + id);
-  showResult('elpResult', data);
-}
+const elp2Cache = {};
+let elp2Inited = false;
 
-// ---------------------------------------------------------------------------
-// ELP – Create
-// ---------------------------------------------------------------------------
-const elpCodelistCache = {};
-let elpCreateInited = false;
-
-async function elpLoadCodelist(kod) {
-  if (elpCodelistCache[kod]) return elpCodelistCache[kod];
-  const r = await api('GET', '/api/elp/ciselniky/' + kod + '/polozky');
+async function elp2LoadCodelist(kod) {
+  if (elp2Cache[kod]) return elp2Cache[kod];
+  const r = await api('GET', '/api/elp2/ciselniky/' + kod + '/polozky');
   if (r.status === 200 && Array.isArray(r.data)) {
-    elpCodelistCache[kod] = r.data;
+    elp2Cache[kod] = r.data;
     return r.data;
   }
   return [];
 }
 
-async function elpFillSelect(selectId, codelistKod) {
+async function elp2FillSelect(selectId, codelistKod) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
   sel.innerHTML = '';
-  const items = await elpLoadCodelist(codelistKod);
+  const items = await elp2LoadCodelist(codelistKod);
   for (const it of items) {
     const opt = document.createElement('option');
     opt.value = it.kod;
@@ -6060,105 +6085,199 @@ async function elpFillSelect(selectId, codelistKod) {
   }
 }
 
-async function elpCreateInit() {
-  if (elpCreateInited) return;
-  elpCreateInited = true;
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('elpCrDatumVysetreni').value = today;
-  document.getElementById('elpCrDatumVystaveni').value = today;
-
-  await Promise.all([
-    elpFillSelect('elpCrAkce', 'akce-ro'),
-    elpFillSelect('elpCrDruh', 'druh-posudku-ro'),
-    elpFillSelect('elpCrProhlidka', 'druh-prohlidky-ro'),
-    elpFillSelect('elpCrOdbornost', 'odbornost-lekare-ro'),
-    elpFillSelect('elpCrSkupina', 'skupina-zadatel-ridic-ro'),
-    elpFillSelect('elpCrVysledek', 'vysledek-posudku-ro'),
-    elpFillSelect('elpCrStav', 'stav-posudku'),
-  ]);
-
-  const el = document.getElementById('elpCreateChips');
-  if (el) {
-    let html = '';
-    if (isProd) html += '<span style="color:var(--orange);font-size:12px;margin-right:8px">PRODUKCE</span>';
-    if (testPatients.length > 0) {
-      html += testPatients.slice(0, 15).map(p =>
-        `<div class="chip" onclick="document.getElementById('elpCrRid').value='${p.rid}'">${p.rid} ${p.name}</div>`
-      ).join('');
-    }
-    el.innerHTML = html;
+function elp2PopulateChips(containerId, ridInputId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  let html = '';
+  if (isProd) html += '<span style="color:var(--orange);font-size:12px;margin-right:8px">PRODUKCE</span>';
+  if (testPatients.length > 0) {
+    html += testPatients.slice(0, 12).map(p =>
+      `<div class="chip" onclick="document.getElementById('${ridInputId}').value='${p.rid}'">${p.rid} ${p.name}</div>`
+    ).join('');
   }
-  toast('ELP číselníky načteny');
+  el.innerHTML = html;
 }
 
-function elpBuildBody() {
+async function elp2CreateInit() {
+  if (elp2Inited) return;
+  elp2Inited = true;
+  const today = new Date().toISOString().split('T')[0];
+  const el = document.getElementById('elpCrDatumVystaveni');
+  if (el) el.value = today;
+
+  await Promise.all([
+    elp2FillSelect('elpCrAkce', 'akce-ro'),
+    elp2FillSelect('elpCrDruh', 'druh-posudku-ro'),
+    elp2FillSelect('elpCrProhlidka', 'druh-prohlidky-ro'),
+    elp2FillSelect('elpCrSkupina', 'skupina-zadatel-ridic-ro'),
+    elp2FillSelect('elpCrVysledek', 'vysledek-posudku-ro'),
+    elp2FillSelect('elpCrStav', 'stav-posudku'),
+  ]);
+
+  elp2PopulateChips('elpCreateChips', 'elpCrRid');
+  elp2PopulateChips('elpSearchChips', 'elpSrchRid');
+  toast('ELP v2 číselníky načteny');
+}
+
+// -- Vyhledání --
+async function elp2Vyhledej() {
+  const body = {};
+  const rid = document.getElementById('elpSrchRid').value.trim();
+  const ico = document.getElementById('elpSrchIco').value.trim();
+  const fulltext = document.getElementById('elpSrchFulltext').value.trim();
+  const datumOd = document.getElementById('elpSrchDatumOd').value;
+  const datumDo = document.getElementById('elpSrchDatumDo').value;
+  const jenPlatne = document.getElementById('elpSrchJenPlatne').value;
+  const sort = document.getElementById('elpSrchSort').value;
+  const order = document.getElementById('elpSrchOrder').value;
+  if (rid) body.rid = rid;
+  if (ico) body.ico = ico;
+  if (fulltext) body.fulltext = fulltext;
+  if (datumOd) body.datumOd = datumOd + 'T00:00:00';
+  if (datumDo) body.datumDo = datumDo + 'T23:59:59';
+  if (jenPlatne) body.jenPlatne = jenPlatne === 'true';
+  if (sort) body.sort = sort;
+  if (order) body.order = order;
+  body.page = parseInt(document.getElementById('elpPage').value) || 0;
+  body.size = parseInt(document.getElementById('elpSize').value) || 10;
+  const data = await api('POST', '/api/elp2/vyhledej', body);
+  showResult('elpResult', data);
+}
+
+async function elp2Detail() {
+  const id = document.getElementById('elpId').value.trim();
+  if (!id) return toast('Zadejte ID posudku', true);
+  const data = await api('GET', '/api/elp2/posudek/' + id);
+  showResult('elpResult', data);
+}
+
+// -- Vytvoření v2 (se zpusobilostmi) --
+function elp2BuildBody() {
   const rid = document.getElementById('elpCrRid').value.trim();
   if (!rid) { toast('Zadejte RID pacienta', true); return null; }
+  const krzpId = document.getElementById('elpCrKrzp').value.trim();
+  if (!krzpId) { toast('Zadejte KRZP ID lékaře', true); return null; }
   const cp = (kod) => ({ kod, verze: '1.0.0' });
+
+  const skupinyRoRaw = document.getElementById('elpCrSkupinyRo').value.trim();
+  const skupinyRo = skupinyRoRaw.split(',').map(s => s.trim()).filter(Boolean)
+    .map(s => ({ skupinaRo: cp(s) }));
+  if (!skupinyRo.length) { toast('Zadejte alespoň jednu skupinu ŘO', true); return null; }
+
+  const zpusobilost = {
+    skupinaZadateleRidic: cp(document.getElementById('elpCrSkupina').value),
+    skupinyRidicskehoOpravneni: skupinyRo,
+    vysledek: cp(document.getElementById('elpCrVysledek').value),
+  };
+
+  const harmKod = document.getElementById('elpCrHarmKod').value.trim();
+  if (harmKod) {
+    const harmText = document.getElementById('elpCrHarmText').value.trim();
+    zpusobilost.harmonizovaneKody = [{
+      harmonizovanyKod: cp(harmKod),
+      skupinaRo: skupinyRo.map(s => s.skupinaRo),
+      upresneniText: harmText || null,
+    }];
+  }
+
+  const narKod = document.getElementById('elpCrNarKod').value.trim();
+  if (narKod) {
+    const narText = document.getElementById('elpCrNarText').value.trim();
+    zpusobilost.narodniKody = [{
+      narodniKod: cp(narKod),
+      skupinaRo: skupinyRo[0]?.skupinaRo || cp('B'),
+      upresneniText: narText || null,
+    }];
+  }
+
   return {
     rid,
-    krzpId: document.getElementById('elpCrKrzp').value.trim() || null,
-    ico: document.getElementById('elpCrIco').value.trim() || null,
+    krzpId,
     typAkce: cp(document.getElementById('elpCrAkce').value),
-    druhPosudku: cp(document.getElementById('elpCrDruh').value),
-    druhProhlidky: cp(document.getElementById('elpCrProhlidka').value),
-    odbornostLekare: cp(document.getElementById('elpCrOdbornost').value),
-    skupinaZadatelRidic: cp(document.getElementById('elpCrSkupina').value),
-    vysledek: cp(document.getElementById('elpCrVysledek').value),
     stavPosudku: cp(document.getElementById('elpCrStav').value),
-    datumVysetreni: document.getElementById('elpCrDatumVysetreni').value,
+    druhProhlidky: cp(document.getElementById('elpCrProhlidka').value),
+    druhPosudku: cp(document.getElementById('elpCrDruh').value),
     datumVystaveni: document.getElementById('elpCrDatumVystaveni').value,
     platnostDo: document.getElementById('elpCrPlatnostDo').value || null,
-    zduvodneni: document.getElementById('elpCrZduvodneni').value || null,
+    zpusobilosti: [zpusobilost],
   };
 }
 
-function elpPreview() {
-  const body = elpBuildBody();
+function elp2Preview() {
+  const body = elp2BuildBody();
   if (!body) return;
   document.getElementById('elpCreatePreview').innerHTML = syntaxHighlight(body);
 }
 
-async function elpCreateSubmit() {
-  const body = elpBuildBody();
+async function elp2CreateSubmit() {
+  const body = elp2BuildBody();
   if (!body) return;
   document.getElementById('elpCreatePreview').innerHTML = syntaxHighlight(body);
-  const data = await api('POST', '/api/elp/vytvor', body);
+  const data = await api('POST', '/api/elp2/vytvor', body);
   showResult('elpCreateResult', data);
-  if (data.status >= 200 && data.status < 300) toast('Posudek úspěšně vytvořen!');
+  if (data.status >= 200 && data.status < 300) toast('Posudek v2 úspěšně vytvořen!');
 }
 
-// ---------------------------------------------------------------------------
-// ELP – Historie, PDF, Zneplatnění, Seznam
-// ---------------------------------------------------------------------------
-async function elpHistorie() {
+// -- Oprávnění --
+async function elp2Opravneni() {
+  const ico = document.getElementById('elpOprIco').value.trim();
+  const krzpId = document.getElementById('elpOprKrzp').value.trim();
+  if (!ico || !krzpId) return toast('Vyplňte IČO a KRZP ID', true);
+  const r = await api('POST', '/api/elp2/opravneni', { ico, krzpId });
+  showResult('elpOprResult', r);
+  if (r.status === 200 && r.data) {
+    const ok = r.data.opravneni;
+    toast(ok ? 'Pracovník MÁ oprávnění k založení posudku' : 'Pracovník NEMÁ oprávnění', !ok);
+  }
+}
+
+// -- Detail / Historie / PDF / Zneplatnění --
+async function elp2HistDetail() {
   const id = document.getElementById('elpHistId').value.trim();
   if (!id) return toast('Zadejte ID posudku', true);
-  const r = await api('GET', `/api/elp/posudek/${id}/historie`);
+  const r = await api('GET', `/api/elp2/posudek/${id}`);
+  showResult('elpHistResult', r);
+  if (r.status === 200 && r.data && r.data.verzeZaznamu) {
+    document.getElementById('elpHistEtag').value = r.data.verzeZaznamu;
+    toast('ETag (verzeZaznamu) automaticky vyplněn');
+  }
+}
+
+async function elp2Historie() {
+  const id = document.getElementById('elpHistId').value.trim();
+  if (!id) return toast('Zadejte ID posudku', true);
+  const r = await api('GET', `/api/elp2/posudek/${id}/historie`);
   showResult('elpHistResult', r);
 }
 
-async function elpPdf() {
+async function elp2Pdf() {
   const id = document.getElementById('elpHistId').value.trim();
   if (!id) return toast('Zadejte ID posudku', true);
-  const r = await api('GET', `/api/elp/posudek/${id}/pdf`);
+  const r = await api('GET', `/api/elp2/posudek/${id}/pdf`);
   showResult('elpHistResult', r);
 }
 
-async function elpZneplatnit() {
+async function elp2Zneplatnit() {
   const id = document.getElementById('elpHistId').value.trim();
   if (!id) return toast('Zadejte ID posudku', true);
-  if (!confirm('Opravdu zneplatnit posudek ' + id + '?')) return;
-  const r = await api('PATCH', `/api/elp/posudek/${id}/zneplatnit`);
+  const etag = document.getElementById('elpHistEtag').value.trim();
+  if (!etag) return toast('ETag (If-Match) je povinný pro zneplatnění v2', true);
+  if (!confirm('Opravdu zneplatnit posudek ' + id + '?\nTato operace je nevratná.')) return;
+  const r = await api('PATCH', `/api/elp2/posudek/${id}/zneplatnit`, null, {'If-Match': etag});
   showResult('elpHistResult', r);
 }
 
-async function elpList() {
-  const params = new URLSearchParams();
-  const rid = document.getElementById('elpListRid').value.trim();
-  if (rid) params.set('rid', rid);
-  const r = await api('GET', '/api/elp/posudky?' + params.toString());
-  showResult('elpListResult', r);
+// -- Číselníky --
+async function elp2LoadCiselniky() {
+  const r = await api('GET', '/api/elp2/ciselniky');
+  showResult('elpCisResult', r);
+}
+
+async function elp2LoadPolozky() {
+  const kod = document.getElementById('elpCisKod').value.trim();
+  if (!kod) return toast('Zadejte kód číselníku', true);
+  const r = await api('GET', '/api/elp2/ciselniky/' + kod + '/polozky');
+  showResult('elpCisResult', r);
 }
 
 // ---------------------------------------------------------------------------
