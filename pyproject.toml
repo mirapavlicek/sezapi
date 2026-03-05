@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sez-api"
+version = "2.0.0"
+description = "Python klient a webové rozhraní pro SEZ API (Sdílené elektronické zdravotnictví ČR)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    {name = "Krajská zdravotní a.s."},
+]
+keywords = ["sez", "api", "zdravotnictví", "healthcare", "czech", "ehealth"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Healthcare Industry",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Framework :: FastAPI",
+]
+
+dependencies = [
+    "cryptography>=42.0",
+    "requests>=2.31",
+    "PyJWT>=2.8",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "jinja2>=3.1",
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+sez-api = "sez_api.cli:main"
+
+[project.urls]
+Documentation = "https://mzcr.atlassian.net/wiki/spaces/EPZS"
+Repository = "https://github.com/mirapavlicek/sezapi"
+
+[tool.setuptools.packages.find]
+include = ["sez_api*"]
+
+[tool.setuptools.package-data]
+sez_api = ["templates/*.html"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120

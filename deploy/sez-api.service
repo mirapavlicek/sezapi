@@ -1,0 +1,22 @@
+[Unit]
+Description=SEZ API Web Interface
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sezapi
+Group=sezapi
+WorkingDirectory=/opt/sez-api
+ExecStart=/opt/sez-api/.venv/bin/python -m sez_api.cli serve
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/sez-api/.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sez-api
+
+[Install]
+WantedBy=multi-user.target

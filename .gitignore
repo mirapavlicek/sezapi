@@ -1,0 +1,47 @@
+# Credentials & secrets
+.env
+*.pfx
+*.p12
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Downloaded test data
+stazene_zasilky/
+*.json
+!pyproject.toml
+
+# Archives & large files
+*.zip
+vsechny_zasilky.json
+posudek_detail.json
+
+# Deployment / local
+checkmk/
+
+# Temp
+*.tmp
+*.bak
