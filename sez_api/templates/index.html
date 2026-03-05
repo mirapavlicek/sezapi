@@ -3479,8 +3479,8 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           Interaktivní testování dle <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/159219724" target="_blank">Metodiky testování EHR fáze I</a> (MZČR).
           Pokrývá technické testy připojení k centrálním komponentám a obsahové testy dokumentů eZD.
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
-            <span><strong>Technické testy</strong> – KRP, KRZP, DÚ, TermX, Notifikace</span>
-            <span><strong>Obsahové testy</strong> – příjem/vytvoření eZD</span>
+            <span><strong>Technické testy</strong> – KRP, KRZP, RO, DÚ, TermX, Notifikace</span>
+            <span><strong>Obsahové testy</strong> – příjem/vytvoření eZD, FHIR validace</span>
             <span><strong>Kategorie</strong> – A (nemocnice), B (ostatní), ZZS</span>
           </div>
           <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
@@ -3543,14 +3543,33 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
               <tr><td><code>TS-TECH-1</code></td><td>Připojení ke KRP</td><td>Vyhledání pacienta 4 metodami</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-2</code></td><td>Připojení ke KRZP</td><td>Vyhledání pracovníka dle KRZP ID a zaměstnavatele</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-3</code></td><td>Notifikace</td><td>Ověření notifikačního systému</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-4</code></td><td>Registr oprávnění</td><td>Ověření přístupu ZP přes Registr oprávnění</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-5</code></td><td>TermX číselníky</td><td>Získání ValueSet z terminologického serveru</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-6</code></td><td>Uložení do DÚ</td><td>UlozZasilku s dokumentem</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-7</code></td><td>Vyhledání a stažení z DÚ</td><td>VyhledejZasilku + DejZasilku + ověření dokumentů</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-8</code></td><td>Změna v DÚ</td><td>VyhledejZasilku + ZmenZasilku</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-9</code></td><td>Zneplatnění v DÚ</td><td>VyhledejZasilku + ZneplatniZasilku</td><td>Technický</td></tr>
               <tr><td><code>TS-OBS-1</code></td><td>Příjem eZD</td><td>Stažení z DÚ, validace integrity, zobrazení</td><td>Obsahový</td></tr>
-              <tr><td><code>TS-OBS-2</code></td><td>Vytvoření eZD</td><td>Generování FHIR Bundle + uložení do DÚ</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-OBS-2</code></td><td>Vytvoření eZD</td><td>Generování FHIR Bundle, validace formátu + uložení do DÚ</td><td>Obsahový</td></tr>
             </tbody>
           </table>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,#fffbeb 0%,#fefce8 100%);border-color:#fde68a">
+          <div class="card-title" style="color:#92400e">Poznámky z webináře (Martin Pilník, NCEZ)</div>
+          <div style="font-size:12px;line-height:1.8;color:#78350f">
+            <ul style="margin:0;padding-left:18px">
+              <li><strong>Podání žádosti MZdr</strong> – k dispozici od NCEZ, po kompletaci i na MV</li>
+              <li><strong>KR – novorozenci a cizinci</strong> – testuje se založení nového RID u novorozenců a DRID u cizinců</li>
+              <li><strong>Dokumenty na DÚ</strong> – odesílání typů dokumentů z žádosti, ověření správného FHIR formátu (čitelné, uložené na DÚ)</li>
+              <li><strong>Screenshoty</strong> – pro prokazování jsou nutné screenshoty z testování</li>
+              <li><strong>Prohlášení o shodě</strong> – místo testování PZS lze využít prohlášení o shodě SW se standardy EZ (Medicalc ho má)</li>
+              <li><strong>ÚZIS registry</strong> – označit jen ty, které máme v žádosti</li>
+              <li><strong>NCPeH + NIA</strong> – připojení testuje Vysočina a DIA, NCEZ zajišťuje administrativní zapracování</li>
+              <li><strong>Pacientský souhrn CDA</strong> – pro NCPeH se stále testuje ve formátu CDA</li>
+              <li><strong>CMS 2.0 → 2.5</strong> – zatím nemají zprávu, jak postupovat při přechodu (nové testování?)</li>
+              <li><strong>eŽádanky</strong> – přístupy na ID PZS a ID ZP, <span style="color:#dc2626;font-weight:600">certifikáty pro ZP zatím nejsou hotové</span></li>
+            </ul>
+          </div>
         </div>
         <div class="card">
           <div class="card-title">Zdroje MZČR</div>
@@ -3569,8 +3588,10 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
         <div class="card" id="iropTech1"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-1</span><span class="card-title">Připojení ke KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání pacienta dle RID, jméno+RC, jméno+datum narození, jméno+číslo pojištěnce.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-1')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-1" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech2"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-2</span><span class="card-title">Připojení ke KRZP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání zdravotnického pracovníka dle KRZP ID a zaměstnavatele (IČO).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-2')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-2" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech3"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-3</span><span class="card-title">Notifikace ze SEZ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření odběrů notifikací v KRP a stavu kanálů v KRZP.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-3')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-3" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech4"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-4</span><span class="card-title">Registr oprávnění</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření přístupových oprávnění zdravotnického pracovníka (PZS→ZP, přístup k DÚ, služby EZ).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-4')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-4" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech5"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-5</span><span class="card-title">TermX číselníky</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Získání definice a rozbalení ValueSet z Terminologického serveru.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-5')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-5" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech6"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-6</span><span class="card-title">Uložení dokumentace do DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vytvoření a uložení zásilky s dokumentem do Dočasného úložiště (UlozZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-6')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-6" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech7"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-7</span><span class="card-title">Vyhledání a stažení z DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a stažení dokumentu (VyhledejZasilku + DejZasilku + ověření obsahu).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-7')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-7" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech8"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-8</span><span class="card-title">Změna dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a provedení změny (VyhledejZasilku + ZmenZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-8')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-8" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech9"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-9</span><span class="card-title">Zneplatnění dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a její zneplatnění (VyhledejZasilku + ZneplatniZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-9')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-9" style="margin-top:10px;min-height:30px">-</div></div>
       </div>
@@ -3585,7 +3606,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <div class="sub-panel" id="irop-all-panel">
         <div class="card">
           <div class="card-title">Spustit všechny scénáře</div>
-          <p style="font-size:12px;color:var(--fg3);margin:4px 0 12px">Sekvenčně spustí všech 9 testovacích scénářů s aktuálně nastavenými parametry. Trvá obvykle 30–120 sekund.</p>
+          <p style="font-size:12px;color:var(--fg3);margin:4px 0 12px">Sekvenčně spustí všech 11 testovacích scénářů s aktuálně nastavenými parametry. Trvá obvykle 30–120 sekund.</p>
           <button class="btn btn-green" onclick="iropRunAll()" id="iropBtnAll" style="min-width:200px">Spustit kompletní testování</button>
           <div id="iropAllProgress" style="margin-top:12px"></div>
           <div id="iropAllSummary" style="margin-top:12px"></div>
@@ -7781,7 +7802,7 @@ async function iropRunAll() {
   const summary = document.getElementById('iropAllSummary');
   btn.disabled = true;
   btn.textContent = 'Probíhá testování...';
-  progress.innerHTML = '<span class="spinner"></span> Spouštím všech 9 scénářů...';
+  progress.innerHTML = '<span class="spinner"></span> Spouštím všech 11 scénářů...';
   summary.innerHTML = '';
 
   const params = iropGetParams();

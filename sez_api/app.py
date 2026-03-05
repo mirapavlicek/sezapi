@@ -2220,6 +2220,38 @@ def _irop_tech3(params, modules, client):
             "steps": steps, "passed": passed, "total": len(steps)}
 
 
+def _irop_tech4(params, modules, client):
+    """TS-TECH-4: Registr oprávnění – ověření přístupu zdravotnického pracovníka."""
+    ro = modules.get("ro")
+    if not ro:
+        return {"error": "Registr oprávnění modul není dostupný"}
+    ico = params.get("ico", "25488627")
+    krzpid = params.get("autor", "102129137")
+    steps = []
+
+    steps.append(_irop_step_api(
+        "Ověření oprávnění ZP (DÚ přístup)",
+        ro.over_zdravotnika, ico, krzpid, 1, 5,
+    ))
+
+    steps.append(_irop_step_api(
+        "Ověření oprávnění ZP (služba EZ)",
+        ro.over_zdravotnika, ico, krzpid, 2, 5,
+    ))
+
+    steps.append(_irop_step_api(
+        "Ověření oprávnění PZS→ZP (obecné)",
+        ro.over,
+        1, 5,
+        "PoskytovatelZdravotnickychSluzeb", ico,
+        "ZdravotnickyPracovnik", krzpid,
+    ))
+
+    passed = sum(1 for s in steps if s["passed"])
+    return {"scenario_id": "TS-TECH-4", "name": "Registr oprávnění",
+            "steps": steps, "passed": passed, "total": len(steps)}
+
+
 def _irop_tech5(params, modules, client):
     """TS-TECH-5: Získání číselníků z TermX."""
     if not client:
@@ -2303,6 +2335,60 @@ def _irop_tech6(params, modules, client):
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-6", "name": "Uložení dokumentace do DÚ",
+            "steps": steps, "passed": passed, "total": len(steps)}
+
+
+def _irop_tech7(params, modules, client):
+    """TS-TECH-7: Vyhledání a stažení dokumentace z DÚ."""
+    du = modules.get("du")
+    if not du:
+        return {"error": "DÚ modul není dostupný"}
+    rid = params.get("rid", "2667873559")
+    steps = []
+
+    now = datetime.now(timezone.utc)
+    od = (now.replace(day=1)).strftime("%Y-%m-%dT00:00:00+00:00")
+    do_ = now.strftime("%Y-%m-%dT23:59:59+00:00")
+    steps.append(_irop_step_api("VyhledejZasilku", du.vyhledej_zasilku, od, do_, rid))
+
+    zasilka_id = None
+    if steps[0]["passed"] and isinstance(steps[0].get("data"), dict):
+        zasilky = steps[0]["data"].get("zasilka", [])
+        if zasilky:
+            zasilka_id = zasilky[0].get("id")
+
+    if zasilka_id:
+        steps.append(_irop_step_api("DejZasilku (stažení metadat)", du.dej_zasilku, zasilka_id))
+
+        if steps[-1]["passed"] and isinstance(steps[-1].get("data"), dict):
+            docs = steps[-1]["data"].get("dokument", [])
+            doc_count = len(docs)
+            has_content = any(
+                bool(d.get("soubor", {}).get("soubor") or d.get("soubor", {}).get("cesta"))
+                for d in docs
+            )
+            steps.append({
+                "name": f"Ověření dokumentů ({doc_count} nalezeno)",
+                "passed": doc_count > 0 and has_content,
+                "status": 200, "elapsed_ms": 0,
+                "data": {"document_count": doc_count, "has_content": has_content},
+                "error": None if (doc_count > 0 and has_content)
+                         else "Zásilka neobsahuje dokumenty s obsahem",
+                "_debug": {},
+            })
+        else:
+            steps.append({"name": "Ověření dokumentů", "passed": False, "status": 0,
+                           "elapsed_ms": 0, "data": None,
+                           "error": "Nelze získat zásilku pro ověření dokumentů", "_debug": {}})
+    else:
+        steps.append({"name": "DejZasilku", "passed": False, "status": 0,
+                       "elapsed_ms": 0, "data": None,
+                       "error": "Žádná zásilka nalezena (spusťte nejdřív TS-TECH-6)", "_debug": {}})
+        steps.append({"name": "Ověření dokumentů", "passed": False, "status": 0,
+                       "elapsed_ms": 0, "data": None, "error": "Nelze ověřit – zásilka nenalezena", "_debug": {}})
+
+    passed = sum(1 for s in steps if s["passed"])
+    return {"scenario_id": "TS-TECH-7", "name": "Vyhledání a stažení z DÚ",
             "steps": steps, "passed": passed, "total": len(steps)}
 
 
@@ -2452,10 +2538,38 @@ def _irop_obs2(params, modules, client):
     content_bytes = content.encode("utf-8")
     content_b64 = base64.b64encode(content_bytes).decode()
     sha = hashlib.sha256(content_bytes).hexdigest()
+    fhir_valid = True
+    fhir_errors = []
+    if fhir_bundle.get("resourceType") != "Bundle":
+        fhir_valid = False; fhir_errors.append("resourceType != Bundle")
+    if fhir_bundle.get("type") != "document":
+        fhir_valid = False; fhir_errors.append("type != document")
+    entry_types = [e.get("resource", {}).get("resourceType") for e in fhir_bundle.get("entry", [])]
+    for required in ["Composition", "Patient"]:
+        if required not in entry_types:
+            fhir_valid = False; fhir_errors.append(f"Chybí {required} v entries")
+    comp = next((e["resource"] for e in fhir_bundle.get("entry", [])
+                 if e.get("resource", {}).get("resourceType") == "Composition"), None)
+    if comp:
+        if not comp.get("type", {}).get("coding"):
+            fhir_valid = False; fhir_errors.append("Composition.type.coding chybí")
+        if not comp.get("date"):
+            fhir_valid = False; fhir_errors.append("Composition.date chybí")
+        if not comp.get("author"):
+            fhir_valid = False; fhir_errors.append("Composition.author chybí")
+
     steps.append({"name": "Generování FHIR Bundle", "passed": True, "status": 200,
                    "elapsed_ms": 0, "data": {"resourceType": "Bundle", "entries": len(fhir_bundle["entry"]),
                                               "size_bytes": len(content_bytes), "sha256": sha[:16] + "..."},
                    "error": None, "_debug": {}})
+
+    steps.append({"name": "Validace FHIR formátu",
+                   "passed": fhir_valid, "status": 200 if fhir_valid else 422,
+                   "elapsed_ms": 0,
+                   "data": {"valid": fhir_valid, "entry_types": entry_types,
+                            "errors": fhir_errors if fhir_errors else None},
+                   "error": "; ".join(fhir_errors) if fhir_errors else None,
+                   "_debug": {"composition_keys": list(comp.keys()) if comp else []}})
 
     typ_map = {"propousteci-zprava": "18842-5", "pacientsky-souhrn": "60591-5",
                "obrazove-vysetreni": "18748-4", "laboratorni-vysetreni": "11502-2",
@@ -2499,10 +2613,14 @@ IROP_SCENARIOS = {
                    "desc": "Ověření vyhledání zdravotnického pracovníka v KRZP dle KRZP ID a zaměstnavatele."},
     "TS-TECH-3": {"fn": _irop_tech3, "name": "Notifikace ze SEZ",
                    "desc": "Ověření funkčnosti notifikačního systému (vyhledání odběrů, stav kanálů)."},
+    "TS-TECH-4": {"fn": _irop_tech4, "name": "Registr oprávnění",
+                   "desc": "Ověření přístupových oprávnění ZP přes Registr oprávnění (Over, OverZdravotnika)."},
     "TS-TECH-5": {"fn": _irop_tech5, "name": "TermX číselníky",
                    "desc": "Získání a rozbalení číselníku z Terminologického serveru (ValueSet, $expand)."},
     "TS-TECH-6": {"fn": _irop_tech6, "name": "Uložení do DÚ",
                    "desc": "Uložení nové zásilky s dokumentem do Dočasného úložiště (UlozZasilku)."},
+    "TS-TECH-7": {"fn": _irop_tech7, "name": "Vyhledání a stažení z DÚ",
+                   "desc": "Vyhledání zásilky a stažení dokumentu z DÚ (VyhledejZasilku + DejZasilku)."},
     "TS-TECH-8": {"fn": _irop_tech8, "name": "Změna v DÚ",
                    "desc": "Vyhledání existující zásilky a provedení změny (ZmenZasilku)."},
     "TS-TECH-9": {"fn": _irop_tech9, "name": "Zneplatnění v DÚ",
@@ -2510,7 +2628,7 @@ IROP_SCENARIOS = {
     "TS-OBS-1":  {"fn": _irop_obs1, "name": "Příjem eZD",
                    "desc": "Stažení dokumentu z DÚ, validace integrity (hash, velikost), zobrazení obsahu."},
     "TS-OBS-2":  {"fn": _irop_obs2, "name": "Vytvoření eZD",
-                   "desc": "Generování FHIR Bundle a uložení do DÚ jako elektronický zdravotní dokument."},
+                   "desc": "Generování FHIR Bundle, validace formátu a uložení do DÚ."},
 }
 
 
