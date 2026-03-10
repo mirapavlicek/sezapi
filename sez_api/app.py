@@ -27,7 +27,7 @@ from pydantic import BaseModel
 from sez_api import config as cfg
 from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
-    KRP, KRZP, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, EZadanky, Notifikace, EZCA2,
+    KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, EZadanky, Notifikace, EZCA2,
 )
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -82,6 +82,7 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
 
     _modules["krp"] = KRP(_client)
     _modules["krzp"] = KRZP(_client)
+    _modules["krpzs"] = KRPZS(_client)
     _modules["ro"] = RegistrOpravneni(_client)
     _modules["du"] = DocasneUloziste(_client)
     _modules["szz"] = SZZ(_client)
@@ -625,6 +626,40 @@ async def krzp_notifikace_zalozit(request: Request):
 async def krzp_notifikace_zrusit(request: Request):
     body = await request.json()
     return timed_call(_modules["krzp"].notifikace_zrusit, body.get("data",{}))
+
+
+# ---------------------------------------------------------------------------
+# KRPZS – Kmenový registr poskytovatelů zdravotních služeb
+# ---------------------------------------------------------------------------
+
+@app.post("/api/krpzs/hledat-ico")
+async def krpzs_hledat_ico(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].hledat_ico, body.get("ico", ""))
+
+@app.post("/api/krpzs/hledat-nazev")
+async def krpzs_hledat_nazev(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].hledat_nazev, body.get("nazev", ""))
+
+@app.post("/api/krpzs/hledat-pracoviste")
+async def krpzs_hledat_pracoviste(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].hledat_pracoviste, body.get("ico", ""))
+
+@app.post("/api/krpzs/detail")
+async def krpzs_detail(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].detail, body.get("ico", ""))
+
+@app.post("/api/krpzs/ciselnik/{nazev}")
+async def krpzs_ciselnik(nazev: str):
+    return timed_call(_modules["krpzs"].ciselnik, nazev)
+
+@app.post("/api/krpzs/reklamuj-udaj")
+async def krpzs_reklamuj(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].reklamuj_udaj, body)
 
 
 # ---------------------------------------------------------------------------
@@ -1686,27 +1721,41 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krzp/api/v2/notifikace/zrusit", "desc": "Zrušit notifikaci"},
                 ],
             },
+            "KRPZS": {
+                "name": "Kmenový registr poskytovatelů zdravotních služeb",
+                "base": "/krpzs",
+                "version": "v2.0.0",
+                "endpoints": [
+                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/hledat/ico", "desc": "Vyhledání poskytovatele podle IČO"},
+                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/hledat/nazev", "desc": "Vyhledání podle názvu"},
+                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/hledat/pracoviste", "desc": "Vyhledání pracovišť"},
+                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/detail", "desc": "Detail poskytovatele"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/{nazev}", "desc": "Číselníky"},
+                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/reklamuj/udaj", "desc": "Reklamace údaje"},
+                ],
+            },
             "RO": {
                 "name": "Registr oprávnění",
                 "base": "/registrOpravneni",
-                "version": "v1.0.0",
+                "version": "v1.0.1",
                 "endpoints": [
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce"},
                 ],
             },
             "TermX": {
                 "name": "Terminologický server (FHIR)",
-                "base": "/termx",
+                "base": "/terminologie",
                 "version": "v1.0.5",
+                "note": "T2: /terminologie, Prod: /termx-fhir (po autentizaci)",
                 "endpoints": [
-                    {"method": "GET", "path": "/termx/fhir/ValueSet/{id}", "desc": "Načtení ValueSetu"},
-                    {"method": "GET", "path": "/termx/fhir/ValueSet/$expand", "desc": "Expandování ValueSetu"},
-                    {"method": "GET", "path": "/termx/fhir/ValueSet/$validate-code", "desc": "Validace kódu proti ValueSetu"},
-                    {"method": "GET", "path": "/termx/fhir/CodeSystem/{id}", "desc": "Načtení CodeSystemu"},
-                    {"method": "GET", "path": "/termx/fhir/CodeSystem/$lookup", "desc": "Lookup kódu v CodeSystemu"},
-                    {"method": "GET", "path": "/termx/fhir/ConceptMap/{id}", "desc": "Mapování konceptů"},
-                    {"method": "GET", "path": "/termx/fhir/ConceptMap/$translate", "desc": "Překlad konceptů"},
-                    {"method": "GET", "path": "/termx/fhir/metadata", "desc": "FHIR capability statement"},
+                    {"method": "GET", "path": "/terminologie/fhir/ValueSet/{id}", "desc": "Načtení ValueSetu"},
+                    {"method": "GET", "path": "/terminologie/fhir/ValueSet/$expand", "desc": "Expandování ValueSetu"},
+                    {"method": "GET", "path": "/terminologie/fhir/ValueSet/$validate-code", "desc": "Validace kódu proti ValueSetu"},
+                    {"method": "GET", "path": "/terminologie/fhir/CodeSystem/{id}", "desc": "Načtení CodeSystemu"},
+                    {"method": "GET", "path": "/terminologie/fhir/CodeSystem/$lookup", "desc": "Lookup kódu v CodeSystemu"},
+                    {"method": "GET", "path": "/terminologie/fhir/ConceptMap/{id}", "desc": "Mapování konceptů"},
+                    {"method": "GET", "path": "/terminologie/fhir/ConceptMap/$translate", "desc": "Překlad konceptů"},
+                    {"method": "GET", "path": "/terminologie/fhir/metadata", "desc": "FHIR capability statement"},
                 ],
             },
             "DU": {
@@ -1747,7 +1796,7 @@ async def debug_jwt():
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
-                "version": "v2.0.1",
+                "version": "v2.0.3",
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek (v2)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
@@ -1797,7 +1846,7 @@ async def debug_jwt():
             "EZCA2": {
                 "name": "Služby vytvářející důvěru (EZCA II)",
                 "base": "/ezca2",
-                "version": "v1.0.0",
+                "version": "v1.0.3",
                 "endpoints": [
                     {"method": "GET",  "path": "/ezca2/simple-health", "desc": "Health check (simple)"},
                     {"method": "GET",  "path": "/ezca2/detail-health", "desc": "Health check (detail)"},
@@ -2383,8 +2432,8 @@ def _irop_tech5(params, modules, client):
             return {"name": name, "passed": False, "status": 0,
                     "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": {}}
 
-    steps.append(_termx_step("Vyhledání ValueSet", f"/termx/fhir/ValueSet/?url={vs_url}"))
-    steps.append(_termx_step("Expand ValueSet", f"/termx/fhir/ValueSet/$expand?url={vs_url}"))
+    steps.append(_termx_step("Vyhledání ValueSet", f"/terminologie/fhir/ValueSet/?url={vs_url}"))
+    steps.append(_termx_step("Expand ValueSet", f"/terminologie/fhir/ValueSet/$expand?url={vs_url}"))
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-5", "name": "TermX číselníky",

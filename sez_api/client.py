@@ -1107,6 +1107,62 @@ class KRZP:
                            self._envelope(ucel, data))
 
 
+class KRPZS:
+    """Kmenový registr poskytovatelů zdravotních služeb – PZS API v2."""
+    BASE = "/krpzs"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    def _envelope(self, ucel, data, key="zadostData"):
+        from datetime import date
+        return {
+            key: data,
+            "zadostInfo": {
+                "datum": date.today().isoformat(),
+                "ucel": ucel,
+                "zadostId": str(uuid.uuid4()),
+            },
+        }
+
+    @staticmethod
+    def _now():
+        from datetime import date
+        return date.today().isoformat()
+
+    def hledat_ico(self, ico: str, ucel="OVERENI"):
+        return self.c.post(
+            f"{self.BASE}/api/v2/poskytovatel/hledat/ico",
+            self._envelope(ucel, {"ico": ico}),
+        )
+
+    def hledat_nazev(self, nazev: str, ucel="OVERENI"):
+        return self.c.post(
+            f"{self.BASE}/api/v2/poskytovatel/hledat/nazev",
+            self._envelope(ucel, {"nazev": nazev}),
+        )
+
+    def hledat_pracoviste(self, ico: str, ucel="OVERENI"):
+        return self.c.post(
+            f"{self.BASE}/api/v2/poskytovatel/hledat/pracoviste",
+            self._envelope(ucel, {"ico": ico}),
+        )
+
+    def detail(self, ico: str, ucel="OVERENI"):
+        return self.c.post(
+            f"{self.BASE}/api/v2/poskytovatel/detail",
+            self._envelope(ucel, {"ico": ico}),
+        )
+
+    def ciselnik(self, nazev_ciselniku, ucel="OVERENI"):
+        return self.c.post(f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
+                           {"zadostInfo": {"datum": self._now(), "ucel": ucel}})
+
+    def reklamuj_udaj(self, reklamace_data, ucel="OVERENI"):
+        return self.c.post(f"{self.BASE}/api/v2/poskytovatel/reklamuj/udaj",
+                           self._envelope(ucel, reklamace_data))
+
+
 class RegistrOpravneni:
     """Registr oprávnění – ověřování přístupových oprávnění zdravotníků."""
     BASE = "/registrOpravneni"
