@@ -12,7 +12,7 @@ import sys
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -382,7 +382,8 @@ async def krp_historie_lekaru(request: Request):
 @app.post("/api/krp/zalozit-pacienta")
 async def krp_zalozit(request: Request):
     body = await request.json()
-    return timed_call(_modules["krp"].zalozit_pacienta, body.get("data",{}), body.get("ucel","LECBA"))
+    pacient_data = body.get("data") if "data" in body else body
+    return timed_call(_modules["krp"].zalozit_pacienta, pacient_data or {}, body.get("ucel","LECBA"))
 
 @app.post("/api/krp/zmenit-pacienta")
 async def krp_zmenit(request: Request):
@@ -496,6 +497,69 @@ async def krp_notifikace_zrusit(request: Request):
     return timed_call(_modules["krp"].notifikace_zrusit,
                       body.get("idSubskripce"), body.get("subjektId"),
                       body.get("ucel","LECBA"))
+
+@app.get("/api/krp/ciselnik/{nazev}")
+async def krp_ciselnik(nazev: str):
+    return timed_call(_modules["krzp"].ciselnik, nazev)
+
+
+# ---------------------------------------------------------------------------
+# RUIAN – vyhledávání adres (proxy k ČÚZK)
+# ---------------------------------------------------------------------------
+
+RUIAN_BASE = "https://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN/MapServer/exts/GeocodeSOE"
+
+_ruian_client = httpx.AsyncClient(timeout=15, follow_redirects=True)
+
+
+def _parse_ruian_address(text: str, magic_key: str = ""):
+    """Parse formatted RUIAN address into structured fields."""
+    import re
+    result = {"text": text}
+    if magic_key:
+        parts = magic_key.split("_", 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            result["ruianId"] = int(parts[1])
+    m = re.match(
+        r'^(.+?)\s+(\d+)(?:/(\d+[a-zA-Z]?))?,\s*(.+?),\s*(\d{3}\s?\d{2})\s+(.+)$',
+        text
+    )
+    if m:
+        result["ulice"] = m.group(1)
+        result["cisloPopisne"] = int(m.group(2))
+        if m.group(3):
+            result["cisloOrientacni"] = m.group(3)
+        result["castObce"] = m.group(4)
+        result["psc"] = int(m.group(5).replace(" ", ""))
+        result["obec"] = m.group(6)
+    else:
+        m2 = re.match(r'^(.+?),\s*(\d{3}\s?\d{2})\s+(.+)$', text)
+        if m2:
+            result["ulice"] = m2.group(1)
+            result["psc"] = int(m2.group(2).replace(" ", ""))
+            result["obec"] = m2.group(3)
+    return result
+
+
+@app.get("/api/ruian/suggest")
+async def ruian_suggest(q: str = "", max: int = 8):
+    if len(q) < 2:
+        return JSONResponse({"suggestions": []})
+    try:
+        resp = await _ruian_client.get(
+            f"{RUIAN_BASE}/suggest",
+            params={"text": q, "f": "json", "maxSuggestions": min(max, 15)},
+        )
+        data = resp.json()
+        items = []
+        for s in data.get("suggestions", []):
+            parsed = _parse_ruian_address(s.get("text", ""), s.get("magicKey", ""))
+            parsed["magicKey"] = s.get("magicKey", "")
+            parsed["type"] = s.get("type", "")
+            items.append(parsed)
+        return JSONResponse({"suggestions": items})
+    except Exception as e:
+        return JSONResponse({"suggestions": [], "error": str(e)})
 
 
 # ---------------------------------------------------------------------------
@@ -1576,70 +1640,92 @@ async def debug_jwt():
             "KRP": {
                 "name": "Kmenový registr pacientů",
                 "base": "/krp",
+                "version": "v2.0.0",
                 "endpoints": [
                     {"method": "POST", "path": "/krp/api/v2/pacient/hledat/rid", "desc": "Vyhledání pacienta podle RID"},
                     {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc", "desc": "Vyhledání podle jména a RČ"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_datum_narozeni", "desc": "Vyhledání podle jména a data narození"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_cp", "desc": "Vyhledání podle jména a čísla pojištěnce"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/cizinec_cp", "desc": "Vyhledání cizince podle čísla pojištěnce"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/doklady", "desc": "Vyhledání podle dokladů"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/niabsi", "desc": "Vyhledání podle NIABSI"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/aifoulozenka", "desc": "Vyhledání podle AIFA uloženky"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/uni", "desc": "Univerzální vyhledávání"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/mapovani_rid", "desc": "Mapování RID (aktuální ↔ historické)"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/historie_pojisteni", "desc": "Historie pojištění"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
                     {"method": "POST", "path": "/krp/api/v2/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID)"},
                     {"method": "POST", "path": "/krp/api/v2/pacient/priradit/docasny_rid", "desc": "Přiřazení DRID ke skutečnému RID"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/mapovani_rid", "desc": "Mapování RID (aktuální ↔ historické)"},
-                ],
-                "full_urls": [
-                    f"{gw}/krp/api/v2/pacient/hledat/rid",
-                    f"{gw}/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc",
-                    f"{gw}/krp/api/v2/pacient/generovat/docasny_rid",
-                    f"{gw}/krp/api/v2/pacient/priradit/docasny_rid",
-                    f"{gw}/krp/api/v2/pacient/hledat/mapovani_rid",
+                    {"method": "POST", "path": "/krp/api/v2/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec)"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/zmenit/pacient", "desc": "Změna údajů pacienta"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/reklamuj/udaj", "desc": "Reklamace údaje pacienta"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/slouceni/zadost", "desc": "Žádost o sloučení pacientů"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/rozdeleni/zadost", "desc": "Žádost o rozdělení pacientů"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/zruseni/zadost", "desc": "Zrušení žádosti"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění — výsledky"},
+                    {"method": "POST", "path": "/krp/api/v2/notifikace/vyhledat/odber", "desc": "Vyhledat odběry notifikací"},
+                    {"method": "POST", "path": "/krp/api/v2/notifikace/zalozit/odber", "desc": "Založit odběr notifikací"},
+                    {"method": "POST", "path": "/krp/api/v2/notifikace/zrusit/odber", "desc": "Zrušit odběr notifikací"},
                 ],
             },
             "KRZP": {
                 "name": "Kmenový registr zdravotnických pracovníků",
                 "base": "/krzp",
+                "version": "v2.0.0",
                 "endpoints": [
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/krzpid", "desc": "Vyhledání pracovníka podle KRZP ID"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/jmenoPrijmeniDatumNarozeni", "desc": "Vyhledání podle jména a data narození"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/zamestnavatel", "desc": "Vyhledání podle zaměstnavatele (IČO)"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/personalistika", "desc": "Personalistické vyhledávání"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/reklamuj/udaj", "desc": "Reklamace údaje"},
-                ],
-                "full_urls": [
-                    f"{gw}/krzp/api/v2/pracovnik/hledat/krzpid",
-                    f"{gw}/krzp/api/v2/pracovnik/hledat/jmenoPrijmeniDatumNarozeni",
-                    f"{gw}/krzp/api/v2/pracovnik/hledat/zamestnavatel",
-                    f"{gw}/krzp/api/v2/pracovnik/hledat/personalistika",
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/{nazev}", "desc": "Číselníky (pohlaví, stát, druh_dokladu, obor, specializace…)"},
+                    {"method": "GET",  "path": "/krzp/api/v2/notifikace/stav", "desc": "Stav notifikací"},
+                    {"method": "POST", "path": "/krzp/api/v2/notifikace/zalozit", "desc": "Založit notifikaci"},
+                    {"method": "POST", "path": "/krzp/api/v2/notifikace/zrusit", "desc": "Zrušit notifikaci"},
                 ],
             },
             "RO": {
                 "name": "Registr oprávnění",
                 "base": "/registrOpravneni",
+                "version": "v1.0.0",
                 "endpoints": [
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce"},
                 ],
-                "full_urls": [
-                    f"{gw}/registrOpravneni/api/v1/Opravneni/Over",
+            },
+            "TermX": {
+                "name": "Terminologický server (FHIR)",
+                "base": "/termx",
+                "version": "v1.0.5",
+                "endpoints": [
+                    {"method": "GET", "path": "/termx/fhir/ValueSet/{id}", "desc": "Načtení ValueSetu"},
+                    {"method": "GET", "path": "/termx/fhir/ValueSet/$expand", "desc": "Expandování ValueSetu"},
+                    {"method": "GET", "path": "/termx/fhir/ValueSet/$validate-code", "desc": "Validace kódu proti ValueSetu"},
+                    {"method": "GET", "path": "/termx/fhir/CodeSystem/{id}", "desc": "Načtení CodeSystemu"},
+                    {"method": "GET", "path": "/termx/fhir/CodeSystem/$lookup", "desc": "Lookup kódu v CodeSystemu"},
+                    {"method": "GET", "path": "/termx/fhir/ConceptMap/{id}", "desc": "Mapování konceptů"},
+                    {"method": "GET", "path": "/termx/fhir/ConceptMap/$translate", "desc": "Překlad konceptů"},
+                    {"method": "GET", "path": "/termx/fhir/metadata", "desc": "FHIR capability statement"},
                 ],
             },
             "DU": {
                 "name": "Dočasné úložiště",
                 "base": "/docasneUloziste",
+                "version": "v1.0.0",
                 "note": "DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami",
                 "endpoints": [
-                    {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky"},
+                    {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky (eZD)"},
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/VyhledejZasilku", "desc": "Vyhledání zásilek"},
                     {"method": "GET",  "path": "/docasneUloziste/api/v1/Zasilka/DejZasilku/{zasilkaId}", "desc": "Stažení zásilky podle ID"},
-                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZmenZasilku/{zasilkaId}", "desc": "Změna zásilky (před stažením)"},
+                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZmenZasilku/{zasilkaId}", "desc": "Změna metadata zásilky"},
                     {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZneplatniZasilku", "desc": "Zneplatnění zásilky"},
-                ],
-                "full_urls": [
-                    f"{gw}/docasneUloziste/api/v1/Zasilka/UlozZasilku",
-                    f"{gw}/docasneUloziste/api/v1/Zasilka/VyhledejZasilku",
-                    f"{gw}/docasneUloziste/api/v1/Zasilka/DejZasilku/{{zasilkaId}}",
-                    f"{gw}/docasneUloziste/api/v1/Zasilka/ZmenZasilku/{{zasilkaId}}",
-                    f"{gw}/docasneUloziste/api/v1/Zasilka/ZneplatniZasilku",
                 ],
             },
             "SZZ": {
                 "name": "Sdílený zdravotní záznam",
                 "base": "/sdilenyZdravotniZaznam",
+                "version": "v1.0.6",
                 "endpoints": [
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/{rid}", "desc": "Emergentní záznam"},
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/{rid}/pdf", "desc": "Emergentní záznam PDF"},
@@ -1657,15 +1743,11 @@ async def debug_jwt():
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy/vyhledat", "desc": "Vyhledat zdravotní záznamy"},
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/ciselniky", "desc": "Seznam číselníků"},
                 ],
-                "full_urls": [
-                    f"{gw}/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/{{rid}}",
-                    f"{gw}/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/{{rid}}",
-                    f"{gw}/sdilenyZdravotniZaznam/api/v1/ciselniky",
-                ],
             },
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
+                "version": "v2.0.1",
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek (v2)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
@@ -1677,16 +1759,11 @@ async def debug_jwt():
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/ciselniky", "desc": "Číselníky (v2)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/ciselniky/{kod}/polozky", "desc": "Položky číselníku (v2)"},
                 ],
-                "full_urls": [
-                    f"{gw}/elektronickePosudky/api/v2/posudky/ridicskeOpravneni",
-                    f"{gw}/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat",
-                    f"{gw}/elektronickePosudky/api/v2/ciselniky",
-                    f"{gw}/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni",
-                ],
             },
             "eZadanky": {
                 "name": "eŽádanky",
                 "base": "/eZadanky",
+                "version": "v1.0.0",
                 "endpoints": [
                     {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/DejToken", "desc": "Získání tokenu"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/UlozZadanku", "desc": "Uložit žádanku"},
@@ -1703,15 +1780,11 @@ async def debug_jwt():
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/ZaznacNeproveditelnostZadanky", "desc": "Zaznačit neproveditelnost"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/SestavSouborZadanky", "desc": "Sestavit soubor žádanky"},
                 ],
-                "full_urls": [
-                    f"{gw}/eZadanky/api/v1/eZadanka/DejToken",
-                    f"{gw}/eZadanky/api/v1/eZadanka/VyhledejZadanku",
-                    f"{gw}/eZadanky/api/v1/eZadanka/UlozZadanku",
-                ],
             },
             "Notifikace": {
                 "name": "Notifikační služby",
                 "base": "/notifikace",
+                "version": "v1.0.0",
                 "endpoints": [
                     {"method": "GET",  "path": "/notifikace/api/v1/notifikace/ping", "desc": "Ping (health check)"},
                     {"method": "POST", "path": "/notifikace/api/v1/notifikace/odeslat", "desc": "Odeslat notifikaci"},
@@ -1720,15 +1793,11 @@ async def debug_jwt():
                     {"method": "GET",  "path": "/notifikace/api/v1/sablony/katalog", "desc": "Katalog šablon"},
                     {"method": "GET",  "path": "/notifikace/api/v1/zdroje/katalog", "desc": "Katalog zdrojů"},
                 ],
-                "full_urls": [
-                    f"{gw}/notifikace/api/v1/notifikace/ping",
-                    f"{gw}/notifikace/api/v1/notifikace/odeslat",
-                    f"{gw}/notifikace/api/v1/kanaly/katalog",
-                ],
             },
             "EZCA2": {
                 "name": "Služby vytvářející důvěru (EZCA II)",
                 "base": "/ezca2",
+                "version": "v1.0.0",
                 "endpoints": [
                     {"method": "GET",  "path": "/ezca2/simple-health", "desc": "Health check (simple)"},
                     {"method": "GET",  "path": "/ezca2/detail-health", "desc": "Health check (detail)"},
@@ -1744,11 +1813,6 @@ async def debug_jwt():
                     {"method": "GET",  "path": "/ezca2/api/content/component/{id}", "desc": "Obsah komponenty"},
                     {"method": "POST", "path": "/ezca2/api/create/xades", "desc": "Vytvořit XAdES obálku"},
                     {"method": "POST", "path": "/ezca2/api/content/report", "desc": "Validační report"},
-                ],
-                "full_urls": [
-                    f"{gw}/ezca2/simple-health",
-                    f"{gw}/ezca2/api/sign/document",
-                    f"{gw}/ezca2/api/validate/document",
                 ],
             },
         },
@@ -2102,29 +2166,41 @@ async def dasta4_test_data_download(url: str):
 # IROP/NPO – Testovací scénáře dle metodiky MZČR
 # ---------------------------------------------------------------------------
 
+def _irop_grab_debug():
+    """Capture full last_request_debug from SEZClient and DÚ module."""
+    debug = {}
+    if _client and _client.last_request_debug:
+        debug.update(_client.last_request_debug)
+    du_mod = _modules.get("du")
+    if du_mod and hasattr(du_mod, "last_request_debug") and du_mod.last_request_debug:
+        debug["du_debug"] = du_mod.last_request_debug
+    return debug
+
+
 def _irop_step(name, fn, *args, **kwargs):
     """Run one scenario step, return structured result with timing."""
     t0 = time.monotonic()
     try:
         resp = fn(*args, **kwargs)
         elapsed = round((time.monotonic() - t0) * 1000)
+        if resp is None:
+            return {"name": name, "passed": False, "status": 0,
+                    "elapsed_ms": elapsed, "data": None,
+                    "error": "Prázdná odpověď (None)", "_debug": _irop_grab_debug()}
         status_code = getattr(resp, "status_code", 0)
         try:
             data = resp.json()
         except Exception:
             data = getattr(resp, "text", str(resp))
         ok = 200 <= status_code < 400
-        debug = {}
-        if hasattr(resp, "request"):
-            req = resp.request
-            debug["method"] = str(req.method)
-            debug["url"] = str(req.url)
         return {"name": name, "passed": ok, "status": status_code,
-                "elapsed_ms": elapsed, "data": data, "error": None, "_debug": debug}
+                "elapsed_ms": elapsed, "data": data, "error": None,
+                "_debug": _irop_grab_debug()}
     except Exception as e:
         elapsed = round((time.monotonic() - t0) * 1000)
         return {"name": name, "passed": False, "status": 0,
-                "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": {}}
+                "elapsed_ms": elapsed, "data": None, "error": str(e),
+                "_debug": _irop_grab_debug()}
 
 
 def _irop_step_api(name, fn, *args, **kwargs):
@@ -2133,28 +2209,44 @@ def _irop_step_api(name, fn, *args, **kwargs):
     try:
         resp = fn(*args, **kwargs)
         elapsed = round((time.monotonic() - t0) * 1000)
+        if resp is None:
+            return {"name": name, "passed": False, "status": 0,
+                    "elapsed_ms": elapsed, "data": None,
+                    "error": "Služba vrátila prázdnou odpověď (možný problém s autentizací DÚ)",
+                    "_debug": _irop_grab_debug()}
         status_code = getattr(resp, "status_code", 0)
         try:
             data = resp.json() if hasattr(resp, "json") else resp
         except Exception:
             data = str(resp)
         ok = 200 <= status_code < 400
-        debug = {}
-        if _client:
-            debug["last_status"] = _client.last_status
-            if _client.last_request_debug:
-                debug.update({k: v for k, v in _client.last_request_debug.items()
-                              if k in ("method", "url", "path", "headers", "tried_variants", "kid_variant")})
+        error_detail = None
+        if not ok and isinstance(data, dict):
+            info = data.get("odpovedInfo") or {}
+            error_detail = (info.get("popis") if isinstance(info, dict) else None) \
+                or data.get("message") or data.get("title") or data.get("error")
+            if not error_detail and status_code:
+                error_detail = f"HTTP {status_code}"
         return {"name": name, "passed": ok, "status": status_code,
-                "elapsed_ms": elapsed, "data": data, "error": None, "_debug": debug}
+                "elapsed_ms": elapsed, "data": data, "error": error_detail,
+                "_debug": _irop_grab_debug()}
     except Exception as e:
         elapsed = round((time.monotonic() - t0) * 1000)
-        debug = {}
-        if _client and _client.last_request_debug:
-            debug.update({k: v for k, v in _client.last_request_debug.items()
-                          if k in ("method", "url", "path", "tried_variants")})
         return {"name": name, "passed": False, "status": 0,
-                "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": debug}
+                "elapsed_ms": elapsed, "data": None, "error": str(e),
+                "_debug": _irop_grab_debug()}
+
+
+def _kzr_val(pac, field, fallback=""):
+    """Extract value from KZRString field (object with 'hodnota') or plain string."""
+    if not pac:
+        return fallback
+    v = pac.get(field)
+    if isinstance(v, dict):
+        return v.get("hodnota") or fallback
+    if isinstance(v, str) and v:
+        return v
+    return fallback
 
 
 def _irop_tech1(params, modules, client):
@@ -2169,16 +2261,23 @@ def _irop_tech1(params, modules, client):
 
     pac_data = None
     if steps[0]["passed"] and isinstance(steps[0]["data"], dict):
-        od = steps[0]["data"].get("odpovedData", {})
-        pac_data = od if isinstance(od, dict) else (od[0] if isinstance(od, list) and od else {})
+        od = steps[0]["data"].get("odpovedData")
+        if isinstance(od, list) and od:
+            pac_data = od[0]
+        elif isinstance(od, dict):
+            pac_data = od
 
-    jmeno = pac_data.get("jmeno", {}).get("hodnota", "MRAKOMOROVÁ") if pac_data else "MRAKOMOROVÁ"
-    prijmeni = pac_data.get("prijmeni", {}).get("hodnota", "MRAČENA") if pac_data else "MRAČENA"
+    jmeno = _kzr_val(pac_data, "jmeno", params.get("jmeno", "MRAKOMOROVÁ"))
+    prijmeni = _kzr_val(pac_data, "prijmeni", params.get("prijmeni", "MRAČENA"))
     rc = params.get("rc", "7161264528")
-    dn = params.get("datum_narozeni", "1971-11-26")
+    dn = params.get("datum_narozeni")
+    if not dn:
+        dn_raw = _kzr_val(pac_data, "datumNarozeni", "")
+        dn = dn_raw[:10] if dn_raw and len(dn_raw) >= 10 else "1971-11-26"
 
     steps.append(_irop_step_api("Vyhledání dle jméno + RC", krp.hledat_jmeno_rc, jmeno, prijmeni, rc))
-    steps.append(_irop_step_api("Vyhledání dle jméno + datum narození", krp.hledat_jmeno_dn, jmeno, prijmeni, dn))
+    steps.append(_irop_step_api("Vyhledání dle jméno + datum narození",
+                                krp.hledat_jmeno_dn, jmeno, prijmeni, dn, ["CZ"]))
     steps.append(_irop_step_api("Vyhledání dle jméno + číslo pojištěnce", krp.hledat_jmeno_cp, jmeno, prijmeni, rc))
 
     passed = sum(1 for s in steps if s["passed"])
@@ -2259,33 +2358,33 @@ def _irop_tech5(params, modules, client):
     vs_url = params.get("valueset_url", "https://termit.ncez.mzcr.cz/fhir/ValueSet/typ-adresata")
     steps = []
 
-    t0 = time.monotonic()
-    try:
-        resp = client.get(f"/termx/fhir/ValueSet/?url={vs_url}")
-        elapsed = round((time.monotonic() - t0) * 1000)
-        sc = resp.status_code
-        data = resp.json() if sc < 400 else resp.text
-        steps.append({"name": "Vyhledání ValueSet", "passed": 200 <= sc < 400,
-                       "status": sc, "elapsed_ms": elapsed, "data": data, "error": None,
-                       "_debug": {"url": str(resp.url) if hasattr(resp, "url") else ""}})
-    except Exception as e:
-        elapsed = round((time.monotonic() - t0) * 1000)
-        steps.append({"name": "Vyhledání ValueSet", "passed": False,
-                       "status": 0, "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": {}})
+    def _termx_step(name, path):
+        t0 = time.monotonic()
+        try:
+            resp = client.get(path)
+            elapsed = round((time.monotonic() - t0) * 1000)
+            sc = resp.status_code if resp else 0
+            if resp is None:
+                return {"name": name, "passed": False, "status": 0,
+                        "elapsed_ms": elapsed, "data": None, "error": "Prázdná odpověď", "_debug": {}}
+            try:
+                data = resp.json() if sc < 400 else resp.text
+            except Exception:
+                data = resp.text if hasattr(resp, "text") else str(resp)
+            err = None
+            if sc >= 400:
+                err = data if isinstance(data, str) else (data.get("issue", [{}])[0].get("diagnostics")
+                       if isinstance(data, dict) else f"HTTP {sc}")
+            return {"name": name, "passed": 200 <= sc < 400,
+                    "status": sc, "elapsed_ms": elapsed, "data": data, "error": err,
+                    "_debug": {"url": str(resp.url) if hasattr(resp, "url") else path}}
+        except Exception as e:
+            elapsed = round((time.monotonic() - t0) * 1000)
+            return {"name": name, "passed": False, "status": 0,
+                    "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": {}}
 
-    t0 = time.monotonic()
-    try:
-        resp = client.get(f"/termx/fhir/ValueSet/$expand?url={vs_url}")
-        elapsed = round((time.monotonic() - t0) * 1000)
-        sc = resp.status_code
-        data = resp.json() if sc < 400 else resp.text
-        steps.append({"name": "Expand ValueSet", "passed": 200 <= sc < 400,
-                       "status": sc, "elapsed_ms": elapsed, "data": data, "error": None,
-                       "_debug": {"url": str(resp.url) if hasattr(resp, "url") else ""}})
-    except Exception as e:
-        elapsed = round((time.monotonic() - t0) * 1000)
-        steps.append({"name": "Expand ValueSet", "passed": False,
-                       "status": 0, "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": {}})
+    steps.append(_termx_step("Vyhledání ValueSet", f"/termx/fhir/ValueSet/?url={vs_url}"))
+    steps.append(_termx_step("Expand ValueSet", f"/termx/fhir/ValueSet/$expand?url={vs_url}"))
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-5", "name": "TermX číselníky",
@@ -2347,7 +2446,7 @@ def _irop_tech7(params, modules, client):
     steps = []
 
     now = datetime.now(timezone.utc)
-    od = (now.replace(day=1)).strftime("%Y-%m-%dT00:00:00+00:00")
+    od = (now - timedelta(days=90)).strftime("%Y-%m-%dT00:00:00+00:00")
     do_ = now.strftime("%Y-%m-%dT23:59:59+00:00")
     steps.append(_irop_step_api("VyhledejZasilku", du.vyhledej_zasilku, od, do_, rid))
 
@@ -2401,7 +2500,7 @@ def _irop_tech8(params, modules, client):
     steps = []
 
     now = datetime.now(timezone.utc)
-    od = (now.replace(day=1)).strftime("%Y-%m-%dT00:00:00+00:00")
+    od = (now - timedelta(days=90)).strftime("%Y-%m-%dT00:00:00+00:00")
     do_ = now.strftime("%Y-%m-%dT23:59:59+00:00")
     steps.append(_irop_step_api("VyhledejZasilku", du.vyhledej_zasilku, od, do_, rid))
 
@@ -2435,7 +2534,7 @@ def _irop_tech9(params, modules, client):
     steps = []
 
     now = datetime.now(timezone.utc)
-    od = (now.replace(day=1)).strftime("%Y-%m-%dT00:00:00+00:00")
+    od = (now - timedelta(days=90)).strftime("%Y-%m-%dT00:00:00+00:00")
     do_ = now.strftime("%Y-%m-%dT23:59:59+00:00")
     steps.append(_irop_step_api("VyhledejZasilku", du.vyhledej_zasilku, od, do_, rid))
 
@@ -2468,7 +2567,7 @@ def _irop_obs1(params, modules, client):
     steps = []
 
     now = datetime.now(timezone.utc)
-    od = (now.replace(day=1)).strftime("%Y-%m-%dT00:00:00+00:00")
+    od = (now - timedelta(days=90)).strftime("%Y-%m-%dT00:00:00+00:00")
     do_ = now.strftime("%Y-%m-%dT23:59:59+00:00")
     steps.append(_irop_step_api("VyhledejZasilku", du.vyhledej_zasilku, od, do_, rid))
 
@@ -2515,21 +2614,37 @@ def _irop_obs2(params, modules, client):
     doc_type = params.get("doc_type", "propousteci-zprava")
     steps = []
 
+    comp_uuid = f"urn:uuid:{uuid.uuid4()}"
+    pat_uuid = f"urn:uuid:{uuid.uuid4()}"
+    pract_uuid = f"urn:uuid:{uuid.uuid4()}"
+    org_uuid = f"urn:uuid:{uuid.uuid4()}"
     fhir_bundle = {
         "resourceType": "Bundle", "type": "document",
+        "identifier": {"system": "urn:oid:2.16.840.1.113883.2.9.6.2.1",
+                        "value": f"irop-test-{uuid.uuid4().hex[:8]}"},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "entry": [
-            {"resource": {"resourceType": "Composition", "status": "final",
+            {"fullUrl": comp_uuid,
+             "resource": {"resourceType": "Composition", "status": "final",
                           "type": {"coding": [{"system": "http://loinc.org", "code": "18842-5",
                                                "display": "Discharge summary"}]},
-                          "subject": {"identifier": {"system": "urn:oid:2.16.840.1.113883.4.653", "value": rid}},
-                          "date": datetime.now(timezone.utc).isoformat(),
-                          "author": [{"identifier": {"system": "urn:oid:2.16.840.1.113883.2.9.6.2.7", "value": autor}}],
-                          "title": f"IROP test – {doc_type}"}},
-            {"resource": {"resourceType": "Patient",
+                          "subject": {"reference": pat_uuid},
+                          "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00"),
+                          "author": [{"reference": pract_uuid}],
+                          "custodian": {"reference": org_uuid},
+                          "title": f"IROP test – {doc_type}",
+                          "section": [{"title": "Testovací sekce",
+                                       "text": {"status": "generated",
+                                                 "div": "<div xmlns='http://www.w3.org/1999/xhtml'>"
+                                                        "<p>IROP automatický test</p></div>"}}]}},
+            {"fullUrl": pat_uuid,
+             "resource": {"resourceType": "Patient",
                           "identifier": [{"system": "urn:oid:2.16.840.1.113883.4.653", "value": rid}]}},
-            {"resource": {"resourceType": "Practitioner",
+            {"fullUrl": pract_uuid,
+             "resource": {"resourceType": "Practitioner",
                           "identifier": [{"system": "urn:oid:2.16.840.1.113883.2.9.6.2.7", "value": autor}]}},
-            {"resource": {"resourceType": "Organization",
+            {"fullUrl": org_uuid,
+             "resource": {"resourceType": "Organization",
                           "identifier": [{"system": "urn:oid:2.16.840.1.113883.2.9.6.2.1", "value": ico}],
                           "name": "Testovací PZS"}},
         ],
@@ -2544,11 +2659,17 @@ def _irop_obs2(params, modules, client):
         fhir_valid = False; fhir_errors.append("resourceType != Bundle")
     if fhir_bundle.get("type") != "document":
         fhir_valid = False; fhir_errors.append("type != document")
-    entry_types = [e.get("resource", {}).get("resourceType") for e in fhir_bundle.get("entry", [])]
+    if not fhir_bundle.get("identifier"):
+        fhir_valid = False; fhir_errors.append("Bundle.identifier chybí")
+    entries = fhir_bundle.get("entry", [])
+    entry_types = [e.get("resource", {}).get("resourceType") for e in entries]
     for required in ["Composition", "Patient"]:
         if required not in entry_types:
             fhir_valid = False; fhir_errors.append(f"Chybí {required} v entries")
-    comp = next((e["resource"] for e in fhir_bundle.get("entry", [])
+    has_fullurls = all(e.get("fullUrl") for e in entries)
+    if not has_fullurls:
+        fhir_valid = False; fhir_errors.append("Chybí fullUrl v některých entries")
+    comp = next((e["resource"] for e in entries
                  if e.get("resource", {}).get("resourceType") == "Composition"), None)
     if comp:
         if not comp.get("type", {}).get("coding"):
@@ -2557,6 +2678,8 @@ def _irop_obs2(params, modules, client):
             fhir_valid = False; fhir_errors.append("Composition.date chybí")
         if not comp.get("author"):
             fhir_valid = False; fhir_errors.append("Composition.author chybí")
+        if not comp.get("section"):
+            fhir_valid = False; fhir_errors.append("Composition.section chybí")
 
     steps.append({"name": "Generování FHIR Bundle", "passed": True, "status": 200,
                    "elapsed_ms": 0, "data": {"resourceType": "Bundle", "entries": len(fhir_bundle["entry"]),
@@ -2606,6 +2729,76 @@ def _irop_obs2(params, modules, client):
             "steps": steps, "passed": passed, "total": len(steps)}
 
 
+def _irop_tech10(body, modules, client):
+    """TS-TECH-10: Ověření číselníků KRP/KRZP."""
+    steps = []
+    krzp = modules.get("krzp")
+    if not krzp:
+        return {"scenario_id": "TS-TECH-10", "name": "Číselníky KRP/KRZP",
+                "steps": [{"name": "Init", "passed": False, "error": "KRZP modul nedostupný"}],
+                "passed": 0, "total": 1}
+    min_counts = {"pohlavi": 2, "stat": 10, "druh_dokladu": 2, "zdravotni_pojistovna": 3}
+    for cs_name, min_expected in min_counts.items():
+        step = _irop_step_api(f"Číselník: {cs_name}", krzp.ciselnik, cs_name)
+        if step["passed"] and step.get("data"):
+            d = step["data"]
+            od = d.get("odpovedData", []) if isinstance(d, dict) else []
+            count = len(od) if isinstance(od, list) else 0
+            step["_items_count"] = count
+            if isinstance(od, list) and len(od) > 0:
+                step["_sample"] = od[:3]
+            if count < min_expected:
+                step["passed"] = False
+                step["error"] = f"Málo položek: {count} (minimum {min_expected})"
+        steps.append(step)
+    passed = sum(1 for s in steps if s["passed"])
+    return {"scenario_id": "TS-TECH-10", "name": "Číselníky KRP/KRZP",
+            "steps": steps, "passed": passed, "total": len(steps)}
+
+
+def _irop_obs3(body, modules, client):
+    """TS-OBS-3: Založení pacienta v KRP (novorozenec)."""
+    steps = []
+    krp = modules.get("krp")
+    if not krp:
+        return {"scenario_id": "TS-OBS-3", "name": "Založení pacienta v KRP",
+                "steps": [{"name": "Init", "passed": False, "error": "KRP modul nedostupný"}],
+                "passed": 0, "total": 1}
+    birth = (date.today() - timedelta(days=3)).isoformat()
+    test_name = f"IROPTest{uuid.uuid4().hex[:6]}"
+    pacient_data = {
+        "jmeno": test_name,
+        "prijmeni": "Testovaci",
+        "datumNarozeni": birth,
+        "pohlavi": "2",
+        "statniObcanstvi": ["CZ"],
+        "mistoNarozeniZemeKod": "CZ",
+        "matka": {
+            "jmeno": "Jana",
+            "prijmeni": "Testovaci",
+            "datumNarozeni": "1990-01-15",
+            "rodneCislo": f"900115{uuid.uuid4().hex[:4].upper()}",
+        },
+    }
+    step = _irop_step_api("Založit pacienta (novorozenec)", krp.zalozit_pacienta, pacient_data)
+    if step["passed"] and step.get("data"):
+        d = step["data"]
+        od = d.get("odpovedData", {}) if isinstance(d, dict) else {}
+        if isinstance(od, dict) and od.get("rid"):
+            step["_rid"] = od["rid"]
+            step["_stav"] = d.get("odpovedInfo", {}).get("popis", "")
+    elif not step["passed"] and step.get("data") and isinstance(step["data"], dict):
+        info = step["data"].get("odpovedInfo") or {}
+        step["_api_error"] = info.get("popis") or info.get("kod") or step.get("error")
+    steps.append(step)
+    rid = step.get("_rid")
+    if rid:
+        steps.append(_irop_step_api("Vyhledat založeného pacienta (RID)", krp.hledat_rid, rid))
+    passed = sum(1 for s in steps if s["passed"])
+    return {"scenario_id": "TS-OBS-3", "name": "Založení pacienta v KRP",
+            "steps": steps, "passed": passed, "total": len(steps)}
+
+
 IROP_SCENARIOS = {
     "TS-TECH-1": {"fn": _irop_tech1, "name": "Připojení ke KRP",
                    "desc": "Ověření vyhledání pacienta v KRP více metodami (RID, jméno+RC, jméno+DN, jméno+ČP)."},
@@ -2625,10 +2818,14 @@ IROP_SCENARIOS = {
                    "desc": "Vyhledání existující zásilky a provedení změny (ZmenZasilku)."},
     "TS-TECH-9": {"fn": _irop_tech9, "name": "Zneplatnění v DÚ",
                    "desc": "Vyhledání existující zásilky a její zneplatnění (ZneplatniZasilku)."},
+    "TS-TECH-10": {"fn": _irop_tech10, "name": "Číselníky KRP/KRZP",
+                   "desc": "Ověření načtení číselníků (pohlaví, stát, druh dokladu, ZP) z brány SEZ."},
     "TS-OBS-1":  {"fn": _irop_obs1, "name": "Příjem eZD",
                    "desc": "Stažení dokumentu z DÚ, validace integrity (hash, velikost), zobrazení obsahu."},
     "TS-OBS-2":  {"fn": _irop_obs2, "name": "Vytvoření eZD",
                    "desc": "Generování FHIR Bundle, validace formátu a uložení do DÚ."},
+    "TS-OBS-3":  {"fn": _irop_obs3, "name": "Založení pacienta v KRP",
+                   "desc": "Založení novorozence v KRP se správnými kódy (pohlaví, státní občanství) a zpětné ověření."},
 }
 
 

@@ -380,8 +380,10 @@ class SEZClient:
                 for k, v in hdrs.items()
             }
             jwt_debug = self._decode_jwt_debug(hdrs.get("Authorization", ""))
+            attempt_t0 = time.monotonic()
             try:
                 resp = self.session.request(method, url, **kwargs)
+                attempt_elapsed = round((time.monotonic() - attempt_t0) * 1000)
                 self.last_status = resp.status_code
 
                 is_last = attempt == max_attempts - 1
@@ -391,6 +393,7 @@ class SEZClient:
                 attempt_info = {
                     "attempt": attempt + 1,
                     "status": resp.status_code,
+                    "elapsed_ms": attempt_elapsed,
                     "headers": safe_hdrs,
                 }
                 if jwt_debug:
@@ -402,6 +405,18 @@ class SEZClient:
                         attempt_info["response"] = resp.json()
                     except Exception:
                         attempt_info["response"] = resp.text[:500]
+                    resp_hdrs = dict(resp.headers)
+                    if resp_hdrs:
+                        attempt_info["response_headers"] = {
+                            k: v for k, v in resp_hdrs.items()
+                            if k.lower() not in ("set-cookie",)
+                        }
+                else:
+                    try:
+                        resp_body = resp.json()
+                        attempt_info["response_preview"] = str(resp_body)[:300]
+                    except Exception:
+                        pass
                 attempts_log.append(attempt_info)
 
                 if token_err and not is_last:
@@ -505,6 +520,13 @@ class KRP:
     def _now():
         from datetime import date
         return date.today().isoformat()
+
+    KRP_CISELNIKY = ["pohlavi", "stat", "druh_dokladu", "zdravotni_pojistovna", "country_service_context"]
+
+    def ciselnik(self, nazev_ciselniku):
+        zadost_id = str(uuid.uuid4())
+        body = {"zadostInfo": {"datum": self._now(), "zadostId": zadost_id}}
+        return self.c.post(f"{self.BASE}/api/v1/ciselnik/{zadost_id}/{nazev_ciselniku}", body)
 
     def hledat_rid(self, rid, ucel="LECBA"):
         return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/rid", self._envelope(ucel, {"rid": rid}))

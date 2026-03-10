@@ -80,6 +80,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--fg); displa
 input, select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; color: var(--fg); font-size: 13px; font-family: var(--font); outline: none; transition: border-color .15s; }
 input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 textarea { font-family: var(--mono); font-size: 12px; resize: vertical; }
+input.date-cs { max-width: 130px; font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
+input.date-cs::placeholder { color: var(--fg3); font-size: 11px; }
 select { cursor: pointer; }
 
 /* JSON viewer */
@@ -128,9 +130,42 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 .log-time { color: var(--fg3); min-width: 50px; text-align: right; }
 .log-path { flex: 1; color: var(--fg2); }
 
-/* Loading */
+/* Loading / queue indicator */
 .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.q-wrap { position: relative; display: inline-flex; align-items: center; }
+.q-btn { display: none; align-items: center; gap: 6px; cursor: pointer; padding: 3px 10px; border-radius: 14px; background: var(--bg3); border: 1px solid var(--border); font-size: 11px; font-family: var(--font); color: var(--fg2); transition: all .15s; user-select: none; }
+.q-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.q-btn.active { display: inline-flex; }
+.q-badge { min-width: 16px; height: 16px; line-height: 16px; text-align: center; border-radius: 8px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 0 4px; }
+.q-panel { display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 380px; max-height: 340px; overflow-y: auto; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 900; padding: 6px 0; }
+.q-panel.open { display: block; }
+.q-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 11px; color: var(--fg2); border-bottom: 1px solid var(--border); }
+.q-item:last-child { border-bottom: none; }
+.q-item .q-method { font-weight: 700; min-width: 36px; font-family: var(--mono); font-size: 10px; }
+.q-item .q-path { flex: 1; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.q-item .q-elapsed { font-family: var(--mono); color: var(--fg3); font-size: 10px; min-width: 40px; text-align: right; }
+.q-item .q-status { font-size: 10px; }
+.q-item.q-running { color: var(--fg1); }
+.q-item.q-done { opacity: .55; }
+.q-item.q-err { color: var(--red); }
+
+/* RUIAN autocomplete */
+.ruian-wrap { position: relative; }
+.ruian-input { width: 100%; padding: 6px 10px 6px 28px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; font-family: var(--font); background: var(--bg1); color: var(--fg1); }
+.ruian-input::placeholder { color: var(--fg3); font-size: 11px; }
+.ruian-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,.15); }
+.ruian-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--fg3); pointer-events: none; }
+.ruian-drop { display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 240px; overflow-y: auto; background: var(--bg1); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); box-shadow: 0 6px 16px rgba(0,0,0,.15); z-index: 800; }
+.ruian-drop.open { display: block; }
+.ruian-opt { padding: 7px 10px; font-size: 11px; cursor: pointer; color: var(--fg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+.ruian-opt:last-child { border-bottom: none; }
+.ruian-opt:hover, .ruian-opt.active { background: var(--accent); color: #fff; }
+.ruian-opt .ro-type { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: var(--bg3); color: var(--fg3); font-weight: 600; flex-shrink: 0; }
+.ruian-opt:hover .ro-type, .ruian-opt.active .ro-type { background: rgba(255,255,255,.2); color: #fff; }
+.ruian-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--accent); color: #fff; font-size: 10px; border-radius: 10px; font-weight: 600; margin-top: 4px; }
+.ruian-tag button { background: none; border: none; color: #fff; cursor: pointer; font-size: 12px; padding: 0 2px; opacity: .7; }
+.ruian-tag button:hover { opacity: 1; }
 
 /* Quick-select chips */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -239,6 +274,11 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 .modal-close { background: none; border: none; color: var(--fg3); font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
 .modal-close:hover { color: var(--red); }
 .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.result-table { border-collapse: collapse; }
+.result-table th, .result-table td { border: 1px solid var(--bd); padding: 4px 8px; text-align: left; }
+.result-table th { background: var(--bg2); font-weight: 600; position: sticky; top: 0; z-index: 1; }
+.result-table tr:hover td { background: rgba(59,130,246,.06); }
+.result-table code { font-size: 11px; background: var(--bg2); padding: 1px 5px; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -314,6 +354,10 @@ td.mono { font-family: var(--mono); font-size: 12px; }
   <div class="topbar">
     <h2 id="pageTitle">Dashboard</h2>
     <span id="loadingIndicator" style="display:none"><span class="spinner"></span></span>
+    <span class="q-wrap" id="qWrap">
+      <button class="q-btn" id="qBtn" onclick="qToggle()"><span class="spinner" style="width:12px;height:12px;border-width:1.5px"></span><span class="q-badge" id="qBadge">0</span></button>
+      <div class="q-panel" id="qPanel"></div>
+    </span>
     <button class="btn btn-outline btn-sm" onclick="runTests()">Spustit testy</button>
   </div>
 
@@ -373,6 +417,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <span><strong>Správa</strong> — založení, změna, reklamace, sloučení, rozdělení</span>
             <span><strong>Hromadné ztotožnění</strong> — CSV upload dávky pacientů</span>
             <span><strong>Notifikace</strong> — odběr změn u pacientů</span>
+            <span><strong>Číselníky</strong> — dynamické z API (KRP, KRZP, SZZ, ELP)</span>
           </div>
         </div>
       </div>
@@ -383,6 +428,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
         <div class="sub-tab" data-panel="krp-sprava-panel">Správa</div>
         <div class="sub-tab" data-panel="krp-hromadne-panel">Hromadné ztotožnění</div>
         <div class="sub-tab" data-panel="krp-notif-panel">Notifikace</div>
+        <div class="sub-tab" data-panel="krp-ciselnik-panel">Číselníky</div>
       </div>
 
       <!-- Hledat -->
@@ -425,7 +471,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <div class="form-row">
               <div class="form-group"><label>Jméno</label><input id="krpJmenoDnJ" placeholder="Jméno"></div>
               <div class="form-group"><label>Příjmení</label><input id="krpJmenoDnP" placeholder="Příjmení"></div>
-              <div class="form-group"><label>Datum narození</label><input type="date" id="krpJmenoDnDn"></div>
+              <div class="form-group"><label>Datum narození</label><input type="text" class="date-cs" id="krpJmenoDnDn" placeholder="d.m.rrrr"></div>
               <button class="btn btn-primary" onclick="krpHledatJmenoDn()">Hledat</button>
             </div>
           </div>
@@ -440,7 +486,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           <div class="sub-panel" id="krp-cizinec">
             <div class="form-row">
               <div class="form-group"><label>Číslo pojištěnce</label><input id="krpCizCp" placeholder="Číslo pojištěnce"></div>
-              <div class="form-group"><label>Státní občanství</label><input id="krpCizStat" placeholder="Kód státu (CZ, SK…)"></div>
+              <div class="form-group"><label>Státní občanství</label><select id="krpCizStat"><option value="">CZ, SK…</option></select></div>
               <button class="btn btn-primary" onclick="krpHledatCizinec()">Hledat</button>
             </div>
           </div>
@@ -448,9 +494,9 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <div class="form-row">
               <div class="form-group"><label>Číslo dokladu</label><input id="krpDokCislo" placeholder="Číslo"></div>
               <div class="form-group"><label>Typ dokladu</label>
-                <select id="krpDokTyp"><option value="OP">OP</option><option value="PAS">Pas</option><option value="PRUKAZ_POJISTENCE">Průkaz pojištěnce</option><option value="EHIC">EHIC</option></select>
+                <select id="krpDokTyp"><option value="">-- typ --</option></select>
               </div>
-              <div class="form-group"><label>Stát</label><input id="krpDokStat" placeholder="Kód státu"></div>
+              <div class="form-group"><label>Stát</label><select id="krpDokStat"><option value="">-- stát --</option></select></div>
               <button class="btn btn-primary" onclick="krpHledatDoklady()">Hledat</button>
             </div>
           </div>
@@ -467,7 +513,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
               <div class="form-group"><label>Rodné číslo</label><input id="krpUnivRc" placeholder="RČ"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Datum narození</label><input type="date" id="krpUnivDn"></div>
+              <div class="form-group"><label>Datum narození</label><input type="text" class="date-cs" id="krpUnivDn" placeholder="d.m.rrrr"></div>
               <div class="form-group"><label>Číslo pojištěnce</label><input id="krpUnivCp" placeholder="ČP"></div>
               <button class="btn btn-primary" onclick="krpHledatUniv()">Hledat</button>
             </div>
@@ -564,31 +610,36 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">
             <div class="form-group"><label>Rodné číslo</label><input id="krpSprZalRc" placeholder="8501011234"></div>
-            <div class="form-group"><label>Datum narození *</label><input id="krpSprZalDatNar" type="date"></div>
+            <div class="form-group"><label>Datum narození *</label><input id="krpSprZalDatNar" type="text" class="date-cs" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Pohlaví</label>
-              <select id="krpSprZalPohlavi"><option value="">-- vyberte --</option><option value="M">Muž</option><option value="F">Žena</option><option value="N">Neurčeno</option></select>
+              <select id="krpSprZalPohlavi"><option value="">-- vyberte --</option></select>
             </div>
-            <div class="form-group"><label>Státní příslušnost</label>
-              <select id="krpSprZalStat">
-                <option value="">-- vyberte --</option>
-                <option value="CZ">CZ — Česká republika</option>
-                <option value="SK">SK — Slovensko</option>
-                <option value="DE">DE — Německo</option>
-                <option value="PL">PL — Polsko</option>
-                <option value="AT">AT — Rakousko</option>
-                <option value="UA">UA — Ukrajina</option>
-                <option value="VN">VN — Vietnam</option>
-                <option value="OTHER">Jiný (doplňte kód)</option>
-              </select>
+            <div class="form-group"><label>Státní občanství</label>
+              <select id="krpSprZalStat"><option value="">-- vyberte --</option></select>
             </div>
           </div>
 
           <details style="margin-top:12px">
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Adresa a kontakty</summary>
+            <div class="form-group" style="margin-top:8px">
+              <label>Hledat adresu v RUIAN (ČR)</label>
+              <div class="ruian-wrap">
+                <span class="ruian-icon">&#x1F50D;</span>
+                <input class="ruian-input" id="krpSprZalRuianQ" placeholder="Začněte psát adresu…" autocomplete="off" data-target="zal">
+                <div class="ruian-drop" id="krpSprZalRuianDrop"></div>
+              </div>
+              <div id="krpSprZalRuianTag" style="min-height:18px"></div>
+              <input type="hidden" id="krpSprZalRuianId">
+            </div>
             <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:8px">
-              <div class="form-group"><label>Ulice a č.p.</label><input id="krpSprZalUlice" placeholder="Nemocniční 128/5"></div>
-              <div class="form-group"><label>Město</label><input id="krpSprZalMesto" placeholder="Ústí nad Labem"></div>
+              <div class="form-group"><label>Ulice</label><input id="krpSprZalUlice" placeholder="Nemocniční"></div>
+              <div class="form-group"><label>Č.p.</label><input id="krpSprZalCp" placeholder="128" style="max-width:90px"></div>
+              <div class="form-group"><label>Č.o.</label><input id="krpSprZalCo" placeholder="5" style="max-width:90px"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:4px">
+              <div class="form-group"><label>Obec</label><input id="krpSprZalMesto" placeholder="Ústí nad Labem"></div>
               <div class="form-group"><label>PSČ</label><input id="krpSprZalPsc" placeholder="40001"></div>
+              <div class="form-group"><label>Stát</label><input id="krpSprZalAdresaStat" value="CZ" placeholder="CZ" style="max-width:60px"></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
               <div class="form-group"><label>Telefon</label><input id="krpSprZalTelefon" placeholder="+420 123 456 789"></div>
@@ -600,17 +651,10 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Doklady</summary>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
               <div class="form-group"><label>Typ dokladu</label>
-                <select id="krpSprZalDokladTyp">
-                  <option value="">-- žádný --</option>
-                  <option value="OP">Občanský průkaz</option>
-                  <option value="PAS">Cestovní pas</option>
-                  <option value="PRUKAZ_POJISTENCE">Průkaz pojištěnce</option>
-                  <option value="EHIC">EHIC (Evropský průkaz)</option>
-                  <option value="JINY">Jiný</option>
-                </select>
+                <select id="krpSprZalDokladTyp"><option value="">-- žádný --</option></select>
               </div>
               <div class="form-group"><label>Číslo dokladu</label><input id="krpSprZalDokladCislo" placeholder="AB123456"></div>
-              <div class="form-group"><label>Platnost do</label><input id="krpSprZalDokladPlatnost" type="date"></div>
+              <div class="form-group"><label>Platnost do</label><input id="krpSprZalDokladPlatnost" type="text" class="date-cs" placeholder="d.m.rrrr"></div>
             </div>
           </details>
 
@@ -619,16 +663,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
               <div class="form-group"><label>Číslo pojištěnce</label><input id="krpSprZalCisloPoj" placeholder="8501011234"></div>
               <div class="form-group"><label>Kód pojišťovny</label>
-                <select id="krpSprZalPojistovna">
-                  <option value="">-- vyberte --</option>
-                  <option value="111">111 — VZP</option>
-                  <option value="201">201 — VoZP</option>
-                  <option value="205">205 — ČPZP</option>
-                  <option value="207">207 — OZP</option>
-                  <option value="209">209 — ZPŠ</option>
-                  <option value="211">211 — ZPMV</option>
-                  <option value="213">213 — RBP</option>
-                </select>
+                <select id="krpSprZalPojistovna"><option value="">-- vyberte --</option></select>
               </div>
             </div>
           </details>
@@ -670,18 +705,33 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
             <div class="form-group"><label>Rodné číslo</label><input id="krpSprZmenRc" placeholder="Nové RČ"></div>
-            <div class="form-group"><label>Datum narození</label><input id="krpSprZmenDatNar" type="date"></div>
+            <div class="form-group"><label>Datum narození</label><input id="krpSprZmenDatNar" type="text" class="date-cs" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Pohlaví</label>
-              <select id="krpSprZmenPohlavi"><option value="">-- beze změny --</option><option value="M">Muž</option><option value="F">Žena</option><option value="N">Neurčeno</option></select>
+              <select id="krpSprZmenPohlavi"><option value="">-- beze změny --</option></select>
             </div>
           </div>
 
           <details style="margin-top:10px">
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Adresa a kontakty</summary>
+            <div class="form-group" style="margin-top:8px">
+              <label>Hledat adresu v RUIAN (ČR)</label>
+              <div class="ruian-wrap">
+                <span class="ruian-icon">&#x1F50D;</span>
+                <input class="ruian-input" id="krpSprZmenRuianQ" placeholder="Začněte psát adresu…" autocomplete="off" data-target="zmen">
+                <div class="ruian-drop" id="krpSprZmenRuianDrop"></div>
+              </div>
+              <div id="krpSprZmenRuianTag" style="min-height:18px"></div>
+              <input type="hidden" id="krpSprZmenRuianId">
+            </div>
             <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:8px">
-              <div class="form-group"><label>Ulice a č.p.</label><input id="krpSprZmenUlice" placeholder="Nová adresa"></div>
-              <div class="form-group"><label>Město</label><input id="krpSprZmenMesto" placeholder="Město"></div>
+              <div class="form-group"><label>Ulice</label><input id="krpSprZmenUlice" placeholder="Nová adresa"></div>
+              <div class="form-group"><label>Č.p.</label><input id="krpSprZmenCp" placeholder="č.p." style="max-width:90px"></div>
+              <div class="form-group"><label>Č.o.</label><input id="krpSprZmenCo" placeholder="č.o." style="max-width:90px"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:4px">
+              <div class="form-group"><label>Obec</label><input id="krpSprZmenMesto" placeholder="Město"></div>
               <div class="form-group"><label>PSČ</label><input id="krpSprZmenPsc" placeholder="PSČ"></div>
+              <div class="form-group"><label>Stát</label><input id="krpSprZmenAdresaStat" value="CZ" placeholder="CZ" style="max-width:60px"></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
               <div class="form-group"><label>Telefon</label><input id="krpSprZmenTelefon" placeholder="+420…"></div>
@@ -767,7 +817,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
               <div class="form-group"><label>Rodné číslo</label><input id="krpSprRozdARc" placeholder="RČ"></div>
-              <div class="form-group"><label>Datum nar.</label><input id="krpSprRozdADatNar" type="date"></div>
+              <div class="form-group"><label>Datum nar.</label><input id="krpSprRozdADatNar" type="text" class="date-cs" placeholder="d.m.rrrr"></div>
             </div>
             <div style="margin-top:10px;font-weight:600;font-size:12px;color:var(--fg3);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:4px;border-bottom:1px solid var(--border)">Pacient B (nový záznam)</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
@@ -776,7 +826,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
               <div class="form-group"><label>Rodné číslo</label><input id="krpSprRozdBRc" placeholder="RČ"></div>
-              <div class="form-group"><label>Datum nar.</label><input id="krpSprRozdBDatNar" type="date"></div>
+              <div class="form-group"><label>Datum nar.</label><input id="krpSprRozdBDatNar" type="text" class="date-cs" placeholder="d.m.rrrr"></div>
             </div>
             <details style="margin-top:8px">
               <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Vlastní JSON (pokročilé)</summary>
@@ -985,6 +1035,84 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 
         <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krpNotifResult">-</div></div>
       </div>
+
+      <!-- KRP CISELNIKY -->
+      <div class="sub-panel" id="krp-ciselnik-panel">
+        <div class="card" style="background:linear-gradient(135deg,#fef3c7 0%,#fefce8 100%);border-color:#fde68a;margin-bottom:14px">
+          <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:6px">Dynamické číselníky z brány SEZ</div>
+          <div style="font-size:12px;color:var(--fg2);line-height:1.6;margin-bottom:10px">
+            Všechny formulářové selecty (pohlaví, stát, doklady, pojišťovny) se automaticky plní z API po připojení.
+            Tlačítko níže to vynutí znovu — užitečné po přepnutí prostředí.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary" onclick="csForceFromApi()">Obnovit z API</button>
+            <button class="btn btn-outline" onclick="_csUseFallback()">Použít výchozí data</button>
+            <span id="csStatus" style="font-size:11px;color:var(--fg3);line-height:32px"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Prohlížeč číselníků (KRP / KRZP)</div>
+          <p style="font-size:12px;color:var(--fg2);margin-bottom:12px">Prohlížení všech číselníků dostupných přes KRZP API v2. Sdílené mezi KRP a KRZP.</p>
+          <div class="form-row" style="align-items:flex-end;gap:10px">
+            <div class="form-group" style="flex:1">
+              <label>Číselník</label>
+              <select id="krpCiselnikSel">
+                <optgroup label="KRP / KRZP sdílené">
+                  <option value="pohlavi">Pohlaví</option>
+                  <option value="stat">Stát</option>
+                  <option value="druh_dokladu">Druh dokladu</option>
+                  <option value="zdravotni_pojistovna">Zdravotní pojišťovna</option>
+                  <option value="country_service_context">Country service context</option>
+                </optgroup>
+                <optgroup label="KRZP specifické">
+                  <option value="komory">Komory</option>
+                  <option value="obor">Obor</option>
+                  <option value="specializace">Specializace</option>
+                  <option value="typ_vykonu_povolani">Typ výkonu povolání</option>
+                  <option value="zakladni_kmen">Základní kmen</option>
+                  <option value="certifikovany_kurz">Certifikovaný kurz</option>
+                </optgroup>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="krpCiselnik()">Načíst</button>
+            <button class="btn" onclick="krpCiselnikAll()" title="Načte a zobrazí všechny KRP/KRZP číselníky najednou">Načíst vše</button>
+          </div>
+        </div>
+        <div class="card" id="krpCiselnikTableCard" style="display:none">
+          <div class="card-title" id="krpCiselnikTableTitle">Položky</div>
+          <div style="max-height:400px;overflow:auto">
+            <table class="result-table" id="krpCiselnikTable" style="width:100%;font-size:12px">
+              <thead><tr><th>Kód</th><th>Název</th><th>Platnost od</th><th>Platnost do</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Prohlížeč číselníků SZZ</div>
+          <p style="font-size:12px;color:var(--fg2);margin-bottom:12px">Číselníky ze Sdíleného zdravotního záznamu (krevní skupiny, alergie, léčivé přípravky atd.).</p>
+          <div class="form-row" style="align-items:flex-end;gap:10px">
+            <button class="btn btn-primary" onclick="csBrowseSzzList()">Načíst seznam číselníků SZZ</button>
+            <div class="form-group" style="flex:1"><label>Kód</label><input id="csSzzKod" placeholder="např. krevni-skupina"></div>
+            <button class="btn btn-outline" onclick="csBrowseSzzPolozky()">Načíst položky</button>
+          </div>
+          <div class="json-box" id="csSzzBrowseResult" style="margin-top:8px;min-height:30px">-</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Prohlížeč číselníků ELP v2</div>
+          <p style="font-size:12px;color:var(--fg2);margin-bottom:12px">Číselníky z Elektronických posudků (akce, druhy posudku, výsledky atd.).</p>
+          <div class="form-row" style="align-items:flex-end;gap:10px">
+            <button class="btn btn-primary" onclick="csBrowseElpList()">Načíst seznam číselníků ELP</button>
+            <div class="form-group" style="flex:1"><label>Kód</label><input id="csElpKod" placeholder="např. akce-ro"></div>
+            <button class="btn btn-outline" onclick="csBrowseElpPolozky()">Načíst položky</button>
+          </div>
+          <div class="json-box" id="csElpBrowseResult" style="margin-top:8px;min-height:30px">-</div>
+        </div>
+
+        <div class="card"><div class="card-title">Raw odpověď</div><div class="json-box" id="krpCiselnikResult">-</div></div>
+      </div>
     </div>
 
     <!-- KRZP – Zdravotničtí pracovníci -->
@@ -1031,7 +1159,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <div class="form-row">
               <div class="form-group"><label>Jméno</label><input id="krzpJmeno" placeholder="Jméno"></div>
               <div class="form-group"><label>Příjmení</label><input id="krzpPrijmeni" placeholder="Příjmení"></div>
-              <div class="form-group"><label>Datum narození</label><input type="date" id="krzpDatNar"></div>
+              <div class="form-group"><label>Datum narození</label><input type="text" class="date-cs" id="krzpDatNar" placeholder="d.m.rrrr"></div>
               <button class="btn btn-primary" onclick="krzpHledatJmeno()">Hledat</button>
             </div>
           </div>
@@ -1048,7 +1176,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 
           <div class="sub-panel" id="krzp-person">
             <div class="form-row">
-              <div class="form-group"><label>Datum narození</label><input type="date" id="krzpPersDatNar"></div>
+              <div class="form-group"><label>Datum narození</label><input type="text" class="date-cs" id="krzpPersDatNar" placeholder="d.m.rrrr"></div>
               <div class="form-group"><label>Jméno (nepovinné)</label><input id="krzpPersJmeno" placeholder="Jméno"></div>
               <div class="form-group"><label>Příjmení (nepovinné)</label><input id="krzpPersPrijmeni" placeholder="Příjmení"></div>
               <div class="form-group"><label>KRZP ID (nepovinné)</label><input id="krzpPersKrzpid" placeholder="KRZP ID"></div>
@@ -1084,7 +1212,16 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <button class="btn btn-primary" onclick="krzpCiselnik()">Načíst</button>
           </div>
         </div>
-        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krzpCiselnikResult">-</div></div>
+        <div class="card" id="krzpCiselnikTableCard" style="display:none">
+          <div class="card-title" id="krzpCiselnikTableTitle">Položky</div>
+          <div style="max-height:400px;overflow:auto">
+            <table class="result-table" id="krzpCiselnikTable" style="width:100%;font-size:12px">
+              <thead><tr><th>Kód</th><th>Název</th><th>Platnost od</th><th>Platnost do</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Raw odpověď</div><div class="json-box" id="krzpCiselnikResult">-</div></div>
       </div>
 
       <!-- KRZP REKLAMACE -->
@@ -1269,8 +1406,8 @@ td.mono { font-family: var(--mono); font-size: 12px; }
         <div class="card">
           <div class="card-title">Vyhledání zásilek</div>
           <div class="form-row">
-            <div class="form-group"><label>Datum od</label><input type="date" id="duOd"></div>
-            <div class="form-group"><label>Datum do</label><input type="date" id="duDo"></div>
+            <div class="form-group"><label>Datum od</label><input type="text" class="date-cs" id="duOd" placeholder="d.m.rrrr"></div>
+            <div class="form-group"><label>Datum do</label><input type="text" class="date-cs" id="duDo" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Pacient (RID)</label><input id="duPacient" placeholder="volitelné"></div>
             <div class="form-group"><label>Velikost stránky</label><input type="number" id="duSize" value="10"></div>
             <button class="btn btn-primary" onclick="duVyhledej()">Hledat</button>
@@ -1348,8 +1485,8 @@ td.mono { font-family: var(--mono); font-size: 12px; }
               <div class="form-group"><label>Hlavní diagnóza (MKN-10)</label><input id="duPrDiagnoza" placeholder="např. J18.9" value="J18.9"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Datum přijetí</label><input type="date" id="duPrPrijeti"></div>
-              <div class="form-group"><label>Datum propuštění</label><input type="date" id="duPrPropusteni"></div>
+              <div class="form-group"><label>Datum přijetí</label><input type="text" class="date-cs" id="duPrPrijeti" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Datum propuštění</label><input type="text" class="date-cs" id="duPrPropusteni" placeholder="d.m.rrrr"></div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -1703,7 +1840,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Manifestace reakce</label><select id="szzAlManifestace" multiple size="4"></select></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzAlDatum"></div>
+            <div class="form-group"><label>Datum zjištění</label><input type="text" class="date-cs" id="szzAlDatum" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzAlCas"></div>
           </div>
           <div class="form-row">
@@ -1732,7 +1869,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Dávkování</label><input id="szzLpDavkovani" placeholder="např. 500mg 2x denně"></div>
-            <div class="form-group"><label>Datum podání</label><input type="date" id="szzLpDatum"></div>
+            <div class="form-group"><label>Datum podání</label><input type="text" class="date-cs" id="szzLpDatum" placeholder="d.m.rrrr"></div>
           </div>
         </div>
 
@@ -1746,7 +1883,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Popis</label><textarea id="szzNpPopis" rows="2" placeholder="Popis příhody"></textarea></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNpDatum"></div>
+            <div class="form-group"><label>Datum zjištění</label><input type="text" class="date-cs" id="szzNpDatum" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNpCas"></div>
           </div>
           <div class="form-row">
@@ -1767,7 +1904,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Popis</label><textarea id="szzNrPopis" rows="2" placeholder="Popis reakce"></textarea></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNrDatum"></div>
+            <div class="form-group"><label>Datum zjištění</label><input type="text" class="date-cs" id="szzNrDatum" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNrCas"></div>
           </div>
           <div class="form-row">
@@ -1788,7 +1925,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Popis</label><textarea id="szzNuPopis" rows="2" placeholder="Popis účinku"></textarea></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNuDatum"></div>
+            <div class="form-group"><label>Datum zjištění</label><input type="text" class="date-cs" id="szzNuDatum" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNuCas"></div>
           </div>
           <div class="form-row">
@@ -1806,7 +1943,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Popis</label><textarea id="szzNudPopis" rows="2" placeholder="Popis události"></textarea></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Datum zjištění</label><input type="date" id="szzNudDatum"></div>
+            <div class="form-group"><label>Datum zjištění</label><input type="text" class="date-cs" id="szzNudDatum" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Čas zjištění</label><input type="time" id="szzNudCas"></div>
           </div>
           <div class="form-row">
@@ -1947,8 +2084,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Fulltext</label><input id="elpSrchFulltext" placeholder="volitelné"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Datum od</label><input type="date" id="elpSrchDatumOd"></div>
-            <div class="form-group"><label>Datum do</label><input type="date" id="elpSrchDatumDo"></div>
+            <div class="form-group"><label>Datum od</label><input type="text" class="date-cs" id="elpSrchDatumOd" placeholder="d.m.rrrr"></div>
+            <div class="form-group"><label>Datum do</label><input type="text" class="date-cs" id="elpSrchDatumDo" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Jen platné</label><select id="elpSrchJenPlatne"><option value="">--</option><option value="true">Ano</option><option value="false">Ne</option></select></div>
           </div>
           <div class="form-row">
@@ -1988,8 +2125,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Stav posudku *</label><select id="elpCrStav"></select></div>
-            <div class="form-group"><label>Datum vystavení *</label><input type="date" id="elpCrDatumVystaveni"></div>
-            <div class="form-group"><label>Platnost do</label><input type="date" id="elpCrPlatnostDo"></div>
+            <div class="form-group"><label>Datum vystavení *</label><input type="text" class="date-cs" id="elpCrDatumVystaveni" placeholder="d.m.rrrr"></div>
+            <div class="form-group"><label>Platnost do</label><input type="text" class="date-cs" id="elpCrPlatnostDo" placeholder="d.m.rrrr"></div>
           </div>
         </div>
         <div class="card">
@@ -2145,8 +2282,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Příjemce (IČO / KRZP)</label><input id="ezSrcPrijemce" placeholder="Příjemce"></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:8px">
-            <div class="form-group"><label>Datum od</label><input type="date" id="ezSrcOd"></div>
-            <div class="form-group"><label>Datum do</label><input type="date" id="ezSrcDo"></div>
+            <div class="form-group"><label>Datum od</label><input type="text" class="date-cs" id="ezSrcOd" placeholder="d.m.rrrr"></div>
+            <div class="form-group"><label>Datum do</label><input type="text" class="date-cs" id="ezSrcDo" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Stav</label>
               <select id="ezSrcStav">
                 <option value="">Všechny stavy</option>
@@ -2233,15 +2370,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>IČP žadatele</label><input id="ezCrIcp" placeholder="např. 72090001" value="72090001" onchange="ezUpdateField('icp')"></div>
             <div class="form-group"><label>ISPZS</label><input id="ezCrIspzs" placeholder="ID pracoviště" value="NIS" onchange="ezUpdateField('ispzs')"></div>
             <div class="form-group"><label>Pojišťovna</label>
-              <select id="ezCrPoj" onchange="ezUpdateField('pojistovna')">
-                <option value="111">111 – VZP</option>
-                <option value="201">201 – VOZP</option>
-                <option value="205">205 – ČPZP</option>
-                <option value="207">207 – OZP</option>
-                <option value="209">209 – ZPŠ</option>
-                <option value="211">211 – ZPMV</option>
-                <option value="213">213 – RBP</option>
-              </select>
+              <select id="ezCrPoj" onchange="ezUpdateField('pojistovna')"><option value="">-- vyberte --</option></select>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
@@ -2539,7 +2668,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:flex-end">
             <div class="form-group"><label>ID příjemce *</label><input id="notifVyhledatId" placeholder="ID příjemce"></div>
-            <div class="form-group"><label>Od data *</label><input type="date" id="notifVyhledatOd"></div>
+            <div class="form-group"><label>Od data *</label><input type="text" class="date-cs" id="notifVyhledatOd" placeholder="d.m.rrrr"></div>
             <div class="form-group"><label>Limit</label><input type="number" id="notifVyhledatLimit" value="20" min="1" max="100"></div>
             <button class="btn btn-primary" onclick="notifVyhledat()">Vyhledat</button>
           </div>
@@ -3424,7 +3553,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
                 <input id="ds4GenPatName" placeholder="např. Jan Novák" value="Jan Novák">
               </div>
               <div class="form-group" style="margin-bottom:10px"><label>Datum narození</label>
-                <input type="date" id="ds4GenPatDob" value="1978-01-01">
+                <input type="text" class="date-cs" id="ds4GenPatDob" value="1. 1. 1978" placeholder="d.m.rrrr">
               </div>
               <div class="form-row" style="gap:8px;margin-top:12px">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
@@ -3550,7 +3679,9 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
               <tr><td><code>TS-TECH-8</code></td><td>Změna v DÚ</td><td>VyhledejZasilku + ZmenZasilku</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-9</code></td><td>Zneplatnění v DÚ</td><td>VyhledejZasilku + ZneplatniZasilku</td><td>Technický</td></tr>
               <tr><td><code>TS-OBS-1</code></td><td>Příjem eZD</td><td>Stažení z DÚ, validace integrity, zobrazení</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-TECH-10</code></td><td>Číselníky KRP/KRZP</td><td>Načtení číselníků pohlaví, stát, druh dokladu, ZP</td><td>Technický</td></tr>
               <tr><td><code>TS-OBS-2</code></td><td>Vytvoření eZD</td><td>Generování FHIR Bundle, validace formátu + uložení do DÚ</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-OBS-3</code></td><td>Založení pacienta</td><td>Založení novorozence v KRP + ověření správných kódů</td><td>Obsahový</td></tr>
             </tbody>
           </table>
         </div>
@@ -3594,19 +3725,21 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
         <div class="card" id="iropTech7"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-7</span><span class="card-title">Vyhledání a stažení z DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a stažení dokumentu (VyhledejZasilku + DejZasilku + ověření obsahu).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-7')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-7" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech8"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-8</span><span class="card-title">Změna dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a provedení změny (VyhledejZasilku + ZmenZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-8')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-8" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech9"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-9</span><span class="card-title">Zneplatnění dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a její zneplatnění (VyhledejZasilku + ZneplatniZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-9')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-9" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech10"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-10</span><span class="card-title">Číselníky KRP/KRZP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření načtení číselníků (pohlaví, stát, druh dokladu, zdravotní pojišťovny) z brány SEZ přes KRZP API.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-10')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-10" style="margin-top:10px;min-height:30px">-</div></div>
       </div>
 
       <!-- OBSAHOVÉ TESTY -->
       <div class="sub-panel" id="irop-obs-panel">
         <div class="card" id="iropObs1"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-1</span><span class="card-title">Příjem, uložení a zobrazení eZD</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Stažení dokumentu z DÚ, validace integrity (hash, velikost), dekódování a zobrazení obsahu.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-1')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-1" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropObs2"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-2</span><span class="card-title">Vytvoření eZD a zpřístupnění v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Generování FHIR Bundle (Composition, Patient, Practitioner, Organization) a uložení jako eZD do DÚ.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-2')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-2" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropObs3"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-3</span><span class="card-title">Založení pacienta v KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Založení novorozence v KRP se správnými kódy (pohlaví, státní občanství) a zpětné ověření přes RID.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-3')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-3" style="margin-top:10px;min-height:30px">-</div></div>
       </div>
 
       <!-- SPUSTIT VŠE -->
       <div class="sub-panel" id="irop-all-panel">
         <div class="card">
           <div class="card-title">Spustit všechny scénáře</div>
-          <p style="font-size:12px;color:var(--fg3);margin:4px 0 12px">Sekvenčně spustí všech 11 testovacích scénářů s aktuálně nastavenými parametry. Trvá obvykle 30–120 sekund.</p>
+          <p style="font-size:12px;color:var(--fg3);margin:4px 0 12px">Sekvenčně spustí všech 13 testovacích scénářů s aktuálně nastavenými parametry. Trvá obvykle 30–120 sekund.</p>
           <button class="btn btn-green" onclick="iropRunAll()" id="iropBtnAll" style="min-width:200px">Spustit kompletní testování</button>
           <div id="iropAllProgress" style="margin-top:12px"></div>
           <div id="iropAllSummary" style="margin-top:12px"></div>
@@ -3677,6 +3810,9 @@ const logEntries = [];
 // Init
 // ---------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+  _initDateInputs();
+  _initRuianInputs();
+  _csUseFallback();
   initNav();
   initSubTabs();
   initDates();
@@ -3745,8 +3881,8 @@ function initDates() {
   const today = new Date();
   const monthAgo = new Date(today);
   monthAgo.setMonth(monthAgo.getMonth() - 2);
-  document.getElementById('duOd').value = monthAgo.toISOString().split('T')[0];
-  document.getElementById('duDo').value = today.toISOString().split('T')[0];
+  _setDate('duOd', monthAgo.toISOString().split('T')[0]);
+  _setDate('duDo', today.toISOString().split('T')[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -3755,14 +3891,92 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// API helpers
+// API helpers + request queue
 // ---------------------------------------------------------------------------
-async function api(method, url, body, extraHeaders) {
+const API_TIMEOUT = 60000;
+const _q = [];
+let _qIdSeq = 0;
+
+function _qAdd(method, url) {
+  const id = ++_qIdSeq;
+  const item = { id, method, url: url.replace(/^\/api\//, ''), t0: performance.now(), status: 'running', httpStatus: 0, elapsed: 0 };
+  _q.unshift(item);
+  if (_q.length > 30) _q.length = 30;
+  _qRender();
+  return item;
+}
+
+function _qDone(item, httpStatus, error) {
+  item.status = error ? 'err' : 'done';
+  item.httpStatus = httpStatus;
+  item.elapsed = Math.round(performance.now() - item.t0);
+  if (error) item.error = error;
+  _qRender();
+  setTimeout(() => {
+    if (!_q.some(i => i.status === 'running')) {
+      document.getElementById('qBtn').classList.remove('active');
+    }
+  }, 1500);
+}
+
+function _qRender() {
+  const running = _q.filter(i => i.status === 'running').length;
+  const btn = document.getElementById('qBtn');
+  const badge = document.getElementById('qBadge');
+  const panel = document.getElementById('qPanel');
+
+  if (running > 0) {
+    btn.classList.add('active');
+    badge.textContent = running;
+  } else {
+    badge.textContent = '0';
+  }
+
   const loading = document.getElementById('loadingIndicator');
-  loading.style.display = '';
+  loading.style.display = running > 0 ? '' : 'none';
+
+  panel.innerHTML = _q.length === 0
+    ? '<div style="padding:12px;text-align:center;color:var(--fg3);font-size:11px">Žádná volání</div>'
+    : _q.map(i => {
+      const cls = i.status === 'running' ? 'q-running' : i.status === 'err' ? 'q-err' : 'q-done';
+      const icon = i.status === 'running'
+        ? '<span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span>'
+        : i.status === 'err'
+          ? '<span style="color:var(--red);font-weight:700">✗</span>'
+          : '<span style="color:var(--green);font-weight:700">✓</span>';
+      const elapsed = i.status === 'running'
+        ? Math.round((performance.now() - i.t0) / 1000) + 's'
+        : (i.elapsed / 1000).toFixed(1) + 's';
+      const st = i.httpStatus ? ' · ' + i.httpStatus : '';
+      const err = i.error ? '<div style="font-size:10px;color:var(--red);padding:0 0 0 44px;margin-top:-2px">' + esc(i.error).substring(0, 80) + '</div>' : '';
+      return `<div class="q-item ${cls}">${icon}<span class="q-method">${i.method}</span><span class="q-path" title="${esc(i.url)}">${esc(i.url)}</span><span class="q-elapsed">${elapsed}${st}</span></div>${err}`;
+    }).join('');
+}
+
+function qToggle() {
+  const panel = document.getElementById('qPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) _qRender();
+}
+
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('qWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('qPanel').classList.remove('open');
+  }
+});
+
+setInterval(() => {
+  if (_q.some(i => i.status === 'running') && document.getElementById('qPanel').classList.contains('open')) {
+    _qRender();
+  }
+}, 1000);
+
+async function api(method, url, body, extraHeaders) {
+  const qi = _qAdd(method, url);
   const t0 = performance.now();
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), 30000);
+  const timer = setTimeout(() => ac.abort(), API_TIMEOUT);
   try {
     const opts = { method, headers: { 'Content-Type': 'application/json', ...extraHeaders }, signal: ac.signal };
     if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
@@ -3771,15 +3985,15 @@ async function api(method, url, body, extraHeaders) {
     const data = await resp.json();
     const elapsed = Math.round(performance.now() - t0);
     addLog(method, url, data.status || resp.status, elapsed);
-    loading.style.display = 'none';
+    _qDone(qi, data.status || resp.status, null);
     return data;
   } catch (e) {
     clearTimeout(timer);
-    loading.style.display = 'none';
     const elapsed = Math.round(performance.now() - t0);
-    const msg = e.name === 'AbortError' ? 'Timeout – odpověď nepřišla do 30 s' : e.message;
+    const msg = e.name === 'AbortError' ? 'Timeout – odpověď nepřišla do 60 s' : e.message;
     addLog(method, url, 0, elapsed);
     toast('Chyba: ' + msg, true);
+    _qDone(qi, 0, msg);
     return { status: 0, error: msg };
   }
 }
@@ -3936,8 +4150,15 @@ const _resultStore = {};
 function showResult(elId, data) {
   const el = document.getElementById(elId);
   _resultStore[elId] = data.data !== undefined ? data.data : data;
+  const attempts = data?._request?.attempts || [];
+  const failedAttempts = attempts.filter(a => a.status && a.status >= 400);
   if (data.status && data.status >= 200 && data.status < 300) {
-    toast(data.status + ' OK (' + (data.elapsed_ms || 0) + 'ms)');
+    if (failedAttempts.length > 0) {
+      const failCodes = failedAttempts.map(a => a.status).join(', ');
+      toast(data.status + ' OK po ' + attempts.length + ' pokusech (' + (data.elapsed_ms || 0) + 'ms) — předchozí: HTTP ' + failCodes, true);
+    } else {
+      toast(data.status + ' OK (' + (data.elapsed_ms || 0) + 'ms)');
+    }
   } else if (data.status >= 400) {
     toast(data.status + ' Error', true);
   }
@@ -3957,13 +4178,31 @@ function renderRequestDebug(elId, data) {
   if (!req) { dbg.innerHTML = ''; return; }
 
   const isError = !data.status || data.status >= 400 || data.status === 0;
-  const borderColor = isError ? 'var(--red)' : 'rgba(91,141,239,.25)';
-  const bgColor = isError ? 'rgba(255,85,85,.06)' : 'rgba(91,141,239,.04)';
-  const label = isError ? '&#9888; Request debug (chyba)' : '&#9881; Request debug';
+  const failedAttempts = (req.attempts || []).filter(a => a.status && a.status >= 400);
+  const hasRetryErrors = failedAttempts.length > 0;
+  const isWarn = !isError && hasRetryErrors;
+  const shouldOpen = isError || isWarn;
 
-  let h = '<details' + (isError ? ' open' : '') + ' style="margin-top:10px;border:1px solid ' + borderColor + ';border-radius:8px;background:' + bgColor + ';overflow:hidden">';
-  h += '<summary style="padding:10px 14px;cursor:pointer;font-weight:700;font-size:13px;color:' + (isError ? 'var(--red)' : 'var(--fg)') + '">' + label + '</summary>';
+  const borderColor = isError ? 'var(--red)' : isWarn ? 'var(--orange, #e89b00)' : 'rgba(91,141,239,.25)';
+  const bgColor = isError ? 'rgba(255,85,85,.06)' : isWarn ? 'rgba(232,155,0,.08)' : 'rgba(91,141,239,.04)';
+  const labelColor = isError ? 'var(--red)' : isWarn ? 'var(--orange, #e89b00)' : 'var(--fg)';
+  const label = isError ? '&#9888; Request debug (chyba)'
+    : isWarn ? '&#9888; Request debug (úspěch po opakování — ' + failedAttempts.map(a => '#' + a.attempt + ' HTTP ' + a.status).join(', ') + ')'
+    : '&#9881; Request debug';
+
+  let h = '<details' + (shouldOpen ? ' open' : '') + ' style="margin-top:10px;border:1px solid ' + borderColor + ';border-radius:8px;background:' + bgColor + ';overflow:hidden">';
+  h += '<summary style="padding:10px 14px;cursor:pointer;font-weight:700;font-size:13px;color:' + labelColor + '">' + label + '</summary>';
   h += '<div style="padding:4px 14px 14px">';
+
+  if (isWarn) {
+    const totalAttempts = (req.attempts || []).length;
+    const failCodes = failedAttempts.map(a => '#' + a.attempt + ' HTTP ' + a.status).join(', ');
+    h += '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(232,155,0,.12);border:1px solid rgba(232,155,0,.3);border-radius:6px;font-size:12px;color:var(--orange,#e89b00)">';
+    h += '<b>&#9888; Upozornění:</b> Požadavek uspěl až na <b>' + totalAttempts + '. pokus</b>. ';
+    h += 'Neúspěšné pokusy: ' + failCodes + '. ';
+    h += 'Body odeslaného požadavku a odpovědi serveru jsou zobrazeny u každého pokusu níže.';
+    h += '</div>';
+  }
 
   h += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">';
   h += '<span style="font-weight:600;font-size:12px;color:var(--fg3)">Method:</span>';
@@ -3992,11 +4231,13 @@ function renderRequestDebug(elId, data) {
     req.attempts.forEach(function(a) {
       const ok = a.status && a.status < 400;
       const col = ok ? 'var(--green)' : 'var(--red)';
-      h += '<details style="margin-bottom:6px;border-left:3px solid ' + col + ';background:var(--bg);border-radius:0 6px 6px 0">';
+      const openFailed = (a.status && a.status >= 400) ? ' open' : '';
+      h += '<details' + openFailed + ' style="margin-bottom:6px;border-left:3px solid ' + col + ';background:var(--bg);border-radius:0 6px 6px 0">';
       h += '<summary style="padding:6px 10px;cursor:pointer;font-size:12px;list-style:none;display:flex;align-items:center;gap:6px">';
       h += '<span style="font-size:10px;color:var(--fg3)">&#9654;</span>';
       h += '<b>#' + a.attempt + '</b>';
       if (a.status) h += ' &rarr; HTTP <span style="color:' + col + ';font-weight:700">' + a.status + '</span>';
+      if (a.elapsed_ms !== undefined) h += ' <span style="color:var(--fg3);font-size:10px">(' + a.elapsed_ms + 'ms)</span>';
       if (a.error) h += ' <span style="color:var(--red)">' + escHtml(a.error) + '</span>';
       if (a.token_error) h += ' <span style="color:var(--orange)">[' + escHtml(a.token_error) + ']</span>';
       if (a.kid) h += ' <span style="color:var(--fg3)">kid=' + escHtml(a.kid) + '</span>';
@@ -4017,11 +4258,19 @@ function renderRequestDebug(elId, data) {
         h += '<div style="margin-bottom:4px;font-size:10px;font-weight:600;color:var(--fg3)">Hlavičky požadavku:</div>';
         h += '<div class="json-box" style="max-height:150px;font-size:10px;margin-bottom:6px">' + syntaxHighlight(a.headers) + '</div>';
       }
+      if (a.status && a.status >= 400 && req.body) {
+        h += '<div style="margin-bottom:4px;font-size:10px;font-weight:600;color:var(--fg3)">Odeslaný požadavek (body):</div>';
+        h += '<div class="json-box" style="max-height:200px;font-size:10px;margin-bottom:6px">' + syntaxHighlight(req.body) + '</div>';
+      }
       if (a.response !== undefined && a.response !== null && a.response !== '') {
         h += '<div style="margin-bottom:4px;font-size:10px;font-weight:600;color:var(--fg3)">Odpověď serveru:</div>';
         h += '<div class="json-box" style="max-height:200px;font-size:10px">' + syntaxHighlight(a.response) + '</div>';
       } else if (a.status && a.status >= 400) {
         h += '<div style="font-size:11px;color:var(--fg3);font-style:italic">Server nevrátil žádné tělo odpovědi</div>';
+      }
+      if (a.response_headers && a.status >= 400) {
+        h += '<div style="margin-top:6px;margin-bottom:4px;font-size:10px;font-weight:600;color:var(--fg3)">Hlavičky odpovědi:</div>';
+        h += '<div class="json-box" style="max-height:150px;font-size:10px">' + syntaxHighlight(a.response_headers) + '</div>';
       }
       h += '</div></details>';
     });
@@ -4193,9 +4442,10 @@ async function _doEnvSwitch(envKey, password) {
   sel.disabled = true;
   badge.textContent = '...';
 
+  const qi = _qAdd('POST', '/api/env/switch');
   try {
     const swAc = new AbortController();
-    const swTimer = setTimeout(() => swAc.abort(), 30000);
+    const swTimer = setTimeout(() => swAc.abort(), API_TIMEOUT);
     const body = {env: envKey};
     if (password) body.password = password;
     const res = await fetch('/api/env/switch', {
@@ -4206,9 +4456,12 @@ async function _doEnvSwitch(envKey, password) {
     });
     clearTimeout(swTimer);
     const data = await res.json();
+    _qDone(qi, res.status, null);
     return {data, oldEnv};
   } catch (e) {
-    return {error: e.message, oldEnv};
+    const msg = e.name === 'AbortError' ? 'Timeout (60 s)' : e.message;
+    _qDone(qi, 0, msg);
+    return {error: msg, oldEnv};
   } finally {
     sel.disabled = false;
   }
@@ -4292,6 +4545,7 @@ async function loadStatus() {
   elp2PopulateChips('elpSearchChips', 'elpSrchRid');
   elp2PopulateChips('elpCreateChips', 'elpCrRid');
   iropInit();
+  csInitOnce();
 }
 
 function renderDashboard(data) {
@@ -4568,7 +4822,7 @@ async function dridPriradit() {
 async function krpHledatJmenoDn() {
   const j = document.getElementById('krpJmenoDnJ').value.trim();
   const p = document.getElementById('krpJmenoDnP').value.trim();
-  const dn = document.getElementById('krpJmenoDnDn').value;
+  const dn = _val('krpJmenoDnDn');
   if (!j || !p || !dn) return toast('Vyplňte jméno, příjmení a datum narození', true);
   const data = await api('POST', '/api/krp/hledat-jmeno-dn', { jmeno: j, prijmeni: p, datumNarozeni: dn });
   showResult('krpResult', data);
@@ -4607,7 +4861,7 @@ async function krpHledatUniv() {
   const j = document.getElementById('krpUnivJ').value.trim();
   const p = document.getElementById('krpUnivP').value.trim();
   const rc = document.getElementById('krpUnivRc').value.trim();
-  const dn = document.getElementById('krpUnivDn').value;
+  const dn = _val('krpUnivDn');
   const cp = document.getElementById('krpUnivCp').value.trim();
   if (j) body.jmeno = j;
   if (p) body.prijmeni = p;
@@ -4649,7 +4903,161 @@ function _buildFromFields(fieldMap) {
   return out;
 }
 
-function _val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function _val(id) {
+  const el = document.getElementById(id);
+  if (!el) return '';
+  const v = el.value.trim();
+  if (el.classList.contains('date-cs')) return _csToIso(v);
+  return v;
+}
+function _csToIso(s) {
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})$/);
+  if (!m) return s;
+  return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+}
+function _isoToCs(s) {
+  if (!s) return '';
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return s;
+  return `${parseInt(m[3])}. ${parseInt(m[2])}. ${m[1]}`;
+}
+function _setDate(id, iso) {
+  const el = document.getElementById(id);
+  if (el) el.value = _isoToCs(iso);
+}
+function _initDateInputs() {
+  document.querySelectorAll('input.date-cs').forEach(el => {
+    el.addEventListener('input', function() {
+      let v = this.value.replace(/[^\d.]/g, '');
+      const parts = v.split('.');
+      if (parts.length === 1 && parts[0].length > 2) {
+        v = parts[0].slice(0,2) + '.' + parts[0].slice(2);
+      }
+      if (parts.length === 2 && parts[1].length > 2) {
+        v = parts[0] + '.' + parts[1].slice(0,2) + '.' + parts[1].slice(2);
+      }
+      if (v.length > 10) v = v.slice(0, 10);
+      if (v !== this.value) this.value = v;
+    });
+    el.addEventListener('blur', function() {
+      const iso = _csToIso(this.value.trim());
+      if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+        this.value = _isoToCs(iso);
+        this.style.borderColor = '';
+      } else       if (this.value.trim()) {
+        this.style.borderColor = 'var(--red)';
+      }
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// RUIAN autocomplete
+// ---------------------------------------------------------------------------
+const _ruianFieldMap = {
+  zal: { ulice: 'krpSprZalUlice', cp: 'krpSprZalCp', co: 'krpSprZalCo', obec: 'krpSprZalMesto', psc: 'krpSprZalPsc', stat: 'krpSprZalAdresaStat', ruianId: 'krpSprZalRuianId', tag: 'krpSprZalRuianTag', q: 'krpSprZalRuianQ', drop: 'krpSprZalRuianDrop' },
+  zmen: { ulice: 'krpSprZmenUlice', cp: 'krpSprZmenCp', co: 'krpSprZmenCo', obec: 'krpSprZmenMesto', psc: 'krpSprZmenPsc', stat: 'krpSprZmenAdresaStat', ruianId: 'krpSprZmenRuianId', tag: 'krpSprZmenRuianTag', q: 'krpSprZmenRuianQ', drop: 'krpSprZmenRuianDrop' },
+};
+let _ruianTimer = null;
+let _ruianActiveIdx = -1;
+let _ruianItems = [];
+
+function _ruianFill(target, item) {
+  const f = _ruianFieldMap[target];
+  if (!f) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set(f.ulice, item.ulice || '');
+  set(f.cp, item.cisloPopisne || '');
+  set(f.co, item.cisloOrientacni || '');
+  set(f.obec, item.obec || '');
+  set(f.psc, item.psc || '');
+  set(f.stat, 'CZ');
+  set(f.ruianId, item.ruianId || '');
+  const tagEl = document.getElementById(f.tag);
+  if (tagEl && item.ruianId) {
+    tagEl.innerHTML = '<span class="ruian-tag">RUIAN ' + item.ruianId + ' &middot; ' + esc(item.text || '').substring(0, 50) +
+      '<button onclick="ruianClear(\'' + target + '\')" title="Zrušit">&times;</button></span>';
+  }
+  const dropEl = document.getElementById(f.drop);
+  if (dropEl) dropEl.classList.remove('open');
+  const qEl = document.getElementById(f.q);
+  if (qEl) qEl.value = '';
+  _ruianItems = [];
+  _ruianActiveIdx = -1;
+}
+
+function ruianClear(target) {
+  const f = _ruianFieldMap[target];
+  if (!f) return;
+  document.getElementById(f.ruianId).value = '';
+  document.getElementById(f.tag).innerHTML = '';
+}
+
+async function _ruianSearch(target, query) {
+  const f = _ruianFieldMap[target];
+  if (!f) return;
+  const dropEl = document.getElementById(f.drop);
+  if (query.length < 2) { dropEl.classList.remove('open'); _ruianItems = []; return; }
+  try {
+    const resp = await fetch('/api/ruian/suggest?q=' + encodeURIComponent(query) + '&max=8');
+    const data = await resp.json();
+    _ruianItems = data.suggestions || [];
+    _ruianActiveIdx = -1;
+    if (!_ruianItems.length) {
+      dropEl.innerHTML = '<div class="ruian-opt" style="color:var(--fg3);cursor:default">Nic nenalezeno</div>';
+      dropEl.classList.add('open');
+      return;
+    }
+    dropEl.innerHTML = _ruianItems.map((s, i) =>
+      '<div class="ruian-opt" data-idx="' + i + '">' +
+      '<span class="ro-type">' + (s.type === 'AdresniMisto' ? 'AM' : s.type === 'Ulice' ? 'UL' : s.type || '?') + '</span>' +
+      '<span>' + esc(s.text) + '</span>' +
+      (s.ruianId ? '<span style="margin-left:auto;font-size:9px;color:var(--fg3)">' + s.ruianId + '</span>' : '') +
+      '</div>'
+    ).join('');
+    dropEl.querySelectorAll('.ruian-opt[data-idx]').forEach(opt => {
+      opt.addEventListener('click', () => _ruianFill(target, _ruianItems[parseInt(opt.dataset.idx)]));
+    });
+    dropEl.classList.add('open');
+  } catch (e) {
+    dropEl.innerHTML = '<div class="ruian-opt" style="color:var(--red);cursor:default">Chyba: ' + esc(e.message) + '</div>';
+    dropEl.classList.add('open');
+  }
+}
+
+function _initRuianInputs() {
+  document.querySelectorAll('.ruian-input').forEach(el => {
+    const target = el.dataset.target;
+    el.addEventListener('input', function() {
+      clearTimeout(_ruianTimer);
+      _ruianTimer = setTimeout(() => _ruianSearch(target, this.value.trim()), 300);
+    });
+    el.addEventListener('keydown', function(e) {
+      const f = _ruianFieldMap[target];
+      const dropEl = document.getElementById(f.drop);
+      if (!dropEl.classList.contains('open') || !_ruianItems.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); _ruianActiveIdx = Math.min(_ruianActiveIdx + 1, _ruianItems.length - 1); _ruianHighlight(dropEl); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); _ruianActiveIdx = Math.max(_ruianActiveIdx - 1, 0); _ruianHighlight(dropEl); }
+      else if (e.key === 'Enter' && _ruianActiveIdx >= 0) { e.preventDefault(); _ruianFill(target, _ruianItems[_ruianActiveIdx]); }
+      else if (e.key === 'Escape') { dropEl.classList.remove('open'); }
+    });
+    el.addEventListener('blur', function() {
+      setTimeout(() => {
+        const f = _ruianFieldMap[target];
+        const dropEl = document.getElementById(f.drop);
+        if (dropEl) dropEl.classList.remove('open');
+      }, 200);
+    });
+  });
+}
+
+function _ruianHighlight(dropEl) {
+  dropEl.querySelectorAll('.ruian-opt').forEach((o, i) => o.classList.toggle('active', i === _ruianActiveIdx));
+  const active = dropEl.querySelector('.ruian-opt.active');
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
 
 async function krpZalozit() {
   const jsonEl = document.getElementById('krpSprZalozitJson');
@@ -4667,16 +5075,22 @@ async function krpZalozit() {
     body.datumNarozeni = _val('krpSprZalDatNar');
     const rc = _val('krpSprZalRc'); if (rc) body.rodneCislo = rc;
     const pohl = _val('krpSprZalPohlavi'); if (pohl) body.pohlavi = pohl;
-    const stat = _val('krpSprZalStat'); if (stat && stat !== 'OTHER') body.statniPrislusnost = stat;
+    const stat = _val('krpSprZalStat'); if (stat) body.statniObcanstvi = [stat];
     const ulice = _val('krpSprZalUlice'), mesto = _val('krpSprZalMesto'), psc = _val('krpSprZalPsc');
-    if (ulice || mesto || psc) {
-      body.adresa = {};
-      if (ulice) body.adresa.ulice = ulice;
-      if (mesto) body.adresa.mesto = mesto;
-      if (psc) body.adresa.psc = psc;
+    const cp = _val('krpSprZalCp'), co = _val('krpSprZalCo'), adStat = _val('krpSprZalAdresaStat');
+    const ruianId = _val('krpSprZalRuianId');
+    if (ulice || mesto || psc || ruianId) {
+      body.adresaPobytu = {};
+      if (ruianId) body.adresaPobytu.ruianId = parseInt(ruianId) || undefined;
+      if (ulice) body.adresaPobytu.ulice = ulice;
+      if (cp) body.adresaPobytu.cisloPopisne = parseInt(cp) || undefined;
+      if (co) body.adresaPobytu.cisloOrientacni = co;
+      if (mesto) body.adresaPobytu.obec = mesto;
+      if (psc) body.adresaPobytu.psc = parseInt(psc) || undefined;
+      if (adStat) body.adresaPobytu.stat = adStat;
     }
-    const tel = _val('krpSprZalTelefon'); if (tel) body.telefon = tel;
-    const email = _val('krpSprZalEmail'); if (email) body.email = email;
+    const tel = _val('krpSprZalTelefon'); if (tel) body.kontaktniTelefon = tel;
+    const email = _val('krpSprZalEmail'); if (email) body.kontaktniEmail = email;
     const dtyp = _val('krpSprZalDokladTyp'), dcislo = _val('krpSprZalDokladCislo');
     if (dtyp && dcislo) {
       const dok = { typDokladu: dtyp, cislo: dcislo };
@@ -4684,14 +5098,17 @@ async function krpZalozit() {
       body.doklady = [dok];
     }
     const cpoj = _val('krpSprZalCisloPoj'), kpoj = _val('krpSprZalPojistovna');
-    if (cpoj || kpoj) {
-      body.pojisteni = {};
-      if (cpoj) body.pojisteni.cisloPojistence = cpoj;
-      if (kpoj) body.pojisteni.kodPojistovny = kpoj;
+    if (cpoj) body.cisloPojistence = cpoj;
+    if (kpoj) {
+      body.zdravotniPojisteni = [{ kodPojistovny: kpoj }];
     }
   }
   const data = await api('POST', '/api/krp/zalozit-pacienta', body);
   showResult('krpSpravaResult', data);
+  if (data?.status === 428) {
+    toast('HTTP 428 Precondition Required — KRP zamítl založení. Pacient mohl být již dříve založen, nebo zůstal v nekonzistentním stavu z předchozího pokusu. Zkuste změnit údaje nebo kontaktujte správce T2.', true);
+    return;
+  }
   const rid = data?.data?.odpovedData?.rid || data?.data?.rid;
   if (rid) toast(`Pacient založen, RID: ${rid}`);
 }
@@ -4725,11 +5142,17 @@ async function krpZmenit() {
                 datumNarozeni: 'krpSprZmenDatNar', pohlavi: 'krpSprZmenPohlavi' };
     for (const [k, id] of Object.entries(f)) { const v = _val(id); if (v) body[k] = v; }
     const ulice = _val('krpSprZmenUlice'), mesto = _val('krpSprZmenMesto'), psc = _val('krpSprZmenPsc');
-    if (ulice || mesto || psc) {
-      body.adresa = {};
-      if (ulice) body.adresa.ulice = ulice;
-      if (mesto) body.adresa.mesto = mesto;
-      if (psc) body.adresa.psc = psc;
+    const cp = _val('krpSprZmenCp'), co = _val('krpSprZmenCo'), adStat = _val('krpSprZmenAdresaStat');
+    const ruianId = _val('krpSprZmenRuianId');
+    if (ulice || mesto || psc || ruianId) {
+      body.adresaPobytu = {};
+      if (ruianId) body.adresaPobytu.ruianId = parseInt(ruianId) || undefined;
+      if (ulice) body.adresaPobytu.ulice = ulice;
+      if (cp) body.adresaPobytu.cisloPopisne = parseInt(cp) || undefined;
+      if (co) body.adresaPobytu.cisloOrientacni = co;
+      if (mesto) body.adresaPobytu.obec = mesto;
+      if (psc) body.adresaPobytu.psc = parseInt(psc) || undefined;
+      if (adStat) body.adresaPobytu.stat = adStat;
     }
     const tel = _val('krpSprZmenTelefon'); if (tel) body.telefon = tel;
     const email = _val('krpSprZmenEmail'); if (email) body.email = email;
@@ -4875,12 +5298,14 @@ async function krpHromNahrat() {
   const blob = new Blob([csvData.text], { type: 'text/csv' });
   formData.append('file', blob, csvData.name);
 
+  const qi = _qAdd('POST', '/api/krp/ztotozneni-zadost');
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 60000);
+    const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT);
     const resp = await fetch('/api/krp/ztotozneni-zadost', { method: 'POST', body: formData, signal: ctrl.signal });
     clearTimeout(timer);
     const data = await resp.json();
+    _qDone(qi, resp.status, null);
     showResult('krpHromadneResult', data);
 
     const respData = data?.data?.odpovedData || data?.odpovedData || data?.data || {};
@@ -4892,7 +5317,9 @@ async function krpHromNahrat() {
       toast('Žádost odeslána, zkontrolujte odpověď');
     }
   } catch (e) {
-    toast('Chyba: ' + e.message, true);
+    const msg = e.name === 'AbortError' ? 'Timeout (60 s)' : e.message;
+    _qDone(qi, 0, msg);
+    toast('Chyba: ' + msg, true);
   }
 }
 
@@ -5047,6 +5474,298 @@ async function krpNotifZrusit() {
 }
 
 // ---------------------------------------------------------------------------
+// Univerzální cache a loader číselníků (KRP/KRZP sdílené)
+// ---------------------------------------------------------------------------
+const _csCache = {};
+let _csSource = {};
+
+const _csFallback = {
+  pohlavi: [
+    {kod:'1',nazev:'Muž'},{kod:'2',nazev:'Žena'},{kod:'0',nazev:'Neuvedeno'},
+  ],
+  druh_dokladu: [
+    {kod:'OP',nazev:'Občanský průkaz'},{kod:'PAS',nazev:'Cestovní pas'},
+    {kod:'OPR',nazev:'Průkaz o povolení k pobytu'},{kod:'PR',nazev:'Průkaz žadatele o mezinárodní ochranu'},
+    {kod:'VS',nazev:'Vízový štítek'},{kod:'PP',nazev:'Povolení k pobytu (karta)'},
+  ],
+  zdravotni_pojistovna: [
+    {kod:'111',nazev:'VZP – Všeobecná zdravotní pojišťovna'},
+    {kod:'201',nazev:'VoZP – Vojenská zdravotní pojišťovna'},
+    {kod:'205',nazev:'ČPZP – Česká průmyslová ZP'},
+    {kod:'207',nazev:'OZP – Oborová zdravotní pojišťovna'},
+    {kod:'209',nazev:'ZPŠ – Zaměstnanecká pojišťovna Škoda'},
+    {kod:'211',nazev:'ZP MV ČR – ZP ministerstva vnitra'},
+    {kod:'213',nazev:'RBP – Revírní bratrská pokladna'},
+  ],
+  stat: [
+    {kod:'CZ',nazev:'Česká republika'},{kod:'SK',nazev:'Slovensko'},
+    {kod:'DE',nazev:'Německo'},{kod:'AT',nazev:'Rakousko'},{kod:'PL',nazev:'Polsko'},
+    {kod:'HU',nazev:'Maďarsko'},{kod:'UA',nazev:'Ukrajina'},{kod:'RO',nazev:'Rumunsko'},
+    {kod:'BG',nazev:'Bulharsko'},{kod:'HR',nazev:'Chorvatsko'},{kod:'SI',nazev:'Slovinsko'},
+    {kod:'IT',nazev:'Itálie'},{kod:'FR',nazev:'Francie'},{kod:'GB',nazev:'Velká Británie'},
+    {kod:'US',nazev:'USA'},{kod:'RU',nazev:'Rusko'},{kod:'VN',nazev:'Vietnam'},
+    {kod:'MN',nazev:'Mongolsko'},{kod:'CN',nazev:'Čína'},{kod:'BY',nazev:'Bělorusko'},
+  ],
+};
+
+function _krpCiselnikExtract(r) {
+  if (!r) return [];
+  const d = r.data || r;
+  const od = d.odpovedData || d;
+  return Array.isArray(od) ? od : [];
+}
+
+function _fmtDate(s) {
+  if (!s) return '—';
+  const iso = s.substring(0, 10);
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${parseInt(m[3])}. ${parseInt(m[2])}. ${m[1]}`;
+}
+
+async function _csLoad(nazev) {
+  if (_csCache[nazev] && _csCache[nazev].length) return _csCache[nazev];
+  try {
+    const r = await api('GET', `/api/krp/ciselnik/${nazev}`);
+    const items = _krpCiselnikExtract(r).filter(it => it.kod);
+    if (items.length) {
+      _csCache[nazev] = items;
+      _csSource[nazev] = 'api';
+      return items;
+    }
+  } catch (e) {
+    console.warn(`[CS] API selhalo pro ${nazev}:`, e);
+  }
+  if (_csFallback[nazev]) {
+    _csCache[nazev] = _csFallback[nazev];
+    _csSource[nazev] = 'fallback';
+    console.info(`[CS] ${nazev}: použita výchozí data (${_csFallback[nazev].length} položek)`);
+    return _csFallback[nazev];
+  }
+  return [];
+}
+
+function _csFillSelectSync(selectId, items, emptyLabel, formatFn) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${emptyLabel || '-- vyberte --'}</option>`;
+  const fmt = formatFn || (it => `${it.kod} — ${it.nazev || it.kod}`);
+  (items || []).forEach(it => {
+    const o = document.createElement('option');
+    o.value = it.kod;
+    o.textContent = fmt(it);
+    sel.appendChild(o);
+  });
+  if (prev) sel.value = prev;
+}
+
+async function _csFillSelect(selectId, nazev, emptyLabel, formatFn) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const items = await _csLoad(nazev);
+  _csFillSelectSync(selectId, items, emptyLabel, formatFn);
+  return items;
+}
+
+const _csFormDefs = [
+  ['krpSprZalPohlavi','pohlavi','-- vyberte --'],
+  ['krpSprZalStat','stat','-- vyberte --'],
+  ['krpSprZalDokladTyp','druh_dokladu','-- žádný --'],
+  ['krpSprZalPojistovna','zdravotni_pojistovna','-- vyberte --'],
+  ['krpSprZmenPohlavi','pohlavi','-- beze změny --'],
+  ['krpDokTyp','druh_dokladu','-- vyberte --'],
+  ['krpCizStat','stat','-- vyberte --'],
+  ['krpDokStat','stat','-- vyberte --'],
+  ['ezCrPoj','zdravotni_pojistovna','-- vyberte --'],
+];
+
+async function _csInitAllKrpForms() {
+  await Promise.all(_csFormDefs.map(([id, cs, lbl]) => _csFillSelect(id, cs, lbl)));
+  _csUpdateStatus();
+}
+
+function _csUseFallback() {
+  for (const [nazev, items] of Object.entries(_csFallback)) {
+    _csCache[nazev] = items;
+    _csSource[nazev] = 'fallback';
+  }
+  _csFormDefs.forEach(([id, cs, lbl]) => _csFillSelectSync(id, _csCache[cs] || [], lbl));
+  _csUpdateStatus();
+  toast('Formuláře naplněny výchozími daty');
+}
+
+function _csUpdateStatus() {
+  const el = document.getElementById('csStatus');
+  if (!el) return;
+  const names = [...new Set(_csFormDefs.map(d => d[1]))];
+  const apiCount = names.filter(n => _csSource[n] === 'api').length;
+  const fbCount = names.filter(n => _csSource[n] === 'fallback').length;
+  const emptyCount = names.filter(n => !_csCache[n] || !_csCache[n].length).length;
+  let txt = '';
+  if (apiCount) txt += `${apiCount} z API`;
+  if (fbCount) txt += (txt ? ', ' : '') + `${fbCount} výchozí`;
+  if (emptyCount) txt += (txt ? ', ' : '') + `${emptyCount} prázdné`;
+  el.textContent = txt;
+  if (fbCount && !apiCount) el.style.color = 'var(--orange)';
+  else if (emptyCount) el.style.color = 'var(--red)';
+  else el.style.color = 'var(--green)';
+}
+
+let _csInitDone = false;
+function csInitOnce() {
+  if (_csInitDone) return;
+  _csInitDone = true;
+  _csInitAllKrpForms().then(() => {
+    console.log('[CS] Číselníky naplněny do formulářů');
+  }).catch(e => {
+    console.warn('[CS] Chyba při načítání číselníků, používám fallback:', e);
+    _csUseFallback();
+  });
+}
+
+function csForceFromApi() {
+  for (const n of Object.keys(_csCache)) delete _csCache[n];
+  _csSource = {};
+  _csInitDone = false;
+  csInitOnce();
+  toast('Obnovuji číselníky z API…');
+}
+
+// ---------------------------------------------------------------------------
+// KRP – Číselníky (prohlížeč)
+// ---------------------------------------------------------------------------
+async function krpCiselnik() {
+  const nazev = document.getElementById('krpCiselnikSel').value;
+  const r = await api('GET', `/api/krp/ciselnik/${nazev}`);
+  showResult('krpCiselnikResult', r);
+  _krpCiselnikRenderTable(nazev, r);
+}
+
+async function krpCiselnikAll() {
+  const ciselniky = ['pohlavi','stat','druh_dokladu','zdravotni_pojistovna','country_service_context',
+                     'komory','obor','specializace','typ_vykonu_povolani','zakladni_kmen','certifikovany_kurz'];
+  toast(`Načítám ${ciselniky.length} číselníků…`);
+  const results = {};
+  for (const c of ciselniky) {
+    const r = await api('GET', `/api/krp/ciselnik/${c}`);
+    results[c] = r;
+  }
+  showResult('krpCiselnikResult', results);
+  const tableCard = document.getElementById('krpCiselnikTableCard');
+  const title = document.getElementById('krpCiselnikTableTitle');
+  const tbody = document.querySelector('#krpCiselnikTable tbody');
+  tbody.innerHTML = '';
+  let totalItems = 0;
+  title.textContent = 'Všechny číselníky';
+  for (const [name, r] of Object.entries(results)) {
+    const items = _krpCiselnikExtract(r);
+    if (!items.length) continue;
+    totalItems += items.length;
+    const hdr = document.createElement('tr');
+    hdr.innerHTML = `<td colspan="4" style="background:var(--accent);color:#fff;font-weight:700;padding:6px 8px">${name} (${items.length})</td>`;
+    tbody.appendChild(hdr);
+    items.forEach(it => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><code>${it.kod}</code></td><td>${it.nazev||''}</td><td>${_fmtDate(it.platnostOd)}</td><td>${_fmtDate(it.platnostDo)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  tableCard.style.display = '';
+  toast(`Načteno ${ciselniky.length} číselníků, celkem ${totalItems} položek`);
+}
+
+async function csBrowseSzzList() {
+  const r = await api('GET', '/api/szz/ciselniky');
+  if (r && r.data) {
+    const items = Array.isArray(r.data) ? r.data : [];
+    let html = `<strong>${items.length} číselníků:</strong><br>`;
+    items.forEach(it => {
+      const kod = it.kod || '';
+      const nazev = (it.preklady && it.preklady.cs && it.preklady.cs.nazev) || '';
+      html += `<code style="cursor:pointer;color:var(--accent)" onclick="document.getElementById('csSzzKod').value='${kod}';csBrowseSzzPolozky()">${kod}</code> — ${esc(nazev)}<br>`;
+    });
+    document.getElementById('csSzzBrowseResult').innerHTML = html;
+  } else {
+    showResult('csSzzBrowseResult', r);
+  }
+}
+
+async function csBrowseSzzPolozky() {
+  const kod = document.getElementById('csSzzKod').value.trim();
+  if (!kod) return toast('Zadejte kód číselníku', true);
+  const r = await api('GET', `/api/szz/ciselniky/${kod}/polozky`);
+  if (r && r.data && Array.isArray(r.data)) {
+    const items = r.data;
+    let html = `<strong>${kod}</strong> — ${items.length} položek:<br><table class="result-table" style="width:100%;font-size:12px;margin-top:6px"><thead><tr><th>Kód</th><th>Název</th><th>Verze</th></tr></thead><tbody>`;
+    items.forEach(it => {
+      const nazev = (it.preklady && it.preklady.cs && it.preklady.cs.nazev) || '';
+      html += `<tr><td><code>${esc(it.kod||'')}</code></td><td>${esc(nazev)}</td><td>${esc(it.verze||'')}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('csSzzBrowseResult').innerHTML = html;
+  } else {
+    showResult('csSzzBrowseResult', r);
+  }
+}
+
+async function csBrowseElpList() {
+  const r = await api('GET', '/api/elp2/ciselniky');
+  if (r && r.data) {
+    const items = Array.isArray(r.data) ? r.data : [];
+    let html = `<strong>${items.length} číselníků:</strong><br>`;
+    items.forEach(it => {
+      const kod = it.kod || '';
+      const nazev = (it.preklady && it.preklady.cs && it.preklady.cs.nazev) || '';
+      html += `<code style="cursor:pointer;color:var(--accent)" onclick="document.getElementById('csElpKod').value='${kod}';csBrowseElpPolozky()">${kod}</code> — ${esc(nazev)}<br>`;
+    });
+    document.getElementById('csElpBrowseResult').innerHTML = html;
+  } else {
+    showResult('csElpBrowseResult', r);
+  }
+}
+
+async function csBrowseElpPolozky() {
+  const kod = document.getElementById('csElpKod').value.trim();
+  if (!kod) return toast('Zadejte kód číselníku', true);
+  const r = await api('GET', `/api/elp2/ciselniky/${kod}/polozky`);
+  if (r && r.data && Array.isArray(r.data)) {
+    const items = r.data;
+    let html = `<strong>${kod}</strong> — ${items.length} položek:<br><table class="result-table" style="width:100%;font-size:12px;margin-top:6px"><thead><tr><th>Kód</th><th>Název</th><th>Verze</th></tr></thead><tbody>`;
+    items.forEach(it => {
+      const nazev = (it.preklady && it.preklady.cs && it.preklady.cs.nazev) || '';
+      html += `<tr><td><code>${esc(it.kod||'')}</code></td><td>${esc(nazev)}</td><td>${esc(it.verze||'')}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('csElpBrowseResult').innerHTML = html;
+  } else {
+    showResult('csElpBrowseResult', r);
+  }
+}
+
+async function krpLoadStatSelect(selectId) {
+  await _csFillSelect(selectId, 'stat', '-- vyberte --');
+  const items = _csCache['stat'] || [];
+  toast(`Načteno ${items.length} států`);
+}
+
+function _krpCiselnikRenderTable(nazev, r) {
+  const items = _krpCiselnikExtract(r);
+  const tableCard = document.getElementById('krpCiselnikTableCard');
+  const title = document.getElementById('krpCiselnikTableTitle');
+  const tbody = document.querySelector('#krpCiselnikTable tbody');
+  tbody.innerHTML = '';
+  if (!items.length) { tableCard.style.display = 'none'; return; }
+  title.textContent = `${nazev} (${items.length} položek)`;
+  items.forEach(it => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><code>${it.kod}</code></td><td>${it.nazev||''}</td><td>${_fmtDate(it.platnostOd)}</td><td>${_fmtDate(it.platnostDo)}</td>`;
+    tbody.appendChild(tr);
+  });
+  tableCard.style.display = '';
+}
+
+// ---------------------------------------------------------------------------
 // KRZP – Zdravotničtí pracovníci
 // ---------------------------------------------------------------------------
 async function krzpHledatKrzpid() {
@@ -5059,7 +5778,7 @@ async function krzpHledatKrzpid() {
 async function krzpHledatJmeno() {
   const j = document.getElementById('krzpJmeno').value.trim();
   const p = document.getElementById('krzpPrijmeni').value.trim();
-  const d = document.getElementById('krzpDatNar').value;
+  const d = _val('krzpDatNar');
   if (!j || !p || !d) return toast('Vyplňte jméno, příjmení a datum narození', true);
   const data = await api('POST', '/api/krzp/hledat-jmeno', {
     jmeno: j, prijmeni: p, datum_narozeni: d + 'T00:00:00'
@@ -5076,7 +5795,7 @@ async function krzpHledatZamestnavatel() {
   krzpRenderCards(data);
 }
 async function krzpHledatPersonalistika() {
-  const d = document.getElementById('krzpPersDatNar').value;
+  const d = _val('krzpPersDatNar');
   if (!d) return toast('Datum narození je povinné', true);
   const body = { datum_narozeni: d + 'T00:00:00' };
   const j = document.getElementById('krzpPersJmeno').value.trim();
@@ -5181,6 +5900,19 @@ async function krzpCiselnik() {
   const nazev = document.getElementById('krzpCiselnikSel').value;
   const r = await api('POST', `/api/krzp/ciselnik/${nazev}`);
   showResult('krzpCiselnikResult', r);
+  const items = _krpCiselnikExtract(r);
+  const tableCard = document.getElementById('krzpCiselnikTableCard');
+  const title = document.getElementById('krzpCiselnikTableTitle');
+  const tbody = document.querySelector('#krzpCiselnikTable tbody');
+  tbody.innerHTML = '';
+  if (!items.length) { tableCard.style.display = 'none'; return; }
+  title.textContent = `${nazev} (${items.length} položek)`;
+  items.forEach(it => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><code>${it.kod}</code></td><td>${it.nazev||''}</td><td>${_fmtDate(it.platnostOd)}</td><td>${_fmtDate(it.platnostDo)}</td>`;
+    tbody.appendChild(tr);
+  });
+  tableCard.style.display = '';
 }
 
 async function krzpReklamace() {
@@ -5349,8 +6081,8 @@ async function duJsuDiagnose() {
 }
 
 async function duVyhledej() {
-  const od = document.getElementById('duOd').value;
-  const doD = document.getElementById('duDo').value;
+  const od = _val('duOd');
+  const doD = _val('duDo');
   if (!od || !doD) return toast('Zadejte datum od/do', true);
   const pac = document.getElementById('duPacient').value.trim() || null;
   const size = parseInt(document.getElementById('duSize').value) || 10;
@@ -5433,8 +6165,8 @@ function duInitCreate() {
   const weekAgoStr = weekAgo.toISOString().slice(0, 10);
   const prPrijeti = document.getElementById('duPrPrijeti');
   const prProp = document.getElementById('duPrPropusteni');
-  if (prPrijeti && !prPrijeti.value) prPrijeti.value = weekAgoStr;
-  if (prProp && !prProp.value) prProp.value = todayStr;
+  if (prPrijeti && !prPrijeti.value) prPrijeti.value = _isoToCs(weekAgoStr);
+  if (prProp && !prProp.value) prProp.value = _isoToCs(todayStr);
   const labDatum = document.getElementById('duLabDatumOdberu');
   if (labDatum && !labDatum.value) labDatum.value = nowStr;
   const kompDatum = document.getElementById('duKompDatum');
@@ -5852,7 +6584,7 @@ async function szzCreateInit() {
   const today = new Date().toISOString().split('T')[0];
   const now = new Date().toTimeString().slice(0, 5);
 
-  document.querySelectorAll('#szz-create-panel input[type="date"]').forEach(el => el.value = today);
+  document.querySelectorAll('#szz-create-panel input.date-cs').forEach(el => el.value = _isoToCs(today));
   document.querySelectorAll('#szz-create-panel input[type="time"]').forEach(el => el.value = now);
 
   await Promise.all([
@@ -6123,8 +6855,7 @@ async function elp2CreateInit() {
   if (elp2Inited) return;
   elp2Inited = true;
   const today = new Date().toISOString().split('T')[0];
-  const el = document.getElementById('elpCrDatumVystaveni');
-  if (el) el.value = today;
+  _setDate('elpCrDatumVystaveni', today);
 
   await Promise.all([
     elp2FillSelect('elpCrAkce', 'akce-ro'),
@@ -6146,8 +6877,8 @@ async function elp2Vyhledej() {
   const rid = document.getElementById('elpSrchRid').value.trim();
   const ico = document.getElementById('elpSrchIco').value.trim();
   const fulltext = document.getElementById('elpSrchFulltext').value.trim();
-  const datumOd = document.getElementById('elpSrchDatumOd').value;
-  const datumDo = document.getElementById('elpSrchDatumDo').value;
+  const datumOd = _val('elpSrchDatumOd');
+  const datumDo = _val('elpSrchDatumDo');
   const jenPlatne = document.getElementById('elpSrchJenPlatne').value;
   const sort = document.getElementById('elpSrchSort').value;
   const order = document.getElementById('elpSrchOrder').value;
@@ -6312,8 +7043,8 @@ function ezBuildSearchBody() {
   const pac = document.getElementById('ezSrcPacient').value.trim();
   const aut = document.getElementById('ezSrcAutor').value.trim();
   const prij = document.getElementById('ezSrcPrijemce').value.trim();
-  const od = document.getElementById('ezSrcOd').value;
-  const doo = document.getElementById('ezSrcDo').value;
+  const od = _val('ezSrcOd');
+  const doo = _val('ezSrcDo');
   const stav = document.getElementById('ezSrcStav').value;
   const prio = document.getElementById('ezSrcPriorita').value;
   const ft = document.getElementById('ezSrcFulltext').value.trim();
@@ -7624,15 +8355,16 @@ async function loadDocs() {
   html += '</tbody></table></div>';
 
   // Service endpoints
-  const svcOrder = ['KRP','KRZP','RO','DU','SZZ','ELP','eZadanky','Notifikace'];
-  const svcIcons = {KRP:'&#9823;', KRZP:'&#9764;', RO:'&#9888;', DU:'&#9993;', SZZ:'&#10010;', ELP:'&#9997;', eZadanky:'&#10148;', Notifikace:'&#9881;'};
+  const svcOrder = ['KRP','KRZP','RO','TermX','DU','SZZ','ELP','eZadanky','Notifikace','EZCA2'];
+  const svcIcons = {KRP:'&#9823;', KRZP:'&#9764;', RO:'&#9888;', TermX:'&#128218;', DU:'&#9993;', SZZ:'&#10010;', ELP:'&#9997;', eZadanky:'&#10148;', Notifikace:'&#9881;', EZCA2:'&#128274;'};
   const methodColors = {GET:'var(--green)', POST:'var(--accent)', PATCH:'var(--orange)', PUT:'var(--orange)', DELETE:'var(--red)'};
 
   svcOrder.forEach(key => {
     const svc = data.services[key];
     if (!svc) return;
     html += '<div class="card">';
-    html += '<div class="card-title">' + (svcIcons[key]||'') + ' ' + esc(svc.name) + ' <span style="font-size:10px;color:var(--fg3);font-weight:400;text-transform:none;letter-spacing:0">(base: ' + esc(svc.base) + ')</span></div>';
+    const ver = svc.version ? ' ' + svc.version : '';
+    html += '<div class="card-title">' + (svcIcons[key]||'') + ' ' + esc(svc.name) + ' <span style="font-size:10px;color:var(--fg3);font-weight:400;text-transform:none;letter-spacing:0">(base: ' + esc(svc.base) + ver + ')</span></div>';
     if (svc.note) html += '<p style="font-size:12px;color:var(--orange);margin-bottom:10px">' + esc(svc.note) + '</p>';
     html += '<table><thead><tr><th style="width:70px">Metoda</th><th>Endpoint</th><th>Popis</th><th>Plná URL</th></tr></thead><tbody>';
     svc.endpoints.forEach(ep => {
@@ -7739,6 +8471,92 @@ function iropGetParams() {
   };
 }
 
+function _iropRenderDebug(dbg, passed) {
+  if (!dbg || !Object.keys(dbg).length) return '';
+  const isErr = !passed;
+  const hasRetryErrors = (dbg.attempts || []).some(function(a) { return a.status && a.status >= 400; });
+  const borderCol = isErr ? 'var(--red)' : hasRetryErrors ? 'var(--orange,#e89b00)' : 'rgba(91,141,239,.25)';
+  const bgCol = isErr ? 'rgba(255,85,85,.06)' : hasRetryErrors ? 'rgba(232,155,0,.08)' : 'rgba(91,141,239,.04)';
+
+  let h = '<details open style="margin-bottom:6px;border:1px solid ' + borderCol + ';border-radius:6px;background:' + bgCol + ';overflow:hidden">';
+  h += '<summary style="padding:6px 10px;cursor:pointer;font-weight:700;font-size:11px;color:' + (isErr ? 'var(--red)' : 'var(--fg3)') + '">&#128233; Request</summary>';
+  h += '<div style="padding:4px 10px 10px">';
+
+  h += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;font-size:11px">';
+  if (dbg.method) h += '<span><b>Method:</b> <span class="mono">' + escHtml(dbg.method) + '</span></span>';
+  if (dbg.url) h += '<span><b>URL:</b> <span class="mono" style="font-size:10px;word-break:break-all">' + escHtml(dbg.url) + '</span></span>';
+  if (dbg.kid_variant) h += '<span><b>JWT kid:</b> <span class="mono" style="color:var(--accent)">' + escHtml(dbg.kid_variant) + '</span></span>';
+  h += '</div>';
+
+  if (dbg.headers) {
+    h += '<details style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">HTTP hlavičky</summary>';
+    h += '<div class="json-box" style="max-height:150px;font-size:10px;margin-top:4px">' + syntaxHighlight(dbg.headers) + '</div></details>';
+  }
+
+  if (dbg.body) {
+    h += '<details open style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">Request body (odeslaný požadavek)</summary>';
+    h += '<div class="json-box" style="max-height:250px;font-size:10px;margin-top:4px">' + syntaxHighlight(dbg.body) + '</div></details>';
+  }
+
+  if (dbg.attempts && dbg.attempts.length) {
+    var failedAttempts = dbg.attempts.filter(function(a) { return a.status && a.status >= 400; });
+    if (hasRetryErrors) {
+      h += '<div style="margin-bottom:6px;padding:6px 8px;background:rgba(232,155,0,.12);border:1px solid rgba(232,155,0,.3);border-radius:4px;font-size:10px;color:var(--orange,#e89b00)">';
+      h += '<b>&#9888;</b> Retry: ' + failedAttempts.map(function(a) { return '#' + a.attempt + ' HTTP ' + a.status; }).join(', ');
+      h += '</div>';
+    }
+    h += '<details' + (dbg.attempts.length > 1 ? ' open' : '') + ' style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">Pokusy (' + dbg.attempts.length + ')</summary>';
+    h += '<div style="margin-top:4px">';
+    dbg.attempts.forEach(function(a) {
+      var ok = a.status && a.status < 400;
+      var col = ok ? 'var(--green)' : 'var(--red)';
+      var openIt = (!ok) ? ' open' : '';
+      h += '<details' + openIt + ' style="margin-bottom:4px;border-left:3px solid ' + col + ';background:var(--bg);border-radius:0 4px 4px 0">';
+      h += '<summary style="padding:4px 8px;cursor:pointer;font-size:11px;list-style:none;display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:9px;color:var(--fg3)">&#9654;</span>';
+      h += '<b>#' + a.attempt + '</b>';
+      if (a.status) h += ' &rarr; HTTP <span style="color:' + col + ';font-weight:700">' + a.status + '</span>';
+      if (a.elapsed_ms != null) h += ' <span style="color:var(--fg3);font-size:10px">(' + a.elapsed_ms + 'ms)</span>';
+      if (a.token_error) h += ' <span style="color:var(--orange)">[' + escHtml(a.token_error) + ']</span>';
+      h += '</summary>';
+      h += '<div style="padding:4px 8px 6px">';
+      if (a.headers) {
+        h += '<div style="margin-bottom:4px;font-size:9px;font-weight:600;color:var(--fg3)">Hlavičky požadavku:</div>';
+        h += '<div class="json-box" style="max-height:120px;font-size:9px;margin-bottom:4px">' + syntaxHighlight(a.headers) + '</div>';
+      }
+      if (!ok && dbg.body) {
+        h += '<div style="margin-bottom:4px;font-size:9px;font-weight:600;color:var(--fg3)">Odeslaný požadavek (body):</div>';
+        h += '<div class="json-box" style="max-height:150px;font-size:9px;margin-bottom:4px">' + syntaxHighlight(dbg.body) + '</div>';
+      }
+      if (a.response !== undefined && a.response !== null && a.response !== '') {
+        h += '<div style="margin-bottom:4px;font-size:9px;font-weight:600;color:var(--fg3)">Odpověď serveru:</div>';
+        h += '<div class="json-box" style="max-height:150px;font-size:9px">' + syntaxHighlight(a.response) + '</div>';
+      } else if (!ok) {
+        h += '<div style="font-size:10px;color:var(--fg3);font-style:italic">Server nevrátil žádné tělo odpovědi</div>';
+      }
+      if (a.response_headers && !ok) {
+        h += '<div style="margin-top:4px;margin-bottom:4px;font-size:9px;font-weight:600;color:var(--fg3)">Hlavičky odpovědi:</div>';
+        h += '<div class="json-box" style="max-height:100px;font-size:9px">' + syntaxHighlight(a.response_headers) + '</div>';
+      }
+      h += '</div></details>';
+    });
+    h += '</div></details>';
+  }
+
+  if (dbg.tried_variants && dbg.tried_variants.length) {
+    h += '<details style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">DÚ kid varianty (' + dbg.tried_variants.length + ')</summary>';
+    h += '<div class="json-box" style="max-height:150px;font-size:9px;margin-top:4px">' + syntaxHighlight(dbg.tried_variants) + '</div></details>';
+  }
+
+  if (dbg.du_debug) {
+    h += '<details style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">DÚ debug</summary>';
+    h += '<div class="json-box" style="max-height:200px;font-size:9px;margin-top:4px">' + syntaxHighlight(dbg.du_debug) + '</div></details>';
+  }
+
+  h += '</div></details>';
+  return h;
+}
+
 function iropRenderSteps(elId, data) {
   const el = document.getElementById(elId);
   if (!el) return;
@@ -7762,19 +8580,25 @@ function iropRenderSteps(elId, data) {
     html += '<span style="font-weight:600;font-size:11px;color:var(--fg3);min-width:18px">[' + (i+1) + ']</span> ';
     html += badge + ' ';
     html += '<span style="font-size:12px;font-weight:600;color:var(--fg1)">' + esc(step.name) + '</span>';
+    let extras = [];
+    if (step.elapsed_ms != null) extras.push(step.elapsed_ms + 'ms');
+    if (step.status) extras.push('HTTP ' + step.status);
+    if (step._items_count != null) extras.push(step._items_count + ' položek');
+    if (step._rid) extras.push('RID: ' + step._rid);
     html += '<span style="margin-left:auto;font-size:11px;color:var(--fg3);font-family:var(--mono)">' +
-      (step.elapsed_ms != null ? step.elapsed_ms + 'ms' : '') +
-      (step.status ? ' · HTTP ' + step.status : '') + '</span>';
+      extras.join(' · ') + '</span>';
     html += '</div>';
 
-    html += '<div id="' + uid + '" style="display:none;margin-top:8px">';
+    const stepOpen = !step.passed ? 'block' : 'none';
+    html += '<div id="' + uid + '" style="display:' + stepOpen + ';margin-top:8px">';
     if (step.error) {
       html += '<div style="padding:6px 10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:4px;font-size:11px;color:#991b1b;margin-bottom:6px">' + esc(step.error) + '</div>';
     }
+    if (step._api_error && step._api_error !== step.error) {
+      html += '<div style="padding:6px 10px;background:#fefce8;border:1px solid #fde68a;border-radius:4px;font-size:11px;color:#92400e;margin-bottom:6px">API: ' + esc(step._api_error) + '</div>';
+    }
     if (step._debug && Object.keys(step._debug).length) {
-      html += '<div style="font-size:10px;font-weight:600;color:var(--fg3);margin-bottom:2px">Debug info</div>';
-      html += '<pre class="json-box" style="max-height:200px;font-size:10px;margin-bottom:6px">' +
-        syntaxHighlight(JSON.stringify(step._debug, null, 2)) + '</pre>';
+      html += _iropRenderDebug(step._debug, step.passed);
     }
     if (step.data != null) {
       html += '<div style="font-size:10px;font-weight:600;color:var(--fg3);margin-bottom:2px">Response</div>';
@@ -7802,7 +8626,7 @@ async function iropRunAll() {
   const summary = document.getElementById('iropAllSummary');
   btn.disabled = true;
   btn.textContent = 'Probíhá testování...';
-  progress.innerHTML = '<span class="spinner"></span> Spouštím všech 11 scénářů...';
+  progress.innerHTML = '<span class="spinner"></span> Spouštím všech 13 scénářů...';
   summary.innerHTML = '';
 
   const params = iropGetParams();
@@ -7830,7 +8654,12 @@ async function iropRunAll() {
       '<td><strong>' + esc(s.scenario_id) + '</strong> ' + esc(s.name || '') + '</td>' +
       '<td>' + (s.passed || 0) + '/' + (s.total || 0) + '</td>' +
       '<td style="font-size:11px;color:var(--fg3)">' +
-        (s.steps || []).map(st => (st.passed ? '✓' : '✗') + ' ' + (st.name || '')).join(' · ') +
+        (s.steps || []).map(st => {
+          let lbl = (st.passed ? '✓' : '✗') + ' ' + (st.name || '');
+          if (!st.passed && st.error) lbl += ' <span style="color:#dc2626;font-size:10px">(' + esc(st.error).substring(0,60) + ')</span>';
+          if (st._items_count != null) lbl += ' [' + st._items_count + ']';
+          return lbl;
+        }).join(' · ') +
       '</td></tr>';
   }).join('');
   document.getElementById('iropAllResultsCard').style.display = '';
@@ -8314,19 +9143,25 @@ async function ds4ValidateFile() {
   const fd = new FormData();
   fd.append('file', f);
 
+  const qi = _qAdd('POST', '/api/dasta4/validate');
   const loading = document.getElementById('loadingIndicator');
   loading.style.display = '';
   const t0 = performance.now();
+  const ac = new AbortController();
+  const tm = setTimeout(() => ac.abort(), API_TIMEOUT);
   try {
-    const resp = await fetch('/api/dasta4/validate', { method: 'POST', body: fd });
+    const resp = await fetch('/api/dasta4/validate', { method: 'POST', body: fd, signal: ac.signal });
+    clearTimeout(tm);
     const data = await resp.json();
     const elapsed = Math.round(performance.now() - t0);
     addLog('POST', '/api/dasta4/validate', data.status || resp.status, elapsed);
-    loading.style.display = 'none';
+    _qDone(qi, data.status || resp.status, null);
     _ds4ShowResult(data, f.name);
   } catch(e) {
-    loading.style.display = 'none';
-    toast('Chyba: ' + e.message, true);
+    clearTimeout(tm);
+    const msg = e.name === 'AbortError' ? 'Timeout (60 s)' : e.message;
+    _qDone(qi, 0, msg);
+    toast('Chyba: ' + msg, true);
   }
 }
 
@@ -8566,8 +9401,12 @@ async function ds4LoadTestData() {
 
 async function ds4DownloadTestFile(url, name) {
   toast('Stahuji ' + name + '...');
+  const qi = _qAdd('GET', '/api/dasta4/test-data/download');
   try {
-    const resp = await fetch('/api/dasta4/test-data/download?url=' + encodeURIComponent(url));
+    const ac = new AbortController();
+    const tm = setTimeout(() => ac.abort(), API_TIMEOUT);
+    const resp = await fetch('/api/dasta4/test-data/download?url=' + encodeURIComponent(url), { signal: ac.signal });
+    clearTimeout(tm);
     const text = await resp.text();
     document.getElementById('ds4XmlInput').value = text;
 
@@ -8577,9 +9416,12 @@ async function ds4DownloadTestFile(url, name) {
     document.querySelectorAll('#sec-ds4 .sub-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('ds4-validate-panel').classList.add('active');
 
+    _qDone(qi, resp.status, null);
     toast(name + ' načten (' + (text.length/1024).toFixed(1) + ' kB) – připraven k validaci');
   } catch(e) {
-    toast('Chyba stahování: ' + e.message, true);
+    const msg = e.name === 'AbortError' ? 'Timeout (60 s)' : e.message;
+    _qDone(qi, 0, msg);
+    toast('Chyba stahování: ' + msg, true);
   }
 }
 
@@ -8600,7 +9442,7 @@ function ds4Generate() {
   const question = document.getElementById('ds4GenQuestion').value.trim();
   const patRid = document.getElementById('ds4GenPatRid').value.trim() || '7801011234';
   const patName = document.getElementById('ds4GenPatName').value.trim() || 'Jan Novák';
-  const patDob = document.getElementById('ds4GenPatDob').value || '1978-01-01';
+  const patDob = _val('ds4GenPatDob') || '1978-01-01';
   const withCaveats = document.getElementById('ds4GenCaveats').checked;
   const cfg = getDastaConfig();
 
