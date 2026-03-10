@@ -2326,7 +2326,7 @@ def _irop_tech1(params, modules, client):
 
     steps.append(_irop_step_api("Vyhledání dle jméno + RC", krp.hledat_jmeno_rc, jmeno, prijmeni, rc))
     steps.append(_irop_step_api("Vyhledání dle jméno + datum narození",
-                                krp.hledat_jmeno_dn, jmeno, prijmeni, dn, ["CZ"]))
+                                krp.hledat_jmeno_dn, jmeno, prijmeni, dn, "CZ"))
     steps.append(_irop_step_api("Vyhledání dle jméno + číslo pojištěnce", krp.hledat_jmeno_cp, jmeno, prijmeni, rc))
 
     passed = sum(1 for s in steps if s["passed"])
@@ -2356,12 +2356,15 @@ def _irop_tech3(params, modules, client):
     krp = modules.get("krp")
     if not krp:
         return {"error": "KRP modul není dostupný"}
+    ico = params.get("ico", "25488627")
     steps = []
-    steps.append(_irop_step_api("Vyhledání odběrů notifikací (KRP)", krp.notifikace_vyhledat, "WEBSERVICE"))
+    steps.append(_irop_step_api("Vyhledání odběrů notifikací (KRP)",
+                                krp.notifikace_vyhledat, "WEBSERVICE", ico, "PZS"))
 
     krzp = modules.get("krzp")
     if krzp:
-        steps.append(_irop_step_api("Stav notifikací (KRZP)", krzp.notifikace_stav, "WEBSERVICE"))
+        steps.append(_irop_step_api("Stav notifikací (KRZP)",
+                                    krzp.notifikace_stav, "WEBSERVICE", ico, "PZS"))
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-3", "name": "Notifikace ze SEZ",
@@ -2417,15 +2420,28 @@ def _irop_tech5(params, modules, client):
                 return {"name": name, "passed": False, "status": 0,
                         "elapsed_ms": elapsed, "data": None, "error": "Prázdná odpověď", "_debug": {}}
             try:
-                data = resp.json() if sc < 400 else resp.text
+                ct = resp.headers.get("content-type", "")
+                if "json" in ct or "fhir" in ct:
+                    data = resp.json()
+                elif sc < 400:
+                    data = resp.json()
+                else:
+                    data = resp.text[:500] if hasattr(resp, "text") else str(resp)
             except Exception:
-                data = resp.text if hasattr(resp, "text") else str(resp)
+                data = resp.text[:500] if hasattr(resp, "text") else str(resp)
             err = None
             if sc >= 400:
-                err = data if isinstance(data, str) else (data.get("issue", [{}])[0].get("diagnostics")
-                       if isinstance(data, dict) else f"HTTP {sc}")
+                if sc == 502:
+                    err = f"HTTP 502 Bad Gateway – TermX server na T2 nedostupný"
+                elif isinstance(data, str):
+                    err = data[:200]
+                elif isinstance(data, dict):
+                    err = data.get("issue", [{}])[0].get("diagnostics") if data.get("issue") else f"HTTP {sc}"
+                else:
+                    err = f"HTTP {sc}"
             return {"name": name, "passed": 200 <= sc < 400,
-                    "status": sc, "elapsed_ms": elapsed, "data": data, "error": err,
+                    "status": sc, "elapsed_ms": elapsed, "data": data if not isinstance(data, str) or len(data) < 300 else data[:300] + "…",
+                    "error": err,
                     "_debug": {"url": str(resp.url) if hasattr(resp, "url") else path}}
         except Exception as e:
             elapsed = round((time.monotonic() - t0) * 1000)
@@ -2458,23 +2474,23 @@ def _irop_tech6(params, modules, client):
     zasilka = {
         "nazev": "IROP TS-TECH-6 test",
         "popis": "Automatický test uložení zásilky (IROP/NPO)",
-        "typ": {"kod": "11506-3", "verze": "1.0.0"},
-        "klasifikace": {"kod": "11503-0", "verze": "1.0.0"},
+        "typ": {"ciselnikKod": "medical-document-type", "kod": "11506-3", "verze": "1.0.0"},
+        "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": "1.0.0"},
         "autor": autor, "zdravotnickyPracovnik": autor,
         "poskytovatel": ico, "pacient": rid,
         "ispzs": "SEZ API IROP Test", "adresat": ico,
-        "adresatTyp": {"kod": "PZS", "verze": "1.0.0"},
+        "adresatTyp": {"ciselnikKod": "typ-adresata", "kod": "PZS", "verze": "1.0.0"},
         "dostupnost": True,
         "dokument": [{
             "nazev": "IROP testovací dokument",
-            "jazyk": {"kod": "cs", "verze": "5.0.0"},
-            "typ": {"kod": "11506-3", "verze": "1.0.0"},
-            "klasifikace": {"kod": "11503-0", "verze": "1.0.0"},
+            "jazyk": {"ciselnikKod": "languages", "kod": "cs", "verze": "5.0.0"},
+            "typ": {"ciselnikKod": "medical-document-type", "kod": "11506-3", "verze": "1.0.0"},
+            "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": "1.0.0"},
             "autor": autor, "poskytovatel": ico, "pacient": rid,
             "dostupnost": True,
-            "duvernost": {"kod": "N", "verze": "2.0.0"},
-            "format": {"kod": "urn:ihe:iti:xds:2017:mimeTypeSufficient", "verze": "1.0.0"},
-            "mime": {"kod": "text/plain", "verze": "1.0.0"},
+            "duvernost": {"ciselnikKod": "v3-Confidentiality", "kod": "N", "verze": "2.0.0"},
+            "format": {"ciselnikKod": "format-code", "kod": "urn:ihe:iti:xds:2017:mimeTypeSufficient", "verze": "1.0.0"},
+            "mime": {"ciselnikKod": "media-type", "kod": "text/plain", "verze": "1.0.0"},
             "hash": sha, "velikost": len(content_bytes),
             "soubor": {"soubor": content_b64},
         }],
@@ -2750,23 +2766,23 @@ def _irop_obs2(params, modules, client):
     zasilka = {
         "nazev": f"IROP TS-OBS-2 – {doc_type}",
         "popis": "Automaticky generovaný eZD (FHIR Bundle)",
-        "typ": {"kod": typ_kod, "verze": "1.0.0"},
-        "klasifikace": {"kod": "11503-0", "verze": "1.0.0"},
+        "typ": {"ciselnikKod": "medical-document-type", "kod": typ_kod, "verze": "1.0.0"},
+        "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": "1.0.0"},
         "autor": autor, "zdravotnickyPracovnik": autor,
         "poskytovatel": ico, "pacient": rid,
         "ispzs": "SEZ API IROP Test", "adresat": ico,
-        "adresatTyp": {"kod": "PZS", "verze": "1.0.0"},
+        "adresatTyp": {"ciselnikKod": "typ-adresata", "kod": "PZS", "verze": "1.0.0"},
         "dostupnost": True,
         "dokument": [{
             "nazev": f"{doc_type} – FHIR Bundle",
-            "jazyk": {"kod": "cs", "verze": "5.0.0"},
-            "typ": {"kod": typ_kod, "verze": "1.0.0"},
-            "klasifikace": {"kod": "11503-0", "verze": "1.0.0"},
+            "jazyk": {"ciselnikKod": "languages", "kod": "cs", "verze": "5.0.0"},
+            "typ": {"ciselnikKod": "medical-document-type", "kod": typ_kod, "verze": "1.0.0"},
+            "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": "1.0.0"},
             "autor": autor, "poskytovatel": ico, "pacient": rid,
             "dostupnost": True,
-            "duvernost": {"kod": "N", "verze": "2.0.0"},
-            "format": {"kod": "urn:ihe:iti:xds:2017:mimeTypeSufficient", "verze": "1.0.0"},
-            "mime": {"kod": "application/fhir+json", "verze": "1.0.0"},
+            "duvernost": {"ciselnikKod": "v3-Confidentiality", "kod": "N", "verze": "2.0.0"},
+            "format": {"ciselnikKod": "format-code", "kod": "urn:ihe:iti:xds:2017:mimeTypeSufficient", "verze": "1.0.0"},
+            "mime": {"ciselnikKod": "media-type", "kod": "application/fhir+json", "verze": "1.0.0"},
             "hash": sha, "velikost": len(content_bytes),
             "soubor": {"soubor": content_b64},
         }],

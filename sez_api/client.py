@@ -719,9 +719,10 @@ class KRP:
             w.writerow(flat)
         return out.getvalue()
 
-    def notifikace_vyhledat(self, kanal_typ, subjekt_id=None, ucel="LECBA"):
+    def notifikace_vyhledat(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="LECBA"):
         data = {"kanalTyp": kanal_typ}
         if subjekt_id: data["subjektId"] = subjekt_id
+        if subjekt_typ: data["subjektTyp"] = subjekt_typ
         return self.c.post(f"{self.BASE}/api/v2/notifikace/vyhledat/odber",
                            self._envelope(ucel, data))
 
@@ -1092,9 +1093,10 @@ class KRZP:
         return self.c.post(f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
                            {"zadostInfo": {"datum": self._now(), "ucel": ucel}})
 
-    def notifikace_stav(self, kanal_typ, subjekt_id=None, ucel="OVERENI"):
+    def notifikace_stav(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="OVERENI"):
         data = {"kanalTyp": kanal_typ}
         if subjekt_id: data["subjektId"] = subjekt_id
+        if subjekt_typ: data["subjektTyp"] = subjekt_typ
         return self.c.post(f"{self.BASE}/api/v2/notifikace/stav",
                            self._envelope(ucel, data))
 

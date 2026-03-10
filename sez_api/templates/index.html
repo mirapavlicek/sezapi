@@ -10,6 +10,7 @@
   --fg: #1a1d2e; --fg2: #4a4f6a; --fg3: #8089a8;
   --accent: #3b6fd4; --accent2: #2e5cb8; --green: #2d9f6f; --red: #d93636;
   --orange: #d48a06; --border: #d4d8e3; --radius: 8px;
+  --bg1: #ffffff; --fg1: #1a1d2e; --card: #ffffff; --bd: #d4d8e3;
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
@@ -121,6 +122,8 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 
 /* Log bar */
 .logbar { height: 160px; background: var(--bg2); border-top: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; font-family: var(--mono); font-size: 11px; padding: 8px 16px; }
+.log-wrap { border-bottom: 1px solid var(--border); padding: 2px 0 4px; }
+.log-wrap:last-child { border-bottom: none; }
 .log-entry { display: flex; gap: 12px; padding: 2px 0; color: var(--fg3); }
 .log-method { font-weight: 700; min-width: 50px; }
 .log-status { min-width: 30px; font-weight: 700; }
@@ -129,6 +132,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 .log-status.s5 { color: var(--red); }
 .log-time { color: var(--fg3); min-width: 50px; text-align: right; }
 .log-path { flex: 1; color: var(--fg2); }
+.log-detail { margin: 4px 0 0 62px; padding: 6px 8px; background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; }
 
 /* Loading / queue indicator */
 .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
@@ -138,10 +142,10 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 .q-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 .q-btn.active { display: inline-flex; }
 .q-badge { min-width: 16px; height: 16px; line-height: 16px; text-align: center; border-radius: 8px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 0 4px; }
-.q-panel { display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 380px; max-height: 340px; overflow-y: auto; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 900; padding: 6px 0; }
+.q-panel { display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 520px; max-height: 440px; overflow-y: auto; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 900; padding: 6px 0; }
 .q-panel.open { display: block; }
 .q-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 11px; color: var(--fg2); border-bottom: 1px solid var(--border); }
-.q-item:last-child { border-bottom: none; }
+.q-item:not(.q-running):hover { background: var(--bg3); opacity: 1 !important; }
 .q-item .q-method { font-weight: 700; min-width: 36px; font-family: var(--mono); font-size: 10px; }
 .q-item .q-path { flex: 1; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .q-item .q-elapsed { font-family: var(--mono); color: var(--fg3); font-size: 10px; min-width: 40px; text-align: right; }
@@ -267,13 +271,13 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 /* Modal overlay */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); opacity: 0; transition: opacity .2s; }
 .modal-overlay.open { opacity: 1; }
-.modal-box { background: var(--card); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.35); max-width: 820px; width: 92vw; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; transform: scale(.95); transition: transform .2s; }
+.modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.35); max-width: 820px; width: 92vw; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; transform: scale(.95); transition: transform .2s; opacity: 1; }
 .modal-overlay.open .modal-box { transform: scale(1); }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); }
 .modal-header h3 { margin: 0; font-size: 15px; color: var(--fg); }
 .modal-close { background: none; border: none; color: var(--fg3); font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
 .modal-close:hover { color: var(--red); }
-.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; background: var(--bg2); color: var(--fg); }
 .result-table { border-collapse: collapse; }
 .result-table th, .result-table td { border: 1px solid var(--bd); padding: 4px 8px; text-align: left; }
 .result-table th { background: var(--bg2); font-weight: 600; position: sticky; top: 0; z-index: 1; }
@@ -300,6 +304,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
     <div class="nav-item active" data-section="dashboard"><span class="icon">&#9632;</span> Dashboard</div>
     <div class="nav-item" data-section="krp"><span class="icon">&#9823;</span> KRP Pacienti</div>
     <div class="nav-item" data-section="krzp"><span class="icon">&#9764;</span> KRZP Pracovníci</div>
+    <div class="nav-item" data-section="krpzs"><span class="icon">&#127973;</span> KRPZS Poskytovatelé</div>
     <div class="nav-item" data-section="ro"><span class="icon">&#9888;</span> Oprávnění</div>
     <div class="nav-item" data-section="du"><span class="icon">&#9993;</span> Dočasné úložiště</div>
     <div class="nav-item" data-section="szz"><span class="icon">&#10010;</span> SZZ Zdravotní záznam</div>
@@ -1235,6 +1240,81 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           <button class="btn btn-primary" style="margin-top:8px" onclick="krzpReklamace()">Odeslat reklamaci</button>
         </div>
         <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krzpReklamaceResult">-</div></div>
+      </div>
+    </div>
+
+    <!-- KRPZS – Poskytovatelé zdravotních služeb -->
+    <div class="section" id="sec-krpzs">
+      <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8faff 100%);border-color:#bfdbfe;margin-bottom:16px">
+        <div style="font-weight:700;font-size:14px;color:#2563eb;margin-bottom:8px">Kmenový registr poskytovatelů zdravotních služeb (KRPZS)</div>
+        <div style="font-size:13px;color:var(--fg2);line-height:1.7">
+          KRPZS je centrální registr všech poskytovatelů zdravotních služeb v ČR.
+          Umožňuje <strong>vyhledávání</strong> poskytovatelů podle IČO nebo názvu,
+          zobrazení <strong>detailu a pracovišť</strong>,
+          stahování <strong>číselníků</strong>
+          a podávání <strong>reklamací</strong> chybných údajů.
+        </div>
+      </div>
+
+      <div class="sub-tabs" id="krpzsMainTabs">
+        <div class="sub-tab active" data-panel="krpzs-search-panel">Vyhledávání</div>
+        <div class="sub-tab" data-panel="krpzs-ciselnik-panel">Číselníky</div>
+      </div>
+
+      <div class="sub-panel active" id="krpzs-search-panel">
+        <div class="card">
+          <div class="card-title">Vyhledání poskytovatele</div>
+          <div class="sub-tabs">
+            <div class="sub-tab active" data-panel="krpzs-ico">Podle IČO</div>
+            <div class="sub-tab" data-panel="krpzs-nazev">Podle názvu</div>
+            <div class="sub-tab" data-panel="krpzs-pracoviste">Pracoviště</div>
+            <div class="sub-tab" data-panel="krpzs-detail">Detail</div>
+          </div>
+          <div class="sub-panel active" id="krpzs-ico">
+            <div class="form-row">
+              <div class="form-group"><label>IČO</label><input id="krpzsIco" placeholder="např. 25488627"></div>
+              <button class="btn btn-primary" onclick="krpzsHledatIco()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krpzs-nazev">
+            <div class="form-row">
+              <div class="form-group"><label>Název poskytovatele</label><input id="krpzsNazev" placeholder="např. Krajská zdravotní"></div>
+              <button class="btn btn-primary" onclick="krpzsHledatNazev()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krpzs-pracoviste">
+            <div class="form-row">
+              <div class="form-group"><label>IČO</label><input id="krpzsPracIco" placeholder="např. 25488627"></div>
+              <button class="btn btn-primary" onclick="krpzsHledatPracoviste()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krpzs-detail">
+            <div class="form-row">
+              <div class="form-group"><label>IČO</label><input id="krpzsDetIco" placeholder="např. 25488627"></div>
+              <button class="btn btn-primary" onclick="krpzsDetail()">Zobrazit detail</button>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krpzsResult">-</div></div>
+      </div>
+
+      <div class="sub-panel" id="krpzs-ciselnik-panel">
+        <div class="card">
+          <div class="card-title">Číselníky KRPZS</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Číselník</label>
+              <select id="krpzsCiselnikNazev">
+                <option value="druh_zarizeni">Druh zařízení</option>
+                <option value="forma_pzs">Forma PZS</option>
+                <option value="obor">Obor</option>
+                <option value="typ_pracoviste">Typ pracoviště</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="krpzsCiselnik()">Načíst</button>
+          </div>
+          <div class="json-box" id="krpzsCiselnikResult" style="margin-top:10px">-</div>
+        </div>
       </div>
     </div>
 
@@ -3906,11 +3986,12 @@ function _qAdd(method, url) {
   return item;
 }
 
-function _qDone(item, httpStatus, error) {
+function _qDone(item, httpStatus, error, responseData) {
   item.status = error ? 'err' : 'done';
   item.httpStatus = httpStatus;
   item.elapsed = Math.round(performance.now() - item.t0);
   if (error) item.error = error;
+  if (responseData) item._resp = responseData;
   _qRender();
   setTimeout(() => {
     if (!_q.some(i => i.status === 'running')) {
@@ -3949,8 +4030,77 @@ function _qRender() {
         : (i.elapsed / 1000).toFixed(1) + 's';
       const st = i.httpStatus ? ' · ' + i.httpStatus : '';
       const err = i.error ? '<div style="font-size:10px;color:var(--red);padding:0 0 0 44px;margin-top:-2px">' + esc(i.error).substring(0, 80) + '</div>' : '';
-      return `<div class="q-item ${cls}">${icon}<span class="q-method">${i.method}</span><span class="q-path" title="${esc(i.url)}">${esc(i.url)}</span><span class="q-elapsed">${elapsed}${st}</span></div>${err}`;
+      let detail = '';
+      if (i.status !== 'running') {
+        detail = '<div id="qd-' + i.id + '" onclick="event.stopPropagation()" style="display:none;padding:6px 10px 10px;border-top:1px solid var(--border);background:var(--bg);font-size:11px">';
+        detail += _qBuildDetail(i);
+        detail += '</div>';
+      }
+      const clickAttr = i.status !== 'running' ? ' onclick="_qToggleDetail(' + i.id + ')" style="cursor:pointer"' : '';
+      return `<div class="q-item ${cls}"${clickAttr}>${icon}<span class="q-method">${i.method}</span><span class="q-path" title="${esc(i.url)}">${esc(i.url)}</span><span class="q-elapsed">${elapsed}${st}</span></div>${err}${detail}`;
     }).join('');
+}
+
+function _qToggleDetail(id) {
+  const el = document.getElementById('qd-' + id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function _qBuildDetail(item) {
+  let h = '';
+  const req = item._resp?._request;
+  if (req) {
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">';
+    if (req.method) h += '<span><b style="color:var(--fg3)">Method:</b> <code>' + esc(req.method) + '</code></span>';
+    if (req.url) h += '<span><b style="color:var(--fg3)">URL:</b> <code style="word-break:break-all;font-size:10px">' + esc(req.url) + '</code></span>';
+    h += '</div>';
+    if (req.kid_variant) {
+      h += '<div style="margin-bottom:4px"><b style="color:var(--fg3)">JWT kid:</b> <code style="color:var(--accent)">' + esc(req.kid_variant) + '</code></div>';
+    }
+    if (req.headers) {
+      h += '<details style="margin-bottom:4px"><summary style="cursor:pointer;font-size:10px;font-weight:600;color:var(--fg3)">Hlavičky požadavku</summary>';
+      h += '<div class="json-box" style="max-height:120px;font-size:10px;margin-top:2px">' + syntaxHighlight(req.headers) + '</div></details>';
+    }
+    if (req.body) {
+      h += '<details style="margin-bottom:4px"><summary style="cursor:pointer;font-size:10px;font-weight:600;color:var(--fg3)">Request body</summary>';
+      h += '<div class="json-box" style="max-height:200px;font-size:10px;margin-top:2px">' + syntaxHighlight(req.body) + '</div></details>';
+    }
+    if (req.attempts && req.attempts.length) {
+      h += '<div style="font-size:10px;font-weight:600;color:var(--fg3);margin-bottom:2px">Pokusy (' + req.attempts.length + '):</div>';
+      req.attempts.forEach(function(a) {
+        const ok = a.status && a.status < 400;
+        const col = ok ? 'var(--green)' : 'var(--red)';
+        h += '<div style="padding:2px 0;border-left:2px solid ' + col + ';padding-left:6px;margin-bottom:2px">';
+        h += '<b>#' + a.attempt + '</b> &rarr; HTTP <span style="color:' + col + ';font-weight:700">' + (a.status || '?') + '</span>';
+        if (a.elapsed_ms !== undefined) h += ' <span style="color:var(--fg3)">(' + a.elapsed_ms + 'ms)</span>';
+        if (a.error) h += ' <span style="color:var(--red)">' + esc(a.error) + '</span>';
+        if (a.response !== undefined && a.response !== null && a.response !== '') {
+          h += '<details style="margin-top:2px"><summary style="cursor:pointer;font-size:10px;color:var(--fg3)">Odpověď serveru</summary>';
+          h += '<div class="json-box" style="max-height:120px;font-size:10px;margin-top:2px">' + syntaxHighlight(a.response) + '</div></details>';
+        }
+        h += '</div>';
+      });
+    }
+  } else if (item._body) {
+    h += '<details style="margin-bottom:4px"><summary style="cursor:pointer;font-size:10px;font-weight:600;color:var(--fg3)">Odeslaný body</summary>';
+    h += '<div class="json-box" style="max-height:200px;font-size:10px;margin-top:2px">' + syntaxHighlight(item._body) + '</div></details>';
+  }
+  if (item._resp && !req) {
+    const preview = {};
+    if (item._resp.status !== undefined) preview.status = item._resp.status;
+    if (item._resp.error) preview.error = item._resp.error;
+    if (item._resp.data !== undefined) {
+      const s = JSON.stringify(item._resp.data);
+      preview.data = s.length > 300 ? s.substring(0, 300) + '…' : item._resp.data;
+    }
+    if (Object.keys(preview).length) {
+      h += '<details style="margin-bottom:4px"><summary style="cursor:pointer;font-size:10px;font-weight:600;color:var(--fg3)">Odpověď</summary>';
+      h += '<div class="json-box" style="max-height:150px;font-size:10px;margin-top:2px">' + syntaxHighlight(preview) + '</div></details>';
+    }
+  }
+  if (!h) h = '<span style="color:var(--fg3)">Žádné debug informace</span>';
+  return h;
 }
 
 function qToggle() {
@@ -3974,6 +4124,7 @@ setInterval(() => {
 
 async function api(method, url, body, extraHeaders) {
   const qi = _qAdd(method, url);
+  qi._body = body;
   const t0 = performance.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), API_TIMEOUT);
@@ -3984,14 +4135,14 @@ async function api(method, url, body, extraHeaders) {
     clearTimeout(timer);
     const data = await resp.json();
     const elapsed = Math.round(performance.now() - t0);
-    addLog(method, url, data.status || resp.status, elapsed);
-    _qDone(qi, data.status || resp.status, null);
+    addLog(method, url, data.status || resp.status, elapsed, { body, response: data });
+    _qDone(qi, data.status || resp.status, null, data);
     return data;
   } catch (e) {
     clearTimeout(timer);
     const elapsed = Math.round(performance.now() - t0);
     const msg = e.name === 'AbortError' ? 'Timeout – odpověď nepřišla do 60 s' : e.message;
-    addLog(method, url, 0, elapsed);
+    addLog(method, url, 0, elapsed, { body, error: msg });
     toast('Chyba: ' + msg, true);
     _qDone(qi, 0, msg);
     return { status: 0, error: msg };
@@ -4348,14 +4499,39 @@ function syntaxHighlight(obj) {
     .replace(/: (null)/g, ': <span class="json-null">$1</span>');
 }
 
-function addLog(method, url, status, elapsed) {
+function _renderLogbar() {
+  const el = document.getElementById('logbar');
+  if (!el) return;
+  el.innerHTML = logEntries.map(entry => {
+    const sc = entry.status === 0 || entry.status >= 500 ? 's5' : entry.status >= 400 ? 's4' : 's2';
+    const path = entry.url.replace(/^\/api\//, '');
+    let detail = '';
+    if (entry.body !== undefined || entry.response !== undefined || entry.error) {
+      detail += '<div class="log-detail">';
+      detail += _qBuildDetail({ _body: entry.body, _resp: entry.response });
+      if (entry.error) {
+        detail += '<div style="margin-top:6px;color:var(--red);font-size:10px"><b>Chyba:</b> ' + esc(entry.error) + '</div>';
+      }
+      detail += '</div>';
+    }
+    return `<div class="log-wrap"><div class="log-entry"><span class="log-time">${entry.time}</span><span class="log-method">${entry.method}</span><span class="log-status ${sc}">${entry.status}</span><span class="log-path">${esc(path)}</span><span class="log-time">${entry.elapsed}ms</span></div>${detail}</div>`;
+  }).join('');
+}
+
+function addLog(method, url, status, elapsed, detail) {
   const time = new Date().toLocaleTimeString('cs');
-  const sc = status >= 500 ? 's5' : status >= 400 ? 's4' : 's2';
-  const path = url.replace(/^\/api\//, '');
-  const html = `<div class="log-entry"><span class="log-time">${time}</span><span class="log-method">${method}</span><span class="log-status ${sc}">${status}</span><span class="log-path">${path}</span><span class="log-time">${elapsed}ms</span></div>`;
-  logEntries.unshift(html);
+  logEntries.unshift({
+    time,
+    method,
+    url,
+    status,
+    elapsed,
+    body: detail?.body,
+    response: detail?.response,
+    error: detail?.error,
+  });
   if (logEntries.length > 100) logEntries.pop();
-  document.getElementById('logbar').innerHTML = logEntries.join('');
+  _renderLogbar();
 }
 
 function toast(msg, isError) {
@@ -4553,6 +4729,7 @@ function renderDashboard(data) {
     { name: 'Notifikace', fn: checkNotif },
     { name: 'KRP', fn: checkKRP },
     { name: 'KRZP', fn: checkKRZP },
+    { name: 'KRPZS', fn: checkKRPZS },
     { name: 'SZZ', fn: checkSZZ },
     { name: 'ELP', fn: checkELP },
     { name: 'eŽádanky', fn: checkEZ },
@@ -4627,8 +4804,13 @@ function goKRZP(krzpid) {
 }
 
 function goKRPZS(ico) {
-  toast('PZS IČO ' + ico + ' zkopírováno');
-  navigator.clipboard.writeText(ico).catch(() => {});
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('[data-section="krpzs"]').classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-krpzs').classList.add('active');
+  document.getElementById('pageTitle').textContent = 'KRPZS Poskytovatelé';
+  document.getElementById('krpzsIco').value = ico;
+  krpzsHledatIco();
 }
 
 async function checkNotif(name) {
@@ -4649,6 +4831,14 @@ async function checkKRZP(name) {
     return;
   }
   const r = await api('POST', '/api/krzp/hledat-krzpid', {krzpid: '102129137'});
+  setDashCard(name, r.status === 200);
+}
+async function checkKRPZS(name) {
+  if (isProd) {
+    setDashCard(name, null, 'Ruční test');
+    return;
+  }
+  const r = await api('POST', '/api/krpzs/hledat-ico', {ico: '25488627'});
   setDashCard(name, r.status === 200);
 }
 async function checkSZZ(name) {
@@ -4685,8 +4875,30 @@ async function checkDU(name) {
   }
   const now = new Date();
   const ago = new Date(now); ago.setMonth(ago.getMonth() - 1);
-  const r = await api('POST', '/api/du/vyhledej', {datum_od: ago.toISOString(), datum_do: now.toISOString(), size: 1});
-  setDashCard(name, r.status === 200);
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 8000);
+  try {
+    const resp = await fetch('/api/du/vyhledej', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ datum_od: ago.toISOString(), datum_do: now.toISOString(), size: 1 }),
+      signal: ac.signal,
+    });
+    clearTimeout(timer);
+    if (!resp.ok) {
+      setDashCard(name, null, 'Nedostupné');
+      return;
+    }
+    const data = await resp.json();
+    if (data?.status === 200) {
+      setDashCard(name, true);
+    } else {
+      setDashCard(name, null, 'Nedostupné');
+    }
+  } catch (_) {
+    clearTimeout(timer);
+    setDashCard(name, null, 'Nedostupné');
+  }
 }
 function setDashCard(name, ok, label) {
   const el = document.getElementById('dash-' + name);
@@ -5925,6 +6137,40 @@ async function krzpReklamace() {
 }
 
 // ---------------------------------------------------------------------------
+// KRPZS – Poskytovatelé zdravotních služeb
+// ---------------------------------------------------------------------------
+
+async function krpzsHledatIco() {
+  const ico = document.getElementById('krpzsIco').value.trim();
+  if (!ico) return toast('Zadejte IČO', true);
+  const data = await apiCall('/api/krpzs/hledat-ico', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ico})});
+  showResult(data, 'krpzsResult');
+}
+async function krpzsHledatNazev() {
+  const nazev = document.getElementById('krpzsNazev').value.trim();
+  if (!nazev) return toast('Zadejte název', true);
+  const data = await apiCall('/api/krpzs/hledat-nazev', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nazev})});
+  showResult(data, 'krpzsResult');
+}
+async function krpzsHledatPracoviste() {
+  const ico = document.getElementById('krpzsPracIco').value.trim();
+  if (!ico) return toast('Zadejte IČO', true);
+  const data = await apiCall('/api/krpzs/hledat-pracoviste', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ico})});
+  showResult(data, 'krpzsResult');
+}
+async function krpzsDetail() {
+  const ico = document.getElementById('krpzsDetIco').value.trim();
+  if (!ico) return toast('Zadejte IČO', true);
+  const data = await apiCall('/api/krpzs/detail', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ico})});
+  showResult(data, 'krpzsResult');
+}
+async function krpzsCiselnik() {
+  const nazev = document.getElementById('krpzsCiselnikNazev').value;
+  const data = await apiCall('/api/krpzs/ciselnik/' + encodeURIComponent(nazev), {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+  showResult(data, 'krpzsCiselnikResult');
+}
+
+// ---------------------------------------------------------------------------
 // Registr oprávnění
 // ---------------------------------------------------------------------------
 
@@ -6814,12 +7060,55 @@ async function szzEmergPdf() {
 const elp2Cache = {};
 let elp2Inited = false;
 
+const _elpFallback = {
+  'akce-ro': [
+    {kod:'akce_ro_1',preklady:{cs:{nazev:'vytvoření'}}},
+    {kod:'akce_ro_2',preklady:{cs:{nazev:'aktualizace'}}},
+    {kod:'akce_ro_3',preklady:{cs:{nazev:'zneplatnění'}}},
+  ],
+  'druh-posudku-ro': [
+    {kod:'Prvoridic',preklady:{cs:{nazev:'Prvořidič'}}},
+    {kod:'RozsireniRo',preklady:{cs:{nazev:'Rozšíření řidičského oprávnění'}}},
+    {kod:'ProdlouzeniRo',preklady:{cs:{nazev:'Prodloužení řidičského oprávnění'}}},
+    {kod:'SenioriRo',preklady:{cs:{nazev:'Řidičské oprávnění pro seniory'}}},
+    {kod:'PrezkoumaniZpusobilosti',preklady:{cs:{nazev:'Přezkoumání způsobilosti'}}},
+  ],
+  'druh-prohlidky-ro': [
+    {kod:'Vstupni',preklady:{cs:{nazev:'vstupní'}}},
+    {kod:'Pravidelna',preklady:{cs:{nazev:'pravidelná'}}},
+    {kod:'Mimoradna',preklady:{cs:{nazev:'mimořádná'}}},
+  ],
+  'skupina-zadatel-ridic-ro': [
+    {kod:'Skupina1',preklady:{cs:{nazev:'skupina 1'}}},
+    {kod:'Skupina2',preklady:{cs:{nazev:'skupina 2'}}},
+  ],
+  'vysledek-posudku-ro': [
+    {kod:'Zpusobily',preklady:{cs:{nazev:'způsobilý'}}},
+    {kod:'Nezpusobily',preklady:{cs:{nazev:'nezpůsobilý'}}},
+    {kod:'ZpusobilySPodminkou',preklady:{cs:{nazev:'způsobilý s podmínkou'}}},
+  ],
+  'stav-posudku': [
+    {kod:'platny',preklady:{cs:{nazev:'Platný'}}},
+    {kod:'neplatny',preklady:{cs:{nazev:'Neplatný'}}},
+    {kod:'zneplatneny',preklady:{cs:{nazev:'Zneplatněný'}}},
+  ],
+};
+
 async function elp2LoadCodelist(kod) {
   if (elp2Cache[kod]) return elp2Cache[kod];
-  const r = await api('GET', '/api/elp2/ciselniky/' + kod + '/polozky');
-  if (r.status === 200 && Array.isArray(r.data)) {
-    elp2Cache[kod] = r.data;
-    return r.data;
+  try {
+    const r = await api('GET', '/api/elp2/ciselniky/' + kod + '/polozky');
+    if (r.status === 200 && Array.isArray(r.data) && r.data.length) {
+      elp2Cache[kod] = r.data;
+      return r.data;
+    }
+  } catch (e) {
+    console.warn('[ELP] API selhalo pro ' + kod + ':', e);
+  }
+  if (_elpFallback[kod]) {
+    elp2Cache[kod] = _elpFallback[kod];
+    console.info('[ELP] ' + kod + ': použita výchozí data (' + _elpFallback[kod].length + ' položek)');
+    return _elpFallback[kod];
   }
   return [];
 }
@@ -6868,7 +7157,12 @@ async function elp2CreateInit() {
 
   elp2PopulateChips('elpCreateChips', 'elpCrRid');
   elp2PopulateChips('elpSearchChips', 'elpSrchRid');
-  toast('ELP v2 číselníky načteny');
+  const elpFbUsed = Object.keys(elp2Cache).filter(k => _elpFallback[k] && elp2Cache[k] === _elpFallback[k]);
+  if (elpFbUsed.length) {
+    toast('ELP číselníky: ' + elpFbUsed.length + '/' + Object.keys(_elpFallback).length + ' z výchozích dat (API nedostupné)', true);
+  } else {
+    toast('ELP v2 číselníky načteny');
+  }
 }
 
 // -- Vyhledání --
@@ -9154,7 +9448,7 @@ async function ds4ValidateFile() {
     clearTimeout(tm);
     const data = await resp.json();
     const elapsed = Math.round(performance.now() - t0);
-    addLog('POST', '/api/dasta4/validate', data.status || resp.status, elapsed);
+    addLog('POST', '/api/dasta4/validate', data.status || resp.status, elapsed, { response: data });
     _qDone(qi, data.status || resp.status, null);
     _ds4ShowResult(data, f.name);
   } catch(e) {
