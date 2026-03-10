@@ -6143,31 +6143,31 @@ async function krzpReklamace() {
 async function krpzsHledatIco() {
   const ico = document.getElementById('krpzsIco').value.trim();
   if (!ico) return toast('Zadejte IČO', true);
-  const data = await apiCall('/api/krpzs/hledat-ico', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ico})});
-  showResult(data, 'krpzsResult');
+  const data = await api('POST', '/api/krpzs/hledat-ico', { ico });
+  showResult('krpzsResult', data);
 }
 async function krpzsHledatNazev() {
   const nazev = document.getElementById('krpzsNazev').value.trim();
   if (!nazev) return toast('Zadejte název', true);
-  const data = await apiCall('/api/krpzs/hledat-nazev', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nazev})});
-  showResult(data, 'krpzsResult');
+  const data = await api('POST', '/api/krpzs/hledat-nazev', { nazev });
+  showResult('krpzsResult', data);
 }
 async function krpzsHledatPracoviste() {
   const ico = document.getElementById('krpzsPracIco').value.trim();
   if (!ico) return toast('Zadejte IČO', true);
-  const data = await apiCall('/api/krpzs/hledat-pracoviste', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ico})});
-  showResult(data, 'krpzsResult');
+  const data = await api('POST', '/api/krpzs/hledat-pracoviste', { ico });
+  showResult('krpzsResult', data);
 }
 async function krpzsDetail() {
   const ico = document.getElementById('krpzsDetIco').value.trim();
   if (!ico) return toast('Zadejte IČO', true);
-  const data = await apiCall('/api/krpzs/detail', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ico})});
-  showResult(data, 'krpzsResult');
+  const data = await api('POST', '/api/krpzs/detail', { ico });
+  showResult('krpzsResult', data);
 }
 async function krpzsCiselnik() {
   const nazev = document.getElementById('krpzsCiselnikNazev').value;
-  const data = await apiCall('/api/krpzs/ciselnik/' + encodeURIComponent(nazev), {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
-  showResult(data, 'krpzsCiselnikResult');
+  const data = await api('POST', '/api/krpzs/ciselnik/' + encodeURIComponent(nazev), {});
+  showResult('krpzsCiselnikResult', data);
 }
 
 // ---------------------------------------------------------------------------
