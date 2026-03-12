@@ -8,7 +8,7 @@ Type=simple
 User=sezapi
 Group=sezapi
 WorkingDirectory=/opt/sez-api
-ExecStart=/opt/sez-api/.venv/bin/python -m sez_api.cli serve
+ExecStart=/opt/sez-api/.venv/bin/python -m sez_api.cli serve --workers 4
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1

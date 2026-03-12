@@ -17,6 +17,8 @@ def main():
     serve_cmd = sub.add_parser("serve", help="Spustí webové rozhraní (výchozí)")
     serve_cmd.add_argument("--host", default=None, help="Adresa serveru (výchozí: 0.0.0.0)")
     serve_cmd.add_argument("--port", type=int, default=None, help="Port (výchozí: 8004)")
+    serve_cmd.add_argument("--workers", type=int, default=None,
+                           help="Počet worker procesů (výchozí: dle konfigurace)")
     serve_cmd.add_argument("--reload", action="store_true", help="Automatický reload při změnách")
 
     sub.add_parser("ping", help="Rychlý test připojení ke všem službám")
@@ -43,15 +45,21 @@ def _serve(args):
 
     host = getattr(args, "host", None) or cfg.HOST
     port = getattr(args, "port", None) or cfg.PORT
+    workers = getattr(args, "workers", None) or cfg.WORKERS
     reload = getattr(args, "reload", False)
+
+    if reload and workers > 1:
+        print("Reload režim podporuje jen jeden worker, přepínám na workers=1")
+        workers = 1
 
     print(f"SEZ API Web UI: http://{host}:{port}")
     print(f"  Client ID: {cfg.CLIENT_ID}")
     print(f"  Gateway:   {cfg.GATEWAY}")
     print(f"  Certifikát: {cfg.P12_PATH}")
+    print(f"  Workers:   {workers}")
     print()
 
-    uvicorn.run("sez_api.app:app", host=host, port=port, reload=reload)
+    uvicorn.run("sez_api.app:app", host=host, port=port, reload=reload, workers=workers)
 
 
 def _ping():

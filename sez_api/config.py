@@ -26,6 +26,7 @@ CERT_UID = env("SEZ_CERT_UID", "")
 GATEWAY = env("SEZ_GATEWAY", "https://gwy-ext-sec-t2.csez.cz")
 HOST = env("SEZ_HOST", "0.0.0.0")
 PORT = int(env("SEZ_PORT", "8004"))
+WORKERS = int(env("SEZ_WORKERS", "1"))
 
 PROD_CLIENT_ID = env("SEZ_PROD_CLIENT_ID", "")
 PROD_P12_PATH = env("SEZ_PROD_P12_PATH", "")
