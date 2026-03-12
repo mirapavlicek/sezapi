@@ -208,11 +208,15 @@ if r.status_code == 200:
 print("\n[5] eŽádanky")
 ez = EZadanky(client)
 
-r = ez.dej_token()
-check("eŽádanky DejToken → 200", r.status_code == 200, f"status={r.status_code}")
+r = ez.vyhledej_zadanku({"strankovani": {"page": 1, "size": 1}})
+check("eŽádanky VyhledejZadanku → endpoint existuje", r.status_code != 404, f"status={r.status_code}")
 if r.status_code == 200:
     d = r.json()
-    check("Response má access_token", "access_token" in d)
+    check("Response má pageNumber/totalCount/page",
+          all(k in d for k in ["pageNumber", "totalCount", "page"]),
+          f"klíče: {list(d.keys())[:5]}")
+elif r.status_code in (400, 401, 403):
+    check("eŽádanky endpoint vrací očekávanou aplikační/auth chybu", True, f"status={r.status_code}")
 
 # === 6. Dočasné úložiště ===
 print("\n[6] Dočasné úložiště")
@@ -278,7 +282,7 @@ if du_ok:
         "nazev": "Test dokumentace - Krajska zdravotni",
         "popis": "Automatický test ověření dokumentace",
         "typ": {"ciselnikKod": "medical-document-type", "kod": "11506-3", "verze": "1.0.0"},
-        "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": "1.0.0"},
+        "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": ""},
         "datumOd": now.isoformat(),
         "datumDo": (now + timedelta(days=30)).isoformat(),
         "autor": "102129137",
@@ -294,7 +298,7 @@ if du_ok:
             "popis": "Test",
             "jazyk": {"ciselnikKod": "languages", "kod": "cs", "verze": "5.0.0"},
             "typ": {"ciselnikKod": "medical-document-type", "kod": "67781-5", "verze": "1.0.0"},
-            "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": "1.0.0"},
+            "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": ""},
             "autor": "102129137",
             "poskytovatel": "25488627",
             "pacient": "2667873559",

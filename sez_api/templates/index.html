@@ -965,7 +965,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
             Zobrazí seznam aktivních odběrů notifikací pro vaše PZS. Filtrovat můžete podle typu kanálu nebo ID subjektu (RID pacienta).
           </p>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:flex-end">
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end">
             <div class="form-group"><label>Typ kanálu</label>
               <select id="krpNotifKanalTyp">
                 <option value="">-- všechny --</option>
@@ -975,13 +975,6 @@ td.mono { font-family: var(--mono); font-size: 12px; }
               </select>
             </div>
             <div class="form-group"><label>ID subjektu (RID)</label><input id="krpNotifSubjektId" placeholder="RID pacienta"></div>
-            <div class="form-group"><label>Stav</label>
-              <select id="krpNotifStav">
-                <option value="">-- všechny --</option>
-                <option value="AKTIVNI">Aktivní</option>
-                <option value="NEAKTIVNI">Neaktivní</option>
-              </select>
-            </div>
             <button class="btn btn-primary" onclick="krpNotifVyhledat()">Vyhledat</button>
           </div>
         </div>
@@ -2246,7 +2239,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
       <div class="sub-panel" id="elp-opravneni-panel">
         <div class="card">
           <div class="card-title">Ověření oprávnění k založení posudku</div>
-          <div style="font-size:12px;color:var(--fg3);margin-bottom:12px">POST /api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni</div>
+          <div style="font-size:12px;color:var(--fg3);margin-bottom:12px">POST /api/elp2/opravneni (gateway: /elektronickePosudky/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni)</div>
           <div class="form-row">
             <div class="form-group"><label>IČO poskytovatele</label><input id="elpOprIco" value="25488627"></div>
             <div class="form-group"><label>KRZP ID pracovníka</label><input id="elpOprKrzp" value="102129137"></div>
@@ -2749,7 +2742,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:flex-end">
             <div class="form-group"><label>ID příjemce *</label><input id="notifVyhledatId" placeholder="ID příjemce"></div>
             <div class="form-group"><label>Od data *</label><input type="text" class="date-cs" id="notifVyhledatOd" placeholder="d.m.rrrr"></div>
-            <div class="form-group"><label>Limit</label><input type="number" id="notifVyhledatLimit" value="20" min="1" max="100"></div>
+            <div class="form-group"><label>Limit (size)</label><input type="number" id="notifVyhledatLimit" value="20" min="1" max="100"></div>
             <button class="btn btn-primary" onclick="notifVyhledat()">Vyhledat</button>
           </div>
         </div>
@@ -3282,7 +3275,7 @@ base64 -d &lt; podepsany.b64.txt &gt; podepsany.pdf
 <span style="color:#94a3b8"># Inline v cURL – podpis dokumentu přes EZCA API</span>
 B64=$(base64 -w0 dokument.pdf)
 
-curl -X POST "https://gwy-ext-sec-t2.csez.cz/ezca2/api/v1/podpis/podepsat" \
+curl -X POST "https://gwy-ext-sec-t2.csez.cz/ezca2/api/sign/document" \
   -H "Authorization: Bearer $JWT" \
   -H "Content-Type: application/json" \
   -d "{
@@ -3661,10 +3654,10 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
 
     <!-- Testy -->
     <div class="section" id="sec-tests">
-      <div class="card">
-        <div class="card-title">Ověření dokumentace a služeb</div>
-        <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">Spustí test_dokumentace.py, který ověří všech 38 testů proti reálnému API.</p>
-        <button class="btn btn-green" onclick="runTests()" id="btnRunTests">Spustit kompletní testy</button>
+        <div class="card">
+          <div class="card-title">Ověření dokumentace a služeb</div>
+          <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">Spustí <code>test_dokumentace.py</code>, tedy cílenou dokumentační kontrolu vybraných služeb a odpovědí proti reálnému API.</p>
+          <button class="btn btn-green" onclick="runTests()" id="btnRunTests">Spustit dokumentační kontrolu</button>
         <div id="testSummary" style="margin-top:16px"></div>
       </div>
       <div class="card" id="testResultsCard" style="display:none">
@@ -3738,9 +3731,9 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           <table>
             <thead><tr><th>Kategorie</th><th>Popis</th><th>Povinné eZD</th><th>Testy</th></tr></thead>
             <tbody>
-              <tr><td><span class="badge badge-ok" style="font-size:12px">A</span></td><td>PZS s urgentním příjmem typu II</td><td>Pac. souhrn, Zobrazovací, Propouštěcí, Výjezd ZZS</td><td>TS-OBS-1, TS-OBS-2</td></tr>
-              <tr><td><span class="badge badge-ok" style="font-size:12px">B</span></td><td>Ostatní poskytovatelé ZS</td><td>Pac. souhrn, Zobrazovací, Propouštěcí</td><td>TS-OBS-1, TS-OBS-2</td></tr>
-              <tr><td><span class="badge badge-ok" style="font-size:12px">ZZS</span></td><td>Zdravotnická záchranná služba</td><td>Pac. souhrn, Výjezd ZZS</td><td>TS-OBS-1, TS-OBS-2</td></tr>
+              <tr><td><span class="badge badge-ok" style="font-size:12px">A</span></td><td>PZS s urgentním příjmem typu II</td><td>Pac. souhrn: TS-OBS-1 + TS-OBS-2<br>Zobrazovací: TS-OBS-1 + TS-OBS-2<br>Propouštěcí: TS-OBS-1 + TS-OBS-2<br>Výjezd ZZS: TS-OBS-1</td><td>Dle typu eZD</td></tr>
+              <tr><td><span class="badge badge-ok" style="font-size:12px">B</span></td><td>Ostatní poskytovatelé ZS</td><td>Pac. souhrn: TS-OBS-1 + TS-OBS-2<br>Zobrazovací: TS-OBS-1<br>Propouštěcí: TS-OBS-1 + TS-OBS-2</td><td>Dle typu eZD</td></tr>
+              <tr><td><span class="badge badge-ok" style="font-size:12px">ZZS</span></td><td>Zdravotnická záchranná služba</td><td>Pac. souhrn: TS-OBS-1<br>Výjezd ZZS: TS-OBS-1 + TS-OBS-2</td><td>Dle typu eZD</td></tr>
             </tbody>
           </table>
         </div>
@@ -3750,7 +3743,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
             <thead><tr><th>ID</th><th>Název</th><th>Popis</th><th>Typ</th></tr></thead>
             <tbody>
               <tr><td><code>TS-TECH-1</code></td><td>Připojení ke KRP</td><td>Vyhledání pacienta 4 metodami</td><td>Technický</td></tr>
-              <tr><td><code>TS-TECH-2</code></td><td>Připojení ke KRZP</td><td>Vyhledání pracovníka dle KRZP ID a zaměstnavatele</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-2</code></td><td>Připojení ke KRPZS</td><td>Vyhledání poskytovatele dle IČO, názvu a pracoviště</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-3</code></td><td>Notifikace</td><td>Ověření notifikačního systému</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-4</code></td><td>Registr oprávnění</td><td>Ověření přístupu ZP přes Registr oprávnění</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-5</code></td><td>TermX číselníky</td><td>Získání ValueSet z terminologického serveru</td><td>Technický</td></tr>
@@ -3758,10 +3751,10 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
               <tr><td><code>TS-TECH-7</code></td><td>Vyhledání a stažení z DÚ</td><td>VyhledejZasilku + DejZasilku + ověření dokumentů</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-8</code></td><td>Změna v DÚ</td><td>VyhledejZasilku + ZmenZasilku</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-9</code></td><td>Zneplatnění v DÚ</td><td>VyhledejZasilku + ZneplatniZasilku</td><td>Technický</td></tr>
-              <tr><td><code>TS-OBS-1</code></td><td>Příjem eZD</td><td>Stažení z DÚ, validace integrity, zobrazení</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-OBS-1</code></td><td>Příjem eZD</td><td>Stažení z DÚ, validace integrity, lokální uložení a náhled</td><td>Obsahový</td></tr>
               <tr><td><code>TS-TECH-10</code></td><td>Číselníky KRP/KRZP</td><td>Načtení číselníků pohlaví, stát, druh dokladu, ZP</td><td>Technický</td></tr>
-              <tr><td><code>TS-OBS-2</code></td><td>Vytvoření eZD</td><td>Generování FHIR Bundle, validace formátu + uložení do DÚ</td><td>Obsahový</td></tr>
-              <tr><td><code>TS-OBS-3</code></td><td>Založení pacienta</td><td>Založení novorozence v KRP + ověření správných kódů</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-OBS-2</code></td><td>Vytvoření eZD</td><td>Generování FHIR Bundle, validace formátu, uložení do DÚ a ověření dohledatelnosti</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-OBS-3</code></td><td>Založení pacienta</td><td>Založení novorozence v KRP + kontrola vrácených kódů</td><td>Obsahový</td></tr>
             </tbody>
           </table>
         </div>
@@ -3797,7 +3790,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- TECHNICKÉ TESTY -->
       <div class="sub-panel" id="irop-tech-panel">
         <div class="card" id="iropTech1"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-1</span><span class="card-title">Připojení ke KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání pacienta dle RID, jméno+RC, jméno+datum narození, jméno+číslo pojištěnce.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-1')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-1" style="margin-top:10px;min-height:30px">-</div></div>
-        <div class="card" id="iropTech2"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-2</span><span class="card-title">Připojení ke KRZP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání zdravotnického pracovníka dle KRZP ID a zaměstnavatele (IČO).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-2')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-2" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech2"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-2</span><span class="card-title">Připojení ke KRPZS</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání poskytovatele dle IČO, názvu a pracoviště.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-2')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-2" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech3"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-3</span><span class="card-title">Notifikace ze SEZ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření odběrů notifikací v KRP a stavu kanálů v KRZP.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-3')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-3" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech4"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-4</span><span class="card-title">Registr oprávnění</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření přístupových oprávnění zdravotnického pracovníka (PZS→ZP, přístup k DÚ, služby EZ).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-4')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-4" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech5"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-5</span><span class="card-title">TermX číselníky</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Získání definice a rozbalení ValueSet z Terminologického serveru.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-5')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-5" style="margin-top:10px;min-height:30px">-</div></div>
@@ -3810,9 +3803,9 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
 
       <!-- OBSAHOVÉ TESTY -->
       <div class="sub-panel" id="irop-obs-panel">
-        <div class="card" id="iropObs1"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-1</span><span class="card-title">Příjem, uložení a zobrazení eZD</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Stažení dokumentu z DÚ, validace integrity (hash, velikost), dekódování a zobrazení obsahu.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-1')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-1" style="margin-top:10px;min-height:30px">-</div></div>
-        <div class="card" id="iropObs2"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-2</span><span class="card-title">Vytvoření eZD a zpřístupnění v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Generování FHIR Bundle (Composition, Patient, Practitioner, Organization) a uložení jako eZD do DÚ.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-2')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-2" style="margin-top:10px;min-height:30px">-</div></div>
-        <div class="card" id="iropObs3"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-3</span><span class="card-title">Založení pacienta v KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Založení novorozence v KRP se správnými kódy (pohlaví, státní občanství) a zpětné ověření přes RID.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-3')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-3" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropObs1"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-1</span><span class="card-title">Příjem, uložení a zobrazení eZD</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Stažení dokumentu z DÚ, validace integrity (hash, velikost), lokální uložení a náhled obsahu.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-1')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-1" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropObs2"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-2</span><span class="card-title">Vytvoření eZD a zpřístupnění v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Generování FHIR Bundle (Composition, Patient, Practitioner, Organization), uložení jako eZD do DÚ a kontrola dohledatelnosti.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-2')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-2" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropObs3"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-3</span><span class="card-title">Založení pacienta v KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Založení novorozence v KRP se správnými kódy (pohlaví, státní občanství) a kontrola vrácených údajů přes RID.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-3')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-3" style="margin-top:10px;min-height:30px">-</div></div>
       </div>
 
       <!-- SPUSTIT VŠE -->
@@ -5081,7 +5074,7 @@ async function krpHledatUniv() {
   if (dn) body.datumNarozeni = dn;
   if (cp) body.cisloPojistence = cp;
   if (!Object.keys(body).length) return toast('Vyplňte alespoň jedno pole', true);
-  const data = await api('POST', '/api/krp/hledat-univerzalni', body);
+  const data = await api('POST', '/api/krp/hledat-uni', body);
   showResult('krpResult', data);
 }
 
@@ -5643,11 +5636,9 @@ function _showHromStatus(msg, color) {
 async function krpNotifVyhledat() {
   const typ = _val('krpNotifKanalTyp');
   const subj = _val('krpNotifSubjektId');
-  const stav = _val('krpNotifStav');
   const body = {};
   if (typ) body.kanalTyp = typ;
   if (subj) body.subjektId = subj;
-  if (stav) body.stav = stav;
   const data = await api('POST', '/api/krp/notifikace-vyhledat', body);
   showResult('krpNotifResult', data);
 }
@@ -6653,7 +6644,7 @@ function duBuildBody() {
       nazev: nazev,
       popis: popis,
       typ: {ciselnikKod: 'medical-document-type', kod: typKod, verze: '1.0.0'},
-      klasifikace: {ciselnikKod: 'document-category', kod: klasKod, verze: '1.0.0'},
+      klasifikace: {ciselnikKod: 'document-category', kod: klasKod, verze: ''},
       autor: document.getElementById('duCrAutor').value,
       zdravotnickyPracovnik: document.getElementById('duCrAutor').value,
       poskytovatel: document.getElementById('duCrPoskytovatel').value,
@@ -6667,7 +6658,7 @@ function duBuildBody() {
         popis: popis,
         jazyk: {ciselnikKod: 'languages', kod: document.getElementById('duCrDocJazyk').value, verze: '5.0.0'},
         typ: {ciselnikKod: 'medical-document-type', kod: typKod, verze: '1.0.0'},
-        klasifikace: {ciselnikKod: 'document-category', kod: klasKod, verze: '1.0.0'},
+        klasifikace: {ciselnikKod: 'document-category', kod: klasKod, verze: ''},
         autor: document.getElementById('duCrAutor').value,
         poskytovatel: document.getElementById('duCrPoskytovatel').value,
         pacient: rid,
@@ -8686,11 +8677,11 @@ async function runTests() {
   const summary = document.getElementById('testSummary');
   btn.disabled = true;
   btn.textContent = 'Probíhá testování...';
-  summary.innerHTML = '<span class="spinner"></span> Spouštím testy (může trvat ~60s)...';
+  summary.innerHTML = '<span class="spinner"></span> Spouštím dokumentační kontrolu (může trvat ~60s)...';
 
   const data = await api('POST', '/api/test/run');
   btn.disabled = false;
-  btn.textContent = 'Spustit kompletní testy';
+  btn.textContent = 'Spustit dokumentační kontrolu';
 
   if (data.error) {
     summary.innerHTML = `<span class="badge badge-err">CHYBA</span> ${data.error}`;
