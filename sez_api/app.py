@@ -1530,9 +1530,27 @@ async def notif_vyhledat(
     effective_size = size if size is not None else (limit if limit is not None else 25)
     return timed_call(_modules["notif"].vyhledat, idPrijemce, odData, page, effective_size)
 
+def _normalize_notif_pzs_prijem_vzor_body(body):
+    """Tolerate the simpler UI shape and normalize it for the upstream API."""
+    if not isinstance(body, dict):
+        return body
+    payload = dict(body)
+    model = payload.get("model")
+    if isinstance(model, dict):
+        model = dict(model)
+    else:
+        model = dict(payload)
+        payload = {"model": model}
+    for key in ("prijemce", "Prijemce"):
+        if isinstance(model.get(key), dict):
+            model[key] = [model[key]]
+    payload["model"] = model
+    return payload
+
 @app.post("/api/notifikace/pzs-prijem-vzor")
 async def notif_pzs_prijem_vzor(request: Request):
     body = await request.json()
+    body = _normalize_notif_pzs_prijem_vzor_body(body)
     return timed_call(_modules["notif"].pzs_prijem_vzor, body)
 
 

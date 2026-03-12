@@ -2755,14 +2755,18 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card">
           <div class="card-title">PZS příjem vzor</div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Konfigurace šablony pro příjem notifikací poskytovatelem zdravotních služeb (PZS).
-            Šablona definuje, jaké notifikace PZS přijímá a jakým kanálem.
+            Upstream endpoint očekává přesný JSON model push notifikace. Naše vrstva nyní
+            automaticky doplní obálku <code>model</code> a převede <code>prijemce</code> na pole,
+            ale pro pohodlný start je nejlepší vložit si kostru ukázkového JSONu.
           </p>
           <div class="form-group">
             <label>JSON tělo</label>
-            <textarea id="notifPzsJson" rows="8" placeholder='{"vzor": "..."}'></textarea>
+            <textarea id="notifPzsJson" rows="12" placeholder='{"Id":"...","Typ":"WEBSERVICE","Obsah":"...","Predmet":[],"Hlavicka":[],"IdKorelace":"...","ZdrojovySystem":"SEZ_API_WEB","TypDokumentace":5,"Subjekt":{"Typ":"PZS","Id":"25488627"},"Prijemce":[{"Typ":"PAC","Id":"6259251557"}]}'></textarea>
           </div>
-          <button class="btn btn-primary" style="margin-top:8px" onclick="notifPzsVzor()">Odeslat</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn" style="margin-top:8px" onclick="notifPzsFillExample()">Vyplnit kostru</button>
+            <button class="btn btn-primary" style="margin-top:8px" onclick="notifPzsVzor()">Odeslat</button>
+          </div>
         </div>
         <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="notifPzsResult">-</div></div>
       </div>
@@ -7194,6 +7198,16 @@ function elp2BuildBody() {
   if (!rid) { toast('Zadejte RID pacienta', true); return null; }
   const krzpId = document.getElementById('elpCrKrzp').value.trim();
   if (!krzpId) { toast('Zadejte KRZP ID lékaře', true); return null; }
+  const datumVystaveni = _val('elpCrDatumVystaveni');
+  const platnostDo = _val('elpCrPlatnostDo');
+  if (!datumVystaveni || !/^\d{4}-\d{2}-\d{2}$/.test(datumVystaveni)) {
+    toast('Datum vystavení musí být ve formátu d. m. rrrr', true);
+    return null;
+  }
+  if (platnostDo && !/^\d{4}-\d{2}-\d{2}$/.test(platnostDo)) {
+    toast('Platnost do musí být ve formátu d. m. rrrr', true);
+    return null;
+  }
   const cp = (kod) => ({ kod, verze: '1.0.0' });
 
   const skupinyRoRaw = document.getElementById('elpCrSkupinyRo').value.trim();
@@ -7234,8 +7248,8 @@ function elp2BuildBody() {
     stavPosudku: cp(document.getElementById('elpCrStav').value),
     druhProhlidky: cp(document.getElementById('elpCrProhlidka').value),
     druhPosudku: cp(document.getElementById('elpCrDruh').value),
-    datumVystaveni: document.getElementById('elpCrDatumVystaveni').value,
-    platnostDo: document.getElementById('elpCrPlatnostDo').value || null,
+    datumVystaveni,
+    platnostDo: platnostDo || null,
     zpusobilosti: [zpusobilost],
   };
 }
@@ -8210,10 +8224,32 @@ async function notifVyhledat() {
 }
 
 async function notifPzsVzor() {
+  const el = document.getElementById('notifPzsJson');
+  if (!el.value.trim()) {
+    notifPzsFillExample();
+    return toast('Doplněna ukázková kostra JSON pro PZS příjem vzor', true);
+  }
   let body;
-  try { body = JSON.parse(document.getElementById('notifPzsJson').value); } catch(e) { return toast('Neplatný JSON: ' + e.message, true); }
+  try { body = JSON.parse(el.value); } catch(e) { return toast('Neplatný JSON: ' + e.message, true); }
   const r = await api('POST', '/api/notifikace/pzs-prijem-vzor', body);
   showResult('notifPzsResult', r);
+}
+
+function notifPzsFillExample() {
+  const sample = {
+    Id: 'notif-pzs-vzor-1',
+    Typ: 'WEBSERVICE',
+    Obsah: 'Ukazkovy obsah notifikace pro PZS prijem.',
+    Predmet: [],
+    Hlavicka: [],
+    IdKorelace: 'corr-notif-pzs-vzor-1',
+    ZdrojovySystem: 'SEZ_API_WEB',
+    TypDokumentace: 5,
+    Subjekt: { Typ: 'PZS', Id: '25488627' },
+    Prijemce: [{ Typ: 'PAC', Id: '6259251557' }],
+  };
+  document.getElementById('notifPzsJson').value = JSON.stringify(sample, null, 2);
+  toast('Vlozena ukazkova kostra JSON pro PZS prijem vzor');
 }
 
 async function notifKanaly() { await notifNactiKatalogy(); }
