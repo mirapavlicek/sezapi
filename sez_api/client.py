@@ -740,6 +740,9 @@ class KRP:
 
 class DocasneUloziste:
     BASE = "/docasneUloziste"
+    QUICK_TIMEOUT = 8
+    QUICK_RETRY_BACKOFF = [0.5]
+    QUICK_JSU_SCOPES = [None]
 
     def __init__(self, client: SEZClient):
         self.c = client
@@ -754,15 +757,21 @@ class DocasneUloziste:
         url = self.c.config.GATEWAY + path
         body = kwargs.pop("body", None)
         timeout = kwargs.pop("timeout", 30)
+        retry_backoff = kwargs.pop("retry_backoff", self.RETRY_BACKOFF)
+        max_alt_kids = kwargs.pop("max_alt_kids", None)
+        jsu_scopes = kwargs.pop("jsu_scopes", None)
 
         self.last_request_debug = {
             "method": method,
             "url": url,
             "path": path,
             "body": body,
+            "timeout": timeout,
         }
 
         alt_kids = self.c.auth.get_alt_kids()
+        if max_alt_kids:
+            alt_kids = alt_kids[:max_alt_kids]
         if self._working_kid and not self._working_kid.startswith("jsu_"):
             for i, (name, _) in enumerate(alt_kids):
                 if name == self._working_kid:
@@ -775,7 +784,7 @@ class DocasneUloziste:
         last_kid_name = None
 
         primary_kid, primary_jwt_hdrs = alt_kids[0]
-        primary_retries = len(self.RETRY_BACKOFF)
+        primary_retries = len(retry_backoff)
         for attempt in range(primary_retries + 1):
             assertion = self.c.auth.build_assertion(extra_headers=primary_jwt_hdrs)
             headers = self._build_headers(assertion)
@@ -809,7 +818,7 @@ class DocasneUloziste:
             last_resp = resp
 
             if token_err and attempt < primary_retries:
-                delay = self.RETRY_BACKOFF[attempt]
+                delay = retry_backoff[attempt]
                 logger.warning(
                     "DÚ [%s] %s (HTTP %d) pokus %d/%d – reset, čekám %.1fs",
                     primary_kid, token_err, resp.status_code,
@@ -854,7 +863,7 @@ class DocasneUloziste:
             for v in tried_variants if "error" in v
         ) and tried_variants
         if all_token:
-            fb = self._jsu_fallback(method, url, body, timeout, tried_variants)
+            fb = self._jsu_fallback(method, url, body, timeout, tried_variants, scopes=jsu_scopes)
             if fb is not None:
                 return fb
 
@@ -862,6 +871,16 @@ class DocasneUloziste:
             self.last_request_debug["kid_variant"] = (
                 f"{last_kid_name} (poslední – neúspěšný)")
             self.last_request_debug["headers"] = self._safe_headers(last_headers)
+
+        if last_resp is None:
+            errors = [v.get("error") for v in tried_variants if v.get("error")]
+            if errors:
+                self.last_request_debug["error"] = errors[-1]
+            else:
+                self.last_request_debug["error"] = "DÚ neodpovědělo v časovém limitu"
+            logger.error("DÚ: všechny pokusy selhaly bez HTTP odpovědi: %s",
+                         self.last_request_debug["error"])
+            return None
 
         if last_resp is not None:
             self.c.last_status = last_resp.status_code
@@ -925,12 +944,12 @@ class DocasneUloziste:
             self.c.last_response = resp.text
         return resp
 
-    def _jsu_fallback(self, method, url, body, timeout, tried_variants):
+    def _jsu_fallback(self, method, url, body, timeout, tried_variants, scopes=None):
         """Try direct JSU token exchange when Gateway auth fails for DÚ."""
         logger.info("DÚ: všechny kid varianty selhaly s token errorém – "
                      "zkouším přímý JSU token exchange")
 
-        DU_SCOPES = [None, "docasneUloziste", "DU"]
+        DU_SCOPES = scopes or [None, "docasneUloziste", "DU"]
         jsu_log = []
 
         for scope in DU_SCOPES:
@@ -1011,13 +1030,28 @@ class DocasneUloziste:
         return None
 
     def dej_zasilku(self, zasilka_id):
-        return self._du_request("GET", f"{self.BASE}/api/v1/Zasilka/DejZasilku/{zasilka_id}")
+        return self._du_request(
+            "GET",
+            f"{self.BASE}/api/v1/Zasilka/DejZasilku/{zasilka_id}",
+            timeout=self.QUICK_TIMEOUT,
+            retry_backoff=self.QUICK_RETRY_BACKOFF,
+            max_alt_kids=1,
+            jsu_scopes=self.QUICK_JSU_SCOPES,
+        )
 
     def vyhledej_zasilku(self, datum_od, datum_do, pacient=None, page=1, size=25):
         body = {"datumOd": datum_od, "datumDo": datum_do, "strankovani": {"page": page, "size": size}}
         if pacient:
             body["pacient"] = pacient
-        return self._du_request("POST", f"{self.BASE}/api/v1/Zasilka/VyhledejZasilku", body=body)
+        return self._du_request(
+            "POST",
+            f"{self.BASE}/api/v1/Zasilka/VyhledejZasilku",
+            body=body,
+            timeout=self.QUICK_TIMEOUT,
+            retry_backoff=self.QUICK_RETRY_BACKOFF,
+            max_alt_kids=1,
+            jsu_scopes=self.QUICK_JSU_SCOPES,
+        )
 
     def uloz_zasilku(self, zasilka):
         return self._du_request("POST", f"{self.BASE}/api/v1/Zasilka/UlozZasilku", body=zasilka)

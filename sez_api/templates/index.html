@@ -4357,6 +4357,10 @@ function renderRequestDebug(elId, data) {
   h += '<span class="mono" style="font-size:12px">' + escHtml(req.method || '') + '</span>';
   h += '<span style="font-weight:600;font-size:12px;color:var(--fg3)">URL:</span>';
   h += '<span class="mono" style="font-size:11px;word-break:break-all">' + escHtml(req.url || '') + '</span>';
+  if (req.timeout != null) {
+    h += '<span style="font-weight:600;font-size:12px;color:var(--fg3)">Timeout:</span>';
+    h += '<span class="mono" style="font-size:12px">' + escHtml(String(req.timeout)) + 's</span>';
+  }
   h += '</div>';
 
   if (req.kid_variant) {
@@ -4451,6 +4455,11 @@ function renderRequestDebug(elId, data) {
       h += '</div></details>';
     });
     h += '</div>';
+  }
+
+  if (req.jsu_fallback && req.jsu_fallback.length) {
+    h += '<div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:var(--fg3);margin-bottom:4px">DÚ – JSU fallback:</div>';
+    h += '<div class="json-box" style="max-height:220px;font-size:10px">' + syntaxHighlight(req.jsu_fallback) + '</div></div>';
   }
 
   if (req.jsu_fallback && req.jsu_fallback.length) {
@@ -6333,9 +6342,40 @@ async function duVyhledej() {
     pacient: pac, size
   });
   showResult('duResult', data);
+  duAutofillFirstShipment(data?.data);
 }
+
+function _duExtractShipments(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.zasilka)) return payload.zasilka;
+  if (Array.isArray(payload.items)) return payload.items;
+  if (Array.isArray(payload.page)) return payload.page;
+  if (payload.data) return _duExtractShipments(payload.data);
+  return [];
+}
+
+function duAutofillFirstShipment(payload) {
+  const zasilky = _duExtractShipments(payload);
+  const first = zasilky.find(z => z && z.id);
+  if (!first) return;
+  const idEl = document.getElementById('duZasilkaId');
+  if (idEl) {
+    idEl.value = first.id;
+    toast('První nalezená zásilka byla automaticky vložena do detailu');
+  }
+}
+
 async function duDej() {
-  const id = document.getElementById('duZasilkaId').value.trim();
+  let id = document.getElementById('duZasilkaId').value.trim();
+  if (!id) {
+    const first = _duExtractShipments(_resultStore.duResult).find(z => z && z.id);
+    if (first?.id) {
+      id = first.id;
+      document.getElementById('duZasilkaId').value = id;
+      toast('Použita první zásilka z posledního vyhledání');
+    }
+  }
   if (!id) return toast('Zadejte ID zásilky', true);
   const data = await api('GET', '/api/du/zasilka/' + id);
   showResult('duResult', data);
@@ -7110,9 +7150,16 @@ async function elp2LoadCodelist(kod) {
 
 async function elp2FillSelect(selectId, codelistKod) {
   const sel = document.getElementById(selectId);
-  if (!sel) return;
+  if (!sel) return false;
   sel.innerHTML = '';
   const items = await elp2LoadCodelist(codelistKod);
+  if (!items.length) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '-- číselník se nepodařilo načíst --';
+    sel.appendChild(opt);
+    return false;
+  }
   for (const it of items) {
     const opt = document.createElement('option');
     opt.value = it.kod;
@@ -7120,6 +7167,41 @@ async function elp2FillSelect(selectId, codelistKod) {
     opt.textContent = it.kod + ' – ' + (cs.nazev || it.kod);
     sel.appendChild(opt);
   }
+  if (!sel.value && items[0]?.kod) sel.value = items[0].kod;
+  return true;
+}
+
+async function elp2EnsureCreateSelects() {
+  const required = [
+    ['elpCrAkce', 'akce-ro'],
+    ['elpCrDruh', 'druh-posudku-ro'],
+    ['elpCrProhlidka', 'druh-prohlidky-ro'],
+    ['elpCrSkupina', 'skupina-zadatel-ridic-ro'],
+    ['elpCrVysledek', 'vysledek-posudku-ro'],
+    ['elpCrStav', 'stav-posudku'],
+  ];
+  const missing = required.filter(([selectId]) => {
+    const sel = document.getElementById(selectId);
+    return !sel || !sel.options.length || !sel.value;
+  });
+  if (!missing.length) return;
+  await Promise.all(missing.map(([selectId, codelistKod]) => elp2FillSelect(selectId, codelistKod)));
+}
+
+function elp2RequiredSelectValue(selectId, label) {
+  const sel = document.getElementById(selectId);
+  if (!sel) {
+    toast(`Pole "${label}" ve formuláři chybí`, true);
+    return null;
+  }
+  const value = (sel.value || '').trim();
+  if (value) return value;
+  if (!sel.options.length || sel.options[0]?.value === '') {
+    toast(`Číselník pro pole "${label}" se nenačetl. Zkuste formulář otevřít znovu.`, true);
+    return null;
+  }
+  toast(`Vyberte položku "${label}"`, true);
+  return null;
 }
 
 function elp2PopulateChips(containerId, ridInputId) {
@@ -7136,10 +7218,12 @@ function elp2PopulateChips(containerId, ridInputId) {
 }
 
 async function elp2CreateInit() {
-  if (elp2Inited) return;
-  elp2Inited = true;
   const today = new Date().toISOString().split('T')[0];
   _setDate('elpCrDatumVystaveni', today);
+  if (elp2Inited) {
+    await elp2EnsureCreateSelects();
+    return;
+  }
 
   await Promise.all([
     elp2FillSelect('elpCrAkce', 'akce-ro'),
@@ -7149,6 +7233,7 @@ async function elp2CreateInit() {
     elp2FillSelect('elpCrVysledek', 'vysledek-posudku-ro'),
     elp2FillSelect('elpCrStav', 'stav-posudku'),
   ]);
+  elp2Inited = true;
 
   elp2PopulateChips('elpCreateChips', 'elpCrRid');
   elp2PopulateChips('elpSearchChips', 'elpSrchRid');
@@ -7193,7 +7278,8 @@ async function elp2Detail() {
 }
 
 // -- Vytvoření v2 (se zpusobilostmi) --
-function elp2BuildBody() {
+async function elp2BuildBody() {
+  await elp2EnsureCreateSelects();
   const rid = document.getElementById('elpCrRid').value.trim();
   if (!rid) { toast('Zadejte RID pacienta', true); return null; }
   const krzpId = document.getElementById('elpCrKrzp').value.trim();
@@ -7209,6 +7295,13 @@ function elp2BuildBody() {
     return null;
   }
   const cp = (kod) => ({ kod, verze: '1.0.0' });
+  const typAkce = elp2RequiredSelectValue('elpCrAkce', 'Typ akce');
+  const stavPosudku = elp2RequiredSelectValue('elpCrStav', 'Stav posudku');
+  const druhProhlidky = elp2RequiredSelectValue('elpCrProhlidka', 'Druh prohlídky');
+  const druhPosudku = elp2RequiredSelectValue('elpCrDruh', 'Druh posudku');
+  const skupinaZadateleRidic = elp2RequiredSelectValue('elpCrSkupina', 'Skupina žadatele');
+  const vysledek = elp2RequiredSelectValue('elpCrVysledek', 'Výsledek posudku');
+  if (!typAkce || !stavPosudku || !druhProhlidky || !druhPosudku || !skupinaZadateleRidic || !vysledek) return null;
 
   const skupinyRoRaw = document.getElementById('elpCrSkupinyRo').value.trim();
   const skupinyRo = skupinyRoRaw.split(',').map(s => s.trim()).filter(Boolean)
@@ -7216,9 +7309,9 @@ function elp2BuildBody() {
   if (!skupinyRo.length) { toast('Zadejte alespoň jednu skupinu ŘO', true); return null; }
 
   const zpusobilost = {
-    skupinaZadateleRidic: cp(document.getElementById('elpCrSkupina').value),
+    skupinaZadateleRidic: cp(skupinaZadateleRidic),
     skupinyRidicskehoOpravneni: skupinyRo,
-    vysledek: cp(document.getElementById('elpCrVysledek').value),
+    vysledek: cp(vysledek),
   };
 
   const harmKod = document.getElementById('elpCrHarmKod').value.trim();
@@ -7244,24 +7337,24 @@ function elp2BuildBody() {
   return {
     rid,
     krzpId,
-    typAkce: cp(document.getElementById('elpCrAkce').value),
-    stavPosudku: cp(document.getElementById('elpCrStav').value),
-    druhProhlidky: cp(document.getElementById('elpCrProhlidka').value),
-    druhPosudku: cp(document.getElementById('elpCrDruh').value),
+    typAkce: cp(typAkce),
+    stavPosudku: cp(stavPosudku),
+    druhProhlidky: cp(druhProhlidky),
+    druhPosudku: cp(druhPosudku),
     datumVystaveni,
     platnostDo: platnostDo || null,
     zpusobilosti: [zpusobilost],
   };
 }
 
-function elp2Preview() {
-  const body = elp2BuildBody();
+ async function elp2Preview() {
+  const body = await elp2BuildBody();
   if (!body) return;
   document.getElementById('elpCreatePreview').innerHTML = syntaxHighlight(body);
 }
 
 async function elp2CreateSubmit() {
-  const body = elp2BuildBody();
+  const body = await elp2BuildBody();
   if (!body) return;
   document.getElementById('elpCreatePreview').innerHTML = syntaxHighlight(body);
   const data = await api('POST', '/api/elp2/vytvor', body);
@@ -8807,6 +8900,7 @@ function _iropRenderDebug(dbg, passed) {
   if (dbg.method) h += '<span><b>Method:</b> <span class="mono">' + escHtml(dbg.method) + '</span></span>';
   if (dbg.url) h += '<span><b>URL:</b> <span class="mono" style="font-size:10px;word-break:break-all">' + escHtml(dbg.url) + '</span></span>';
   if (dbg.kid_variant) h += '<span><b>JWT kid:</b> <span class="mono" style="color:var(--accent)">' + escHtml(dbg.kid_variant) + '</span></span>';
+  if (dbg.timeout != null) h += '<span><b>Timeout:</b> <span class="mono">' + escHtml(String(dbg.timeout)) + 's</span></span>';
   h += '</div>';
 
   if (dbg.headers) {
@@ -8867,6 +8961,11 @@ function _iropRenderDebug(dbg, passed) {
   if (dbg.tried_variants && dbg.tried_variants.length) {
     h += '<details style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">DÚ kid varianty (' + dbg.tried_variants.length + ')</summary>';
     h += '<div class="json-box" style="max-height:150px;font-size:9px;margin-top:4px">' + syntaxHighlight(dbg.tried_variants) + '</div></details>';
+  }
+
+  if (dbg.jsu_fallback && dbg.jsu_fallback.length) {
+    h += '<details style="margin-bottom:6px"><summary style="font-size:10px;font-weight:600;color:var(--fg3);cursor:pointer">DÚ JSU fallback (' + dbg.jsu_fallback.length + ')</summary>';
+    h += '<div class="json-box" style="max-height:180px;font-size:9px;margin-top:4px">' + syntaxHighlight(dbg.jsu_fallback) + '</div></details>';
   }
 
   if (dbg.du_debug) {

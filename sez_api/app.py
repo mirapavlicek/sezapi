@@ -724,8 +724,18 @@ def _du_timed_call(fn, *args, **kwargs) -> JSONResponse:
     try:
         resp = fn(*args, **kwargs)
         elapsed = round((time.monotonic() - t0) * 1000)
-        result = api_response(resp)
-        result["elapsed_ms"] = elapsed
+        if resp is None:
+            err = None
+            if du.last_request_debug:
+                err = du.last_request_debug.get("error")
+            result = {
+                "status": 0,
+                "error": err or "DÚ nevrátilo žádnou odpověď v časovém limitu",
+                "elapsed_ms": elapsed,
+            }
+        else:
+            result = api_response(resp)
+            result["elapsed_ms"] = elapsed
     except Exception as e:
         elapsed = round((time.monotonic() - t0) * 1000)
         result = {"status": 0, "error": str(e), "elapsed_ms": elapsed}
@@ -2273,7 +2283,12 @@ def _irop_grab_debug():
         debug.update(_client.last_request_debug)
     du_mod = _modules.get("du")
     if du_mod and hasattr(du_mod, "last_request_debug") and du_mod.last_request_debug:
-        debug["du_debug"] = du_mod.last_request_debug
+        du_debug = du_mod.last_request_debug
+        debug["du_debug"] = du_debug
+        for key in ("method", "url", "path", "body", "headers", "attempts",
+                    "kid_variant", "tried_variants", "jsu_fallback", "timeout"):
+            if du_debug.get(key) is not None:
+                debug[key] = du_debug[key]
     return debug
 
 
@@ -2310,10 +2325,14 @@ def _irop_step_api(name, fn, *args, **kwargs):
         resp = fn(*args, **kwargs)
         elapsed = round((time.monotonic() - t0) * 1000)
         if resp is None:
+            dbg = _irop_grab_debug()
+            err = dbg.get("error")
+            if not err and isinstance(dbg.get("du_debug"), dict):
+                err = dbg["du_debug"].get("error")
             return {"name": name, "passed": False, "status": 0,
                     "elapsed_ms": elapsed, "data": None,
-                    "error": "Služba vrátila prázdnou odpověď (možný problém s autentizací DÚ)",
-                    "_debug": _irop_grab_debug()}
+                    "error": err or "Služba vrátila prázdnou odpověď",
+                    "_debug": dbg}
         status_code = getattr(resp, "status_code", 0)
         try:
             data = resp.json() if hasattr(resp, "json") else resp
@@ -2554,7 +2573,8 @@ def _irop_tech5(params, modules, client):
             sc = resp.status_code if resp else 0
             if resp is None:
                 return {"name": name, "passed": False, "status": 0,
-                        "elapsed_ms": elapsed, "data": None, "error": "Prázdná odpověď", "_debug": {}}
+                        "elapsed_ms": elapsed, "data": None, "error": "Prázdná odpověď",
+                        "_debug": {"method": "GET", "url": path, "body": None}}
             try:
                 ct = resp.headers.get("content-type", "")
                 if "json" in ct or "fhir" in ct:
@@ -2578,11 +2598,12 @@ def _irop_tech5(params, modules, client):
             return {"name": name, "passed": 200 <= sc < 400,
                     "status": sc, "elapsed_ms": elapsed, "data": data if not isinstance(data, str) or len(data) < 300 else data[:300] + "…",
                     "error": err,
-                    "_debug": {"url": str(resp.url) if hasattr(resp, "url") else path}}
+                    "_debug": {"method": "GET", "url": str(resp.url) if hasattr(resp, "url") else path, "body": None}}
         except Exception as e:
             elapsed = round((time.monotonic() - t0) * 1000)
             return {"name": name, "passed": False, "status": 0,
-                    "elapsed_ms": elapsed, "data": None, "error": str(e), "_debug": {}}
+                    "elapsed_ms": elapsed, "data": None, "error": str(e),
+                    "_debug": {"method": "GET", "url": path, "body": None}}
 
     steps.append(_termx_step("Vyhledání ValueSet", f"/terminologie/fhir/ValueSet/?url={vs_url}"))
     steps.append(_termx_step("Expand ValueSet", f"/terminologie/fhir/ValueSet/$expand?url={vs_url}"))
