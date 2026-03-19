@@ -85,7 +85,7 @@ def _ping():
         ("KRP",        lambda: KRP(client).hledat_rid("7653800856")),
         ("SZZ",        lambda: SZZ(client).alergie("7706120004")),
         ("ELP",        lambda: ELP(client).vyhledej_posudky({"strankovani": {"page": 0, "size": 1}})),
-        ("eZadanky",   lambda: EZadanky(client).dej_token()),
+        ("eZadanky",   lambda: EZadanky(client).vyhledej_zadanku({"strankovani": {"page": 1, "size": 1}})),
         ("EZCA2",      lambda: EZCA2(client).simple_health()),
         ("KRZP",       lambda: KRZP(client).hledat_jmeno("Novák", "Jan")),
     ]

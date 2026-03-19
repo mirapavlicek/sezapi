@@ -488,8 +488,8 @@ class SEZClient:
     def patch(self, path, body=None, params=None, **kwargs):
         return self._request("PATCH", path, json=body, params=params, **kwargs)
 
-    def put(self, path, body=None, **kwargs):
-        return self._request("PUT", path, json=body, **kwargs)
+    def put(self, path, body=None, params=None, **kwargs):
+        return self._request("PUT", path, json=body, params=params, **kwargs)
 
     def delete(self, path, body=None):
         return self._request("DELETE", path, json=body)
@@ -756,16 +756,19 @@ class DocasneUloziste:
         then kid-variant fallback, then direct JSU exchange."""
         url = self.c.config.GATEWAY + path
         body = kwargs.pop("body", None)
+        params = kwargs.pop("params", None)
         timeout = kwargs.pop("timeout", 30)
         retry_backoff = kwargs.pop("retry_backoff", self.RETRY_BACKOFF)
         max_alt_kids = kwargs.pop("max_alt_kids", None)
         jsu_scopes = kwargs.pop("jsu_scopes", None)
+        debug_url = requests.Request(method, url, params=params).prepare().url if params else url
 
         self.last_request_debug = {
             "method": method,
-            "url": url,
+            "url": debug_url,
             "path": path,
             "body": body,
+            "params": params,
             "timeout": timeout,
         }
 
@@ -791,7 +794,7 @@ class DocasneUloziste:
             last_headers = headers
             last_kid_name = primary_kid
 
-            resp, err = self._try_request(method, url, headers, body, timeout)
+            resp, err = self._try_request(method, url, headers, body, timeout, params=params)
             if err:
                 tried_variants.append({
                     "kid": f"{primary_kid} (pokus {attempt + 1})",
@@ -863,7 +866,7 @@ class DocasneUloziste:
             for v in tried_variants if "error" in v
         ) and tried_variants
         if all_token:
-            fb = self._jsu_fallback(method, url, body, timeout, tried_variants, scopes=jsu_scopes)
+            fb = self._jsu_fallback(method, url, body, timeout, tried_variants, scopes=jsu_scopes, params=params)
             if fb is not None:
                 return fb
 
@@ -918,14 +921,14 @@ class DocasneUloziste:
         except Exception:
             return resp.text[:300]
 
-    def _try_request(self, method, url, headers, body, timeout):
+    def _try_request(self, method, url, headers, body, timeout, params=None):
         try:
             if method == "GET":
                 r = self.c.session.request("GET", url, headers=headers,
-                                           timeout=timeout)
+                                           params=params, timeout=timeout)
             else:
                 r = self.c.session.request(method, url, headers=headers,
-                                           json=body, timeout=timeout)
+                                           json=body, params=params, timeout=timeout)
             return r, None
         except (requests.ConnectionError, requests.Timeout) as e:
             logger.warning("DÚ spojení selhalo: %s", e)
@@ -944,7 +947,7 @@ class DocasneUloziste:
             self.c.last_response = resp.text
         return resp
 
-    def _jsu_fallback(self, method, url, body, timeout, tried_variants, scopes=None):
+    def _jsu_fallback(self, method, url, body, timeout, tried_variants, scopes=None, params=None):
         """Try direct JSU token exchange when Gateway auth fails for DÚ."""
         logger.info("DÚ: všechny kid varianty selhaly s token errorém – "
                      "zkouším přímý JSU token exchange")
@@ -971,10 +974,10 @@ class DocasneUloziste:
                 try:
                     if method == "GET":
                         resp = self.c.session.request(
-                            "GET", url, headers=headers, timeout=timeout)
+                            "GET", url, headers=headers, params=params, timeout=timeout)
                     else:
                         resp = self.c.session.request(
-                            method, url, headers=headers, json=body,
+                            method, url, headers=headers, json=body, params=params,
                             timeout=timeout)
                 except Exception as e:
                     jsu_log.append({
@@ -1056,12 +1059,27 @@ class DocasneUloziste:
     def uloz_zasilku(self, zasilka):
         return self._du_request("POST", f"{self.BASE}/api/v1/Zasilka/UlozZasilku", body=zasilka)
 
-    def zmen_zasilku(self, zasilka_id, zasilka):
-        return self._du_request("PUT", f"{self.BASE}/api/v1/Zasilka/ZmenZasilku/{zasilka_id}", body=zasilka)
+    def zmen_zasilku(self, zasilka_id, verze_radku, zasilka):
+        return self._du_request(
+            "PUT",
+            f"{self.BASE}/api/v1/Zasilka/ZmenZasilku",
+            body=zasilka,
+            params={"Id": zasilka_id, "VerzeRadku": verze_radku},
+        )
 
     def zneplatni_zasilku(self, zasilka_id, verze_radku):
-        body = {"id": zasilka_id, "verzeRadku": verze_radku}
-        return self._du_request("PUT", f"{self.BASE}/api/v1/Zasilka/ZneplatniZasilku", body=body)
+        return self._du_request(
+            "PATCH",
+            f"{self.BASE}/api/v1/Zasilka/ZneplatniZasilku",
+            params={"Id": zasilka_id, "VerzeRadku": verze_radku},
+        )
+
+    def potvrd_vyzvednuti_zasilky(self, zasilka_id, verze_radku):
+        return self._du_request(
+            "PATCH",
+            f"{self.BASE}/api/v1/Zasilka/PotvrdVyzvednutiZasilky",
+            params={"Id": zasilka_id, "VerzeRadku": verze_radku},
+        )
 
 
 class KRZP:
@@ -1246,6 +1264,31 @@ class RegistrOpravneni:
             opravnena_role=zastupce_role,
             opravnena_hodnota=zastupce_hodnota,
         )
+
+    def sluzby_ez(self, kod=None, nazev=None, sort="nazev", order="asc", page=0, size=100):
+        params = {"Sort": sort, "Order": order, "Page": page, "Size": size}
+        if kod:
+            params["Kod"] = kod
+        if nazev:
+            params["Nazev"] = nazev
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/SluzbyEZ", params=params)
+
+    def sluzba_ez_detail(self, item_id: int):
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/SluzbyEZ/{item_id}")
+
+    def typy_dokumentaci(self, kod=None, nazev=None, sort="nazev", order="asc", page=0, size=100):
+        params = {"Sort": sort, "Order": order, "Page": page, "Size": size}
+        if kod:
+            params["Kod"] = kod
+        if nazev:
+            params["Nazev"] = nazev
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/TypyDokumentaci", params=params)
+
+    def typ_dokumentace_detail(self, item_id: int):
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/TypyDokumentaci/{item_id}")
+
+    def opravnujici_osoby(self, rid: str):
+        return self.c.get(f"{self.BASE}/api/v1/Osoby/Opravnujici/{rid}")
 
 
 class SZZ:
@@ -1478,9 +1521,6 @@ class EZadanky:
     def __init__(self, client: SEZClient):
         self.c = client
 
-    def dej_token(self):
-        return self.c.get(f"{self.BASE}/api/v1/eZadanka/DejToken")
-
     def uloz_zadanku(self, zadanka):
         return self.c.post(f"{self.BASE}/api/v1/eZadanka/UlozZadanku", zadanka)
 
@@ -1492,12 +1532,6 @@ class EZadanky:
 
     def nacti_zadanku(self, zadanka_id):
         return self.c.get(f"{self.BASE}/api/v1/eZadanka/NactiZadanku/{zadanka_id}")
-
-    def dej_vizual(self, zadanka_id):
-        return self.c.get(f"{self.BASE}/api/v1/eZadanka/DejVizualZadanky/{zadanka_id}")
-
-    def dej_prilohy(self, zadanka_id):
-        return self.c.get(f"{self.BASE}/api/v1/eZadanka/DejPrilohyZadanky/{zadanka_id}")
 
     def stornuj(self, body):
         return self.c.patch(f"{self.BASE}/api/v1/eZadanka/StornujZadanku", body)
@@ -1517,9 +1551,6 @@ class EZadanky:
     def neproveditelnost(self, body):
         return self.c.patch(f"{self.BASE}/api/v1/eZadanka/ZaznacNeproveditelnostZadanky", body)
 
-    def sestav_soubor(self, body):
-        return self.c.post(f"{self.BASE}/api/v1/eZadanka/SestavSouborZadanky", body)
-
     def diagnose(self) -> dict:
         """Probe each endpoint to determine auth status without side effects."""
         results = []
@@ -1527,17 +1558,10 @@ class EZadanky:
         dummy_verze = "AAAAAAA="
 
         probes = [
-            ("DejVizualZadanky", "GET",
-             f"{self.BASE}/api/v1/eZadanka/DejVizualZadanky/{dummy_uuid}", None),
             ("StornujZadanku", "PATCH",
              f"{self.BASE}/api/v1/eZadanka/StornujZadanku",
              {"id": dummy_uuid, "verzeRadku": dummy_verze,
               "duvodStornaZadanky": {"kod": "1", "verze": "1.0.0"}}),
-            ("SestavSouborZadanky", "POST",
-             f"{self.BASE}/api/v1/eZadanka/SestavSouborZadanky",
-             {"autorId": "0", "zadatelId": "0", "pacient": "0",
-              "adresatId": "0", "typZadanky": "Z",
-              "uhrada": {"coding": [{"system": "x", "code": "x"}]}}),
             ("VyhledejZadanku", "POST",
              f"{self.BASE}/api/v1/eZadanka/VyhledejZadanku",
              {"strankovani": {"page": 1, "size": 1}}),
@@ -1546,8 +1570,6 @@ class EZadanky:
              {"strankovani": {"page": 1, "size": 1}}),
             ("NactiZadanku", "GET",
              f"{self.BASE}/api/v1/eZadanka/NactiZadanku/{dummy_uuid}", None),
-            ("DejPrilohyZadanky", "GET",
-             f"{self.BASE}/api/v1/eZadanka/DejPrilohyZadanky/{dummy_uuid}", None),
             ("PrijmiZadanku", "PATCH",
              f"{self.BASE}/api/v1/eZadanka/PrijmiZadanku",
              {"id": dummy_uuid, "verzeRadku": dummy_verze}),
@@ -1568,7 +1590,20 @@ class EZadanky:
                      "autor": "0", "zdravotnickyPracovnik": "0",
                      "poskytovatel": "0", "pacient": "0", "ispzs": "0",
                  }
-             }}),
+            }}),
+            ("UpravZadanku", "PATCH",
+             f"{self.BASE}/api/v1/eZadanka/UpravZadanku",
+             {"id": dummy_uuid, "verzeRadku": dummy_verze,
+              "upravenyPacient": "0",
+              "upravenaPriorita": {"kod": "routine", "verze": "5.0.2"}}),
+            ("VratZadankuDoObehu", "PATCH",
+             f"{self.BASE}/api/v1/eZadanka/VratZadankuDoObehu",
+             {"id": dummy_uuid, "verzeRadku": dummy_verze,
+              "duvodVraceniZadanky": {"kod": "1", "verze": "1.0.0"}}),
+            ("ZaznacNeproveditelnostZadanky", "PATCH",
+             f"{self.BASE}/api/v1/eZadanka/ZaznacNeproveditelnostZadanky",
+             {"id": dummy_uuid, "verzeRadku": dummy_verze,
+              "duvodNeproveditelnostiZadanky": {"kod": "1", "verze": "1.0.0"}}),
         ]
 
         for label, method, path, body in probes:

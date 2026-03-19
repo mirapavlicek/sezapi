@@ -49,6 +49,6 @@ show("DÚ – VyhledejZasilku",
 show("DÚ – DejZasilku",
      DocasneUloziste(client).dej_zasilku("53cf7836-6ba9-43b7-a858-319bccf8bd6c"))
 
-show("eŽádanky – token",             EZadanky(client).dej_token())
+show("eŽádanky – VyhledejZadanku",   EZadanky(client).vyhledej_zadanku({"strankovani": {"page": 1, "size": 1}}))
 
 print("=" * 90)

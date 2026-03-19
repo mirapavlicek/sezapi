@@ -706,6 +706,28 @@ async def ro_over_zastupce(req: ROZastupceRequest):
                       req.pacient_rid, req.zastupce_hodnota,
                       req.zastupce_role, req.id_sluzby, req.id_typu_dokumentace)
 
+@app.get("/api/ro/sluzby")
+async def ro_sluzby(kod: Optional[str] = None, nazev: Optional[str] = None,
+                    page: int = 0, size: int = 100):
+    return timed_call(_modules["ro"].sluzby_ez, kod, nazev, "nazev", "asc", page, size)
+
+@app.get("/api/ro/sluzby/{item_id}")
+async def ro_sluzba_detail(item_id: int):
+    return timed_call(_modules["ro"].sluzba_ez_detail, item_id)
+
+@app.get("/api/ro/typy-dokumentaci")
+async def ro_typy_dokumentaci(kod: Optional[str] = None, nazev: Optional[str] = None,
+                              page: int = 0, size: int = 100):
+    return timed_call(_modules["ro"].typy_dokumentaci, kod, nazev, "nazev", "asc", page, size)
+
+@app.get("/api/ro/typy-dokumentaci/{item_id}")
+async def ro_typ_dokumentace_detail(item_id: int):
+    return timed_call(_modules["ro"].typ_dokumentace_detail, item_id)
+
+@app.get("/api/ro/opravnujici-osoby/{rid}")
+async def ro_opravnujici_osoby(rid: str):
+    return timed_call(_modules["ro"].opravnujici_osoby, rid)
+
 
 # ---------------------------------------------------------------------------
 # Dočasné úložiště
@@ -717,6 +739,30 @@ class DUVyhledejRequest(BaseModel):
     pacient: Optional[str] = None
     page: int = 1
     size: int = 25
+
+_DU_ZMEN_ALLOWED_FIELDS = (
+    "nazev", "popis", "typ", "klasifikace", "odbornost", "datumOd", "datumDo",
+    "datumVytvoreni", "autor", "zdravotnickyPracovnik", "poskytovatel", "pacient",
+    "ispzs", "adresat", "adresatTyp", "dostupnost", "rodic", "udalost", "dokument",
+)
+_DU_ZMEN_REQUIRED_FIELDS = (
+    "nazev", "typ", "klasifikace", "autor", "zdravotnickyPracovnik",
+    "poskytovatel", "pacient", "ispzs",
+)
+
+def _du_prepare_update_body(payload):
+    if not isinstance(payload, dict):
+        return None
+    prepared = {
+        key: payload[key]
+        for key in _DU_ZMEN_ALLOWED_FIELDS
+        if key in payload and payload[key] is not None
+    }
+    for key in _DU_ZMEN_REQUIRED_FIELDS:
+        value = prepared.get(key)
+        if value in (None, "", [], {}):
+            return None
+    return prepared
 
 def _du_timed_call(fn, *args, **kwargs) -> JSONResponse:
     du = _modules["du"]
@@ -759,15 +805,28 @@ async def du_uloz(request: Request):
 @app.put("/api/du/zmen/{zasilka_id}")
 async def du_zmen(zasilka_id: str, request: Request):
     body = await request.json()
-    return _du_timed_call(_modules["du"].zmen_zasilku, zasilka_id, body)
+    if not isinstance(body, dict):
+        return error_response("Tělo změny zásilky musí být JSON objekt", 400)
+    verze_radku = body.pop("verzeRadku", None) or body.pop("verze_radku", None)
+    if not verze_radku:
+        return error_response("Pro změnu zásilky je povinná hodnota verzeRadku", 400)
+    prepared = _du_prepare_update_body(body)
+    if not prepared:
+        return error_response("Tělo změny zásilky neodpovídá aktuálnímu kontraktu DÚ 1.11.7", 400)
+    return _du_timed_call(_modules["du"].zmen_zasilku, zasilka_id, verze_radku, prepared)
 
 class DUZneplatniRequest(BaseModel):
     zasilka_id: str
     verze_radku: str
 
+@app.patch("/api/du/zneplatni")
 @app.put("/api/du/zneplatni")
 async def du_zneplatni(req: DUZneplatniRequest):
     return _du_timed_call(_modules["du"].zneplatni_zasilku, req.zasilka_id, req.verze_radku)
+
+@app.patch("/api/du/potvrd-vyzvednuti")
+async def du_potvrd_vyzvednuti(req: DUZneplatniRequest):
+    return _du_timed_call(_modules["du"].potvrd_vyzvednuti_zasilky, req.zasilka_id, req.verze_radku)
 
 
 @app.get("/api/du/jsu-diagnose")
@@ -1288,6 +1347,13 @@ def _ez_sim_seed():
 # eŽádanky – Routes (simulation-aware)
 # ---------------------------------------------------------------------------
 
+def _ez_legacy_endpoint_error(endpoint_name: str) -> JSONResponse:
+    return error_response(
+        f"Aktuální eŽádanky API v1.11.7 endpoint {endpoint_name} už nepublikuje. "
+        "Použijte pouze operace dostupné ve swaggeru aktuální verze.",
+        410,
+    )
+
 @app.get("/api/ezadanky/token")
 async def ez_token():
     if _ez_sim_mode:
@@ -1297,7 +1363,7 @@ async def ez_token():
         diag = _modules["ez"].diagnose()
         elapsed = round((time.monotonic() - t0) * 1000)
         results = diag.get("results", []) if isinstance(diag, dict) else []
-        ok = any(isinstance(r, dict) and r.get("http_status") not in (None, 0, 404) for r in results)
+        ok = any(isinstance(r, dict) and r.get("status") not in (None, 0, 404) for r in results)
         return JSONResponse({
             "status": 200 if ok else 0,
             "data": {
@@ -1352,7 +1418,7 @@ async def ez_vizual(zadanka_id: str):
                 f"<p><b>Autor:</b> {aut.get('titulPred','')} {aut.get('jmeno','')} {aut.get('prijmeni','')}</p>"
                 f"<p style='color:gray;font-size:12px'>Simulovaná vizualizace</p></body></html>")
         return _ez_sim_resp({"vizualizace": html, "mime": "text/html"})
-    return timed_call(_modules["ez"].dej_vizual, zadanka_id)
+    return _ez_legacy_endpoint_error("DejVizualZadanky")
 
 @app.get("/api/ezadanky/prilohy/{zadanka_id}")
 async def ez_prilohy(zadanka_id: str):
@@ -1361,7 +1427,7 @@ async def ez_prilohy(zadanka_id: str):
         if not rec:
             return _ez_sim_err("Žádanka nenalezena", "E00011", 404)
         return _ez_sim_resp({"prilohy": [], "pocet": 0})
-    return timed_call(_modules["ez"].dej_prilohy, zadanka_id)
+    return _ez_legacy_endpoint_error("DejPrilohyZadanky")
 
 @app.post("/api/ezadanky/uloz")
 async def ez_uloz(request: Request):
@@ -1443,17 +1509,17 @@ async def ez_sestav(request: Request):
             "nazev": "sim_zadanka.pdf",
             "message": "Simulovaný PDF soubor žádanky",
         })
-    return timed_call(_modules["ez"].sestav_soubor, body)
+    return _ez_legacy_endpoint_error("SestavSouborZadanky")
 
 @app.get("/api/ezadanky/diagnose")
 async def ez_diagnose():
     if _ez_sim_mode:
         endpoints = [
-            ("DejVizualZadanky", "GET"), ("StornujZadanku", "PATCH"),
-            ("SestavSouborZadanky", "POST"), ("VyhledejZadanku", "POST"),
+            ("StornujZadanku", "PATCH"), ("VyhledejZadanku", "POST"),
             ("VyhledejAktivniZadanku", "POST"), ("NactiZadanku", "GET"),
-            ("DejPrilohyZadanky", "GET"), ("PrijmiZadanku", "PATCH"),
-            ("VyridZadanku", "PATCH"), ("UlozZadanku", "POST"),
+            ("PrijmiZadanku", "PATCH"), ("VyridZadanku", "PATCH"),
+            ("UlozZadanku", "POST"), ("UpravZadanku", "PATCH"),
+            ("VratZadankuDoObehu", "PATCH"), ("ZaznacNeproveditelnostZadanky", "PATCH"),
         ]
         return JSONResponse({
             "summary": f"10/10 endpointů dostupné (SIMULACE – {len(_ez_sim_store)} žádanek)",
@@ -1800,6 +1866,9 @@ async def debug_jwt():
                 "version": "v1.0.1",
                 "endpoints": [
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZ"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/TypyDokumentaci", "desc": "Číselník typů dokumentace"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Osoby/Opravnujici/{rid}", "desc": "Seznam oprávněných osob pro RID"},
                 ],
             },
             "TermX": {
@@ -1821,14 +1890,15 @@ async def debug_jwt():
             "DU": {
                 "name": "Dočasné úložiště",
                 "base": "/docasneUloziste",
-                "version": "v1.0.0",
+                "version": "v1.11.7",
                 "note": "DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami",
                 "endpoints": [
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky (eZD)"},
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/VyhledejZasilku", "desc": "Vyhledání zásilek"},
                     {"method": "GET",  "path": "/docasneUloziste/api/v1/Zasilka/DejZasilku/{zasilkaId}", "desc": "Stažení zásilky podle ID"},
-                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZmenZasilku/{zasilkaId}", "desc": "Změna metadata zásilky"},
-                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZneplatniZasilku", "desc": "Zneplatnění zásilky"},
+                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZmenZasilku?Id={zasilkaId}&VerzeRadku={verze}", "desc": "Změna zásilky"},
+                    {"method": "PATCH","path": "/docasneUloziste/api/v1/Zasilka/ZneplatniZasilku?Id={zasilkaId}&VerzeRadku={verze}", "desc": "Zneplatnění zásilky"},
+                    {"method": "PATCH","path": "/docasneUloziste/api/v1/Zasilka/PotvrdVyzvednutiZasilky?Id={zasilkaId}&VerzeRadku={verze}", "desc": "Potvrzení vyzvednutí zásilky"},
                 ],
             },
             "SZZ": {
@@ -1856,7 +1926,7 @@ async def debug_jwt():
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
-                "version": "v2.0.3",
+                "version": "v2.0.5",
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek (v2)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
@@ -1872,22 +1942,18 @@ async def debug_jwt():
             "eZadanky": {
                 "name": "eŽádanky",
                 "base": "/eZadanky",
-                "version": "v1.0.0",
+                "version": "v1.11.7",
                 "endpoints": [
-                    {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/DejToken", "desc": "Získání tokenu"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/UlozZadanku", "desc": "Uložit žádanku"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/VyhledejZadanku", "desc": "Vyhledat žádanky"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/VyhledejAktivniZadanku", "desc": "Vyhledat aktivní žádanky"},
                     {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/NactiZadanku/{zadankaId}", "desc": "Načíst žádanku"},
-                    {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/DejVizualZadanky/{zadankaId}", "desc": "Vizualizace žádanky"},
-                    {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/DejPrilohyZadanky/{zadankaId}", "desc": "Přílohy žádanky"},
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/StornujZadanku", "desc": "Stornovat žádanku"},
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/PrijmiZadanku", "desc": "Přijmout žádanku"},
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/VyridZadanku", "desc": "Vyřídit žádanku"},
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/UpravZadanku", "desc": "Upravit žádanku"},
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/VratZadankuDoObehu", "desc": "Vrátit žádanku do oběhu"},
                     {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/ZaznacNeproveditelnostZadanky", "desc": "Zaznačit neproveditelnost"},
-                    {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/SestavSouborZadanky", "desc": "Sestavit soubor žádanky"},
                 ],
             },
             "Notifikace": {
@@ -2741,19 +2807,29 @@ def _irop_tech8(params, modules, client):
 
     zasilka_id = None
     verze = None
+    zmena = None
     if steps[0]["passed"] and isinstance(steps[0].get("data"), dict):
         zasilky = steps[0]["data"].get("zasilka", [])
         if zasilky:
             zasilka_id = zasilky[0].get("id")
             verze = zasilky[0].get("verzeRadku")
+            zmena = _du_prepare_update_body(zasilky[0])
 
-    if zasilka_id:
-        zmena = {"nazev": f"IROP TS-TECH-8 změna {now.isoformat()}", "verzeRadku": verze}
-        steps.append(_irop_step_api("ZmenZasilku", du.zmen_zasilku, zasilka_id, zmena))
+    if zasilka_id and not zmena:
+        try:
+            detail_resp = du.dej_zasilku(zasilka_id)
+            if detail_resp is not None:
+                zmena = _du_prepare_update_body(detail_resp.json())
+        except Exception:
+            zmena = None
+
+    if zasilka_id and verze and zmena:
+        zmena["nazev"] = f"IROP TS-TECH-8 změna {now.isoformat()}"
+        steps.append(_irop_step_api("ZmenZasilku", du.zmen_zasilku, zasilka_id, verze, zmena))
     else:
         steps.append({"name": "ZmenZasilku", "passed": False, "status": 0,
                        "elapsed_ms": 0, "data": None,
-                       "error": "Žádná zásilka nalezena pro změnu (spusťte nejdřív TS-TECH-6)", "_debug": {}})
+                       "error": "Žádná vhodná zásilka nalezena pro změnu podle aktuálního kontraktu DÚ", "_debug": {}})
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-8", "name": "Změna dokumentace v DÚ",

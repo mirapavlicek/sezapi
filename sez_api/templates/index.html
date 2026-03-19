@@ -1314,9 +1314,10 @@ td.mono { font-family: var(--mono); font-size: 12px; }
     <!-- Registr oprávnění -->
     <div class="section" id="sec-ro">
       <div style="background:rgba(91,141,239,.08);border:1px solid rgba(91,141,239,.25);border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:13px;line-height:1.6">
-        <div style="font-weight:700;margin-bottom:6px;color:var(--accent)">&#9432; Registr oprávnění — pouze ověřování</div>
+        <div style="font-weight:700;margin-bottom:6px;color:var(--accent)">&#9432; Registr oprávnění — ověření + číselníky</div>
         <div style="color:var(--fg2)">
-          B2B API služby Registr oprávnění umožňuje pouze <b>ověřit</b>, zda má daná osoba oprávnění k přístupu ke zdravotnickým službám.
+          Aktuální B2B API Registru oprávnění umožňuje <b>ověřit</b>, zda má daná osoba oprávnění k přístupu ke zdravotnickým službám,
+          a navíc zpřístupňuje <b>read-only číselníky služeb eZ</b>, <b>typů dokumentace</b> a seznam <b>oprávněných osob</b> pro zvolený RID.
           <b>Nastavení oprávnění</b> (udělování, odebírání souhlasů, správa zástupců) se provádí výhradně přes
           <a href="https://www.ezdravi.gov.cz" target="_blank" style="color:var(--accent);font-weight:600">portál NPEZ (ezdravi.gov.cz)</a>:
         </div>
@@ -1329,6 +1330,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
         <div class="sub-tab active" data-panel="roZdravotnik">Oprávnění zdravotníka</div>
         <div class="sub-tab" data-panel="roZastupce">Zástupce pacienta</div>
         <div class="sub-tab" data-panel="roGeneral">Obecné ověření</div>
+        <div class="sub-tab" data-panel="roCatalogs">Číselníky / osoby</div>
       </div>
 
       <!-- Oprávnění zdravotníka -->
@@ -1343,20 +1345,12 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
             <div class="form-group"><label>ID služby eZ</label>
               <select id="roSvcId1">
-                <option value="1">1 – Dočasné úložiště</option>
-                <option value="2">2 – Sdílený zdravotní záznam</option>
-                <option value="3">3 – Elektronické posudky</option>
-                <option value="4">4 – eŽádanky</option>
-                <option value="5" selected>5 – Notifikace</option>
+                <option value="">Načítám služby z API...</option>
               </select>
             </div>
             <div class="form-group"><label>ID typu dokumentace</label>
               <select id="roDocType1">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5" selected>5</option>
+                <option value="">Načítám typy dokumentace z API...</option>
               </select>
             </div>
           </div>
@@ -1393,11 +1387,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             </div>
             <div class="form-group"><label>ID služby eZ</label>
               <select id="roSvcId2">
-                <option value="1" selected>1 – Dočasné úložiště</option>
-                <option value="2">2 – Sdílený zdravotní záznam</option>
-                <option value="3">3 – Elektronické posudky</option>
-                <option value="4">4 – eŽádanky</option>
-                <option value="5">5 – Notifikace</option>
+                <option value="">Načítám služby z API...</option>
               </select>
             </div>
           </div>
@@ -1447,6 +1437,25 @@ td.mono { font-family: var(--mono); font-size: 12px; }
         </div>
         <div class="json-box" id="roResult3">-</div>
       </div>
+
+      <div class="sub-panel" id="roCatalogs">
+        <div class="card">
+          <div class="card-title">Číselníky a oprávněné osoby</div>
+          <p style="font-size:12px;color:var(--fg2);margin-bottom:12px">
+            Aktuální API <code>v1.0.1</code> zveřejňuje číselník služeb eZ, typů dokumentace a seznam oprávněných osob pro zadaný RID.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <button class="btn btn-primary" onclick="roLoadCatalogs()">Načíst číselníky z API</button>
+            <span id="roSvcCount" style="font-size:11px;color:var(--fg3)"></span>
+            <span id="roDocCount" style="font-size:11px;color:var(--fg3)"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
+            <div class="form-group"><label>RID opravňující osoby</label><input id="roOsobyRid" placeholder="např. 7653800856"></div>
+            <button class="btn btn-outline" onclick="roLoadAuthorizedPersons()">Načíst oprávněné osoby</button>
+          </div>
+        </div>
+        <div class="json-box" id="roResult4">-</div>
+      </div>
     </div>
 
     <!-- DÚ -->
@@ -1487,11 +1496,19 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           </div>
         </div>
         <div class="card">
-          <div class="card-title">Detail zásilky</div>
+          <div class="card-title">Detail a akce nad zásilkou</div>
           <div class="form-row">
             <div class="form-group"><label>ID zásilky</label><input id="duZasilkaId" placeholder="UUID"></div>
             <button class="btn btn-primary" onclick="duDej()">Načíst (DejZasilku)</button>
           </div>
+          <div class="form-row" style="margin-top:8px">
+            <div class="form-group"><label>Verze řádku</label><input id="duVerzeRadku" placeholder="Base64 verze zásilky"></div>
+            <button class="btn btn-outline" onclick="duZneplatni()">Zneplatnit</button>
+            <button class="btn" style="background:#0f766e;color:#fff;border:none" onclick="duPotvrdVyzvednuti()">Potvrdit vyzvednutí</button>
+          </div>
+          <p style="font-size:11px;color:var(--fg3);margin-top:8px">
+            V aktuálním DÚ <code>v1.11.7</code> používají zneplatnění i potvrzení vyzvednutí kombinaci <code>Id + VerzeRadku</code>.
+          </p>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-dasta" onclick="exportDasta('duResult','du')" title="Export do DASTA DS4 XML">DASTA</button><button class="btn-iris" onclick="irisGenerate('duResult','du')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="duResult">-</div></div>
         
@@ -2124,9 +2141,9 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
     <!-- ELP v2 -->
     <div class="section" id="sec-elp">
       <div class="card" style="background:linear-gradient(135deg,#fdf4ff 0%,#fef9ff 100%);border-color:#e9d5ff;margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#9333ea;margin-bottom:8px">Elektronické posudky (ELP) <span style="font-size:11px;background:#9333ea;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:500">v2.0</span></div>
+        <div style="font-weight:700;font-size:14px;color:#9333ea;margin-bottom:8px">Elektronické posudky (ELP) <span style="font-size:11px;background:#9333ea;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:500">API 2.0.5</span></div>
         <div style="font-size:13px;color:var(--fg2);line-height:1.7">
-          Systém elektronických lékařských posudků pro <strong>řidičská oprávnění</strong> dle nového API v2.0.
+          Systém elektronických lékařských posudků pro <strong>řidičská oprávnění</strong> dle aktuálního standardu 2.1 a API 2.0.5.
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
             <span><strong>Vyhledat</strong> — dle RID, data, stavu, fulltextu, IČO</span>
             <span><strong>Vytvořit</strong> — nový posudek se způsobilostmi</span>
@@ -2293,8 +2310,6 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           <div style="margin-top:10px;padding:10px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">
             <div style="font-weight:600;font-size:12px;margin-bottom:6px;color:var(--fg1)">Životní cyklus žádanky</div>
             <div style="font-size:11px;font-family:var(--mono);line-height:1.8;color:var(--fg2)">
-              <span style="padding:2px 6px;border-radius:4px;background:#dbeafe;color:#1d4ed8;font-weight:600">SestavSoubor</span>
-              &#8594;
               <span style="padding:2px 6px;border-radius:4px;background:#dcfce7;color:#15803d;font-weight:600">UlozZadanku</span>
               &#8594;
               <span style="padding:2px 6px;border-radius:4px;background:#fef3c7;color:#a16207;font-weight:600">PrijmiZadanku</span>
@@ -2344,7 +2359,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             identifikován jako <strong>poskytovatel zdravotních služeb (PZS)</strong> přes JSU token exchange na SEZ Gateway.
             Náš testovací klient (<code>25488627_KrajskaZdravotniVerejnyTest</code>) nemá v JSU registrovaný PZS kontext pro eŽádanky.
             <br><strong>Řešení:</strong> Zaregistrovat klienta s PZS oprávněním na MZČR, nebo použít klienta s plným PZS přístupem.
-            <br>Pro simulaci použijte záložku <strong>Nová žádanka</strong> (SestavSouborZadanky funguje) nebo <strong>Diagnostika</strong>.
+            <br>Pro offline demo použijte <strong>Simulační režim</strong> nebo záložku <strong>Diagnostika</strong>.
           </div>
         </div>
         <div class="card">
@@ -2400,11 +2415,12 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
       <div class="sub-panel" id="ez-detail-panel">
         <div class="card">
           <div class="card-title">Načtení žádanky podle ID</div>
-          <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:end">
+          <p style="font-size:11px;color:var(--fg3);margin-bottom:8px">
+            Aktuální eŽádanky API <code>v1.11.7</code> zveřejňuje detail přes <code>NactiZadanku</code>; legacy endpointy pro vizualizaci a přílohy už ve swaggeru nejsou.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
             <div class="form-group"><label>ID žádanky (UUID)</label><input id="ezId" placeholder="UUID žádanky"></div>
             <button class="btn btn-primary" onclick="ezNacti()">Načíst detail</button>
-            <button class="btn btn-outline" onclick="ezVizual()">Vizualizace</button>
-            <button class="btn btn-outline" onclick="ezPrilohy()">Přílohy</button>
           </div>
         </div>
         <div id="ezDetailCard" style="display:none"></div>
@@ -2457,12 +2473,11 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           <textarea id="ezCrBody" rows="18" style="font-size:11px;font-family:var(--mono)"></textarea>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-green" onclick="ezCreateSubmit()">Odeslat (UlozZadanku)</button>
-            <button class="btn btn-primary" onclick="ezCreateSestavSoubor()">Sestav soubor (PDF)</button>
             <button class="btn btn-outline" onclick="ezTemplateChanged()">Obnovit ze šablony</button>
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--fg3);line-height:1.5">
-            <strong>SestavSouborZadanky</strong> generuje PDF a funguje i bez plného PZS kontextu.
-            <strong>UlozZadanku</strong> vyžaduje PZS kontext z JWT.
+            <strong>UlozZadanku</strong> je aktuální publikační endpoint <code>v1.11.7</code> a vyžaduje PZS kontext z JWT.
+            Legacy helpery <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> a <code>SestavSouborZadanky</code> už nejsou součástí aktuálního swaggeru.
           </div>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Odpověď API</span><button class="btn-dasta" onclick="exportDasta('ezCreateResult','ez')" title="DASTA">DASTA</button><button class="btn-iris" onclick="irisGenerate('ezCreateResult','ezadanky')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="ezCreateResult">-</div></div>
@@ -2587,7 +2602,6 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
               <option value="/api/ezadanky/vyhledej">POST VyhledejZadanku</option>
               <option value="/api/ezadanky/vyhledej-aktivni">POST VyhledejAktivniZadanku</option>
               <option value="/api/ezadanky/uloz">POST UlozZadanku</option>
-              <option value="/api/ezadanky/sestav-soubor">POST SestavSouborZadanky</option>
               <option value="/api/ezadanky/stornuj">PATCH StornujZadanku</option>
               <option value="/api/ezadanky/prijmi">PATCH PrijmiZadanku</option>
               <option value="/api/ezadanky/vyrid">PATCH VyridZadanku</option>
@@ -3922,6 +3936,7 @@ function initNav() {
       document.getElementById('pageTitle').textContent = el.textContent.trim();
       currentSection = sec;
       if (sec === 'docs') loadDocs();
+      if (sec === 'ro') roInitCatalogs(true);
     });
   });
 }
@@ -4866,8 +4881,8 @@ async function checkELP(name) {
   setDashCard(name, r.status === 200);
 }
 async function checkEZ(name) {
-  const r = await api('GET', '/api/ezadanky/token');
-  setDashCard(name, r.status === 200);
+  const r = await api('GET', '/api/ezadanky/diagnose');
+  setDashCard(name, Array.isArray(r?.results));
 }
 async function checkEZCA(name) {
   const r = await api('GET', '/api/ezca/ping');
@@ -6178,7 +6193,127 @@ async function krpzsCiselnik() {
 // Registr oprávnění
 // ---------------------------------------------------------------------------
 
+const RO_FALLBACK_SERVICES = [
+  {id: 1, kod: 'KZR', nazev: 'Kmenové zdravotnické registry'},
+  {id: 2, kod: 'RO', nazev: 'Registr oprávnění'},
+  {id: 3, kod: 'ntf_b2b', nazev: 'Notifikační systém'},
+  {id: 9, kod: 'EZCA', nazev: 'EZCA'},
+];
+
+const RO_FALLBACK_DOC_TYPES = [
+  {id: 1, kod: '1', nazev: 'Propouštěcí zprávy'},
+  {id: 2, kod: '1.1', nazev: 'Propouštěcí zprávy z nemocnice'},
+  {id: 3, kod: '1.2', nazev: 'Propouštěcí zprávy z nemocnice včetně porodnictví'},
+  {id: 4, kod: '2', nazev: 'Ambulantní zprávy'},
+  {id: 5, kod: '3', nazev: 'Záznam o výjezdu RZS'},
+  {id: 6, kod: '4', nazev: 'Pacientský souhrn'},
+  {id: 7, kod: '5', nazev: 'Laboratorní dokumentace'},
+  {id: 8, kod: '5.1', nazev: 'Laboratorní žádanka'},
+  {id: 9, kod: '5.2', nazev: 'Zpráva z laboratorního vyšetření'},
+  {id: 10, kod: '5.3', nazev: 'Hlášení výsledků laboratorního vyšetření do NZIS'},
+  {id: 11, kod: '6', nazev: 'Zobrazovací dokumentace'},
+  {id: 12, kod: '6.1', nazev: 'Žádanka obrazového vyšetření'},
+  {id: 13, kod: '6.2', nazev: 'Zpráva ze obrazovacího vyšetření'},
+  {id: 14, kod: '7', nazev: 'Sdílený zdravotní záznam'},
+  {id: 15, kod: '7.1', nazev: 'Emergentní zdravotní záznam'},
+  {id: 16, kod: '7.2', nazev: 'Výsledky preventivních a screeningových vyšetření'},
+];
+
+let _roServicesCatalog = [];
+let _roDocTypesCatalog = [];
+
+function _roItemsFromResponse(data) {
+  const payload = data?.data || data;
+  if (Array.isArray(payload?.page)) return payload.page;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload)) return payload;
+  return [];
+}
+
+function _roItemLabel(item) {
+  const id = item?.id ?? item?.Id ?? '';
+  const kod = item?.kod ?? item?.Kod ?? '';
+  const nazev = item?.nazev ?? item?.Nazev ?? item?.name ?? item?.Name ?? '';
+  const prefix = [id, kod].filter(v => v !== '' && v != null).join(' / ');
+  return prefix ? (nazev ? `${prefix} – ${nazev}` : prefix) : (nazev || '-');
+}
+
+function _roPopulateSelect(selectId, items, selectedValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const previous = selectedValue ?? sel.value;
+  sel.innerHTML = '';
+  for (const item of items) {
+    const id = item?.id ?? item?.Id;
+    if (id == null) continue;
+    const opt = document.createElement('option');
+    opt.value = String(id);
+    opt.textContent = _roItemLabel(item);
+    sel.appendChild(opt);
+  }
+  if (previous && [...sel.options].some(o => o.value === String(previous))) {
+    sel.value = String(previous);
+  } else if (sel.options.length) {
+    sel.value = sel.options[0].value;
+  }
+}
+
+function _roApplyCatalogs(services, docTypes) {
+  _roServicesCatalog = services.slice();
+  _roDocTypesCatalog = docTypes.slice();
+  _roPopulateSelect('roSvcId1', _roServicesCatalog);
+  _roPopulateSelect('roSvcId2', _roServicesCatalog);
+  _roPopulateSelect('roDocType1', _roDocTypesCatalog);
+  const svcCount = document.getElementById('roSvcCount');
+  const docCount = document.getElementById('roDocCount');
+  if (svcCount) svcCount.textContent = `Služby eZ: ${_roServicesCatalog.length}`;
+  if (docCount) docCount.textContent = `Typy dokumentace: ${_roDocTypesCatalog.length}`;
+}
+
+async function roInitCatalogs(silent = false) {
+  if (_roServicesCatalog.length && _roDocTypesCatalog.length) return true;
+  const [svcResp, docResp] = await Promise.all([
+    api('GET', '/api/ro/sluzby?page=0&size=100'),
+    api('GET', '/api/ro/typy-dokumentaci?page=0&size=100'),
+  ]);
+  const services = _roItemsFromResponse(svcResp);
+  const docTypes = _roItemsFromResponse(docResp);
+  if (services.length && docTypes.length) {
+    _roApplyCatalogs(services, docTypes);
+    if (!silent) {
+      showResult('roResult4', {status: 200, data: {sluzby: services, typyDokumentace: docTypes}});
+      toast('RO číselníky načteny z API');
+    }
+    return true;
+  }
+  _roApplyCatalogs(RO_FALLBACK_SERVICES, RO_FALLBACK_DOC_TYPES);
+  if (!silent) {
+    showResult('roResult4', {
+      status: 200,
+      data: {
+        warning: 'API číselníky nebylo možné načíst, použita lokální fallback data.',
+        sluzby: _roServicesCatalog,
+        typyDokumentace: _roDocTypesCatalog,
+      }
+    });
+    toast('RO číselníky z API nebylo možné načíst, použita fallback data', true);
+  }
+  return false;
+}
+
+async function roLoadCatalogs() {
+  await roInitCatalogs(false);
+}
+
+async function roLoadAuthorizedPersons() {
+  const rid = document.getElementById('roOsobyRid').value.trim();
+  if (!rid) return toast('Zadejte RID opravňující osoby', true);
+  const data = await api('GET', '/api/ro/opravnujici-osoby/' + encodeURIComponent(rid));
+  showResult('roResult4', data);
+}
+
 async function roOverZdravotnika() {
+  await roInitCatalogs(true);
   const ico = document.getElementById('roIco').value.trim();
   const krzpid = document.getElementById('roKrzpid').value.trim();
   if (!ico || !krzpid) return toast('Zadejte IČO i KRZP ID', true);
@@ -6189,6 +6324,7 @@ async function roOverZdravotnika() {
 }
 
 async function roOverVsechnySluzby() {
+  await roInitCatalogs(true);
   const ico = document.getElementById('roIco').value.trim();
   const krzpid = document.getElementById('roKrzpid').value.trim();
   if (!ico || !krzpid) return toast('Zadejte IČO i KRZP ID', true);
@@ -6196,21 +6332,22 @@ async function roOverVsechnySluzby() {
   const content = document.getElementById('roMatrixContent');
   matrix.style.display = '';
   content.innerHTML = '<div style="color:var(--fg3);font-size:13px">Ověřuji oprávnění pro všechny služby...</div>';
-  const services = [
-    {id: 1, name: 'Dočasné úložiště'},
-    {id: 2, name: 'Sdílený zdravotní záznam'},
-    {id: 3, name: 'Elektronické posudky'},
-    {id: 4, name: 'eŽádanky'},
-    {id: 5, name: 'Notifikace'},
-  ];
-  const docTypes = [1, 2, 3, 4, 5];
+  const services = _roServicesCatalog.length ? _roServicesCatalog : RO_FALLBACK_SERVICES;
+  const docTypes = _roDocTypesCatalog.length ? _roDocTypesCatalog : RO_FALLBACK_DOC_TYPES;
   let html = '<table style="width:100%;font-size:12px"><thead><tr><th>Služba</th>';
-  docTypes.forEach(d => { html += '<th style="text-align:center">DocType ' + d + '</th>'; });
+  docTypes.forEach(d => {
+    html += '<th style="text-align:center" title="' + escHtml(_roItemLabel(d)) + '">' + escHtml(d.kod || d.id) + '</th>';
+  });
   html += '</tr></thead><tbody>';
   for (const svc of services) {
-    html += '<tr><td style="font-weight:600;padding:6px 8px">' + escHtml(svc.name) + '</td>';
+    html += '<tr><td style="font-weight:600;padding:6px 8px">' + escHtml(svc.nazev || svc.name || String(svc.id)) + '</td>';
     for (const dt of docTypes) {
-      const data = await api('POST', '/api/ro/over-zdravotnika', {ico, krzpid, id_sluzby: svc.id, id_typu_dokumentace: dt});
+      const data = await api('POST', '/api/ro/over-zdravotnika', {
+        ico,
+        krzpid,
+        id_sluzby: Number(svc.id),
+        id_typu_dokumentace: Number(dt.id),
+      });
       const result = data?.data;
       const isTrue = result === true;
       const isFalse = result === false;
@@ -6230,6 +6367,7 @@ async function roOverVsechnySluzby() {
 }
 
 async function roOverZastupce() {
+  await roInitCatalogs(true);
   const rid = document.getElementById('roPacRid').value.trim();
   const val = document.getElementById('roZastVal').value.trim();
   if (!rid || !val) return toast('Zadejte RID pacienta i hodnotu zástupce', true);
@@ -6348,6 +6486,7 @@ async function duVyhledej() {
 function _duExtractShipments(payload) {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
+  if (payload.id) return [payload];
   if (Array.isArray(payload.zasilka)) return payload.zasilka;
   if (Array.isArray(payload.items)) return payload.items;
   if (Array.isArray(payload.page)) return payload.page;
@@ -6356,14 +6495,41 @@ function _duExtractShipments(payload) {
 }
 
 function duAutofillFirstShipment(payload) {
-  const zasilky = _duExtractShipments(payload);
-  const first = zasilky.find(z => z && z.id);
+  const first = _duExtractShipments(payload).find(z => z && z.id);
   if (!first) return;
   const idEl = document.getElementById('duZasilkaId');
-  if (idEl) {
+  const verzeEl = document.getElementById('duVerzeRadku');
+  let changed = false;
+  if (idEl && first.id && idEl.value !== first.id) {
     idEl.value = first.id;
+    changed = true;
+  }
+  if (verzeEl && first.verzeRadku && verzeEl.value !== first.verzeRadku) {
+    verzeEl.value = first.verzeRadku;
+    changed = true;
+  }
+  if (changed) {
     toast('První nalezená zásilka byla automaticky vložena do detailu');
   }
+}
+
+function duActionMeta() {
+  let id = document.getElementById('duZasilkaId').value.trim();
+  let verze = document.getElementById('duVerzeRadku').value.trim();
+  if (!id || !verze) {
+    const first = _duExtractShipments(_resultStore.duResult).find(z => z && z.id);
+    if (first?.id && !id) {
+      id = first.id;
+      document.getElementById('duZasilkaId').value = id;
+    }
+    if (first?.verzeRadku && !verze) {
+      verze = first.verzeRadku;
+      document.getElementById('duVerzeRadku').value = verze;
+    }
+  }
+  if (!id) return toast('Zadejte ID zásilky', true);
+  if (!verze) return toast('Zadejte verzi řádku zásilky', true);
+  return { id, verzeRadku: verze };
 }
 
 async function duDej() {
@@ -6379,6 +6545,23 @@ async function duDej() {
   if (!id) return toast('Zadejte ID zásilky', true);
   const data = await api('GET', '/api/du/zasilka/' + id);
   showResult('duResult', data);
+  duAutofillFirstShipment(data?.data);
+}
+
+async function duZneplatni() {
+  const meta = duActionMeta();
+  if (!meta) return;
+  const data = await api('PATCH', '/api/du/zneplatni', { zasilka_id: meta.id, verze_radku: meta.verzeRadku });
+  showResult('duResult', data);
+  duAutofillFirstShipment(data?.data);
+}
+
+async function duPotvrdVyzvednuti() {
+  const meta = duActionMeta();
+  if (!meta) return;
+  const data = await api('PATCH', '/api/du/potvrd-vyzvednuti', { zasilka_id: meta.id, verze_radku: meta.verzeRadku });
+  showResult('duResult', data);
+  duAutofillFirstShipment(data?.data);
 }
 
 // ---------------------------------------------------------------------------
@@ -7517,11 +7700,13 @@ async function ezRunDiagnose() {
   }
   html += '</tbody></table>';
   if (!data.pzs_context) {
+    const okEndpoints = data.results.filter(r => r.auth_ok).map(r => '<code>' + escHtml(r.endpoint) + '</code>');
     html += '<div style="margin-top:12px;padding:10px;background:#fef2f2;border-radius:6px;font-size:12px;color:#7f1d1d;line-height:1.6">' +
       '<strong>Diagnóza:</strong> Náš JWT assertion (iss: <code>' + escHtml(data.client_id || '25488627_KrajskaZdravotniVerejnyTest') + '</code>) ' +
       'nemá v JSU registrovaný PZS kontext. Gateway provede token exchange, ale výsledný token neobsahuje PZS identitu. ' +
       'Proto endpointy vyžadující PZS vrací <code>E01001</code>.<br>' +
-      '<strong>Fungující endpointy:</strong> SestavSouborZadanky, DejVizualZadanky, StornujZadanku – tyto nevyžadují PZS kontext z JWT.' +
+      '<strong>Dostupné s aktuálním certifikátem:</strong> ' + (okEndpoints.length ? okEndpoints.join(', ') : 'žádné') + '.<br>' +
+      '<strong>Poznámka:</strong> Aktuální eŽádanky API <code>v1.11.7</code> už nepublikuje legacy endpointy <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> ani <code>SestavSouborZadanky</code>.' +
       '</div>';
   }
   box.innerHTML = html;
@@ -7719,12 +7904,14 @@ async function ezNacti() {
   ezRenderDetail(data);
 }
 async function ezVizual() {
+  if (!_ezSimEnabled) return toast('Vizualizace žádanky už není součástí aktuálního API v1.11.7', true);
   const id = document.getElementById('ezId').value.trim();
   if (!id) return toast('Zadejte ID žádanky', true);
   const data = await api('GET', '/api/ezadanky/vizual/' + id);
   showResult('ezDetailResult', data);
 }
 async function ezPrilohy() {
+  if (!_ezSimEnabled) return toast('Přílohy žádanky už nejsou součástí aktuálního API v1.11.7', true);
   const id = document.getElementById('ezId').value.trim();
   if (!id) return toast('Zadejte ID žádanky', true);
   const data = await api('GET', '/api/ezadanky/prilohy/' + id);
@@ -7799,8 +7986,6 @@ function ezRenderDetail(data) {
 
   html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
   html += '<button class="btn btn-green" style="font-size:11px" onclick="ezOpenWorkflow(\'' + escHtml(z.id) + '\',\'' + escHtml(z.verzeRadku||'') + '\')">Workflow akce &#8594;</button>';
-  html += '<button class="btn btn-outline" style="font-size:11px" onclick="ezVizual()">Vizualizace</button>';
-  html += '<button class="btn btn-outline" style="font-size:11px" onclick="ezPrilohy()">Přílohy</button>';
   if (data._sim) {
     html += '<span style="margin-left:auto;background:#7c3aed;color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px;align-self:center">SIM</span>';
   }
@@ -8076,25 +8261,7 @@ async function ezWfUprav() {
 }
 
 async function ezCreateSestavSoubor() {
-  const cfg = ezGetFormCfg();
-  const body = {
-    autorId: cfg.krzp,
-    zadatelId: cfg.krzp,
-    pacient: cfg.pac || '',
-    adresatId: cfg.adr || cfg.ico,
-    typZadanky: document.getElementById('ezCrTemplate').value === 'kons' ? 'K' : (document.getElementById('ezCrTemplate').value === 'ft' ? 'FT' : 'Z'),
-    uhrada: {coding: [{system: 'uhrada', code: cfg.samo ? 'SAMOPLATCE' : 'VZP'}]},
-    icp: cfg.icp,
-    pojistovnaKod: {coding: [{system: 'pojistovna', code: cfg.poj}]},
-  };
-  const data = await api('POST', '/api/ezadanky/sestav-soubor', body);
-  showResult('ezCreateResult', data);
-  if (data.status < 300) toast('Soubor sestaven!');
-  else if (data.data?.errors) {
-    const errs = data.data.errors;
-    const authFail = errs.some(e => e.error === 'E01001');
-    if (!authFail) toast('Sestav soubor: business validace (ne auth)', true);
-  }
+  toast('SestavSouborZadanky už není součástí aktuálního eŽádanky API v1.11.7', true);
 }
 
 // ---------------------------------------------------------------------------
