@@ -292,10 +292,10 @@ td.mono { font-family: var(--mono); font-size: 12px; }
   <div class="sidebar-header">
     <h1>SEZ API <span class="env-badge test" id="envBadge">T2</span></h1>
     <small><span class="status-dot" id="statusDot"></span><span id="statusText">Connecting...</span></small>
+    <div id="envGatewayLine" style="font-size:9px;color:var(--fg3);margin:2px 0 4px;word-break:break-all;min-height:12px"></div>
     <div class="env-selector">
       <select id="envSelect" onchange="switchEnvironment(this.value)">
         <option value="T2">Test T2</option>
-        <option value="T1">Test T1</option>
         <option value="PROD">Produkce</option>
       </select>
     </div>
@@ -3812,6 +3812,22 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
         <div class="card" id="iropTech3"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-3</span><span class="card-title">Notifikace ze SEZ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření odběrů notifikací v KRP a stavu kanálů v KRZP.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-3')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-3" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech4"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-4</span><span class="card-title">Registr oprávnění</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření přístupových oprávnění zdravotnického pracovníka (PZS→ZP, přístup k DÚ, služby EZ).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-4')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-4" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech5"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-5</span><span class="card-title">TermX číselníky</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Získání definice a rozbalení ValueSet z Terminologického serveru.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-5')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-5" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="termxPubCard">
+          <div class="card-header">
+            <span class="badge badge-info" style="font-size:11px;margin-right:8px">TermX-PUB</span>
+            <span class="card-title">Veřejný TermX – FHIR ValueSety</span>
+          </div>
+          <p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">
+            Alternativní zdroj číselníků přes <code>termx-api-t2-pub.csez.cz</code> (mTLS, bez gateway).
+            Klíčové ValueSety pro DÚ a zdravotní dokumentaci.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="btn btn-primary" onclick="termxPubExpand('medical-document-type')">Typ zdrav. dokumentu</button>
+            <button class="btn btn-primary" onclick="termxPubExpand('stav-zasilky')">Stav zásilky</button>
+            <button class="btn" style="background:var(--bg2);color:var(--fg2)" onclick="termxPubListAll()">Zobrazit všechny ValueSety</button>
+          </div>
+          <div class="json-box" id="termxPubResult" style="min-height:30px">-</div>
+        </div>
         <div class="card" id="iropTech6"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-6</span><span class="card-title">Uložení dokumentace do DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vytvoření a uložení zásilky s dokumentem do Dočasného úložiště (UlozZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-6')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-6" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech7"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-7</span><span class="card-title">Vyhledání a stažení z DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a stažení dokumentu (VyhledejZasilku + DejZasilku + ověření obsahu).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-7')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-7" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech8"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-8</span><span class="card-title">Změna dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a provedení změny (VyhledejZasilku + ZmenZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-8')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-8" style="margin-top:10px;min-height:30px">-</div></div>
@@ -4580,10 +4596,11 @@ function hideDnsWarning() {
 // ---------------------------------------------------------------------------
 let currentEnv = 'T2';
 
-function updateEnvUI(envKey) {
+function updateEnvUI(envKey, gateway) {
   currentEnv = envKey;
   const badge = document.getElementById('envBadge');
   const sel = document.getElementById('envSelect');
+  const gwLine = document.getElementById('envGatewayLine');
   badge.textContent = envKey;
   if (envKey === 'PROD') {
     badge.className = 'env-badge prod';
@@ -4593,6 +4610,14 @@ function updateEnvUI(envKey) {
     document.body.style.borderTop = 'none';
   }
   sel.value = envKey;
+  if (gateway && gwLine) gwLine.textContent = gateway;
+}
+
+function _invalidateAllCaches() {
+  for (const n of Object.keys(_csCache)) delete _csCache[n];
+  for (const k of Object.keys(szzCodelistCache)) delete szzCodelistCache[k];
+  docsLoaded = false;
+  _csSource = {};
 }
 
 function _askProdPassword(errorMsg) {
@@ -4678,8 +4703,8 @@ async function switchEnvironment(envKey) {
       if (r.error) { toast('Chyba přepnutí: ' + r.error, true); sel.value = r.oldEnv; updateEnvUI(r.oldEnv); return; }
       if (r.data.ok) {
         isProd = true;
-        updateEnvUI(r.data.environment);
-        docsLoaded = false;
+        updateEnvUI(r.data.environment, r.data.gateway);
+        _invalidateAllCaches();
         renderPatientChips();
         if (r.data.dns_warning) { toast(r.data.dns_warning, true); showDnsWarning(r.data.dns_warning); }
         else { toast('Přepnuto na Produkci'); hideDnsWarning(); }
@@ -4697,8 +4722,8 @@ async function switchEnvironment(envKey) {
   if (r.error) { toast('Chyba přepnutí: ' + r.error, true); sel.value = r.oldEnv; updateEnvUI(r.oldEnv); return; }
   if (r.data.ok) {
     isProd = false;
-    updateEnvUI(r.data.environment);
-    docsLoaded = false;
+    updateEnvUI(r.data.environment, r.data.gateway);
+    _invalidateAllCaches();
     renderPatientChips();
     toast(`Přepnuto na ${SEZ_ENV_NAMES[r.data.environment] || r.data.environment}`);
     hideDnsWarning();
@@ -4709,14 +4734,14 @@ async function switchEnvironment(envKey) {
   }
 }
 
-const SEZ_ENV_NAMES = {T2: 'Test T2', T1: 'Test T1', PROD: 'Produkce'};
+const SEZ_ENV_NAMES = {T2: 'Test T2', PROD: 'Produkce'};
 
 async function loadStatus() {
   const data = await api('GET', '/api/status');
   const dot = document.getElementById('statusDot');
   const txt = document.getElementById('statusText');
   const env = data.environment || 'T2';
-  updateEnvUI(env);
+  updateEnvUI(env, data.gateway);
   if (data.dns_ok === false) {
     dot.className = 'status-dot err';
     txt.textContent = (SEZ_ENV_NAMES[env] || env) + ' – gateway nedostupná (DNS)';
@@ -9254,6 +9279,54 @@ async function iropRunAll() {
   const detail = document.getElementById('iropAllDetail');
   detail.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
   document.getElementById('iropAllDetailCard').style.display = '';
+}
+
+// ---------------------------------------------------------------------------
+// TermX Public ValueSet
+// ---------------------------------------------------------------------------
+async function termxPubExpand(vsId) {
+  const el = document.getElementById('termxPubResult');
+  el.innerHTML = '<span class="spinner"></span> Načítám ValueSet <code>' + esc(vsId) + '</code> z veřejného TermX...';
+  const data = await api('GET', '/api/termx-pub/valueset/' + encodeURIComponent(vsId) + '/expand');
+  if (data.error) {
+    el.innerHTML = '<span class="badge badge-err">CHYBA</span> ' + esc(data.error);
+    return;
+  }
+  const items = data.items || [];
+  let html = '<div style="margin-bottom:8px"><span class="badge badge-ok">' + items.length + ' položek</span> ' +
+    '<span style="font-size:11px;color:var(--fg3)">' + esc(data.url || '') + ' (' + (data.elapsed_ms || '?') + ' ms)</span></div>';
+  if (items.length) {
+    html += '<table style="width:100%;font-size:12px"><thead><tr><th style="text-align:left">Kód</th><th style="text-align:left">Popis</th></tr></thead><tbody>';
+    items.forEach(it => {
+      html += '<tr><td><code>' + esc(it.code) + '</code></td><td>' + esc(it.display) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  el.innerHTML = html;
+}
+
+async function termxPubListAll() {
+  const el = document.getElementById('termxPubResult');
+  el.innerHTML = '<span class="spinner"></span> Načítám seznam ValueSetů z veřejného TermX...';
+  const data = await api('GET', '/api/termx-pub/valueset');
+  if (data.error) {
+    el.innerHTML = '<span class="badge badge-err">CHYBA</span> ' + esc(data.error);
+    return;
+  }
+  const items = data.items || [];
+  let html = '<div style="margin-bottom:8px"><span class="badge badge-info">' + items.length + ' ValueSetů</span></div>';
+  if (items.length) {
+    html += '<table style="width:100%;font-size:11px"><thead><tr><th style="text-align:left">ID</th><th style="text-align:left">Název</th>' +
+      '<th style="text-align:left">Akce</th></tr></thead><tbody>';
+    items.forEach(it => {
+      const shortId = (it.id || '').replace(/--[\d.]+$/, '');
+      html += '<tr><td><code>' + esc(shortId) + '</code></td><td>' + esc(it.title || it.url || '') + '</td>' +
+        '<td><button class="btn" style="padding:2px 8px;font-size:10px;background:var(--bg2);color:var(--fg2)" ' +
+        'onclick="termxPubExpand(\'' + esc(shortId) + '\')">$expand</button></td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  el.innerHTML = html;
 }
 
 // ---------------------------------------------------------------------------

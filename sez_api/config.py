@@ -36,12 +36,6 @@ PROD_GATEWAY = env("SEZ_PROD_GATEWAY", "")
 PROD_JSU_AUDIENCE = env("SEZ_PROD_JSU_AUDIENCE", "")
 
 ENV_CREDENTIALS = {
-    "T1": {
-        "client_id": CLIENT_ID,
-        "p12_path": P12_PATH,
-        "p12_password": P12_PASSWORD,
-        "cert_uid": CERT_UID,
-    },
     "T2": {
         "client_id": CLIENT_ID,
         "p12_path": P12_PATH,

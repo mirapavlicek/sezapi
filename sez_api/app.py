@@ -1875,7 +1875,8 @@ async def debug_jwt():
                 "name": "Terminologický server (FHIR)",
                 "base": "/terminologie",
                 "version": "v1.0.5",
-                "note": "T2: /terminologie, Prod: /termx-fhir (po autentizaci)",
+                "note": "Gateway: /terminologie | Veřejný: termx-api-t2-pub.csez.cz/fhir (mTLS)",
+                "public_base": TERMX_PUB_BASE,
                 "endpoints": [
                     {"method": "GET", "path": "/terminologie/fhir/ValueSet/{id}", "desc": "Načtení ValueSetu"},
                     {"method": "GET", "path": "/terminologie/fhir/ValueSet/$expand", "desc": "Expandování ValueSetu"},
@@ -1885,6 +1886,8 @@ async def debug_jwt():
                     {"method": "GET", "path": "/terminologie/fhir/ConceptMap/{id}", "desc": "Mapování konceptů"},
                     {"method": "GET", "path": "/terminologie/fhir/ConceptMap/$translate", "desc": "Překlad konceptů"},
                     {"method": "GET", "path": "/terminologie/fhir/metadata", "desc": "FHIR capability statement"},
+                    {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/medical-document-type/$expand", "desc": "Typ zdravotního dokumentu (veřejný)"},
+                    {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/stav-zasilky/$expand", "desc": "Stav zásilky (veřejný)"},
                 ],
             },
             "DU": {
@@ -1926,7 +1929,7 @@ async def debug_jwt():
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
-                "version": "v2.0.5",
+                "version": "v1.0.7 + v2.0.5",
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek (v2)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
@@ -3284,3 +3287,68 @@ async def irop_run_all(request: Request):
         "total_scenarios": len(results),
         "scenarios_ok": sum(1 for r in results if r.get("passed", 0) == r.get("total", 0)),
     })
+
+
+# ---------------------------------------------------------------------------
+# TermX Public (alternativní FHIR endpoint bez gateway)
+# ---------------------------------------------------------------------------
+
+TERMX_PUB_BASE = "https://termx-api-t2-pub.csez.cz/fhir"
+
+TERMX_PUB_KNOWN_VS = {
+    "medical-document-type",
+    "stav-zasilky",
+}
+
+
+@app.get("/api/termx-pub/valueset/{valueset_id}/expand")
+async def termx_pub_expand(valueset_id: str):
+    if not _client:
+        return JSONResponse({"error": "Klient není připojen"}, status_code=503)
+    url = f"{TERMX_PUB_BASE}/ValueSet/{valueset_id}/$expand"
+    t0 = time.monotonic()
+    try:
+        resp = _client.get_external(url)
+        elapsed = round((time.monotonic() - t0) * 1000)
+        data = resp.json()
+        expansion = data.get("expansion", {})
+        contains = expansion.get("contains", [])
+        return {
+            "valueset_id": valueset_id,
+            "url": url,
+            "http_status": resp.status_code,
+            "elapsed_ms": elapsed,
+            "total": expansion.get("total", len(contains)),
+            "items": [{"code": c.get("code", ""), "display": c.get("display", "")}
+                      for c in contains],
+            "raw": data,
+        }
+    except Exception as e:
+        elapsed = round((time.monotonic() - t0) * 1000)
+        return JSONResponse(
+            {"error": str(e), "url": url, "elapsed_ms": elapsed},
+            status_code=502,
+        )
+
+
+@app.get("/api/termx-pub/valueset")
+async def termx_pub_list():
+    """List known public TermX ValueSets."""
+    if not _client:
+        return JSONResponse({"error": "Klient není připojen"}, status_code=503)
+    url = f"{TERMX_PUB_BASE}/ValueSet/?_count=300&_summary=true"
+    try:
+        resp = _client.get_external(url)
+        data = resp.json()
+        entries = data.get("entry", [])
+        return {
+            "total": len(entries),
+            "items": [
+                {"id": e.get("resource", {}).get("id", ""),
+                 "title": e.get("resource", {}).get("title", ""),
+                 "url": e.get("resource", {}).get("url", "")}
+                for e in entries
+            ],
+        }
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=502)

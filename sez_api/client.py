@@ -37,11 +37,6 @@ SEZ_ENVIRONMENTS = {
         "gateway": "https://gwy-ext-sec-t2.csez.cz",
         "jsu_audience": "https://jsuint-auth-t2.csez.cz/connect/token",
     },
-    "T1": {
-        "name": "Test T1",
-        "gateway": "https://gwy-ext-sec-t1.csez.cz",
-        "jsu_audience": "https://jsuint-auth-t1.csez.cz/connect/token",
-    },
     "PROD": {
         "name": "Produkce",
         "gateway": _PROD_GATEWAY_DEFAULT,
@@ -493,6 +488,17 @@ class SEZClient:
 
     def delete(self, path, body=None):
         return self._request("DELETE", path, json=body)
+
+    def get_external(self, url: str, timeout: int = 30) -> requests.Response:
+        """GET an arbitrary external URL using the same mTLS session (no gateway prefix)."""
+        hdrs = {"Accept": "application/json", "Accept-Language": "cs"}
+        resp = self.session.get(url, headers=hdrs, timeout=timeout, verify=True)
+        self.last_status = resp.status_code
+        try:
+            self.last_response = resp.json()
+        except Exception:
+            self.last_response = resp.text
+        return resp
 
 
 # ---------------------------------------------------------------------------
