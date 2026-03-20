@@ -61,17 +61,23 @@ def _apply_prod_overrides():
 _apply_prod_overrides()
 
 
-def check_gateway_dns(env_key: str) -> dict:
+def check_gateway_dns(env_key: str, timeout: float = 3.0) -> dict:
     """Quick DNS check for a gateway hostname. Returns {ok, host, ip|error}."""
     import socket
+    import concurrent.futures
     from urllib.parse import urlparse
     env = SEZ_ENVIRONMENTS.get(env_key)
     if not env:
         return {"ok": False, "host": "?", "error": "Neznámé prostředí"}
     host = urlparse(env["gateway"]).hostname
+    def _resolve():
+        return socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
     try:
-        ip = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            ip = pool.submit(_resolve).result(timeout=timeout)
         return {"ok": True, "host": host, "ip": ip}
+    except concurrent.futures.TimeoutError:
+        return {"ok": False, "host": host, "error": f"DNS timeout ({timeout}s)"}
     except socket.gaierror as e:
         return {"ok": False, "host": host, "error": f"DNS nelze resolvovat: {e}"}
 

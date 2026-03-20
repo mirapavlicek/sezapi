@@ -287,8 +287,6 @@ async def env_switch(req: EnvSwitchRequest):
             status_code=400,
         )
 
-    dns = check_gateway_dns(req.env)
-
     try:
         _init_client(
             client_id=creds["client_id"],
@@ -298,6 +296,7 @@ async def env_switch(req: EnvSwitchRequest):
             env_key=req.env,
         )
         _save_env_state(SEZConfig.ENVIRONMENT)
+        dns = check_gateway_dns(req.env, timeout=3.0)
         result = {"ok": True, "environment": SEZConfig.ENVIRONMENT,
                   "gateway": SEZConfig.GATEWAY, "cert": _cert_info,
                   "dns_ok": dns["ok"]}
