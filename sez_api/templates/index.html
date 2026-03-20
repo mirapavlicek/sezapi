@@ -3911,6 +3911,7 @@ let testWorkers = [];
 let testWorkersPzs = [];
 let testPzs = [];
 let isProd = false;
+let prodNeedsPassword = true;
 const logEntries = [];
 
 // ---------------------------------------------------------------------------
@@ -4689,11 +4690,21 @@ async function _doEnvSwitch(envKey, password) {
   }
 }
 
+function _handleSwitchSuccess(r, envKey) {
+  isProd = envKey === 'PROD';
+  updateEnvUI(r.data.environment, r.data.gateway);
+  _invalidateAllCaches();
+  renderPatientChips();
+  if (r.data.dns_warning) { toast(r.data.dns_warning, true); showDnsWarning(r.data.dns_warning); }
+  else { toast(`Přepnuto na ${SEZ_ENV_NAMES[r.data.environment] || r.data.environment}`); hideDnsWarning(); }
+  loadStatus();
+}
+
 async function switchEnvironment(envKey) {
   if (envKey === currentEnv) return;
   const sel = document.getElementById('envSelect');
 
-  if (envKey === 'PROD') {
+  if (envKey === 'PROD' && prodNeedsPassword) {
     let errorMsg = null;
     while (true) {
       const pw = await _askProdPassword(errorMsg);
@@ -4701,16 +4712,7 @@ async function switchEnvironment(envKey) {
       if (!pw) { errorMsg = 'Heslo nesmí být prázdné'; continue; }
       const r = await _doEnvSwitch(envKey, pw);
       if (r.error) { toast('Chyba přepnutí: ' + r.error, true); sel.value = r.oldEnv; updateEnvUI(r.oldEnv); return; }
-      if (r.data.ok) {
-        isProd = true;
-        updateEnvUI(r.data.environment, r.data.gateway);
-        _invalidateAllCaches();
-        renderPatientChips();
-        if (r.data.dns_warning) { toast(r.data.dns_warning, true); showDnsWarning(r.data.dns_warning); }
-        else { toast('Přepnuto na Produkci'); hideDnsWarning(); }
-        loadStatus();
-        return;
-      }
+      if (r.data.ok) { _handleSwitchSuccess(r, envKey); return; }
       if (r.data.needs_password) { errorMsg = 'Nesprávné heslo – zkuste znovu'; continue; }
       toast(r.data.error || 'Chyba přepnutí na produkci', true);
       sel.value = r.oldEnv; updateEnvUI(r.oldEnv);
@@ -4721,13 +4723,7 @@ async function switchEnvironment(envKey) {
   const r = await _doEnvSwitch(envKey, '');
   if (r.error) { toast('Chyba přepnutí: ' + r.error, true); sel.value = r.oldEnv; updateEnvUI(r.oldEnv); return; }
   if (r.data.ok) {
-    isProd = false;
-    updateEnvUI(r.data.environment, r.data.gateway);
-    _invalidateAllCaches();
-    renderPatientChips();
-    toast(`Přepnuto na ${SEZ_ENV_NAMES[r.data.environment] || r.data.environment}`);
-    hideDnsWarning();
-    loadStatus();
+    _handleSwitchSuccess(r, envKey);
   } else {
     toast(r.data.error || 'Chyba přepnutí', true);
     sel.value = r.oldEnv; updateEnvUI(r.oldEnv);
@@ -4756,6 +4752,7 @@ async function loadStatus() {
     hideDnsWarning();
   }
   isProd = data.is_prod || false;
+  prodNeedsPassword = data.prod_needs_password !== false;
   testPatients = data.test_patients || [];
   testWorkers = data.test_workers || [];
   testWorkersPzs = data.test_workers_pzs || [];

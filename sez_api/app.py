@@ -31,6 +31,7 @@ from sez_api.client import (
 )
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+_ENV_STATE_FILE = Path(__file__).parent.parent / ".env_state.json"
 
 # ---------------------------------------------------------------------------
 # Singleton client
@@ -41,6 +42,45 @@ _client: SEZClient | None = None
 _modules: dict = {}
 _connected = False
 _cert_info: dict = {}
+
+
+def _save_env_state(env_key: str):
+    """Persist the active environment to a shared file so all workers converge."""
+    try:
+        _ENV_STATE_FILE.write_text(json.dumps({"env": env_key, "ts": time.time()}))
+    except Exception:
+        pass
+
+
+def _load_env_state() -> str | None:
+    """Read the shared env state; returns env key or None."""
+    try:
+        if _ENV_STATE_FILE.exists():
+            data = json.loads(_ENV_STATE_FILE.read_text())
+            return data.get("env")
+    except Exception:
+        pass
+    return None
+
+
+def _sync_env_if_needed():
+    """If another worker changed the environment, re-initialise this worker."""
+    desired = _load_env_state()
+    if not desired or desired == SEZConfig.ENVIRONMENT:
+        return
+    creds = cfg.ENV_CREDENTIALS.get(desired, {})
+    if not creds.get("p12_path"):
+        return
+    try:
+        _init_client(
+            client_id=creds["client_id"],
+            p12_path=creds["p12_path"],
+            p12_password=creds["p12_password"],
+            cert_uid=creds["cert_uid"],
+            env_key=desired,
+        )
+    except Exception:
+        pass
 
 
 def _init_client(client_id: str, p12_path: str, p12_password: str,
@@ -167,6 +207,7 @@ async def index(request: Request):
 
 @app.get("/api/status")
 async def status():
+    _sync_env_if_needed()
     dns = check_gateway_dns(SEZConfig.ENVIRONMENT)
     is_prod = SEZConfig.ENVIRONMENT == "PROD"
     return {
@@ -175,6 +216,7 @@ async def status():
         "gateway": SEZConfig.GATEWAY,
         "environment": SEZConfig.ENVIRONMENT,
         "is_prod": is_prod,
+        "prod_needs_password": bool(PROD_PASSWORD),
         "dns_ok": dns["ok"],
         "dns_detail": dns.get("ip") or dns.get("error", ""),
         "test_patients": cfg.TEST_PATIENTS,
@@ -204,6 +246,7 @@ async def env_list():
             "client_id": creds.get("client_id", ""),
             "dns_ok": dns["ok"],
             "dns_detail": dns.get("ip") or dns.get("error", ""),
+            "needs_password": key == "PROD" and bool(PROD_PASSWORD),
         })
     return envs
 
@@ -254,6 +297,7 @@ async def env_switch(req: EnvSwitchRequest):
             cert_uid=creds["cert_uid"],
             env_key=req.env,
         )
+        _save_env_state(SEZConfig.ENVIRONMENT)
         result = {"ok": True, "environment": SEZConfig.ENVIRONMENT,
                   "gateway": SEZConfig.GATEWAY, "cert": _cert_info,
                   "dns_ok": dns["ok"]}
