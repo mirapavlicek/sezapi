@@ -3,9 +3,11 @@ SEZ API Web UI – FastAPI backend.
 Obaluje sez_api.client do REST endpointů a servíruje SPA frontend.
 """
 
+import asyncio
 import base64
 import hashlib
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -30,8 +32,12 @@ from sez_api.client import (
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, EZadanky, Notifikace, EZCA2,
 )
 
+logger = logging.getLogger("sez_api")
+
 TEMPLATES_DIR = Path(__file__).parent / "templates"
-_ENV_STATE_FILE = Path(__file__).parent.parent / ".env_state.json"
+_ENV_STATE_FILE = Path("/tmp/sez-api-env-state.json")
+
+PEER_RELAY_HEADER = "X-Peer-Relay"
 
 # ---------------------------------------------------------------------------
 # Singleton client
@@ -273,11 +279,50 @@ class EnvSwitchRequest(BaseModel):
 
 PROD_PASSWORD = os.environ.get("SEZ_PROD_PASSWORD", "nemamradapi").strip()
 
+
+async def _relay_to_peer(client: httpx.AsyncClient, url: str,
+                         env_key: str, password: str) -> dict:
+    """Send env switch to a single peer server. Returns status dict."""
+    try:
+        resp = await client.post(
+            f"{url}/api/env/switch",
+            json={"env": env_key, "password": password},
+            headers={PEER_RELAY_HEADER: "1"},
+            timeout=10.0,
+        )
+        data = resp.json()
+        return {"url": url, "ok": data.get("ok", False),
+                "environment": data.get("environment"),
+                "status": resp.status_code}
+    except Exception as e:
+        return {"url": url, "ok": False, "error": str(e)}
+
+
+async def _relay_env_switch_to_peers(env_key: str, password: str) -> list[dict]:
+    """Relay the env switch to all configured peer servers in parallel."""
+    peers = cfg.PEER_URLS
+    if not peers:
+        return []
+    async with httpx.AsyncClient() as client:
+        tasks = [_relay_to_peer(client, url, env_key, password) for url in peers]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+    out = []
+    for r in results:
+        if isinstance(r, Exception):
+            out.append({"ok": False, "error": str(r)})
+        else:
+            out.append(r)
+    return out
+
+
 @app.post("/api/env/switch")
-async def env_switch(req: EnvSwitchRequest):
+async def env_switch(req: EnvSwitchRequest, request: Request):
     global _connected, _cert_info
 
-    if req.env == SEZConfig.ENVIRONMENT:
+    is_peer_relay = request.headers.get(PEER_RELAY_HEADER) == "1"
+
+    already_on_target = req.env == SEZConfig.ENVIRONMENT
+    if already_on_target and is_peer_relay:
         return {"ok": True, "environment": SEZConfig.ENVIRONMENT,
                 "gateway": SEZConfig.GATEWAY, "cert": _cert_info}
 
@@ -296,40 +341,53 @@ async def env_switch(req: EnvSwitchRequest):
             status_code=400,
         )
 
-    creds = cfg.ENV_CREDENTIALS.get(req.env, {})
-    if not creds.get("p12_path"):
-        return JSONResponse(
-            {"ok": False, "error": f"Prostředí {req.env}: chybí certifikát (SEZ_PROD_P12_PATH)"},
-            status_code=400,
+    if not already_on_target:
+        creds = cfg.ENV_CREDENTIALS.get(req.env, {})
+        if not creds.get("p12_path"):
+            return JSONResponse(
+                {"ok": False, "error": f"Prostředí {req.env}: chybí certifikát (SEZ_PROD_P12_PATH)"},
+                status_code=400,
+            )
+        try:
+            _init_client(
+                client_id=creds["client_id"],
+                p12_path=creds["p12_path"],
+                p12_password=creds["p12_password"],
+                cert_uid=creds["cert_uid"],
+                env_key=req.env,
+            )
+            _save_env_state(SEZConfig.ENVIRONMENT)
+        except Exception as e:
+            _connected = False
+            _cert_info = {"error": str(e)}
+            return JSONResponse(
+                {"ok": False, "error": f"Chyba inicializace pro {req.env}: {e}"},
+                status_code=500,
+            )
+
+    dns = check_gateway_dns(req.env, timeout=3.0)
+    result = {"ok": True, "environment": SEZConfig.ENVIRONMENT,
+              "gateway": SEZConfig.GATEWAY, "cert": _cert_info,
+              "dns_ok": dns["ok"]}
+    if not dns["ok"]:
+        result["dns_warning"] = (
+            f"Gateway {dns['host']} není dostupná (DNS: {dns.get('error', 'neznámý')}). "
+            "Produkční prostředí SEZ pravděpodobně ještě není nasazené. "
+            "API volání budou selhávat."
         )
 
-    try:
-        _init_client(
-            client_id=creds["client_id"],
-            p12_path=creds["p12_path"],
-            p12_password=creds["p12_password"],
-            cert_uid=creds["cert_uid"],
-            env_key=req.env,
-        )
-        _save_env_state(SEZConfig.ENVIRONMENT)
-        dns = check_gateway_dns(req.env, timeout=3.0)
-        result = {"ok": True, "environment": SEZConfig.ENVIRONMENT,
-                  "gateway": SEZConfig.GATEWAY, "cert": _cert_info,
-                  "dns_ok": dns["ok"]}
-        if not dns["ok"]:
-            result["dns_warning"] = (
-                f"Gateway {dns['host']} není dostupná (DNS: {dns.get('error', 'neznámý')}). "
-                "Produkční prostředí SEZ pravděpodobně ještě není nasazené. "
-                "API volání budou selhávat."
+    if not is_peer_relay and cfg.PEER_URLS:
+        peer_results = await _relay_env_switch_to_peers(req.env, req.password)
+        result["peers"] = peer_results
+        all_ok = all(p.get("ok") for p in peer_results)
+        if not all_ok:
+            failed = [p for p in peer_results if not p.get("ok")]
+            result["peer_warning"] = (
+                f"{len(failed)}/{len(peer_results)} peer server(ů) se nepodařilo přepnout"
             )
-        return result
-    except Exception as e:
-        _connected = False
-        _cert_info = {"error": str(e)}
-        return JSONResponse(
-            {"ok": False, "error": f"Chyba inicializace pro {req.env}: {e}"},
-            status_code=500,
-        )
+        logger.info("Peer relay results: %s", peer_results)
+
+    return result
 
 
 # ---------------------------------------------------------------------------

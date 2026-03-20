@@ -4697,6 +4697,17 @@ function _handleSwitchSuccess(r, envKey) {
   renderPatientChips();
   if (r.data.dns_warning) { toast(r.data.dns_warning, true); showDnsWarning(r.data.dns_warning); }
   else { toast(`Přepnuto na ${SEZ_ENV_NAMES[r.data.environment] || r.data.environment}`); hideDnsWarning(); }
+  if (r.data.peers && r.data.peers.length) {
+    const ok = r.data.peers.filter(p => p.ok).length;
+    const total = r.data.peers.length;
+    if (ok === total) {
+      toast(`HA Proxy: ${ok}/${total} peer serverů přepnuto`);
+    } else {
+      const failed = r.data.peers.filter(p => !p.ok).map(p => p.url || p.error).join(', ');
+      toast(`HA Proxy: ${ok}/${total} peer serverů přepnuto – selhaly: ${failed}`, true);
+    }
+  }
+  if (r.data.peer_warning) { toast(r.data.peer_warning, true); }
   loadStatus();
 }
 

@@ -35,6 +35,10 @@ PROD_CERT_UID = env("SEZ_PROD_CERT_UID", "")
 PROD_GATEWAY = env("SEZ_PROD_GATEWAY", "")
 PROD_JSU_AUDIENCE = env("SEZ_PROD_JSU_AUDIENCE", "")
 
+PEER_URLS: list[str] = [
+    u.strip() for u in env("SEZ_PEER_URLS", "").split(",") if u.strip()
+]
+
 ENV_CREDENTIALS = {
     "T2": {
         "client_id": CLIENT_ID,
