@@ -63,8 +63,16 @@ def _load_env_state() -> str | None:
     return None
 
 
+_last_sync_check = 0.0
+
 def _sync_env_if_needed():
-    """If another worker changed the environment, re-initialise this worker."""
+    """If another worker changed the environment, re-initialise this worker.
+    Checks the shared file at most once per second to avoid I/O on every request."""
+    global _last_sync_check
+    now = time.monotonic()
+    if now - _last_sync_check < 1.0:
+        return
+    _last_sync_check = now
     desired = _load_env_state()
     if not desired or desired == SEZConfig.ENVIRONMENT:
         return
@@ -79,8 +87,9 @@ def _sync_env_if_needed():
             cert_uid=creds["cert_uid"],
             env_key=desired,
         )
-    except Exception:
-        pass
+        logger.info("Worker synchronizován na prostředí %s", desired)
+    except Exception as e:
+        logger.warning("Sync env selhala: %s", e)
 
 
 def _init_client(client_id: str, p12_path: str, p12_password: str,
@@ -165,6 +174,14 @@ app = FastAPI(title="SEZ API Web UI", lifespan=lifespan)
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
+@app.middleware("http")
+async def env_sync_middleware(request: Request, call_next):
+    """Synchronise this worker's environment from the shared state file."""
+    if request.url.path.startswith("/api/"):
+        _sync_env_if_needed()
+    return await call_next(request)
+
+
 def api_response(resp) -> dict:
     try:
         data = resp.json()
@@ -207,7 +224,6 @@ async def index(request: Request):
 
 @app.get("/api/status")
 async def status():
-    _sync_env_if_needed()
     dns = check_gateway_dns(SEZConfig.ENVIRONMENT)
     is_prod = SEZConfig.ENVIRONMENT == "PROD"
     return {
