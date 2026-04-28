@@ -535,10 +535,13 @@ class KRP:
 
     KRP_CISELNIKY = ["pohlavi", "stat", "druh_dokladu", "zdravotni_pojistovna", "country_service_context"]
 
-    def ciselnik(self, nazev_ciselniku):
-        zadost_id = str(uuid.uuid4())
-        body = {"zadostInfo": {"datum": self._now(), "zadostId": zadost_id}}
-        return self.c.post(f"{self.BASE}/api/v1/ciselnik/{zadost_id}/{nazev_ciselniku}", body)
+    def ciselnik(self, nazev_ciselniku, ucel="LECBA"):
+        """KRP v2.0.2: POST /api/v2/ciselnik/{nazev} – načtení číselníku."""
+        return self.c.post(
+            f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
+            {"zadostInfo": {"datum": self._now(), "ucel": ucel,
+                            "zadostId": str(uuid.uuid4())}},
+        )
 
     def hledat_rid(self, rid, ucel="LECBA"):
         return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/rid", self._envelope(ucel, {"rid": rid}))
@@ -1198,26 +1201,38 @@ class KRPZS:
 
     def hledat_ico(self, ico: str, ucel="OVERENI"):
         return self.c.post(
-            f"{self.BASE}/api/v2/poskytovatel/hledat/ico",
+            f"{self.BASE}/api/v2/Poskytovatel/hledat/ico",
             self._envelope(ucel, {"ico": ico}),
         )
 
     def hledat_nazev(self, nazev: str, ucel="OVERENI"):
         return self.c.post(
-            f"{self.BASE}/api/v2/poskytovatel/hledat/nazev",
+            f"{self.BASE}/api/v2/Poskytovatel/hledat/nazev",
             self._envelope(ucel, {"nazev": nazev}),
         )
 
-    def hledat_pracoviste(self, ico: str, ucel="OVERENI"):
+    def hledat_misto(self, mesto: str = None, ulice: str = None,
+                      psc: str = None, kraj: str = None, ucel="OVERENI"):
+        """v2.0.2: vyhledání poskytovatele podle místa působení."""
+        data = {}
+        if mesto:
+            data["mesto"] = mesto
+        if ulice:
+            data["ulice"] = ulice
+        if psc:
+            data["psc"] = psc
+        if kraj:
+            data["kraj"] = kraj
         return self.c.post(
-            f"{self.BASE}/api/v2/poskytovatel/hledat/pracoviste",
-            self._envelope(ucel, {"ico": ico}),
+            f"{self.BASE}/api/v2/Poskytovatel/hledat/misto",
+            self._envelope(ucel, data),
         )
 
-    def detail(self, ico: str, ucel="OVERENI"):
+    def nastavit_url_pro_notifikace(self, ico: str, url: str, ucel="OVERENI"):
+        """v2.0.2: nastavení URL pro notifikace poskytovatele."""
         return self.c.post(
-            f"{self.BASE}/api/v2/poskytovatel/detail",
-            self._envelope(ucel, {"ico": ico}),
+            f"{self.BASE}/api/v2/Poskytovatel/nastavit/urlpronotifikace",
+            self._envelope(ucel, {"ico": ico, "url": url}),
         )
 
     def ciselnik(self, nazev_ciselniku, ucel="OVERENI"):
@@ -1225,8 +1240,23 @@ class KRPZS:
                            {"zadostInfo": {"datum": self._now(), "ucel": ucel}})
 
     def reklamuj_udaj(self, reklamace_data, ucel="OVERENI"):
-        return self.c.post(f"{self.BASE}/api/v2/poskytovatel/reklamuj/udaj",
+        return self.c.post(f"{self.BASE}/api/v2/Poskytovatel/reklamuj/udaj",
                            self._envelope(ucel, reklamace_data))
+
+    def notifikace_vyhledat_odber(self, data, ucel="OVERENI"):
+        """v2.0.2: vyhledat odběry notifikací KRPZS."""
+        return self.c.post(f"{self.BASE}/api/v2/notifikace/vyhledat/odber",
+                           self._envelope(ucel, data))
+
+    def notifikace_zalozit_odber(self, data, ucel="OVERENI"):
+        """v2.0.2: založit odběr notifikací KRPZS."""
+        return self.c.post(f"{self.BASE}/api/v2/notifikace/zalozit/odber",
+                           self._envelope(ucel, data))
+
+    def notifikace_zrusit_odber(self, data, ucel="OVERENI"):
+        """v2.0.2: zrušit odběr notifikací KRPZS (DELETE)."""
+        return self.c.delete(f"{self.BASE}/api/v2/notifikace/zrusit/odber",
+                             self._envelope(ucel, data))
 
 
 class RegistrOpravneni:
@@ -1304,55 +1334,103 @@ class RegistrOpravneni:
 
 
 class SZZ:
+    """Sdílený zdravotní záznam – PZS API v1.0.9.
+
+    Od v1.0.9 jsou GET-by-RID endpointy nahrazeny POST /vyhledat | /detail | /pdf
+    s tělem obsahujícím rid (+ volitelné jenPlatne/sort/order/page/size).
+    Staré metody jsou zachovány kvůli kompatibilitě (interně volají nové).
+    """
     BASE = "/sdilenyZdravotniZaznam"
 
     def __init__(self, client: SEZClient):
         self.c = client
 
-    def emergentni_zaznam(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/{rid}")
+    @staticmethod
+    def _vyhledat_body(rid, jen_platne=None, sort=None, order=None, page=None, size=None):
+        body = {"rid": rid}
+        if jen_platne is not None:
+            body["jenPlatne"] = jen_platne
+        if sort is not None:
+            body["sort"] = sort
+        if order is not None:
+            body["order"] = order
+        if page is not None:
+            body["page"] = page
+        if size is not None:
+            body["size"] = size
+        return body
+
+    def emergentni_zaznam(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def emergentni_zaznam_pdf(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/{rid}/pdf")
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/pdf",
+            {"rid": rid},
+        )
 
-    def alergie(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/alergie/{rid}")
+    def alergie(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/alergie/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def vytvor_alergii(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/alergie", body)
 
     def krevni_skupina(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina/{rid}")
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina/detail",
+            {"rid": rid},
+        )
 
     def vytvor_krevni_skupinu(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina", body)
 
-    def nezadouci_prihody(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody/{rid}")
+    def nezadouci_prihody(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def vytvor_nezadouci_prihodu(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody", body)
 
-    def nezadouci_reakce(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce/{rid}")
+    def nezadouci_reakce(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def vytvor_nezadouci_reakci(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce", body)
 
-    def nezadouci_ucinky(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky/{rid}")
+    def nezadouci_ucinky(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def vytvor_nezadouci_ucinek(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky", body)
 
-    def nezadouci_udalosti(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti/{rid}")
+    def nezadouci_udalosti(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def vytvor_nezadouci_udalost(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti", body)
 
-    def lecive_pripravky(self, rid):
-        return self.c.get(f"{self.BASE}/api/v1/lecivePripravky/{rid}")
+    def lecive_pripravky(self, rid, jen_platne=None, sort=None, order=None):
+        return self.c.post(
+            f"{self.BASE}/api/v1/lecivePripravky/vyhledat",
+            self._vyhledat_body(rid, jen_platne, sort, order),
+        )
 
     def vytvor_lecivy_pripravek(self, body):
         return self.c.post(f"{self.BASE}/api/v1/lecivePripravky", body)
@@ -1365,6 +1443,10 @@ class SZZ:
 
     def ciselniky(self):
         return self.c.get(f"{self.BASE}/api/v1/ciselniky")
+
+    def ciselnik_polozky(self, kod):
+        """v1.0.9: položky číselníku."""
+        return self.c.get(f"{self.BASE}/api/v1/ciselniky/{kod}/polozky")
 
     # --- Lifecycle: Update (PUT) ---
 
@@ -1760,3 +1842,84 @@ class EZCA2:
 
     def external_report(self, body):
         return self.c.post(f"{self.BASE}/api/external/report", body)
+
+    # ========================================================================
+    # v1.0.6: Nové endpointy
+    # ========================================================================
+
+    # --- Search ---
+    def search_hash(self, body):
+        """v1.0.6: Vyhledat dokument podle hashe."""
+        return self.c.post(f"{self.BASE}/api/search/hash", self._auth_wrap(body))
+
+    def search_metadata(self, body):
+        """v1.0.6: Vyhledat dokument podle metadat."""
+        return self.c.post(f"{self.BASE}/api/search/metadata", self._auth_wrap(body))
+
+    # --- Certificates (CRL) ---
+    def get_certificate(self, id_):
+        """v1.0.6: Detail certifikátu."""
+        return self.c.get(f"{self.BASE}/api/certificates/certificate/{id_}")
+
+    def validate_certificate(self, body):
+        """v1.0.6: Validace certifikátu."""
+        return self.c.post(f"{self.BASE}/api/certificates/validatecertificate",
+                           self._auth_wrap(body))
+
+    # --- Content / Package ---
+    def content_package(self, id_):
+        """v1.0.6: Obsah balíčku."""
+        return self.c.get(f"{self.BASE}/api/content/package/{id_}")
+
+    # ========================================================================
+    # v1.0.6: Async varianty (nereblokující – server vrátí ID úlohy)
+    # ========================================================================
+
+    def sign_document_async(self, body):
+        return self.c.post(f"{self.BASE}/api/signasync/document", self._auth_wrap(body))
+
+    def sign_hash_async(self, body):
+        return self.c.post(f"{self.BASE}/api/signasync/hash", self._auth_wrap(body))
+
+    def stamp_document_async(self, body):
+        return self.c.post(f"{self.BASE}/api/stampasync/document", self._auth_wrap(body))
+
+    def stamp_hash_async(self, body):
+        return self.c.post(f"{self.BASE}/api/stampasync/hash", self._auth_wrap(body))
+
+    def validate_document_async(self, body):
+        return self.c.post(f"{self.BASE}/api/validateasync/document", self._auth_wrap(body))
+
+    def list_certificates_async(self, body):
+        return self.c.post(f"{self.BASE}/api/listasync/certificates", body)
+
+    def create_document_async(self, body):
+        return self.c.post(f"{self.BASE}/api/createasync/document", body)
+
+    def create_xades_async(self, body):
+        return self.c.post(f"{self.BASE}/api/createasync/xades", body)
+
+    def info_document_async(self, id_):
+        return self.c.get(f"{self.BASE}/api/infoasync/document/{id_}")
+
+    def info_component_async(self, id_):
+        return self.c.get(f"{self.BASE}/api/infoasync/component/{id_}")
+
+    def content_component_async(self, id_):
+        return self.c.get(f"{self.BASE}/api/contentasync/component/{id_}")
+
+    def content_package_async(self, id_):
+        return self.c.get(f"{self.BASE}/api/contentasync/package/{id_}")
+
+    def content_report_async(self, body):
+        return self.c.post(f"{self.BASE}/api/contentasync/report", body)
+
+    def external_report_async(self, body):
+        return self.c.post(f"{self.BASE}/api/externalasync/report", body)
+
+    def get_certificate_async(self, id_):
+        return self.c.get(f"{self.BASE}/api/certificatesasync/certificate/{id_}")
+
+    def validate_certificate_async(self, body):
+        return self.c.post(f"{self.BASE}/api/certificatesasync/validatecertificate",
+                           self._auth_wrap(body))

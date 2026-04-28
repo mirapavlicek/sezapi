@@ -1070,6 +1070,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
                   <option value="typ_vykonu_povolani">Typ výkonu povolání</option>
                   <option value="zakladni_kmen">Základní kmen</option>
                   <option value="certifikovany_kurz">Certifikovaný kurz</option>
+                  <option value="vzdelavaci_instituce">Vzdělávací instituce</option>
                 </optgroup>
               </select>
             </div>
@@ -1203,6 +1204,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
                 <option value="specializace">Specializace</option>
                 <option value="stat">Stát</option>
                 <option value="typ_vykonu_povolani">Typ výkonu povolání</option>
+                <option value="vzdelavaci_instituce">Vzdělávací instituce</option>
                 <option value="zakladni_kmen">Základní kmen</option>
                 <option value="zdravotni_pojistovna">Zdravotní pojišťovna</option>
               </select>
@@ -1260,8 +1262,8 @@ td.mono { font-family: var(--mono); font-size: 12px; }
           <div class="sub-tabs">
             <div class="sub-tab active" data-panel="krpzs-ico">Podle IČO</div>
             <div class="sub-tab" data-panel="krpzs-nazev">Podle názvu</div>
-            <div class="sub-tab" data-panel="krpzs-pracoviste">Pracoviště</div>
-            <div class="sub-tab" data-panel="krpzs-detail">Detail</div>
+            <div class="sub-tab" data-panel="krpzs-misto">Podle místa <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px">v2.0.2</span></div>
+            <div class="sub-tab" data-panel="krpzs-url-notif">URL notifikace <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px">v2.0.2</span></div>
           </div>
           <div class="sub-panel active" id="krpzs-ico">
             <div class="form-row">
@@ -1275,16 +1277,22 @@ td.mono { font-family: var(--mono); font-size: 12px; }
               <button class="btn btn-primary" onclick="krpzsHledatNazev()">Hledat</button>
             </div>
           </div>
-          <div class="sub-panel" id="krpzs-pracoviste">
+          <div class="sub-panel" id="krpzs-misto">
             <div class="form-row">
-              <div class="form-group"><label>IČO</label><input id="krpzsPracIco" placeholder="např. 25488627"></div>
-              <button class="btn btn-primary" onclick="krpzsHledatPracoviste()">Hledat</button>
+              <div class="form-group"><label>Město</label><input id="krpzsMistoMesto" placeholder="např. Ústí nad Labem"></div>
+              <div class="form-group"><label>Ulice</label><input id="krpzsMistoUlice" placeholder="např. Sociální péče"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>PSČ</label><input id="krpzsMistoPsc" placeholder="např. 401 13"></div>
+              <div class="form-group"><label>Kraj</label><input id="krpzsMistoKraj" placeholder="např. Ústecký kraj"></div>
+              <button class="btn btn-primary" onclick="krpzsHledatMisto()">Hledat</button>
             </div>
           </div>
-          <div class="sub-panel" id="krpzs-detail">
+          <div class="sub-panel" id="krpzs-url-notif">
             <div class="form-row">
-              <div class="form-group"><label>IČO</label><input id="krpzsDetIco" placeholder="např. 25488627"></div>
-              <button class="btn btn-primary" onclick="krpzsDetail()">Zobrazit detail</button>
+              <div class="form-group"><label>IČO</label><input id="krpzsUrlIco" placeholder="např. 25488627"></div>
+              <div class="form-group"><label>URL pro notifikace</label><input id="krpzsUrlUrl" placeholder="https://example.org/notif"></div>
+              <button class="btn btn-primary" onclick="krpzsNastavitUrlNotif()">Nastavit</button>
             </div>
           </div>
         </div>
@@ -1293,15 +1301,19 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 
       <div class="sub-panel" id="krpzs-ciselnik-panel">
         <div class="card">
-          <div class="card-title">Číselníky KRPZS</div>
+          <div class="card-title">Číselníky KRPZS <span style="font-size:11px;background:#22c55e;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px">v2.0.2</span></div>
           <div class="form-row">
             <div class="form-group">
               <label>Číselník</label>
               <select id="krpzsCiselnikNazev">
-                <option value="druh_zarizeni">Druh zařízení</option>
-                <option value="forma_pzs">Forma PZS</option>
-                <option value="obor">Obor</option>
-                <option value="typ_pracoviste">Typ pracoviště</option>
+                <option value="druh_pece">Druh péče</option>
+                <option value="forma_pece">Forma péče</option>
+                <option value="kategorie_pristrojove_techniky">Kategorie přístrojové techniky</option>
+                <option value="obor_pece">Obor péče</option>
+                <option value="spravni_organ">Správní orgán</option>
+                <option value="stat">Stát</option>
+                <option value="typ_rozhodnuti">Typ rozhodnutí</option>
+                <option value="zdravotni_pojistovna">Zdravotní pojišťovna</option>
               </select>
             </div>
             <button class="btn btn-primary" onclick="krpzsCiselnik()">Načíst</button>
@@ -1442,7 +1454,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
         <div class="card">
           <div class="card-title">Číselníky a oprávněné osoby</div>
           <p style="font-size:12px;color:var(--fg2);margin-bottom:12px">
-            Aktuální API <code>v1.0.1</code> zveřejňuje číselník služeb eZ, typů dokumentace a seznam oprávněných osob pro zadaný RID.
+            Aktuální API <code>v1.0.6</code> zveřejňuje číselník služeb eZdraví (vč. detailu) a typů dokumentace (vč. detailu); endpoint <code>/Osoby/Opravnujici/{rid}</code> byl ze swaggeru odstraněn.
           </p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
             <button class="btn btn-primary" onclick="roLoadCatalogs()">Načíst číselníky z API</button>
@@ -1507,7 +1519,7 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <button class="btn" style="background:#0f766e;color:#fff;border:none" onclick="duPotvrdVyzvednuti()">Potvrdit vyzvednutí</button>
           </div>
           <p style="font-size:11px;color:var(--fg3);margin-top:8px">
-            V aktuálním DÚ <code>v1.11.7</code> používají zneplatnění i potvrzení vyzvednutí kombinaci <code>Id + VerzeRadku</code>.
+            V aktuálním DÚ <code>v1.11.12</code> používají zneplatnění i potvrzení vyzvednutí kombinaci <code>Id + VerzeRadku</code> v query parametrech.
           </p>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-dasta" onclick="exportDasta('duResult','du')" title="Export do DASTA DS4 XML">DASTA</button><button class="btn-iris" onclick="irisGenerate('duResult','du')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="duResult">-</div></div>
@@ -2416,7 +2428,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card">
           <div class="card-title">Načtení žádanky podle ID</div>
           <p style="font-size:11px;color:var(--fg3);margin-bottom:8px">
-            Aktuální eŽádanky API <code>v1.11.7</code> zveřejňuje detail přes <code>NactiZadanku</code>; legacy endpointy pro vizualizaci a přílohy už ve swaggeru nejsou.
+            Aktuální eŽádanky API <code>v1.11.12</code> zveřejňuje detail přes <code>NactiZadanku</code>; legacy endpointy pro vizualizaci a přílohy už ve swaggeru nejsou.
           </p>
           <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
             <div class="form-group"><label>ID žádanky (UUID)</label><input id="ezId" placeholder="UUID žádanky"></div>
@@ -2476,7 +2488,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <button class="btn btn-outline" onclick="ezTemplateChanged()">Obnovit ze šablony</button>
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--fg3);line-height:1.5">
-            <strong>UlozZadanku</strong> je aktuální publikační endpoint <code>v1.11.7</code> a vyžaduje PZS kontext z JWT.
+            <strong>UlozZadanku</strong> je aktuální publikační endpoint <code>v1.11.12</code> a vyžaduje PZS kontext z JWT.
             Legacy helpery <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> a <code>SestavSouborZadanky</code> už nejsou součástí aktuálního swaggeru.
           </div>
         </div>
@@ -6204,17 +6216,22 @@ async function krpzsHledatNazev() {
   const data = await api('POST', '/api/krpzs/hledat-nazev', { nazev });
   showResult('krpzsResult', data);
 }
-async function krpzsHledatPracoviste() {
-  const ico = document.getElementById('krpzsPracIco').value.trim();
-  if (!ico) return toast('Zadejte IČO', true);
-  const data = await api('POST', '/api/krpzs/hledat-pracoviste', { ico });
+async function krpzsHledatMisto() {
+  const mesto = document.getElementById('krpzsMistoMesto')?.value?.trim() || '';
+  const ulice = document.getElementById('krpzsMistoUlice')?.value?.trim() || '';
+  const psc = document.getElementById('krpzsMistoPsc')?.value?.trim() || '';
+  const kraj = document.getElementById('krpzsMistoKraj')?.value?.trim() || '';
+  if (!mesto && !ulice && !psc && !kraj) return toast('Zadejte alespoň jeden parametr', true);
+  const data = await api('POST', '/api/krpzs/hledat-misto', { mesto, ulice, psc, kraj });
   showResult('krpzsResult', data);
 }
-async function krpzsDetail() {
-  const ico = document.getElementById('krpzsDetIco').value.trim();
-  if (!ico) return toast('Zadejte IČO', true);
-  const data = await api('POST', '/api/krpzs/detail', { ico });
+async function krpzsNastavitUrlNotif() {
+  const ico = document.getElementById('krpzsUrlIco')?.value?.trim() || '';
+  const url = document.getElementById('krpzsUrlUrl')?.value?.trim() || '';
+  if (!ico || !url) return toast('Zadejte IČO i URL', true);
+  const data = await api('POST', '/api/krpzs/nastavit-url-notifikace', { ico, url });
   showResult('krpzsResult', data);
+  if (data?.ok) toast('URL pro notifikace nastavena');
 }
 async function krpzsCiselnik() {
   const nazev = document.getElementById('krpzsCiselnikNazev').value;
@@ -7739,7 +7756,7 @@ async function ezRunDiagnose() {
       'nemá v JSU registrovaný PZS kontext. Gateway provede token exchange, ale výsledný token neobsahuje PZS identitu. ' +
       'Proto endpointy vyžadující PZS vrací <code>E01001</code>.<br>' +
       '<strong>Dostupné s aktuálním certifikátem:</strong> ' + (okEndpoints.length ? okEndpoints.join(', ') : 'žádné') + '.<br>' +
-      '<strong>Poznámka:</strong> Aktuální eŽádanky API <code>v1.11.7</code> už nepublikuje legacy endpointy <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> ani <code>SestavSouborZadanky</code>.' +
+      '<strong>Poznámka:</strong> Aktuální eŽádanky API <code>v1.11.12</code> už nepublikuje legacy endpointy <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> ani <code>SestavSouborZadanky</code>.' +
       '</div>';
   }
   box.innerHTML = html;
@@ -7937,14 +7954,14 @@ async function ezNacti() {
   ezRenderDetail(data);
 }
 async function ezVizual() {
-  if (!_ezSimEnabled) return toast('Vizualizace žádanky už není součástí aktuálního API v1.11.7', true);
+  if (!_ezSimEnabled) return toast('Vizualizace žádanky už není součástí aktuálního API v1.11.12', true);
   const id = document.getElementById('ezId').value.trim();
   if (!id) return toast('Zadejte ID žádanky', true);
   const data = await api('GET', '/api/ezadanky/vizual/' + id);
   showResult('ezDetailResult', data);
 }
 async function ezPrilohy() {
-  if (!_ezSimEnabled) return toast('Přílohy žádanky už nejsou součástí aktuálního API v1.11.7', true);
+  if (!_ezSimEnabled) return toast('Přílohy žádanky už nejsou součástí aktuálního API v1.11.12', true);
   const id = document.getElementById('ezId').value.trim();
   if (!id) return toast('Zadejte ID žádanky', true);
   const data = await api('GET', '/api/ezadanky/prilohy/' + id);
@@ -8294,7 +8311,7 @@ async function ezWfUprav() {
 }
 
 async function ezCreateSestavSoubor() {
-  toast('SestavSouborZadanky už není součástí aktuálního eŽádanky API v1.11.7', true);
+  toast('SestavSouborZadanky už není součástí aktuálního eŽádanky API v1.11.12', true);
 }
 
 // ---------------------------------------------------------------------------

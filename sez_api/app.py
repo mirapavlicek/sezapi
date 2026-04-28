@@ -760,15 +760,24 @@ async def krpzs_hledat_nazev(request: Request):
     body = await request.json()
     return timed_call(_modules["krpzs"].hledat_nazev, body.get("nazev", ""))
 
-@app.post("/api/krpzs/hledat-pracoviste")
-async def krpzs_hledat_pracoviste(request: Request):
+@app.post("/api/krpzs/hledat-misto")
+async def krpzs_hledat_misto(request: Request):
     body = await request.json()
-    return timed_call(_modules["krpzs"].hledat_pracoviste, body.get("ico", ""))
+    return timed_call(
+        _modules["krpzs"].hledat_misto,
+        mesto=body.get("mesto"),
+        ulice=body.get("ulice"),
+        psc=body.get("psc"),
+        kraj=body.get("kraj"),
+    )
 
-@app.post("/api/krpzs/detail")
-async def krpzs_detail(request: Request):
+@app.post("/api/krpzs/nastavit-url-notifikace")
+async def krpzs_nastavit_url_notifikace(request: Request):
     body = await request.json()
-    return timed_call(_modules["krpzs"].detail, body.get("ico", ""))
+    return timed_call(
+        _modules["krpzs"].nastavit_url_pro_notifikace,
+        body.get("ico", ""), body.get("url", ""),
+    )
 
 @app.post("/api/krpzs/ciselnik/{nazev}")
 async def krpzs_ciselnik(nazev: str):
@@ -778,6 +787,21 @@ async def krpzs_ciselnik(nazev: str):
 async def krpzs_reklamuj(request: Request):
     body = await request.json()
     return timed_call(_modules["krpzs"].reklamuj_udaj, body)
+
+@app.post("/api/krpzs/notifikace/vyhledat")
+async def krpzs_notifikace_vyhledat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].notifikace_vyhledat_odber, body.get("data", {}))
+
+@app.post("/api/krpzs/notifikace/zalozit")
+async def krpzs_notifikace_zalozit(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].notifikace_zalozit_odber, body.get("data", {}))
+
+@app.delete("/api/krpzs/notifikace/zrusit")
+async def krpzs_notifikace_zrusit(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krpzs"].notifikace_zrusit_odber, body.get("data", {}))
 
 
 # ---------------------------------------------------------------------------
@@ -1821,6 +1845,112 @@ async def ezca_external_report(request: Request):
     body = await request.json()
     return timed_call(_modules["ezca"].external_report, body)
 
+# --- EZCA2 v1.0.6: Search ---
+
+@app.post("/api/ezca/search-hash")
+async def ezca_search_hash(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].search_hash, body)
+
+@app.post("/api/ezca/search-metadata")
+async def ezca_search_metadata(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].search_metadata, body)
+
+# --- EZCA2 v1.0.6: Certificates ---
+
+@app.get("/api/ezca/certificate/{cert_id}")
+async def ezca_certificate(cert_id: str):
+    return timed_call(_modules["ezca"].get_certificate, cert_id)
+
+@app.post("/api/ezca/validate-certificate")
+async def ezca_validate_certificate(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].validate_certificate, body)
+
+# --- EZCA2 v1.0.6: Content / Package ---
+
+@app.get("/api/ezca/content-package/{pkg_id}")
+async def ezca_content_package(pkg_id: str):
+    return timed_call(_modules["ezca"].content_package, pkg_id)
+
+# --- EZCA2 v1.0.6: Async varianty ---
+
+@app.post("/api/ezca/sign-document-async")
+async def ezca_sign_document_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].sign_document_async, body)
+
+@app.post("/api/ezca/sign-hash-async")
+async def ezca_sign_hash_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].sign_hash_async, body)
+
+@app.post("/api/ezca/stamp-document-async")
+async def ezca_stamp_document_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].stamp_document_async, body)
+
+@app.post("/api/ezca/stamp-hash-async")
+async def ezca_stamp_hash_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].stamp_hash_async, body)
+
+@app.post("/api/ezca/validate-document-async")
+async def ezca_validate_document_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].validate_document_async, body)
+
+@app.post("/api/ezca/list-certificates-async")
+async def ezca_list_certificates_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].list_certificates_async, body)
+
+@app.post("/api/ezca/create-document-async")
+async def ezca_create_document_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].create_document_async, body)
+
+@app.post("/api/ezca/create-xades-async")
+async def ezca_create_xades_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].create_xades_async, body)
+
+@app.get("/api/ezca/info-document-async/{doc_id}")
+async def ezca_info_document_async(doc_id: str):
+    return timed_call(_modules["ezca"].info_document_async, doc_id)
+
+@app.get("/api/ezca/info-component-async/{comp_id}")
+async def ezca_info_component_async(comp_id: str):
+    return timed_call(_modules["ezca"].info_component_async, comp_id)
+
+@app.get("/api/ezca/content-component-async/{comp_id}")
+async def ezca_content_component_async(comp_id: str):
+    return timed_call(_modules["ezca"].content_component_async, comp_id)
+
+@app.get("/api/ezca/content-package-async/{pkg_id}")
+async def ezca_content_package_async(pkg_id: str):
+    return timed_call(_modules["ezca"].content_package_async, pkg_id)
+
+@app.post("/api/ezca/report-async")
+async def ezca_report_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].content_report_async, body)
+
+@app.post("/api/ezca/external-report-async")
+async def ezca_external_report_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].external_report_async, body)
+
+@app.get("/api/ezca/certificate-async/{cert_id}")
+async def ezca_certificate_async(cert_id: str):
+    return timed_call(_modules["ezca"].get_certificate_async, cert_id)
+
+@app.post("/api/ezca/validate-certificate-async")
+async def ezca_validate_certificate_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].validate_certificate_async, body)
+
 
 # ---------------------------------------------------------------------------
 # Debug / JWT info
@@ -1918,7 +2048,7 @@ async def debug_jwt():
             "KRP": {
                 "name": "Kmenový registr pacientů",
                 "base": "/krp",
-                "version": "v2.0.0",
+                "version": "v2.0.2",
                 "endpoints": [
                     {"method": "POST", "path": "/krp/api/v2/pacient/hledat/rid", "desc": "Vyhledání pacienta podle RID"},
                     {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc", "desc": "Vyhledání podle jména a RČ"},
@@ -1943,6 +2073,12 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost"},
                     {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání"},
                     {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění — výsledky"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vysledky/soubor", "desc": "Hromadné ztotožnění — výsledky (CSV soubor)"},
+                    {"method": "POST", "path": "/krp/api/v2/ciselnik/country_service_context", "desc": "Číselník CountryServiceContext"},
+                    {"method": "POST", "path": "/krp/api/v2/ciselnik/druh_dokladu", "desc": "Číselník druhů dokladů"},
+                    {"method": "POST", "path": "/krp/api/v2/ciselnik/pohlavi", "desc": "Číselník pohlaví"},
+                    {"method": "POST", "path": "/krp/api/v2/ciselnik/stat", "desc": "Číselník států"},
+                    {"method": "POST", "path": "/krp/api/v2/ciselnik/zdravotni_pojistovna", "desc": "Číselník zdravotních pojišťoven"},
                     {"method": "POST", "path": "/krp/api/v2/notifikace/vyhledat/odber", "desc": "Vyhledat odběry notifikací"},
                     {"method": "POST", "path": "/krp/api/v2/notifikace/zalozit/odber", "desc": "Založit odběr notifikací"},
                     {"method": "DELETE", "path": "/krp/api/v2/notifikace/zrusit/odber", "desc": "Zrušit odběr notifikací"},
@@ -1951,41 +2087,63 @@ async def debug_jwt():
             "KRZP": {
                 "name": "Kmenový registr zdravotnických pracovníků",
                 "base": "/krzp",
-                "version": "v2.0.0",
+                "version": "v2.0.1",
                 "endpoints": [
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/krzpid", "desc": "Vyhledání pracovníka podle KRZP ID"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/jmenoPrijmeniDatumNarozeni", "desc": "Vyhledání podle jména a data narození"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/zamestnavatel", "desc": "Vyhledání podle zaměstnavatele (IČO)"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/personalistika", "desc": "Personalistické vyhledávání"},
                     {"method": "POST", "path": "/krzp/api/v2/pracovnik/reklamuj/udaj", "desc": "Reklamace údaje"},
-                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/{nazev}", "desc": "Číselníky (pohlaví, stát, druh_dokladu, obor, specializace…)"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/certifikovany_kurz", "desc": "Číselník certifikovaných kurzů / odborné způsobilosti"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/country_service_context", "desc": "Číselník CountryServiceContext"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/druh_dokladu", "desc": "Číselník druhů dokladů"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/komory", "desc": "Číselník komor"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/obor", "desc": "Číselník oborů odborné způsobilosti"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/pohlavi", "desc": "Číselník pohlaví"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/specializace", "desc": "Číselník specializací"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/stat", "desc": "Číselník států"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/typ_vykonu_povolani", "desc": "Číselník typu výkonu povolání"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/vzdelavaci_instituce", "desc": "Číselník vzdělávacích institucí"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/zakladni_kmen", "desc": "Číselník základních kmenů"},
+                    {"method": "POST", "path": "/krzp/api/v2/ciselnik/zdravotni_pojistovna", "desc": "Číselník zdravotních pojišťoven"},
                     {"method": "POST", "path": "/krzp/api/v2/notifikace/stav", "desc": "Stav notifikací"},
-                    {"method": "POST", "path": "/krzp/api/v2/notifikace/zalozit", "desc": "Založit notifikaci"},
-                    {"method": "POST", "path": "/krzp/api/v2/notifikace/zrusit", "desc": "Zrušit notifikaci"},
+                    {"method": "POST", "path": "/krzp/api/v2/notifikace/zalozit", "desc": "Založit odběr notifikací"},
+                    {"method": "POST", "path": "/krzp/api/v2/notifikace/zrusit", "desc": "Zrušit odběr notifikací"},
                 ],
             },
             "KRPZS": {
                 "name": "Kmenový registr poskytovatelů zdravotních služeb",
                 "base": "/krpzs",
-                "version": "v2.0.0",
+                "version": "v2.0.2",
                 "endpoints": [
-                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/hledat/ico", "desc": "Vyhledání poskytovatele podle IČO"},
-                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/hledat/nazev", "desc": "Vyhledání podle názvu"},
-                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/hledat/pracoviste", "desc": "Vyhledání pracovišť"},
-                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/detail", "desc": "Detail poskytovatele"},
-                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/{nazev}", "desc": "Číselníky"},
-                    {"method": "POST", "path": "/krpzs/api/v2/poskytovatel/reklamuj/udaj", "desc": "Reklamace údaje"},
+                    {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/ico", "desc": "Vyhledání poskytovatele podle IČO"},
+                    {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/nazev", "desc": "Vyhledání podle názvu"},
+                    {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/misto", "desc": "Vyhledání podle místa (NOVÉ v2.0.2)"},
+                    {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/nastavit/urlpronotifikace", "desc": "Nastavit URL pro notifikace (NOVÉ v2.0.2)"},
+                    {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/reklamuj/udaj", "desc": "Reklamace údaje"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/druh_pece", "desc": "Číselník druhů péče"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/forma_pece", "desc": "Číselník forem péče"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/kategorie_pristrojove_techniky", "desc": "Číselník kategorií přístrojové techniky"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/obor_pece", "desc": "Číselník oborů péče"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/spravni_organ", "desc": "Číselník správních orgánů"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/stat", "desc": "Číselník států"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/typ_rozhodnuti", "desc": "Číselník typů rozhodnutí"},
+                    {"method": "POST", "path": "/krpzs/api/v2/ciselnik/zdravotni_pojistovna", "desc": "Číselník zdravotních pojišťoven"},
+                    {"method": "POST", "path": "/krpzs/api/v2/notifikace/vyhledat/odber", "desc": "Vyhledat odběry notifikací"},
+                    {"method": "POST", "path": "/krpzs/api/v2/notifikace/zalozit/odber", "desc": "Založit odběr notifikací"},
+                    {"method": "DELETE", "path": "/krpzs/api/v2/notifikace/zrusit/odber", "desc": "Zrušit odběr notifikací"},
                 ],
             },
             "RO": {
                 "name": "Registr oprávnění",
                 "base": "/registrOpravneni",
-                "version": "v1.0.1",
+                "version": "v1.0.6",
                 "endpoints": [
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce"},
-                    {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZ"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZdraví"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ/{id}", "desc": "Detail služby eZdraví"},
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/TypyDokumentaci", "desc": "Číselník typů dokumentace"},
-                    {"method": "GET", "path": "/registrOpravneni/api/v1/Osoby/Opravnujici/{rid}", "desc": "Seznam oprávněných osob pro RID"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/TypyDokumentaci/{id}", "desc": "Detail typu dokumentace"},
                 ],
             },
             "TermX": {
@@ -2010,45 +2168,93 @@ async def debug_jwt():
             "DU": {
                 "name": "Dočasné úložiště",
                 "base": "/docasneUloziste",
-                "version": "v1.11.7",
-                "note": "DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami",
+                "version": "v1.11.12",
+                "note": "DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami. Od v1.11.12 PATCH/PUT bez query params (Id+VerzeRadku v body)",
                 "endpoints": [
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky (eZD)"},
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/VyhledejZasilku", "desc": "Vyhledání zásilek"},
-                    {"method": "GET",  "path": "/docasneUloziste/api/v1/Zasilka/DejZasilku/{zasilkaId}", "desc": "Stažení zásilky podle ID"},
-                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZmenZasilku?Id={zasilkaId}&VerzeRadku={verze}", "desc": "Změna zásilky"},
-                    {"method": "PATCH","path": "/docasneUloziste/api/v1/Zasilka/ZneplatniZasilku?Id={zasilkaId}&VerzeRadku={verze}", "desc": "Zneplatnění zásilky"},
-                    {"method": "PATCH","path": "/docasneUloziste/api/v1/Zasilka/PotvrdVyzvednutiZasilky?Id={zasilkaId}&VerzeRadku={verze}", "desc": "Potvrzení vyzvednutí zásilky"},
+                    {"method": "GET",  "path": "/docasneUloziste/api/v1/Zasilka/DejZasilku/{id}", "desc": "Stažení zásilky podle ID"},
+                    {"method": "PUT",  "path": "/docasneUloziste/api/v1/Zasilka/ZmenZasilku", "desc": "Změna zásilky (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/docasneUloziste/api/v1/Zasilka/ZneplatniZasilku", "desc": "Zneplatnění zásilky (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/docasneUloziste/api/v1/Zasilka/PotvrdVyzvednutiZasilky", "desc": "Potvrzení vyzvednutí zásilky (Id+VerzeRadku v body)"},
                 ],
             },
             "SZZ": {
                 "name": "Sdílený zdravotní záznam",
                 "base": "/sdilenyZdravotniZaznam",
-                "version": "v1.0.6",
+                "version": "v1.0.9",
+                "note": "v1.0.9 přidává obnovit/zneplatnit/zpochybnit, PUT update, vyhledat seznam, PDF emergentního záznamu, detail krevní skupiny",
                 "endpoints": [
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/{rid}", "desc": "Emergentní záznam"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/{rid}/pdf", "desc": "Emergentní záznam PDF"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/{rid}", "desc": "Alergie pacienta"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/vyhledat", "desc": "Detail emergentního záznamu pacienta dle RID"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/pdf", "desc": "PDF emergentního záznamu"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie", "desc": "Vytvořit alergii"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina/{rid}", "desc": "Krevní skupina"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/vyhledat", "desc": "Seznam záznamů alergií"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/{id}", "desc": "Aktualizovat alergii"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/{id}/zneplatnit", "desc": "Zneplatnit alergii"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/{id}/zpochybnit", "desc": "Zpochybnit alergii"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/alergie/{id}/obnovit", "desc": "Obnovit alergii"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina", "desc": "Vytvořit krevní skupinu"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody/{rid}", "desc": "Nežádoucí příhody"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce/{rid}", "desc": "Nežádoucí reakce"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky/{rid}", "desc": "Nežádoucí účinky"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti/{rid}", "desc": "Nežádoucí události"},
-                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky/{rid}", "desc": "Léčivé přípravky"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina/detail", "desc": "Detail krevní skupiny dle RID"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina/{id}", "desc": "Aktualizovat krevní skupinu"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina/{id}/zneplatnit", "desc": "Zneplatnit krevní skupinu"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina/{id}/zpochybnit", "desc": "Zpochybnit krevní skupinu"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/krevniSkupina/{id}/obnovit", "desc": "Obnovit krevní skupinu"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody", "desc": "Vytvořit nežádoucí příhodu"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody/vyhledat", "desc": "Seznam nežádoucích příhod"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody/{id}", "desc": "Aktualizovat nežádoucí příhodu"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody/{id}/zneplatnit", "desc": "Zneplatnit nežádoucí příhodu"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody/{id}/zpochybnit", "desc": "Zpochybnit nežádoucí příhodu"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciPrihody/{id}/obnovit", "desc": "Obnovit nežádoucí příhodu"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce", "desc": "Vytvořit nežádoucí reakci"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce/vyhledat", "desc": "Seznam nežádoucích reakcí"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce/{id}", "desc": "Aktualizovat nežádoucí reakci"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce/{id}/zneplatnit", "desc": "Zneplatnit nežádoucí reakci"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce/{id}/zpochybnit", "desc": "Zpochybnit nežádoucí reakci"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciReakce/{id}/obnovit", "desc": "Obnovit nežádoucí reakci"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky", "desc": "Vytvořit nežádoucí účinek"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky/vyhledat", "desc": "Seznam nežádoucích účinků"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky/{id}", "desc": "Aktualizovat nežádoucí účinek"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky/{id}/zneplatnit", "desc": "Zneplatnit nežádoucí účinek"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky/{id}/zpochybnit", "desc": "Zpochybnit nežádoucí účinek"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUcinky/{id}/obnovit", "desc": "Obnovit nežádoucí účinek"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti", "desc": "Vytvořit nežádoucí událost"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti/vyhledat", "desc": "Seznam nežádoucích událostí"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti/{id}", "desc": "Aktualizovat nežádoucí událost"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti/{id}/zneplatnit", "desc": "Zneplatnit nežádoucí událost"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti/{id}/zpochybnit", "desc": "Zpochybnit nežádoucí událost"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/emergentniZaznam/nezadouciUdalosti/{id}/obnovit", "desc": "Obnovit nežádoucí událost"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky", "desc": "Vytvořit léčivý přípravek"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky/vyhledat", "desc": "Seznam léčivých přípravků"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky/{id}", "desc": "Aktualizovat léčivý přípravek"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky/{id}/zneplatnit", "desc": "Zneplatnit léčivý přípravek"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky/{id}/zpochybnit", "desc": "Zpochybnit léčivý přípravek"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/lecivePripravky/{id}/obnovit", "desc": "Obnovit léčivý přípravek"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy", "desc": "Vytvořit zdravotní záznam"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy/vyhledat", "desc": "Vyhledat zdravotní záznamy"},
+                    {"method": "PUT",  "path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy/{id}", "desc": "Aktualizovat zdravotní záznam"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy/{id}/zneplatnit", "desc": "Zneplatnit zdravotní záznam"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy/{id}/zpochybnit", "desc": "Zpochybnit zdravotní záznam"},
+                    {"method": "PATCH","path": "/sdilenyZdravotniZaznam/api/v1/zdravotniZaznamy/{id}/obnovit", "desc": "Obnovit zdravotní záznam"},
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/ciselniky", "desc": "Seznam číselníků"},
+                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v1/ciselniky/{kod}/polozky", "desc": "Položky číselníku"},
                 ],
             },
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
-                "version": "v1.0.7 + v2.0.5",
+                "version": "v1.0.7 + v2.0.9",
                 "endpoints": [
-                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Vytvořit posudek (v2)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v1)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni", "desc": "Seznam posudků (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v1)"},
+                    {"method": "PATCH","path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/pdftest", "desc": "PDF test (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/historie", "desc": "Historie (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/ciselniky", "desc": "Číselníky (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/ciselniky/{kod}/polozky", "desc": "Položky číselníku (v1)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v2)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v2)"},
                     {"method": "PATCH","path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v2)"},
@@ -2062,53 +2268,75 @@ async def debug_jwt():
             "eZadanky": {
                 "name": "eŽádanky",
                 "base": "/eZadanky",
-                "version": "v1.11.7",
+                "version": "v1.11.12",
+                "note": "Od v1.11.12 PATCH bez query params (Id + VerzeRadku v těle)",
                 "endpoints": [
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/UlozZadanku", "desc": "Uložit žádanku"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/VyhledejZadanku", "desc": "Vyhledat žádanky"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/VyhledejAktivniZadanku", "desc": "Vyhledat aktivní žádanky"},
-                    {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/NactiZadanku/{zadankaId}", "desc": "Načíst žádanku"},
-                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/StornujZadanku", "desc": "Stornovat žádanku"},
-                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/PrijmiZadanku", "desc": "Přijmout žádanku"},
-                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/VyridZadanku", "desc": "Vyřídit žádanku"},
-                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/UpravZadanku", "desc": "Upravit žádanku"},
-                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/VratZadankuDoObehu", "desc": "Vrátit žádanku do oběhu"},
-                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/ZaznacNeproveditelnostZadanky", "desc": "Zaznačit neproveditelnost"},
+                    {"method": "GET",  "path": "/eZadanky/api/v1/eZadanka/NactiZadanku/{id}", "desc": "Načíst žádanku"},
+                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/StornujZadanku", "desc": "Stornovat žádanku (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/PrijmiZadanku", "desc": "Přijmout žádanku (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/VyridZadanku", "desc": "Vyřídit žádanku (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/UpravZadanku", "desc": "Upravit žádanku (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/VratZadankuDoObehu", "desc": "Vrátit žádanku do oběhu (Id+VerzeRadku v body)"},
+                    {"method": "PATCH","path": "/eZadanky/api/v1/eZadanka/ZaznacNeproveditelnostZadanky", "desc": "Zaznačit neproveditelnost (Id+VerzeRadku v body)"},
                 ],
             },
             "Notifikace": {
                 "name": "Notifikační služby",
                 "base": "/notifikace",
-                "version": "v1.0.0",
+                "version": "v1.0.5",
                 "endpoints": [
                     {"method": "GET",  "path": "/notifikace/api/v1/notifikace/ping", "desc": "Ping (health check)"},
                     {"method": "POST", "path": "/notifikace/api/v1/notifikace/odeslat", "desc": "Odeslat notifikaci"},
-                    {"method": "GET",  "path": "/notifikace/api/v1/notifikace/vyhledat", "desc": "Vyhledat notifikace"},
+                    {"method": "GET",  "path": "/notifikace/api/v1/notifikace/vyhledat", "desc": "Vyhledat notifikace příjemcem"},
                     {"method": "GET",  "path": "/notifikace/api/v1/kanaly/katalog", "desc": "Katalog kanálů"},
                     {"method": "GET",  "path": "/notifikace/api/v1/sablony/katalog", "desc": "Katalog šablon"},
                     {"method": "GET",  "path": "/notifikace/api/v1/zdroje/katalog", "desc": "Katalog zdrojů"},
+                    {"method": "POST", "path": "/notifikace/api/v1/pzs/prijem/vzor", "desc": "PZS příjem (vzor) - testovací příjem notifikací"},
                 ],
             },
             "EZCA2": {
                 "name": "Služby vytvářející důvěru (EZCA II)",
                 "base": "/ezca2",
-                "version": "v1.0.3",
+                "version": "v1.0.6",
+                "note": "v1.0.6 přidává async varianty všech operací, search/hash, search/metadata, certificates, content/package",
                 "endpoints": [
                     {"method": "GET",  "path": "/ezca2/simple-health", "desc": "Health check (simple)"},
                     {"method": "GET",  "path": "/ezca2/detail-health", "desc": "Health check (detail)"},
                     {"method": "POST", "path": "/ezca2/api/sign/document", "desc": "Podepsat dokument"},
-                    {"method": "POST", "path": "/ezca2/api/stamp/document", "desc": "Orazítkovat dokument"},
-                    {"method": "POST", "path": "/ezca2/api/validate/document", "desc": "Validovat podpis"},
                     {"method": "POST", "path": "/ezca2/api/sign/hash", "desc": "Podepsat hash"},
-                    {"method": "POST", "path": "/ezca2/api/stamp/hash", "desc": "Orazítkovat hash"},
+                    {"method": "POST", "path": "/ezca2/api/stamp/document", "desc": "Časové razítko dokumentu"},
+                    {"method": "POST", "path": "/ezca2/api/stamp/hash", "desc": "Časové razítko hashe"},
+                    {"method": "POST", "path": "/ezca2/api/validate/document", "desc": "Validovat podpis"},
                     {"method": "POST", "path": "/ezca2/api/list/certificates", "desc": "Seznam certifikátů"},
+                    {"method": "GET",  "path": "/ezca2/api/certificates/certificate/{id}", "desc": "Detail certifikátu"},
+                    {"method": "POST", "path": "/ezca2/api/certificates/validatecertificate", "desc": "Validace certifikátu"},
                     {"method": "POST", "path": "/ezca2/api/create/document", "desc": "Vytvořit dokument"},
+                    {"method": "POST", "path": "/ezca2/api/create/xades", "desc": "Vytvořit XAdES obálku"},
+                    {"method": "POST", "path": "/ezca2/api/search/hash", "desc": "Vyhledat dokument podle hashe"},
+                    {"method": "POST", "path": "/ezca2/api/search/metadata", "desc": "Vyhledat dokument podle metadata"},
                     {"method": "GET",  "path": "/ezca2/api/info/document/{id}", "desc": "Info o dokumentu"},
                     {"method": "GET",  "path": "/ezca2/api/info/component/{id}", "desc": "Info o komponentě"},
                     {"method": "GET",  "path": "/ezca2/api/content/component/{id}", "desc": "Obsah komponenty"},
-                    {"method": "POST", "path": "/ezca2/api/create/xades", "desc": "Vytvořit XAdES obálku"},
+                    {"method": "GET",  "path": "/ezca2/api/content/package/{id}", "desc": "Obsah balíčku"},
                     {"method": "POST", "path": "/ezca2/api/content/report", "desc": "Validační report"},
                     {"method": "POST", "path": "/ezca2/api/external/report", "desc": "Externí validační report"},
+                    {"method": "POST", "path": "/ezca2/api/signasync/document", "desc": "Podpis dokumentu (async)"},
+                    {"method": "POST", "path": "/ezca2/api/signasync/hash", "desc": "Podpis hashe (async)"},
+                    {"method": "POST", "path": "/ezca2/api/stampasync/document", "desc": "Časové razítko (async)"},
+                    {"method": "POST", "path": "/ezca2/api/stampasync/hash", "desc": "Časové razítko hashe (async)"},
+                    {"method": "POST", "path": "/ezca2/api/validateasync/document", "desc": "Validace (async)"},
+                    {"method": "POST", "path": "/ezca2/api/listasync/certificates", "desc": "Seznam certifikátů (async)"},
+                    {"method": "POST", "path": "/ezca2/api/createasync/document", "desc": "Vytvoření dokumentu (async)"},
+                    {"method": "POST", "path": "/ezca2/api/createasync/xades", "desc": "XAdES (async)"},
+                    {"method": "GET",  "path": "/ezca2/api/infoasync/document/{id}", "desc": "Info o dokumentu (async)"},
+                    {"method": "GET",  "path": "/ezca2/api/infoasync/component/{id}", "desc": "Info o komponentě (async)"},
+                    {"method": "GET",  "path": "/ezca2/api/contentasync/component/{id}", "desc": "Obsah komponenty (async)"},
+                    {"method": "GET",  "path": "/ezca2/api/contentasync/package/{id}", "desc": "Obsah balíčku (async)"},
+                    {"method": "POST", "path": "/ezca2/api/contentasync/report", "desc": "Validační report (async)"},
+                    {"method": "POST", "path": "/ezca2/api/externalasync/report", "desc": "Externí report (async)"},
                 ],
             },
         },
