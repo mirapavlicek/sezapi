@@ -1281,10 +1281,11 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <div class="form-row">
               <div class="form-group"><label>Město</label><input id="krpzsMistoMesto" placeholder="např. Ústí nad Labem"></div>
               <div class="form-group"><label>Ulice</label><input id="krpzsMistoUlice" placeholder="např. Sociální péče"></div>
+              <div class="form-group"><label>PSČ</label><input id="krpzsMistoPsc" placeholder="např. 401 13"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>PSČ</label><input id="krpzsMistoPsc" placeholder="např. 401 13"></div>
-              <div class="form-group"><label>Kraj</label><input id="krpzsMistoKraj" placeholder="např. Ústecký kraj"></div>
+              <div class="form-group"><label>Kraj (název)</label><input id="krpzsMistoKraj" placeholder="např. Ústecký kraj"></div>
+              <div class="form-group"><label>Kraj (kód, povinné)</label><input id="krpzsMistoKrajKod" placeholder="např. CZ042"></div>
               <button class="btn btn-primary" onclick="krpzsHledatMisto()">Hledat</button>
             </div>
           </div>
@@ -6221,8 +6222,9 @@ async function krpzsHledatMisto() {
   const ulice = document.getElementById('krpzsMistoUlice')?.value?.trim() || '';
   const psc = document.getElementById('krpzsMistoPsc')?.value?.trim() || '';
   const kraj = document.getElementById('krpzsMistoKraj')?.value?.trim() || '';
-  if (!mesto && !ulice && !psc && !kraj) return toast('Zadejte alespoň jeden parametr', true);
-  const data = await api('POST', '/api/krpzs/hledat-misto', { mesto, ulice, psc, kraj });
+  const krajKod = document.getElementById('krpzsMistoKrajKod')?.value?.trim() || '';
+  if (!mesto && !ulice && !psc && !kraj && !krajKod) return toast('Zadejte alespoň jeden parametr', true);
+  const data = await api('POST', '/api/krpzs/hledat-misto', { mesto, ulice, psc, kraj, krajKod });
   showResult('krpzsResult', data);
 }
 async function krpzsNastavitUrlNotif() {

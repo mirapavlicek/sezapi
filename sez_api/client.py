@@ -1212,7 +1212,8 @@ class KRPZS:
         )
 
     def hledat_misto(self, mesto: str = None, ulice: str = None,
-                      psc: str = None, kraj: str = None, ucel="OVERENI"):
+                      psc: str = None, kraj: str = None, kraj_kod: str = None,
+                      ucel="OVERENI"):
         """v2.0.2: vyhledání poskytovatele podle místa působení."""
         data = {}
         if mesto:
@@ -1223,9 +1224,24 @@ class KRPZS:
             data["psc"] = psc
         if kraj:
             data["kraj"] = kraj
+        if kraj_kod:
+            data["krajKod"] = kraj_kod
         return self.c.post(
             f"{self.BASE}/api/v2/Poskytovatel/hledat/misto",
             self._envelope(ucel, data),
+        )
+
+    # Legacy aliases pro zpětnou kompatibilitu (PROD v2.0.0 endpointy)
+    def hledat_pracoviste(self, ico: str, ucel="OVERENI"):
+        return self.c.post(
+            f"{self.BASE}/api/v2/Poskytovatel/hledat/pracoviste",
+            self._envelope(ucel, {"ico": ico}),
+        )
+
+    def detail(self, ico: str, ucel="OVERENI"):
+        return self.c.post(
+            f"{self.BASE}/api/v2/Poskytovatel/detail",
+            self._envelope(ucel, {"ico": ico}),
         )
 
     def nastavit_url_pro_notifikace(self, ico: str, url: str, ucel="OVERENI"):
@@ -1334,11 +1350,11 @@ class RegistrOpravneni:
 
 
 class SZZ:
-    """Sdílený zdravotní záznam – PZS API v1.0.9.
+    """Sdílený zdravotní záznam – PZS API.
 
-    Od v1.0.9 jsou GET-by-RID endpointy nahrazeny POST /vyhledat | /detail | /pdf
-    s tělem obsahujícím rid (+ volitelné jenPlatne/sort/order/page/size).
-    Staré metody jsou zachovány kvůli kompatibilitě (interně volají nové).
+    Od T2 v1.0.9: GET-by-RID nahrazeno POST /vyhledat | /detail | /pdf s tělem.
+    Pro zpětnou kompatibilitu s PROD v1.0.6: výchozí metody zkusí nejprve nový POST,
+    a při HTTP 404/405 se vrátí ke starému GET volání.
     """
     BASE = "/sdilenyZdravotniZaznam"
 
@@ -1360,76 +1376,92 @@ class SZZ:
             body["size"] = size
         return body
 
+    def _try_post_then_get(self, post_path: str, body: dict, get_path: str):
+        """v1.0.9 first (POST), fallback to v1.0.6 (GET) on 404/405."""
+        r = self.c.post(post_path, body)
+        if r.status_code in (404, 405):
+            return self.c.get(get_path)
+        return r
+
     def emergentni_zaznam(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/emergentniZaznam/{rid}",
         )
 
     def emergentni_zaznam_pdf(self, rid):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/pdf",
             {"rid": rid},
+            f"{self.BASE}/api/v1/emergentniZaznam/{rid}/pdf",
         )
 
     def alergie(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/alergie/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/emergentniZaznam/alergie/{rid}",
         )
 
     def vytvor_alergii(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/alergie", body)
 
     def krevni_skupina(self, rid):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina/detail",
             {"rid": rid},
+            f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina/{rid}",
         )
 
     def vytvor_krevni_skupinu(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina", body)
 
     def nezadouci_prihody(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody/{rid}",
         )
 
     def vytvor_nezadouci_prihodu(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody", body)
 
     def nezadouci_reakce(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce/{rid}",
         )
 
     def vytvor_nezadouci_reakci(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce", body)
 
     def nezadouci_ucinky(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky/{rid}",
         )
 
     def vytvor_nezadouci_ucinek(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky", body)
 
     def nezadouci_udalosti(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti/{rid}",
         )
 
     def vytvor_nezadouci_udalost(self, body):
         return self.c.post(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti", body)
 
     def lecive_pripravky(self, rid, jen_platne=None, sort=None, order=None):
-        return self.c.post(
+        return self._try_post_then_get(
             f"{self.BASE}/api/v1/lecivePripravky/vyhledat",
             self._vyhledat_body(rid, jen_platne, sort, order),
+            f"{self.BASE}/api/v1/lecivePripravky/{rid}",
         )
 
     def vytvor_lecivy_pripravek(self, body):

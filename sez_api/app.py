@@ -769,7 +769,20 @@ async def krpzs_hledat_misto(request: Request):
         ulice=body.get("ulice"),
         psc=body.get("psc"),
         kraj=body.get("kraj"),
+        kraj_kod=body.get("krajKod") or body.get("kraj_kod"),
     )
+
+@app.post("/api/krpzs/hledat-pracoviste")
+async def krpzs_hledat_pracoviste(request: Request):
+    """Legacy KRPZS v2.0.0 endpoint (zachováno pro zpětnou kompatibilitu)."""
+    body = await request.json()
+    return timed_call(_modules["krpzs"].hledat_pracoviste, body.get("ico", ""))
+
+@app.post("/api/krpzs/detail")
+async def krpzs_detail(request: Request):
+    """Legacy KRPZS v2.0.0 endpoint (zachováno pro zpětnou kompatibilitu)."""
+    body = await request.json()
+    return timed_call(_modules["krpzs"].detail, body.get("ico", ""))
 
 @app.post("/api/krpzs/nastavit-url-notifikace")
 async def krpzs_nastavit_url_notifikace(request: Request):
