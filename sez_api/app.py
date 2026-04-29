@@ -2151,9 +2151,10 @@ async def debug_jwt():
             "RO": {
                 "name": "Registr oprávnění",
                 "base": "/registrOpravneni",
-                "version": "v1.0.6",
+                "version": "v1.0.7",
+                "note": "v1.0.7 (duben 2026): rozšíření GET /Opravneni/Over o EHS osoby a opt-in/opt-out – backward compatible. Endpoint /Osoby/Opravnujici/{rid} byl v PROD dočasně odstraněn z externího API PZS.",
                 "endpoints": [
-                    {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce"},
+                    {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce (rozšířeno v 1.0.7)"},
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZdraví"},
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ/{id}", "desc": "Detail služby eZdraví"},
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/TypyDokumentaci", "desc": "Číselník typů dokumentace"},
@@ -2257,6 +2258,13 @@ async def debug_jwt():
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
                 "version": "v1.0.7 + v2.0.9",
+                "note": ("Standard 2.2 (10. 4. 2026), v2.0.7+ zpřísněné validace: "
+                         "datum vystavení max. 3 dny zpětně a ne v budoucnosti, "
+                         "datum platnosti ne v minulosti a max. 100 let od vystavení "
+                         "(2 roky pro 70+), max. 300 znaků doplňujícího textu, "
+                         "PDF pouze pro platný posudek, zneplatnit může jen vystavující PZS. "
+                         "v2.0.8 + 2.0.9 přidávají interní endpointy online/offline validace "
+                         "(EzKarta), nejsou v B2B PZS API."),
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v1)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v1)"},
@@ -2264,7 +2272,7 @@ async def debug_jwt():
                     {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v1)"},
                     {"method": "PATCH","path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v1)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v1)"},
-                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/pdftest", "desc": "PDF test (v1)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/pdftest", "desc": "PDF test (v1, jen pro testy)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/{id}/historie", "desc": "Historie (v1)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v1/ciselniky", "desc": "Číselníky (v1)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v1/ciselniky/{kod}/polozky", "desc": "Položky číselníku (v1)"},
@@ -2272,9 +2280,9 @@ async def debug_jwt():
                     {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v2)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v2)"},
                     {"method": "PATCH","path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v2)"},
-                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v2)"},
+                    {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v2, jen pro platný posudek)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/{id}/historie", "desc": "Historie (v2)"},
-                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni", "desc": "Ověřit oprávnění (v2)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni", "desc": "Ověřit oprávnění pracovníka (v2.0.7+) – KRZP ID + IČO"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/ciselniky", "desc": "Číselníky (v2)"},
                     {"method": "GET",  "path": "/elektronickePosudky/api/v2/ciselniky/{kod}/polozky", "desc": "Položky číselníku (v2)"},
                 ],
@@ -2353,6 +2361,45 @@ async def debug_jwt():
                     {"method": "POST", "path": "/ezca2/api/externalasync/report", "desc": "Externí report (async)"},
                 ],
             },
+        },
+        "gateway_errors": {
+            "note": "API Gateway error mapping (NPEZ+KSEZ – aktualizace 23. 4. 2026, viz Confluence Manuál EZ pro PZS)",
+            "codes": [
+                {"http": 401, "code": "MISSING_AUTHORIZATION", "desc": "Chybí Authorization header"},
+                {"http": 401, "code": "INVALID_AUTHORIZATION_SCHEME", "desc": "Není formát 'Authorization: Bearer <token>'"},
+                {"http": 401, "code": "JSU_INVALID_TOKEN", "desc": "Neplatný JWT (od 23. 4. 2026 přemapováno z 403 → 401)"},
+                {"http": 401, "code": "JSU_ACCESS_TOKEN", "desc": "JSU vrátilo invalid_client (od 23. 4. 2026 přemapováno z 500 → 401)"},
+                {"http": 401, "code": "BACKEND_INVALID_TOKEN", "desc": "Backend zamítl token"},
+                {"http": 500, "code": "BACKEND_INTERNAL", "desc": "Interní chyba backendu (propagováno)"},
+                {"http": 500, "code": "BACKEND_NOT_AUTHORIZED", "desc": "Backend zamítl auth"},
+                {"http": 500, "code": "JSU_INTERNAL", "desc": "JSU 500 nebo neošetřený stav"},
+                {"http": 502, "code": "BACKEND_UNAVAILABLE", "desc": "Backend 503"},
+                {"http": 502, "code": "BACKEND_ERROR", "desc": "Backend vrátil jiný stav než 200"},
+                {"http": 502, "code": "BACKEND_INVALID_RESPONSE", "desc": "Backend nevrátil JSON"},
+                {"http": 502, "code": "JSU_CONNECT", "desc": "Nelze se připojit na JSU (timeout)"},
+            ],
+        },
+        "confluence_links": {
+            "note": "Aktuální zdroje pravidel a změn (MZČR Confluence Manuál EZ pro PZS)",
+            "links": [
+                {"name": "Přehled Manuálu EZ pro PZS", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/overview?homepageId=48005400"},
+                {"name": "API endpointy (centrální hub)", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/80904194"},
+                {"name": "Autentizace k API gateway", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/160530443"},
+                {"name": "Novinky v aplikacích EZ a dostupnosti služeb", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129"},
+                {"name": "Plán vývoje CSEZ", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/524517377"},
+                {"name": "FAQ", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/190251018"},
+                {"name": "Kmenové zdravotnické registry", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/48136196"},
+                {"name": "Notifikace", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935032"},
+                {"name": "Dočasné úložiště", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935071"},
+                {"name": "eŽádanky", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/56000561"},
+                {"name": "Registr oprávnění", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935041"},
+                {"name": "SZZ – Sdílený zdravotní záznam", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935089"},
+                {"name": "ELP – Elektronické lékařské posudky", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935098"},
+                {"name": "TermX – Terminologický server", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935117"},
+                {"name": "EZCA II / Služby vytvářející důvěru", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935108"},
+                {"name": "Testovací identity (PZS, pacienti)", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/529793025"},
+                {"name": "První kroky pro testování", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/68321283"},
+            ],
         },
     }
 

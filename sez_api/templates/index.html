@@ -381,6 +381,35 @@ td.mono { font-family: var(--mono); font-size: 12px; }
         <div class="card-title">Certifikát</div>
         <div id="certInfo" style="font-family:var(--mono);font-size:12px;color:var(--fg2)">Načítám...</div>
       </div>
+      <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);border-color:#bfdbfe">
+        <div class="card-title" style="color:#1e3a8a">Aktuální verze API a poslední změny</div>
+        <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
+          Souhrn aktuálních verzí na T2 gateway a posledních změn dle <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129" target="_blank" style="color:#1e40af">MZČR Confluence – Novinky</a>.
+          Detail verzí endpointů: <a href="/api/debug/jwt" target="_blank" style="color:#1e40af">/api/debug/jwt</a>.
+        </p>
+        <table style="font-size:12px">
+          <thead><tr><th>Služba</th><th>Verze</th><th>Poslední změna</th></tr></thead>
+          <tbody>
+            <tr><td>KRP – Kmenový registr pacientů</td><td><code>v2.0.2</code></td><td>POST /ciselnik/{nazev} (od v2.0.2)</td></tr>
+            <tr><td>KRZP – Kmenový registr zdrav. prac.</td><td><code>v2.0.1</code></td><td>—</td></tr>
+            <tr><td>KRPZS – Kmenový registr poskytovatelů</td><td><code>v2.0.2</code></td><td>hledat-misto + krajKod (povinné), URL notifikace, capitalized cesty</td></tr>
+            <tr><td>RO – Registr oprávnění</td><td><code>v1.0.7</code></td><td>20. 4. 2026: rozšíření Over o EHS osoby + opt-in/out (BC), v PROD dočasně bez Osoby/Opravnujici/{rid}</td></tr>
+            <tr><td>SZZ – Sdílený zdravotní záznam</td><td><code>v1.0.9</code></td><td>v1.0.9 přidává POST /vyhledat – fallback na GET pro PROD v1.0.6</td></tr>
+            <tr><td>ELP – Elektronické posudky</td><td><code>v2.0.9 + v1.0.7</code></td><td>10. 4. 2026 (std. 2.2): zpřísněné validace data, 70+, 300 znaků, jen vystavující zneplatňuje, PDF jen pro platný</td></tr>
+            <tr><td>DÚ – Dočasné úložiště</td><td><code>v1.11.12</code></td><td>22. 4. 2026: notifikace (nová zásilka, před expirací, zneplatnění, zpochybnění, vyzvednutí)</td></tr>
+            <tr><td>eŽádanky</td><td><code>v1.11.12</code></td><td>21. 4. 2026: úprava FHIR detailu Z-žádanky (BC); PATCH bez query, Id+VerzeRadku v body</td></tr>
+            <tr><td>Notifikace</td><td><code>v1.0.5</code></td><td>—</td></tr>
+            <tr><td>EZCA II</td><td><code>v1.0.6</code></td><td>+ async varianty, search/hash, search/metadata, certificates, content/package</td></tr>
+            <tr><td>TermX – Terminologie</td><td><code>v1.0.5</code></td><td>14. 4. 2026: FHIR typy (string→konkrétní); 7. 4. 2026: nové ValueSety (duvod-odmitnuti, duvod-vraceni, …)</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;line-height:1.6">
+          <strong>API GW T2 (23. 4. 2026):</strong> přemapování chybových kódů JSU
+          <code>JSU_INVALID_TOKEN</code> 403 → <strong>401</strong>,
+          <code>JSU_ACCESS_TOKEN (invalid_client)</code> 500 → <strong>401</strong>.
+          Pokud váš kód větví logiku podle 403/500, doporučujeme upravit na 401.
+        </div>
+      </div>
       <div class="card">
         <div class="card-title">Testovací pacienti <span id="patientCount" style="font-weight:400;color:var(--fg2);font-size:12px"></span></div>
         <div style="max-height:260px;overflow-y:auto">
@@ -2165,16 +2194,27 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
     <!-- ELP v2 -->
     <div class="section" id="sec-elp">
       <div class="card" style="background:linear-gradient(135deg,#fdf4ff 0%,#fef9ff 100%);border-color:#e9d5ff;margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#9333ea;margin-bottom:8px">Elektronické posudky (ELP) <span style="font-size:11px;background:#9333ea;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:500">API 2.0.5</span></div>
+        <div style="font-weight:700;font-size:14px;color:#9333ea;margin-bottom:8px">Elektronické posudky (ELP) <span style="font-size:11px;background:#9333ea;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:500">Standard 2.2 / API v2.0.9</span></div>
         <div style="font-size:13px;color:var(--fg2);line-height:1.7">
-          Systém elektronických lékařských posudků pro <strong>řidičská oprávnění</strong> dle aktuálního standardu 2.1 a API 2.0.5.
+          Systém elektronických lékařských posudků pro <strong>řidičská oprávnění</strong> dle <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935098" target="_blank" style="color:#9333ea">standardu 2.2 (10. 4. 2026)</a> a API v2.0.9.
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
             <span><strong>Vyhledat</strong> — dle RID, data, stavu, fulltextu, IČO</span>
             <span><strong>Vytvořit</strong> — nový posudek se způsobilostmi</span>
             <span><strong>Oprávnění</strong> — ověření oprávnění k založení</span>
-            <span><strong>PDF</strong> — export posudku do PDF</span>
+            <span><strong>PDF</strong> — export posudku do PDF (jen platný posudek!)</span>
             <span><strong>Historie</strong> — verze a změny posudku</span>
-            <span><strong>Zneplatnění</strong> — deaktivace (vyžaduje ETag)</span>
+            <span><strong>Zneplatnění</strong> — deaktivace (vyžaduje ETag), jen vystavující PZS</span>
+          </div>
+          <div style="margin-top:10px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;line-height:1.6">
+            <strong>Validační pravidla v2.0.7+ (server zamítne neplatná data):</strong>
+            <ul style="margin:4px 0 0 16px;padding:0">
+              <li><strong>Datum vystavení</strong> ne v budoucnosti, max. 3 dny zpětně</li>
+              <li><strong>Datum platnosti</strong> ne v minulosti, ne menší než vystavení, max. 100 let od vystavení (max. <strong>2 roky pro 70+</strong> – povinné!)</li>
+              <li><strong>Doplňující text</strong> max. 300 znaků</li>
+              <li><strong>Způsobilý s podmínkou</strong> – musí mít alespoň jeden harmonizovaný/národní kód</li>
+              <li>Každá podmínka způsobilosti přiřazena k alespoň jedné skupině ŘO; vazba skupina posudku ↔ skupina ŘO</li>
+              <li><strong>Typ akce</strong> musí odpovídat volané operaci; <strong>zneplatnit</strong> může jen vystavující PZS</li>
+            </ul>
           </div>
         </div>
       </div>
