@@ -45,3 +45,6 @@ checkmk/
 # Temp
 *.tmp
 *.bak
+
+# Subagent web fetch cache
+.firecrawl/
