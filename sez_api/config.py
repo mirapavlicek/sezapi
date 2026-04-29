@@ -120,18 +120,75 @@ TEST_WORKERS_PZS = [
     {"krzpid": "195435779", "name": "JAN Válek", "ico": "829013"},
 ]
 
+# Testovací PZS identity v testovacím prostředí T2 (zdroj: MZČR Confluence
+# /Podklady pro testování napojení na CSEZ - 529793025).
+# Pole "zastupce" / "zastupce_rid" mapují statutárního zástupce přiřazeného
+# k danému PZS (viz Testovací identity osob výše v TEST_PATIENTS).
 TEST_PZS = [
-    {"ico": "00064203", "name": "Fakultní nemocnice v Motole", "city": "Praha 5"},
-    {"ico": "25488627", "name": "Krajská zdravotní, a.s.", "city": "Ústí nad Labem", "note": "Testovací PZS"},
+    {"ico": "25488627", "name": "Krajská zdravotní, a.s.", "city": "Ústí nad Labem", "note": "Náš testovací PZS"},
+    # Statutární zástupce: Petra Nosková (RID 5785446836)
+    {"ico": "26834022", "name": "Bohumínská městská nemocnice, a.s.", "city": "Bohumín", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "00064165", "name": "Všeobecná fakultní nemocnice v Praze", "city": "Praha 2", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "00179906", "name": "Fakultní nemocnice Hradec Králové", "city": "Hradec Králové", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "27520536", "name": "Nemocnice Pardubického kraje, a.s. - Pardubická nemocnice", "city": "Pardubice", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "27256456", "name": "Oblastní nemocnice Mladá Boleslav, a.s.", "city": "Mladá Boleslav", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "00669806", "name": "Fakultní nemocnice Plzeň", "city": "Plzeň", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "28971906", "name": "Nemocnice Vršovice", "city": "Praha 10", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "47714913", "name": "Nemocnice Ostrov s.r.o.", "city": "Ostrov", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "64827232", "name": "Nemocnice Vrchlabí", "city": "Vrchlabí", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "25443801", "name": "Nemocnice Roudnice nad Labem s.r.o.", "city": "Roudnice nad Labem", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "65269705", "name": "Fakultní nemocnice Brno", "city": "Brno", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "00159816", "name": "Fakultní nemocnice U Svaté Anny", "city": "Brno", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    {"ico": "25897551", "name": "Nemocnice AGEL Český Těšín a.s.", "city": "Český Těšín", "zastupce": "NOSKOVÁ PETRA", "zastupce_rid": "5785446836"},
+    # Statutární zástupce: Vilemína Zasněžená (RID 8754287763)
+    {"ico": "00064211", "name": "Fakultní nemocnice Bulovka", "city": "Praha 8", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "27283933", "name": "Krajská nemocnice Liberec, a.s.", "city": "Liberec", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "00843904", "name": "Fakultní nemocnice Ostrava", "city": "Ostrava", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "00023001", "name": "Institut klinické a experimentální medicíny", "city": "Praha 4", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "26865858", "name": "Bílovecká nemocnice a.s.", "city": "Bílovec", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "60726636", "name": "EUC Klinika Zlín", "city": "Zlín", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "00064173", "name": "Fakultní nemocnice Královské Vinohrady", "city": "Praha 10", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "00098892", "name": "Fakultní nemocnice Olomouc", "city": "Olomouc", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "00064190", "name": "Fakultní Thomayerova nemocnice", "city": "Praha 4", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "26365804", "name": "Karlovarská krajská nemocnice a.s. - Nemocnice Karlovy Vary", "city": "Karlovy Vary", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "49686356", "name": "MEDITERRA", "city": "", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    {"ico": "05421888", "name": "MMN Semily", "city": "Semily", "zastupce": "ZASNĚŽENÁ VILEMÍNA", "zastupce_rid": "8754287763"},
+    # Statutární zástupce: Pyrenejská Borovice (RID 7651532629)
+    {"ico": "41197518", "name": "Nemocnice Duchcov", "city": "Duchcov", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "25479300", "name": "Nemocnice Kadaň", "city": "Kadaň", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "00879444", "name": "Nemocnice na Františku", "city": "Praha 1", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "63145766", "name": "Nemocnice Tanvald", "city": "Tanvald", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "28892950", "name": "OB klinika a.s.", "city": "Praha 8", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "00023728", "name": "Revmatologický ústav", "city": "Praha 2", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "00023698", "name": "Ústav pro péči o matku a dítě", "city": "Praha 4", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "26000202", "name": "Oblastní nemocnice Náchod a.s.", "city": "Náchod", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "62061731", "name": "Nemocnice Rychnov nad Kněžnou o.z.", "city": "Rychnov nad Kněžnou", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "25262238", "name": "Městská nemocnice a.s. (Dvůr Králové)", "city": "Dvůr Králové n. Labem", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "27661989", "name": "Krajská nemocnice T. Bati, a.s.", "city": "Zlín", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "00064220", "name": "Psychiatrická nemocnice Bohnice", "city": "Praha 8", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "26432471", "name": "Centrum léčby pohybového aparátu", "city": "Praha 9", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    {"ico": "00023736", "name": "Ústav hematologie a krevní transfuze Praha", "city": "Praha 2", "zastupce": "PYRENEJSKÁ BOROVICE", "zastupce_rid": "7651532629"},
+    # Statutární zástupce: Pavla Dvořáková (RID 4967435668)
+    {"ico": "26068877", "name": "Nemocnice České Budějovice", "city": "České Budějovice", "zastupce": "DVOŘÁKOVÁ PAVLA", "zastupce_rid": "4967435668"},
+    {"ico": "00090638", "name": "Nemocnice Jihlava", "city": "Jihlava", "zastupce": "DVOŘÁKOVÁ PAVLA", "zastupce_rid": "4967435668"},
+    {"ico": "66183596", "name": "Městská nemocnice Odry", "city": "Odry", "zastupce": "DVOŘÁKOVÁ PAVLA", "zastupce_rid": "4967435668"},
+    {"ico": "00193011", "name": "Ústav chirurgie ruky a plastické chirurgie, p.o.", "city": "Vysoké nad Jizerou", "zastupce": "DVOŘÁKOVÁ PAVLA", "zastupce_rid": "4967435668"},
+    # Další PZS, které byly v původním seznamu (mimo oficiální tabulku zástupců)
     {"ico": "60470488", "name": "AeskuLab k.s.", "city": "Praha 6"},
-    {"ico": "27661989", "name": "Krajská nemocnice T. Bati, a. s.", "city": "Zlín"},
     {"ico": "47911492", "name": "Městská poliklinika u sv. Alžběty, s.r.o.", "city": "Uherské Hradiště"},
     {"ico": "28821599", "name": "Gynekologie Jičín s.r.o.", "city": "Jičín"},
     {"ico": "28375556", "name": "Praktický lékař pro děti a dorost s.r.o.", "city": "Kutná Hora"},
-    {"ico": "829013", "name": "Zdravotnická záchranná služba Ústeckého kraje", "city": "Ústí nad Labem"},
+    {"ico": "00829013", "name": "Zdravotnická záchranná služba Ústeckého kraje", "city": "Ústí nad Labem"},
     {"ico": "02233664", "name": "Mračena poskytuje zdravotní služby", "city": "Říčany"},
     {"ico": "25706381", "name": "Canadian Medical s.r.o.", "city": "Praha 6"},
-    {"ico": "47453745", "name": "Poliklinika Týniště nad Orlicí, s. r. o.", "city": "Týniště nad Orlicí"},
+    {"ico": "47453745", "name": "Poliklinika Týniště nad Orlicí, s.r.o.", "city": "Týniště nad Orlicí"},
+]
+
+# Společní zdravotničtí pracovníci dostupní pro všechny testovací PZS identity
+# (zdroj: MZČR Confluence – Podklady pro testování napojení na CSEZ).
+TEST_COMMON_WORKERS = [
+    {"krzpid": "102129137", "name": "MRAČENA MRAKOMOROVÁ", "rid": "2667873559", "role": "Zdrav. pracovník 1"},
+    {"krzpid": "201210303", "name": "LETNÍ ŽALUD", "rid": "7651669233", "role": "Zdrav. pracovník 2"},
 ]
 
 

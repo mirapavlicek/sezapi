@@ -245,6 +245,7 @@ async def status():
         "test_workers": getattr(cfg, "TEST_WORKERS", []),
         "test_workers_pzs": getattr(cfg, "TEST_WORKERS_PZS", []),
         "test_pzs": getattr(cfg, "TEST_PZS", []),
+        "test_common_workers": getattr(cfg, "TEST_COMMON_WORKERS", []),
     }
 
 

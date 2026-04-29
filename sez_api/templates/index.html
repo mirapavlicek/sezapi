@@ -401,9 +401,13 @@ td.mono { font-family: var(--mono); font-size: 12px; }
       </div>
       <div class="card">
         <div class="card-title">Testovací PZS <span id="pzsCount" style="font-weight:400;color:var(--fg2);font-size:12px"></span></div>
-        <div style="max-height:180px;overflow-y:auto">
+        <p style="font-size:11px;color:var(--fg3);margin:0 0 6px">
+          PZS identity z testovacího prostředí T2.
+          Sloupec <em>Statutární zástupce</em> ukazuje, koho je třeba použít při testování notifikací a přístupů (zdroj: <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/529793025" target="_blank">MZČR Confluence – Podklady pro testování napojení na CSEZ</a>).
+        </p>
+        <div style="max-height:240px;overflow-y:auto">
         <table>
-          <thead><tr><th>IČO</th><th>Název</th><th>Město</th></tr></thead>
+          <thead><tr><th>IČO</th><th>Název</th><th>Město</th><th>Statutární zástupce</th><th>Akce</th></tr></thead>
           <tbody id="pzsTable"></tbody>
         </table>
         </div>
@@ -423,6 +427,13 @@ td.mono { font-family: var(--mono); font-size: 12px; }
             <span><strong>Hromadné ztotožnění</strong> — CSV upload dávky pacientů</span>
             <span><strong>Notifikace</strong> — odběr změn u pacientů</span>
             <span><strong>Číselníky</strong> — dynamické z API (KRP, KRZP, SZZ, ELP)</span>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #fecaca;font-size:11px;color:var(--fg3)">
+            První kroky podle MZČR: <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/68321283" target="_blank" style="color:#dc2626">Vyhledání pacienta (jméno+DN, jméno+RČ, RID)</a> –
+            doporučené testovací identity:
+            <button class="chip" onclick="document.getElementById('krpRid').value='8754287763';krpQuickTab('krp-rid')" title="Vilemína Zasněžená 1971-06-07">Zasněžená Vilemína</button>
+            <button class="chip" onclick="document.getElementById('krpRc').value='8159260010';document.getElementById('krpJmeno').value='Petra';document.getElementById('krpPrijmeni').value='Nosková';krpQuickTab('krp-jmeno')" title="Hledání podle jména a RČ">Nosková Petra (RČ)</button>
+            <button class="chip" onclick="document.getElementById('krpRid').value='2667873559';krpQuickTab('krp-rid')" title="Mračena Mrakomorová – sdílená identita zdrav. pracovníka">Mrakomorová Mračena</button>
           </div>
         </div>
       </div>
@@ -3971,6 +3982,14 @@ function initNav() {
   });
 }
 
+// Programatický přepínač sub-tabu uvnitř KRP karty (klikne na příslušný .sub-tab[data-panel=...]).
+function krpQuickTab(panelId) {
+  const krp = document.getElementById('sec-krp');
+  if (!krp) return;
+  const tab = krp.querySelector(`.sub-tab[data-panel="${panelId}"]`);
+  if (tab) tab.click();
+}
+
 function initSubTabs() {
   document.querySelectorAll('.sub-tabs').forEach(container => {
     container.querySelectorAll('.sub-tab').forEach(tab => {
@@ -4859,9 +4878,22 @@ function renderPzsTable() {
   const pcnt = document.getElementById('pzsCount');
   if (!tbody) return;
   if (pcnt) pcnt.textContent = `(${testPzs.length})`;
-  tbody.innerHTML = testPzs.map(p =>
-    `<tr><td class="mono" style="font-size:11px">${p.ico}</td><td>${p.name}</td><td style="font-size:12px;color:var(--fg2)">${p.city || ''}</td></tr>`
-  ).join('');
+  tbody.innerHTML = testPzs.map(p => {
+    const zastBadge = p.zastupce_rid
+      ? `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();goKRP('${p.zastupce_rid}')" title="Otevřít zástupce v KRP (RID ${p.zastupce_rid})" style="font-size:10px;margin-left:4px">RID</button>`
+      : '';
+    const zastCell = p.zastupce
+      ? `<span style="font-size:11px">${p.zastupce}</span>${zastBadge}`
+      : '<span style="color:var(--fg3);font-size:11px">—</span>';
+    const noteBadge = p.note ? ` <span class="badge badge-info" style="font-size:10px">${p.note}</span>` : '';
+    return `<tr>
+      <td class="mono" style="font-size:11px">${p.ico}</td>
+      <td>${p.name}${noteBadge}</td>
+      <td style="font-size:12px;color:var(--fg2)">${p.city || ''}</td>
+      <td>${zastCell}</td>
+      <td><button class="btn btn-sm btn-outline" onclick="goKRPZS('${p.ico}')" style="font-size:10px">KRPZS</button></td>
+    </tr>`;
+  }).join('');
 }
 
 function goKRZP(krzpid) {
