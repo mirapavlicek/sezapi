@@ -384,25 +384,34 @@ td.mono { font-family: var(--mono); font-size: 12px; }
       <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);border-color:#bfdbfe">
         <div class="card-title" style="color:#1e3a8a">Aktuální verze API a poslední změny</div>
         <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
-          Souhrn aktuálních verzí na T2 gateway a posledních změn dle <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129" target="_blank" style="color:#1e40af">MZČR Confluence – Novinky</a>.
-          Detail verzí endpointů: <a href="/api/debug/jwt" target="_blank" style="color:#1e40af">/api/debug/jwt</a>.
+          Souhrn aktuálních verzí na T2 gateway (kontrola: <strong>5. 5. 2026</strong>) a posledních změn dle <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129" target="_blank" style="color:#1e40af">MZČR Confluence – Novinky</a>.
+          Zdroj: <a href="https://gwy-ext-sec-t2.csez.cz/apidoc/config.json" target="_blank" style="color:#1e40af">apidoc/config.json</a> | Detail: <a href="/api/debug/jwt" target="_blank" style="color:#1e40af">/api/debug/jwt</a>.
         </p>
         <table style="font-size:12px">
           <thead><tr><th>Služba</th><th>Verze</th><th>Poslední změna</th></tr></thead>
           <tbody>
-            <tr><td>KRP – Kmenový registr pacientů</td><td><code>v2.0.2</code></td><td>POST /ciselnik/{nazev} (od v2.0.2)</td></tr>
+            <tr><td>KRP – Kmenový registr pacientů</td><td><code>v2.0.2</code> + <code>v3.0.0</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÉ</span></td><td><strong>v3 (květen 2026):</strong> bez diakritiky v atributech (DatumNarození→DatumNarozeni), snake_case cesty, paralelně s v2</td></tr>
             <tr><td>KRZP – Kmenový registr zdrav. prac.</td><td><code>v2.0.1</code></td><td>—</td></tr>
             <tr><td>KRPZS – Kmenový registr poskytovatelů</td><td><code>v2.0.2</code></td><td>hledat-misto + krajKod (povinné), URL notifikace, capitalized cesty</td></tr>
             <tr><td>RO – Registr oprávnění</td><td><code>v1.0.7</code></td><td>20. 4. 2026: rozšíření Over o EHS osoby + opt-in/out (BC), v PROD dočasně bez Osoby/Opravnujici/{rid}</td></tr>
-            <tr><td>SZZ – Sdílený zdravotní záznam</td><td><code>v1.0.9</code></td><td>v1.0.9 přidává POST /vyhledat – fallback na GET pro PROD v1.0.6</td></tr>
-            <tr><td>ELP – Elektronické posudky</td><td><code>v2.0.9 + v1.0.7</code></td><td>10. 4. 2026 (std. 2.2): zpřísněné validace data, 70+, 300 znaků, jen vystavující zneplatňuje, PDF jen pro platný</td></tr>
-            <tr><td>DÚ – Dočasné úložiště</td><td><code>v1.11.12</code></td><td>22. 4. 2026: notifikace (nová zásilka, před expirací, zneplatnění, zpochybnění, vyzvednutí)</td></tr>
-            <tr><td>eŽádanky</td><td><code>v1.11.12</code></td><td>21. 4. 2026: úprava FHIR detailu Z-žádanky (BC); PATCH bez query, Id+VerzeRadku v body</td></tr>
+            <tr><td>RO NCPeH <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.7</code></td><td><strong>(květen 2026):</strong> samostatná služba pro přeshraniční (Pacient ↔ StátEHP), Over bez IdSluzbyEZ/rolí, výchozí size=1000</td></tr>
+            <tr><td>SZZ – Sdílený zdravotní záznam</td><td><code>v1.0.9</code> + <code>v2.0.1</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÉ</span></td><td><strong>v2 (květen 2026):</strong> nové moduly /prevence (5 typů) a /screeningy (10 typů onkologických + USG aorty), souhrnné /vyhledat, alergie v2 bez CasZjisteni, TOKS s POCT analyzátorem</td></tr>
+            <tr><td>ELP – Elektronické posudky</td><td><code>v2.0.9 + v1.0.7</code> + <code>v3.0.0</code> <span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">interní</span></td><td>10. 4. 2026 (std. 2.2): zpřísněné validace data, 70+, 300 znaků; v3 jen interní (EzKarta/Národní portál)</td></tr>
+            <tr><td>DÚ – Dočasné úložiště</td><td><code>v1.11.13</code> <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">PATCH</span></td><td>5. 5. 2026: zpřesnění validací (BC), 22. 4. 2026: notifikace (nová zásilka, před expirací, zneplatnění, zpochybnění, vyzvednutí)</td></tr>
+            <tr><td>eŽádanky</td><td><code>v1.11.13</code> <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">PATCH</span></td><td>5. 5. 2026: zpřesnění validací (BC); 21. 4. 2026: úprava FHIR detailu Z-žádanky; PATCH bez query, Id+VerzeRadku v body</td></tr>
             <tr><td>Notifikace</td><td><code>v1.0.5</code></td><td>—</td></tr>
-            <tr><td>EZCA II</td><td><code>v1.0.6</code></td><td>+ async varianty, search/hash, search/metadata, certificates, content/package</td></tr>
+            <tr><td>EZCA II</td><td><code>v1.0.7</code> <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">BREAKING</span></td><td><strong>(květen 2026):</strong> certifikáty přesunuty: <code>/api/certificates/certificate/{id}</code>→<code>/api/content/certificate/{id}</code>, <code>/api/certificates/validatecertificate</code>→<code>/api/validate/certificate</code> (sync+async). Nové: <code>/api/stamp/proxytimestamp</code></td></tr>
+            <tr><td>EZCA II – Správa certifikátů <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.2</code></td><td><strong>(květen 2026):</strong> samostatná služba pro životní cyklus systémových cert. (vystavit, preregistrovat, obnovit, revokovat, stav, stáhnout, seznam, CRL)</td></tr>
             <tr><td>TermX – Terminologie</td><td><code>v1.0.5</code></td><td>14. 4. 2026: FHIR typy (string→konkrétní); 7. 4. 2026: nové ValueSety (duvod-odmitnuti, duvod-vraceni, …)</td></tr>
           </tbody>
         </table>
+        <div style="margin-top:10px;padding:10px 12px;background:#dbeafe;border:1px solid #93c5fd;border-radius:6px;font-size:11px;color:#1e40af;line-height:1.6">
+          <strong>Novinky z kontroly Swaggeru (5. 5. 2026):</strong> Na T2 gateway přibyly 4 nové majoritní verze a 1 zcela nová služba.
+          <strong>Hlavní akce pro PZS:</strong>
+          (1) <strong>EZCA II v1.0.7</strong> – pokud používáte <code>/api/certificates/certificate/{id}</code> nebo <code>/api/certificates/validatecertificate</code>, MUSÍTE migrovat na nové cesty <code>/api/content/certificate/{id}</code> a <code>/api/validate/certificate</code> (i v async variantě).
+          (2) <strong>SZZ v2</strong> a <strong>KRP v3</strong> jsou paralelní k v1/v2 – existující implementace funguje dál, ale doporučujeme začít používat nové pro rozšířenou funkcionalitu.
+          (3) <strong>EZCA II Správa certifikátů</strong> je nová služba pro automatickou správu certifikátů – plně nahradí manuální výměnu PFX souborů.
+        </div>
         <div style="margin-top:10px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;line-height:1.6">
           <strong>API GW T2 (23. 4. 2026):</strong> přemapování chybových kódů JSU
           <code>JSU_INVALID_TOKEN</code> 403 → <strong>401</strong>,
@@ -445,8 +454,17 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 
     <!-- KRP -->
     <div class="section" id="sec-krp">
+      <div class="card" style="background:#dcfce7;border-color:#86efac;margin-bottom:8px;padding:10px 14px">
+        <div style="font-weight:600;color:#166534;font-size:12px;margin-bottom:4px">KRP v3.0.0 (květen 2026) – paralelně k v2.0.2</div>
+        <div style="font-size:11px;color:#14532d;line-height:1.6">
+          Nová majoritní verze: bez diakritiky v atributech (např. <code>DatumNarození</code> &rarr; <code>DatumNarozeni</code>),
+          snake_case cesty (<code>/jmeno_prijmeni_rc</code> místo <code>/jmeno-prijmeni-rc</code>).
+          <code>MatkaNovorozence.DatumNarozeni</code> typ změněn z <code>date-time</code> na <code>date</code>.
+          UI vrstva nadále využívá v2.0.2; v3 endpointy jsou vystaveny pod <code>/api/krp3/*</code>.
+        </div>
+      </div>
       <div class="card" style="background:linear-gradient(135deg,#fef2f2 0%,#fff8f8 100%);border-color:#fecaca;margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#dc2626;margin-bottom:8px">Klinický registr pacientů (KRP)</div>
+        <div style="font-weight:700;font-size:14px;color:#dc2626;margin-bottom:8px">Klinický registr pacientů (KRP) – v2.0.2</div>
         <div style="font-size:13px;color:var(--fg2);line-height:1.7">
           KRP je centrální registr pacientů ČR. Každý pacient má přidělen unikátní <strong>RID</strong> (Resortní IDentifikátor).
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
@@ -1875,7 +1893,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
     <!-- SZZ -->
     <div class="section" id="sec-szz">
       <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8faff 100%);border-color:#bfdbfe;margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#2563eb;margin-bottom:8px">Sdílený zdravotní záznam (SZZ)</div>
+        <div style="font-weight:700;font-size:14px;color:#2563eb;margin-bottom:8px">Sdílený zdravotní záznam (SZZ) – v1.0.9 + v2.0.1 paralelně</div>
         <div style="font-size:13px;color:var(--fg2);line-height:1.7">
           SZZ je centrální úložiště zdravotních dat pacienta. Obsahuje <strong>alergie</strong>, <strong>krevní skupinu</strong>,
           <strong>nežádoucí příhody/reakce/účinky/události</strong>, <strong>léčivé přípravky</strong> a <strong>emergentní záznamy</strong>.
@@ -1890,6 +1908,16 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             Editace (PUT) vyžaduje <code>ETag</code> / <code>If-Match</code> hlavičku pro optimistické zamykání.
             Při čtení záznamu se ETag vrátí v odpovědi — použijte ho při aktualizaci.
           </div>
+        </div>
+      </div>
+      <div class="card" style="background:#dcfce7;border-color:#86efac;margin-bottom:16px;padding:12px 16px">
+        <div style="font-weight:600;color:#166534;font-size:13px;margin-bottom:6px">SZZ v2.0.1 (květen 2026) – NOVÉ moduly: Prevence + Screeningy</div>
+        <div style="font-size:12px;color:#14532d;line-height:1.7">
+          <strong>Prevence (5 typů):</strong> kardiovaskulární rizika, HPV očkování, preventivní prohlídky všeob. praktického lékaře / gynekologa / PLDD.<br>
+          <strong>Screeningy (10 typů):</strong> kolorektální karcinom (TOKS+POCT), karcinom prsu (mamografie/biopsie), děložního hrdla (cytologie/HPV/expertní kolposkopie), prostaty (PSA/MRI), plic (LDCT), aneurysma břišní aorty (USG).<br>
+          <strong>Souhrnné endpointy:</strong> <code>POST /api/v2/prevence/vyhledat</code> a <code>POST /api/v2/screeningy/vyhledat</code> – načtení všech záznamů pacienta podle RID.<br>
+          <strong>Změny v v2:</strong> Alergie už neobsahují <code>CasZjisteni</code> v requestu/response. U TOKS přidán typ POCT analyzátoru s validací proti číselníku.<br>
+          API endpointy v naší aplikaci: <code>/api/szz2/prevence/vyhledat</code>, <code>/api/szz2/screeningy/vyhledat</code>, <code>/api/szz2/{modul}/{typ}</code> (POST), atd.
         </div>
       </div>
 
@@ -2853,12 +2881,22 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
     <!-- EZCA 2 – Služby vytvářející důvěru -->
     <div class="section" id="sec-ezca">
       <div class="card" style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%);color:#f1f5f9;padding:20px 24px;border:none">
-        <div style="font-size:18px;font-weight:700;color:#38bdf8">&#128274; Služby vytvářející důvěru (EZCA II)</div>
+        <div style="font-size:18px;font-weight:700;color:#38bdf8">&#128274; Služby vytvářející důvěru (EZCA II) – v1.0.7</div>
         <p style="margin:8px 0 0;color:#94a3b8;font-size:13px">
           Elektronické <strong style="color:#e2e8f0">podepisování</strong>, <strong style="color:#e2e8f0">pečetění</strong>,
           <strong style="color:#e2e8f0">razítkování</strong> a <strong style="color:#e2e8f0">validace</strong> dokumentů.
           Správa certifikátů a dokumentů v úložišti EZCA.
         </p>
+      </div>
+      <div class="card" style="background:#fef2f2;border-color:#fecaca;margin-top:8px;padding:12px 16px">
+        <div style="font-weight:600;color:#991b1b;font-size:13px;margin-bottom:6px">EZCA II v1.0.7 (květen 2026) – BREAKING změny v cestách</div>
+        <div style="font-size:12px;color:#7f1d1d;line-height:1.7">
+          <strong>Přesun endpointů:</strong> <code>/api/certificates/certificate/{id}</code> &rarr; <code>/api/content/certificate/{id}</code>;
+          <code>/api/certificates/validatecertificate</code> &rarr; <code>/api/validate/certificate</code> (totéž pro async: <code>/api/contentasync/certificate/{id}</code>, <code>/api/validateasync/certificate</code>).
+          Stará cesta <code>/api/certificates/*</code> už není dostupná.<br>
+          <strong>Nové endpointy:</strong> <code>POST /api/stamp/proxytimestamp</code> a async <code>POST /api/stampasync/proxytimestamp</code> – vyžádání času. razítka přes externí TSA proxy.<br>
+          <strong>Nová samostatná služba:</strong> EZCA II – Správa certifikátů (<code>/ezca2Certifikaty/api/v1</code>) pro automatický životní cyklus systémových cert. (vystavit / preregistrovat / obnovit / revokovat / stav / stáhnout / seznam / CRL).
+        </div>
       </div>
 
       <div class="sub-tabs" style="margin-top:12px">

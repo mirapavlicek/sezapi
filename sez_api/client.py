@@ -1888,20 +1888,29 @@ class EZCA2:
         """v1.0.6: Vyhledat dokument podle metadat."""
         return self.c.post(f"{self.BASE}/api/search/metadata", self._auth_wrap(body))
 
-    # --- Certificates (CRL) ---
+    # --- Certificates (od v1.0.7 přesunuto pod /content a /validate) ---
     def get_certificate(self, id_):
-        """v1.0.6: Detail certifikátu."""
-        return self.c.get(f"{self.BASE}/api/certificates/certificate/{id_}")
+        """v1.0.7: Detail certifikátu (přesunuto z /api/certificates/certificate/{id})."""
+        return self.c.get(f"{self.BASE}/api/content/certificate/{id_}")
 
     def validate_certificate(self, body):
-        """v1.0.6: Validace certifikátu."""
-        return self.c.post(f"{self.BASE}/api/certificates/validatecertificate",
+        """v1.0.7: Validace certifikátu (přesunuto z /api/certificates/validatecertificate)."""
+        return self.c.post(f"{self.BASE}/api/validate/certificate",
                            self._auth_wrap(body))
 
     # --- Content / Package ---
     def content_package(self, id_):
         """v1.0.6: Obsah balíčku."""
         return self.c.get(f"{self.BASE}/api/content/package/{id_}")
+
+    # --- v1.0.7: Proxy timestamp (sync + async) ---
+    def stamp_proxy_timestamp(self, body):
+        """v1.0.7: Vyžádat časové razítko přes externí TSA proxy."""
+        return self.c.post(f"{self.BASE}/api/stamp/proxytimestamp", self._auth_wrap(body))
+
+    def stamp_proxy_timestamp_async(self, body):
+        """v1.0.7: Async varianta proxy timestamp."""
+        return self.c.post(f"{self.BASE}/api/stampasync/proxytimestamp", self._auth_wrap(body))
 
     # ========================================================================
     # v1.0.6: Async varianty (nereblokující – server vrátí ID úlohy)
@@ -1950,8 +1959,293 @@ class EZCA2:
         return self.c.post(f"{self.BASE}/api/externalasync/report", body)
 
     def get_certificate_async(self, id_):
-        return self.c.get(f"{self.BASE}/api/certificatesasync/certificate/{id_}")
+        """v1.0.7: Detail certifikátu async (přesunuto z /api/certificatesasync/certificate)."""
+        return self.c.get(f"{self.BASE}/api/contentasync/certificate/{id_}")
 
     def validate_certificate_async(self, body):
-        return self.c.post(f"{self.BASE}/api/certificatesasync/validatecertificate",
+        """v1.0.7: Validace certifikátu async (přesunuto z /api/certificatesasync/validatecertificate)."""
+        return self.c.post(f"{self.BASE}/api/validateasync/certificate",
                            self._auth_wrap(body))
+
+
+# ===========================================================================
+# EZCA2 – Správa certifikátů v1.0.2 (samostatná služba na T2 gateway)
+# Cesta: /ezca2Certifikaty/api/v1/... (gateway prefix dle swagger servers[0].url)
+# Slouží PZS k vystavení/obnově/preregistraci/revokaci EZCA II certifikátu.
+# ===========================================================================
+class EZCA2SpravaCertifikatu:
+    """EZCA II Správa certifikátů – REST API pro životní cyklus systémových certů."""
+
+    BASE = "/ezca2Certifikaty"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # --- Lifecycle (POST) ---
+    def vystavit(self, body: dict):
+        """Vytvoří požadavek na vydání nového EZCA II systémového cert."""
+        return self.c.post(f"{self.BASE}/api/v1/vystavit", body)
+
+    def preregistrovat(self, body: dict):
+        """Vystaví nový EZCA II cert na základě stávajícího EZCA I."""
+        return self.c.post(f"{self.BASE}/api/v1/preregistrovat", body)
+
+    def obnovit(self, body: dict):
+        """PUT – vytvoří požadavek na obnovu certifikátu EZCA II."""
+        return self.c.put(f"{self.BASE}/api/v1/obnovit", body)
+
+    def revokovat(self, body: dict):
+        """Vytvoří požadavek na revokaci certifikátu."""
+        return self.c.post(f"{self.BASE}/api/v1/revokovat", body)
+
+    # --- Stavy + stažení (GET) ---
+    def stav(self, request_id: str):
+        return self.c.get(f"{self.BASE}/api/v1/stav?requestId={request_id}")
+
+    def stahnout(self, request_id: str):
+        return self.c.get(f"{self.BASE}/api/v1/stahnout?requestId={request_id}")
+
+    def detail(self, cert_id: str):
+        return self.c.get(f"{self.BASE}/api/v1/detail?certificateId={cert_id}")
+
+    def seznam(self):
+        """Seznam certifikátů pro aktuální subjekt."""
+        return self.c.get(f"{self.BASE}/api/v1/seznam")
+
+    def crl_list(self):
+        """Kompletní seznam revokovaných certifikátů."""
+        return self.c.get(f"{self.BASE}/api/v1/crl-list")
+
+    def seznam_chyb(self):
+        """Seznam možných chyb (číselník)."""
+        return self.c.get(f"{self.BASE}/api/v1/seznam-chyb")
+
+
+# ===========================================================================
+# KRP v3.0.0 – BREAKING: bez diakritiky v atributech, podtržítka v cestách,
+# DatumNarozeni změněno z date-time na date pro MatkaNovorozence.
+# Plně paralelní s KRP v2.0.2 (oba se na T2 gateway momentálně používají).
+# ===========================================================================
+class KRPv3:
+    """KRP v3.0.0 – Kmenový registr pacientů (nový tvar URL)."""
+
+    BASE = "/krp"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # --- Číselníky (POST) ---
+    def ciselnik(self, nazev: str, body: dict | None = None):
+        return self.c.post(f"{self.BASE}/api/v3/ciselnik/{nazev}", body or {})
+
+    # --- Hledání (POST, žádné GET-by-RID, vše v body) ---
+    def hledat_rid(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/rid", body)
+
+    def hledat_jmeno_prijmeni_rc(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/jmeno_prijmeni_rc", body)
+
+    def hledat_jmeno_prijmeni_datum_narozeni(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/jmeno_prijmeni_datum_narozeni", body)
+
+    def hledat_jmeno_prijmeni_cp(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/jmeno_prijmeni_cp", body)
+
+    def hledat_cizinec_cp(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/cizinec_cp", body)
+
+    def hledat_doklady(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/doklady", body)
+
+    def hledat_niabsi(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/niabsi", body)
+
+    def hledat_uni(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/uni", body)
+
+    def hledat_aifoulozenka(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/aifoulozenka", body)
+
+    def historie_pojisteni(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/historie_pojisteni", body)
+
+    def historie_lekaru(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/historie_registrujicich_lekaru", body)
+
+    def mapovani_rid(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/mapovani_rid", body)
+
+    # --- Správa pacienta ---
+    def zalozit(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/zalozit/pacient", body)
+
+    def zmenit(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/zmenit/pacient", body)
+
+    def reklamuj_udaj(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/reklamuj/udaj", body)
+
+    def slouceni(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/slouceni/zadost", body)
+
+    def rozdeleni(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/rozdeleni/zadost", body)
+
+    def zruseni(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/zruseni/zadost", body)
+
+    # --- DRID ---
+    def generovat_docasny_rid(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/generovat/docasny_rid", body)
+
+    def priradit_docasny_rid(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/priradit/docasny_rid", body)
+
+    # --- Hromadné ztotožnění ---
+    def hrom_zadost(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/ztotoznihromadne/zadost", body)
+
+    def hrom_vysledky(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/ztotoznihromadne/vysledky", body)
+
+    def hrom_vysledky_soubor(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/ztotoznihromadne/vysledky/soubor", body)
+
+    # --- Notifikace ---
+    def notifikace_vyhledat(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/notifikace/vyhledat/odber", body)
+
+    def notifikace_zalozit(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/notifikace/zalozit/odber", body)
+
+    def notifikace_zrusit(self, body):
+        return self.c.delete(f"{self.BASE}/api/v3/notifikace/zrusit/odber", body)
+
+
+# ===========================================================================
+# SZZ v2.0.1 – Sdílený zdravotní záznam (BREAKING – samostatné moduly
+# pro Prevence a Screeningy + emergentní záznam ve v2 shodný se v1).
+# Implementace doplňuje SZZ (v1) – obě verze se používají paralelně.
+# ===========================================================================
+class SZZv2:
+    """SZZ v2.0.1 – samostatné moduly /prevence a /screeningy + emergentní záznam v2."""
+
+    BASE = "/sdilenyZdravotniZaznam"
+
+    # Známé typy v modulu /prevence (každý má CRUD: POST, vyhledat, PUT, PATCH /obnovit/zneplatnit/zpochybnit)
+    PREVENCE_TYPY = [
+        "kardiovaskularniRizika",
+        "ockovaniHpv",
+        "preventivniProhlidky",            # všeob. praktický lékař
+        "preventivniProhlidkyGynekologie", # gynekolog
+        "preventivniProhlidkyPldd",        # praktický lékař pro děti a dorost
+    ]
+
+    # Známé typy v modulu /screeningy
+    SCREENINGY_TYPY = [
+        "aneurysmaAbdominalniAortyUsg",
+        "karcinomDDeloznihoHrdlaHpv",
+        "karcinomDeloznihoHrdlaCytologie",
+        "karcinomDeloznihoHrdlaExpertniKolposkopie",
+        "karcinomPlicLdct",
+        "karcinomProstatyMri",
+        "karcinomProstatyPsa",
+        "karcinomPrsuBiopsie",
+        "karcinomPrsuMamografie",
+        "kolorektalniKarcinomToks",
+    ]
+
+    # Emergentní záznam v2 – stejná podmnožina jako v1 (alergie bez CasZjisteni)
+    EMERGENTNI_TYPY = [
+        "alergie", "krevniSkupina", "nezadouciPrihody",
+        "nezadouciReakce", "nezadouciUcinky", "nezadouciUdalosti",
+    ]
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # --- Číselníky ---
+    def ciselniky(self):
+        return self.c.get(f"{self.BASE}/api/v2/ciselniky")
+
+    def ciselnik_polozky(self, kod):
+        return self.c.get(f"{self.BASE}/api/v2/ciselniky/{kod}/polozky")
+
+    def ciselniky_reindex(self, body=None):
+        return self.c.post(f"{self.BASE}/api/v2/ciselniky/reindex", body or {})
+
+    # --- Generický CRUD pro prevence/screeningy/emergentní záznam ---
+    def _crud(self, modul: str, typ: str):
+        """Vrátí slovník metod pro daný modul/typ."""
+        base = f"{self.BASE}/api/v2/{modul}/{typ}"
+        return {
+            "vytvor": lambda body: self.c.post(base, body),
+            "vyhledat": lambda body: self.c.post(f"{base}/vyhledat", body),
+            "uprav": lambda id_, body: self.c.put(f"{base}/{id_}", body),
+            "obnovit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/obnovit", body or {}),
+            "zneplatnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zneplatnit", body or {}),
+            "zpochybnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zpochybnit", body or {}),
+        }
+
+    def prevence(self, typ: str):
+        if typ not in self.PREVENCE_TYPY:
+            raise ValueError(f"Neznámý typ prevence: {typ}. Povolené: {self.PREVENCE_TYPY}")
+        return self._crud("prevence", typ)
+
+    def screening(self, typ: str):
+        if typ not in self.SCREENINGY_TYPY:
+            raise ValueError(f"Neznámý screening: {typ}. Povolené: {self.SCREENINGY_TYPY}")
+        return self._crud("screeningy", typ)
+
+    def emergentni(self, typ: str):
+        if typ not in self.EMERGENTNI_TYPY:
+            raise ValueError(f"Neznámý emergentní typ: {typ}. Povolené: {self.EMERGENTNI_TYPY}")
+        return self._crud("emergentniZaznam", typ)
+
+    # --- Souhrnné vyhledávání všech prevencí / screeningů pacienta ---
+    def prevence_vyhledat_souhrn(self, body):
+        """POST /api/v2/prevence/vyhledat – všechny prevence pacienta podle RID."""
+        return self.c.post(f"{self.BASE}/api/v2/prevence/vyhledat", body)
+
+    def screeningy_vyhledat_souhrn(self, body):
+        """POST /api/v2/screeningy/vyhledat – všechny screeningy pacienta podle RID."""
+        return self.c.post(f"{self.BASE}/api/v2/screeningy/vyhledat", body)
+
+    def emergentni_vyhledat_souhrn(self, body):
+        """POST /api/v2/emergentniZaznam/vyhledat – všechny emergentní záznamy pacienta."""
+        return self.c.post(f"{self.BASE}/api/v2/emergentniZaznam/vyhledat", body)
+
+    def emergentni_pdf(self, body):
+        """POST /api/v2/emergentniZaznam/pdf – PDF souhrn emergentního záznamu."""
+        return self.c.post(f"{self.BASE}/api/v2/emergentniZaznam/pdf", body)
+
+
+# ===========================================================================
+# Registr oprávnění NCPeH v1.0.7 – samostatná služba pro přeshraniční
+# zdravotnictví (CMS/NCPeH). Pro běžné tuzemské PZS není potřeba, ale
+# klient + endpointy zpřístupňujeme pro úplnost.
+# ===========================================================================
+class RegistrOpravneniNcpeh:
+    """RO NCPeH v1.0.7 – přeshraniční oprávnění pro NCPeH (StátEHP ↔ Pacient)."""
+
+    BASE = "/registrOpravneniNcpeh"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    def over(self, params: dict | None = None):
+        """GET /api/v1/Opravneni/Over – v 1.0.7 nepřijímá IdSluzbyEZ ani role
+        (vždy SZZ + Pacient ↔ StátEHP)."""
+        return self.c.get(f"{self.BASE}/api/v1/Opravneni/Over", params=params)
+
+    def sluzby_ez(self, params=None):
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/SluzbyEZ", params=params)
+
+    def sluzba_ez(self, id_):
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/SluzbyEZ/{id_}")
+
+    def typy_dokumentaci(self, params=None):
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/TypyDokumentaci", params=params)
+
+    def typ_dokumentace(self, id_):
+        return self.c.get(f"{self.BASE}/api/v1/Ciselniky/TypyDokumentaci/{id_}")

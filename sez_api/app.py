@@ -30,6 +30,7 @@ from sez_api import config as cfg
 from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, EZadanky, Notifikace, EZCA2,
+    EZCA2SpravaCertifikatu, KRPv3, SZZv2, RegistrOpravneniNcpeh,
 )
 
 logger = logging.getLogger("sez_api")
@@ -136,16 +137,20 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     }
 
     _modules["krp"] = KRP(_client)
+    _modules["krp3"] = KRPv3(_client)
     _modules["krzp"] = KRZP(_client)
     _modules["krpzs"] = KRPZS(_client)
     _modules["ro"] = RegistrOpravneni(_client)
+    _modules["ro_ncpeh"] = RegistrOpravneniNcpeh(_client)
     _modules["du"] = DocasneUloziste(_client)
     _modules["szz"] = SZZ(_client)
+    _modules["szz2"] = SZZv2(_client)
     _modules["elp"] = ELP(_client)
     _modules["elp2"] = ELPv2(_client)
     _modules["ez"] = EZadanky(_client)
     _modules["notif"] = Notifikace(_client)
     _modules["ezca"] = EZCA2(_client)
+    _modules["ezca_cert"] = EZCA2SpravaCertifikatu(_client)
     _connected = True
 
 
@@ -1859,6 +1864,19 @@ async def ezca_external_report(request: Request):
     body = await request.json()
     return timed_call(_modules["ezca"].external_report, body)
 
+# --- EZCA2 v1.0.7: Proxy timestamp (NOVÉ) ---
+
+@app.post("/api/ezca/stamp-proxy-timestamp")
+async def ezca_stamp_proxy_timestamp(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].stamp_proxy_timestamp, body)
+
+@app.post("/api/ezca/stamp-proxy-timestamp-async")
+async def ezca_stamp_proxy_timestamp_async(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca"].stamp_proxy_timestamp_async, body)
+
+
 # --- EZCA2 v1.0.6: Search ---
 
 @app.post("/api/ezca/search-hash")
@@ -1871,14 +1889,16 @@ async def ezca_search_metadata(request: Request):
     body = await request.json()
     return timed_call(_modules["ezca"].search_metadata, body)
 
-# --- EZCA2 v1.0.6: Certificates ---
+# --- EZCA2 v1.0.7: Certificates (přesunuto na /content + /validate) ---
 
 @app.get("/api/ezca/certificate/{cert_id}")
 async def ezca_certificate(cert_id: str):
+    """v1.0.7: GET /api/content/certificate/{id} (dříve /api/certificates/certificate/{id})."""
     return timed_call(_modules["ezca"].get_certificate, cert_id)
 
 @app.post("/api/ezca/validate-certificate")
 async def ezca_validate_certificate(request: Request):
+    """v1.0.7: POST /api/validate/certificate (dříve /api/certificates/validatecertificate)."""
     body = await request.json()
     return timed_call(_modules["ezca"].validate_certificate, body)
 
@@ -1964,6 +1984,219 @@ async def ezca_certificate_async(cert_id: str):
 async def ezca_validate_certificate_async(request: Request):
     body = await request.json()
     return timed_call(_modules["ezca"].validate_certificate_async, body)
+
+
+# ---------------------------------------------------------------------------
+# EZCA II – Správa certifikátů v1.0.2 (NOVÁ samostatná služba)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/ezca-cert/vystavit")
+async def ezca_cert_vystavit(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca_cert"].vystavit, body)
+
+@app.post("/api/ezca-cert/preregistrovat")
+async def ezca_cert_preregistrovat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca_cert"].preregistrovat, body)
+
+@app.put("/api/ezca-cert/obnovit")
+async def ezca_cert_obnovit(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca_cert"].obnovit, body)
+
+@app.post("/api/ezca-cert/revokovat")
+async def ezca_cert_revokovat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["ezca_cert"].revokovat, body)
+
+@app.get("/api/ezca-cert/stav/{request_id}")
+async def ezca_cert_stav(request_id: str):
+    return timed_call(_modules["ezca_cert"].stav, request_id)
+
+@app.get("/api/ezca-cert/stahnout/{request_id}")
+async def ezca_cert_stahnout(request_id: str):
+    return timed_call(_modules["ezca_cert"].stahnout, request_id)
+
+@app.get("/api/ezca-cert/detail/{cert_id}")
+async def ezca_cert_detail(cert_id: str):
+    return timed_call(_modules["ezca_cert"].detail, cert_id)
+
+@app.get("/api/ezca-cert/seznam")
+async def ezca_cert_seznam():
+    return timed_call(_modules["ezca_cert"].seznam)
+
+@app.get("/api/ezca-cert/crl-list")
+async def ezca_cert_crl_list():
+    return timed_call(_modules["ezca_cert"].crl_list)
+
+@app.get("/api/ezca-cert/seznam-chyb")
+async def ezca_cert_seznam_chyb():
+    return timed_call(_modules["ezca_cert"].seznam_chyb)
+
+
+# ---------------------------------------------------------------------------
+# KRP v3.0.0 (NOVÁ MAJOR – paralelně s v2)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/krp3/ciselnik/{nazev}")
+async def krp3_ciselnik(nazev: str, request: Request):
+    body = await request.json() if await request.body() else {}
+    return timed_call(_modules["krp3"].ciselnik, nazev, body)
+
+@app.post("/api/krp3/hledat/{typ}")
+async def krp3_hledat(typ: str, request: Request):
+    body = await request.json()
+    handler = {
+        "rid": _modules["krp3"].hledat_rid,
+        "jmeno_prijmeni_rc": _modules["krp3"].hledat_jmeno_prijmeni_rc,
+        "jmeno_prijmeni_datum_narozeni": _modules["krp3"].hledat_jmeno_prijmeni_datum_narozeni,
+        "jmeno_prijmeni_cp": _modules["krp3"].hledat_jmeno_prijmeni_cp,
+        "cizinec_cp": _modules["krp3"].hledat_cizinec_cp,
+        "doklady": _modules["krp3"].hledat_doklady,
+        "niabsi": _modules["krp3"].hledat_niabsi,
+        "uni": _modules["krp3"].hledat_uni,
+        "aifoulozenka": _modules["krp3"].hledat_aifoulozenka,
+        "historie_pojisteni": _modules["krp3"].historie_pojisteni,
+        "historie_lekaru": _modules["krp3"].historie_lekaru,
+        "mapovani_rid": _modules["krp3"].mapovani_rid,
+    }.get(typ)
+    if not handler:
+        return error_response(f"Neznámý typ KRP v3 hledání: {typ}")
+    return timed_call(handler, body)
+
+@app.post("/api/krp3/zalozit")
+async def krp3_zalozit(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krp3"].zalozit, body)
+
+@app.post("/api/krp3/zmenit")
+async def krp3_zmenit(request: Request):
+    body = await request.json()
+    return timed_call(_modules["krp3"].zmenit, body)
+
+@app.post("/api/krp3/notifikace/{akce}")
+async def krp3_notifikace(akce: str, request: Request):
+    body = await request.json() if await request.body() else {}
+    handler = {
+        "vyhledat": _modules["krp3"].notifikace_vyhledat,
+        "zalozit": _modules["krp3"].notifikace_zalozit,
+        "zrusit": _modules["krp3"].notifikace_zrusit,
+    }.get(akce)
+    if not handler:
+        return error_response(f"Neznámá akce notifikace: {akce}")
+    return timed_call(handler, body)
+
+
+# ---------------------------------------------------------------------------
+# SZZ v2.0.1 – Prevence + Screeningy + Emergentní záznam v2
+# ---------------------------------------------------------------------------
+
+@app.get("/api/szz2/ciselniky")
+async def szz2_ciselniky():
+    return timed_call(_modules["szz2"].ciselniky)
+
+@app.get("/api/szz2/ciselniky/{kod}/polozky")
+async def szz2_ciselnik_polozky(kod: str):
+    return timed_call(_modules["szz2"].ciselnik_polozky, kod)
+
+@app.post("/api/szz2/prevence/vyhledat")
+async def szz2_prevence_vyhledat(request: Request):
+    """Souhrnné vyhledat – všechny prevence pacienta podle RID."""
+    body = await request.json()
+    return timed_call(_modules["szz2"].prevence_vyhledat_souhrn, body)
+
+@app.post("/api/szz2/screeningy/vyhledat")
+async def szz2_screeningy_vyhledat(request: Request):
+    """Souhrnné vyhledat – všechny screeningy pacienta podle RID."""
+    body = await request.json()
+    return timed_call(_modules["szz2"].screeningy_vyhledat_souhrn, body)
+
+@app.post("/api/szz2/emergentni/vyhledat")
+async def szz2_emergentni_vyhledat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz2"].emergentni_vyhledat_souhrn, body)
+
+@app.post("/api/szz2/emergentni/pdf")
+async def szz2_emergentni_pdf(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz2"].emergentni_pdf, body)
+
+@app.api_route("/api/szz2/{modul}/{typ}", methods=["POST"])
+async def szz2_create(modul: str, typ: str, request: Request):
+    """Vytvoření záznamu – POST /api/v2/{modul}/{typ}."""
+    if modul not in {"prevence", "screeningy", "emergentniZaznam"}:
+        return error_response(f"Neznámý modul SZZ v2: {modul}")
+    body = await request.json()
+    if modul == "prevence":
+        return timed_call(_modules["szz2"].prevence(typ)["vytvor"], body)
+    if modul == "screeningy":
+        return timed_call(_modules["szz2"].screening(typ)["vytvor"], body)
+    return timed_call(_modules["szz2"].emergentni(typ)["vytvor"], body)
+
+@app.post("/api/szz2/{modul}/{typ}/vyhledat")
+async def szz2_search_typ(modul: str, typ: str, request: Request):
+    if modul not in {"prevence", "screeningy", "emergentniZaznam"}:
+        return error_response(f"Neznámý modul SZZ v2: {modul}")
+    body = await request.json()
+    if modul == "prevence":
+        return timed_call(_modules["szz2"].prevence(typ)["vyhledat"], body)
+    if modul == "screeningy":
+        return timed_call(_modules["szz2"].screening(typ)["vyhledat"], body)
+    return timed_call(_modules["szz2"].emergentni(typ)["vyhledat"], body)
+
+@app.put("/api/szz2/{modul}/{typ}/{id_}")
+async def szz2_update_typ(modul: str, typ: str, id_: str, request: Request):
+    if modul not in {"prevence", "screeningy", "emergentniZaznam"}:
+        return error_response(f"Neznámý modul SZZ v2: {modul}")
+    body = await request.json()
+    if modul == "prevence":
+        return timed_call(_modules["szz2"].prevence(typ)["uprav"], id_, body)
+    if modul == "screeningy":
+        return timed_call(_modules["szz2"].screening(typ)["uprav"], id_, body)
+    return timed_call(_modules["szz2"].emergentni(typ)["uprav"], id_, body)
+
+@app.patch("/api/szz2/{modul}/{typ}/{id_}/{akce}")
+async def szz2_action_typ(modul: str, typ: str, id_: str, akce: str, request: Request):
+    if modul not in {"prevence", "screeningy", "emergentniZaznam"}:
+        return error_response(f"Neznámý modul SZZ v2: {modul}")
+    if akce not in {"obnovit", "zneplatnit", "zpochybnit"}:
+        return error_response(f"Neznámá akce: {akce}")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if modul == "prevence":
+        return timed_call(_modules["szz2"].prevence(typ)[akce], id_, body)
+    if modul == "screeningy":
+        return timed_call(_modules["szz2"].screening(typ)[akce], id_, body)
+    return timed_call(_modules["szz2"].emergentni(typ)[akce], id_, body)
+
+
+# ---------------------------------------------------------------------------
+# Registr oprávnění NCPeH v1.0.7 (NOVÁ – přeshraniční zdravotnictví)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/ro-ncpeh/over")
+async def ro_ncpeh_over(request: Request):
+    """v1.0.7: GET /api/v1/Opravneni/Over – jen Pacient ↔ StátEHP, služba SZZ."""
+    return timed_call(_modules["ro_ncpeh"].over, dict(request.query_params))
+
+@app.get("/api/ro-ncpeh/sluzby-ez")
+async def ro_ncpeh_sluzby_ez(request: Request):
+    return timed_call(_modules["ro_ncpeh"].sluzby_ez, dict(request.query_params))
+
+@app.get("/api/ro-ncpeh/sluzby-ez/{id_}")
+async def ro_ncpeh_sluzba_ez(id_: str):
+    return timed_call(_modules["ro_ncpeh"].sluzba_ez, id_)
+
+@app.get("/api/ro-ncpeh/typy-dokumentaci")
+async def ro_ncpeh_typy_dokumentaci(request: Request):
+    return timed_call(_modules["ro_ncpeh"].typy_dokumentaci, dict(request.query_params))
+
+@app.get("/api/ro-ncpeh/typy-dokumentaci/{id_}")
+async def ro_ncpeh_typ_dokumentace(id_: str):
+    return timed_call(_modules["ro_ncpeh"].typ_dokumentace, id_)
 
 
 # ---------------------------------------------------------------------------
@@ -2183,8 +2416,8 @@ async def debug_jwt():
             "DU": {
                 "name": "Dočasné úložiště",
                 "base": "/docasneUloziste",
-                "version": "v1.11.12",
-                "note": "DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami. Od v1.11.12 PATCH/PUT bez query params (Id+VerzeRadku v body)",
+                "version": "v1.11.13",
+                "note": "v1.11.13 (květen 2026) – patch: zpřesnění validací schémat, žádné nové endpointy. Od v1.11.12 PATCH/PUT bez query params (Id+VerzeRadku v body). DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami.",
                 "endpoints": [
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky (eZD)"},
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/VyhledejZasilku", "desc": "Vyhledání zásilek"},
@@ -2290,8 +2523,8 @@ async def debug_jwt():
             "eZadanky": {
                 "name": "eŽádanky",
                 "base": "/eZadanky",
-                "version": "v1.11.12",
-                "note": "Od v1.11.12 PATCH bez query params (Id + VerzeRadku v těle)",
+                "version": "v1.11.13",
+                "note": "v1.11.13 (květen 2026) – patch: zpřesnění validací schémat, žádné nové endpointy. Od v1.11.12 PATCH bez query params (Id + VerzeRadku v těle).",
                 "endpoints": [
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/UlozZadanku", "desc": "Uložit žádanku"},
                     {"method": "POST", "path": "/eZadanky/api/v1/eZadanka/VyhledejZadanku", "desc": "Vyhledat žádanky"},
@@ -2322,8 +2555,12 @@ async def debug_jwt():
             "EZCA2": {
                 "name": "Služby vytvářející důvěru (EZCA II)",
                 "base": "/ezca2",
-                "version": "v1.0.6",
-                "note": "v1.0.6 přidává async varianty všech operací, search/hash, search/metadata, certificates, content/package",
+                "version": "v1.0.7",
+                "note": ("v1.0.7 (květen 2026) BREAKING: detail certifikátu se přesunul z "
+                         "/api/certificates/certificate/{id} → /api/content/certificate/{id}, "
+                         "validace cert. z /api/certificates/validatecertificate → /api/validate/certificate "
+                         "(stejně i async). Přidáno proxy timestamp /api/stamp/proxytimestamp + async varianta. "
+                         "Stará jména certificates/* už neexistují."),
                 "endpoints": [
                     {"method": "GET",  "path": "/ezca2/simple-health", "desc": "Health check (simple)"},
                     {"method": "GET",  "path": "/ezca2/detail-health", "desc": "Health check (detail)"},
@@ -2331,10 +2568,11 @@ async def debug_jwt():
                     {"method": "POST", "path": "/ezca2/api/sign/hash", "desc": "Podepsat hash"},
                     {"method": "POST", "path": "/ezca2/api/stamp/document", "desc": "Časové razítko dokumentu"},
                     {"method": "POST", "path": "/ezca2/api/stamp/hash", "desc": "Časové razítko hashe"},
+                    {"method": "POST", "path": "/ezca2/api/stamp/proxytimestamp", "desc": "v1.0.7 NOVÉ: proxy TSA timestamp"},
                     {"method": "POST", "path": "/ezca2/api/validate/document", "desc": "Validovat podpis"},
+                    {"method": "POST", "path": "/ezca2/api/validate/certificate", "desc": "v1.0.7 (přesunuto): Validace certifikátu"},
                     {"method": "POST", "path": "/ezca2/api/list/certificates", "desc": "Seznam certifikátů"},
-                    {"method": "GET",  "path": "/ezca2/api/certificates/certificate/{id}", "desc": "Detail certifikátu"},
-                    {"method": "POST", "path": "/ezca2/api/certificates/validatecertificate", "desc": "Validace certifikátu"},
+                    {"method": "GET",  "path": "/ezca2/api/content/certificate/{id}", "desc": "v1.0.7 (přesunuto): Detail certifikátu"},
                     {"method": "POST", "path": "/ezca2/api/create/document", "desc": "Vytvořit dokument"},
                     {"method": "POST", "path": "/ezca2/api/create/xades", "desc": "Vytvořit XAdES obálku"},
                     {"method": "POST", "path": "/ezca2/api/search/hash", "desc": "Vyhledat dokument podle hashe"},
@@ -2349,16 +2587,143 @@ async def debug_jwt():
                     {"method": "POST", "path": "/ezca2/api/signasync/hash", "desc": "Podpis hashe (async)"},
                     {"method": "POST", "path": "/ezca2/api/stampasync/document", "desc": "Časové razítko (async)"},
                     {"method": "POST", "path": "/ezca2/api/stampasync/hash", "desc": "Časové razítko hashe (async)"},
+                    {"method": "POST", "path": "/ezca2/api/stampasync/proxytimestamp", "desc": "v1.0.7 NOVÉ: proxy TSA timestamp (async)"},
                     {"method": "POST", "path": "/ezca2/api/validateasync/document", "desc": "Validace (async)"},
+                    {"method": "POST", "path": "/ezca2/api/validateasync/certificate", "desc": "v1.0.7 (přesunuto): Validace certifikátu (async)"},
                     {"method": "POST", "path": "/ezca2/api/listasync/certificates", "desc": "Seznam certifikátů (async)"},
                     {"method": "POST", "path": "/ezca2/api/createasync/document", "desc": "Vytvoření dokumentu (async)"},
                     {"method": "POST", "path": "/ezca2/api/createasync/xades", "desc": "XAdES (async)"},
                     {"method": "GET",  "path": "/ezca2/api/infoasync/document/{id}", "desc": "Info o dokumentu (async)"},
                     {"method": "GET",  "path": "/ezca2/api/infoasync/component/{id}", "desc": "Info o komponentě (async)"},
                     {"method": "GET",  "path": "/ezca2/api/contentasync/component/{id}", "desc": "Obsah komponenty (async)"},
+                    {"method": "GET",  "path": "/ezca2/api/contentasync/certificate/{id}", "desc": "v1.0.7 (přesunuto): Detail cert. (async)"},
                     {"method": "GET",  "path": "/ezca2/api/contentasync/package/{id}", "desc": "Obsah balíčku (async)"},
                     {"method": "POST", "path": "/ezca2/api/contentasync/report", "desc": "Validační report (async)"},
                     {"method": "POST", "path": "/ezca2/api/externalasync/report", "desc": "Externí report (async)"},
+                ],
+            },
+            "EZCA2_SpravaCertifikatu": {
+                "name": "EZCA II – Správa certifikátů (NOVÁ služba)",
+                "base": "/ezca2Certifikaty",
+                "version": "v1.0.2",
+                "note": ("Nově oddělená samostatná služba na T2 gateway pro životní cyklus systémových "
+                         "EZCA II certifikátů. Gateway prefix: /ezca2Certifikaty (dle servers[0].url v swagger). "
+                         "Doporučený proces: vystavit/preregistrovat/obnovit → sledovat /stav → /stahnout. "
+                         "Pro PZS umožňuje plně automatizovat výměnu / obnovu certifikátu."),
+                "endpoints": [
+                    {"method": "POST",   "path": "/ezca2Certifikaty/api/v1/vystavit", "desc": "Vytvořit požadavek na vystavení nového cert."},
+                    {"method": "POST",   "path": "/ezca2Certifikaty/api/v1/preregistrovat", "desc": "Vystavit EZCA II cert na základě EZCA I"},
+                    {"method": "PUT",    "path": "/ezca2Certifikaty/api/v1/obnovit", "desc": "Vytvořit požadavek na obnovu cert."},
+                    {"method": "POST",   "path": "/ezca2Certifikaty/api/v1/revokovat", "desc": "Vytvořit požadavek na revokaci cert."},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/api/v1/stav", "desc": "Zjištění stavu požadavku (vystavit/preregistrovat/obnovit)"},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/api/v1/stahnout", "desc": "Stažení dat nově vydaného cert."},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/api/v1/detail", "desc": "Informace o vystaveném/revokovaném cert."},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/api/v1/seznam", "desc": "Seznam certifikátů aktuálního subjektu"},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/api/v1/crl-list", "desc": "Seznam revokovaných certifikátů (CRL)"},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/api/v1/seznam-chyb", "desc": "Číselník možných chyb"},
+                    {"method": "GET",    "path": "/ezca2Certifikaty/health", "desc": "Health check"},
+                ],
+            },
+            "KRP_v3": {
+                "name": "KRP v3.0.0 (NOVÁ MAJOR – paralelně s v2)",
+                "base": "/krp",
+                "version": "v3.0.0",
+                "note": ("BREAKING změny: 1) Odstraněna diakritika v atributech (např. DatumNarození → DatumNarozeni). "
+                         "2) Cesty používají snake_case (např. /pacient/hledat/jmeno_prijmeni_rc místo "
+                         "/jmeno-prijmeni-rc). 3) MatkaNovorozence.DatumNarozeni typ změněn z date-time na date. "
+                         "Verze v2.0.2 zůstává paralelně dostupná."),
+                "endpoints": [
+                    {"method": "POST", "path": "/krp/api/v3/ciselnik/{nazev}", "desc": "Číselník (country_service_context, druh_dokladu, pohlavi, stat, zdravotni_pojistovna)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid", "desc": "Hledat podle RID (POST s body)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc", "desc": "Hledat podle jména/RČ"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_datum_narozeni", "desc": "Hledat podle jména/data narození"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_cp", "desc": "Hledat podle jména/cestovního pasu"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/cizinec_cp", "desc": "Hledat cizince podle CP"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/doklady", "desc": "Hledat podle dokladů"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_pojisteni", "desc": "Historie pojištění"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/mapovani_rid", "desc": "Mapování RID"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/niabsi", "desc": "NIA BSI"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/uni", "desc": "UNI"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/aifoulozenka", "desc": "AIFO úložka"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zalozit/pacient", "desc": "Založit pacienta"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zmenit/pacient", "desc": "Změnit pacienta"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/reklamuj/udaj", "desc": "Reklamace údaje"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/slouceni/zadost", "desc": "Žádost o sloučení"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/rozdeleni/zadost", "desc": "Žádost o rozdělení"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zruseni/zadost", "desc": "Žádost o zrušení"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generovat dočasné RID"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/priradit/docasny_rid", "desc": "Přiřadit dočasné RID"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění – žádost"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění – výsledky"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky/soubor", "desc": "Hromadné ztotožnění – soubor"},
+                    {"method": "POST", "path": "/krp/api/v3/notifikace/vyhledat/odber", "desc": "Notifikace – vyhledat odběry"},
+                    {"method": "POST", "path": "/krp/api/v3/notifikace/zalozit/odber", "desc": "Notifikace – založit odběr"},
+                    {"method": "DELETE", "path": "/krp/api/v3/notifikace/zrusit/odber", "desc": "Notifikace – zrušit odběr"},
+                ],
+            },
+            "SZZ_v2": {
+                "name": "SZZ v2.0.1 – Prevence + Screeningy (NOVÉ moduly)",
+                "base": "/sdilenyZdravotniZaznam",
+                "version": "v2.0.1",
+                "note": ("BREAKING: ze společného SZZ v1 vznikla samostatná verze v2 s oddělenými moduly: "
+                         "PREVENCE (5 typů: kardiovaskulární rizika, HPV očkování, prev. prohlídky všeob. praktik / "
+                         "gynekolog / PLDD) a SCREENINGY (10 typů: kolorektální karcinom TOKS, prsu mammografie/biopsie, "
+                         "děložního hrdla cytologie/HPV/expertní kolposkopie, prostaty PSA/MRI, plic LDCT, "
+                         "aneurysma USG). U alergií v2 odstraněno CasZjisteni z requestu/response. "
+                         "U TOKS přibyl typ POCT analyzátoru. Souhrnné POST endpointy /prevence/vyhledat a /screeningy/vyhledat "
+                         "vrátí všechny záznamy pacienta podle RID. SZZ v1 zůstává paralelně dostupná."),
+                "endpoints": [
+                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v2/ciselniky", "desc": "Číselníky v2"},
+                    {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v2/ciselniky/{kod}/polozky", "desc": "Položky číselníku v2"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/prevence/vyhledat", "desc": "Souhrnné vyhledat všech prevencí pacienta podle RID"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/prevence/kardiovaskularniRizika", "desc": "PREVENCE: vytvořit kardiovaskulární riziko"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/prevence/preventivniProhlidky", "desc": "PREVENCE: prev. prohlídka všeob. prakt. lékaře"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/prevence/preventivniProhlidkyGynekologie", "desc": "PREVENCE: prev. prohlídka gynekolog"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/prevence/preventivniProhlidkyPldd", "desc": "PREVENCE: prev. prohlídka PLDD"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/prevence/ockovaniHpv", "desc": "PREVENCE: očkování HPV (gynekolog)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/vyhledat", "desc": "Souhrnné vyhledat všech screeningů pacienta podle RID"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/kolorektalniKarcinomToks", "desc": "SCREENING: kolorektální karcinom – TOKS (+ POCT analyzátor)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyPsa", "desc": "SCREENING: karcinom prostaty – PSA"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyMri", "desc": "SCREENING: karcinom prostaty – MRI"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaCytologie", "desc": "SCREENING: karcinom děložního hrdla – cytologie"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaExpertniKolposkopie", "desc": "SCREENING: karcinom děložního hrdla – expertní kolposkopie"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuMamografie", "desc": "SCREENING: karcinom prsu – mamografie"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuBiopsie", "desc": "SCREENING: karcinom prsu – biopsie"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPlicLdct", "desc": "SCREENING: karcinom plic – LDCT"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/aneurysmaAbdominalniAortyUsg", "desc": "SCREENING: aneurysma břišní aorty – USG"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/emergentniZaznam/vyhledat", "desc": "EMERG. ZÁZNAM v2: souhrnné vyhledat (alergie bez CasZjisteni)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/emergentniZaznam/pdf", "desc": "EMERG. ZÁZNAM v2: PDF"},
+                ],
+            },
+            "ELP_v3": {
+                "name": "ELP v3.0.0 (interní – nejen pro PZS B2B)",
+                "base": "/elektronickePosudky",
+                "version": "v3.0.0",
+                "note": ("INTERNÍ API systému ELP – určeno pro Národní portál, EZKartu a interní aplikace. "
+                         "Pro PZS B2B používáme dál v1 (v1.0.7) a v2 (v2.0.9). v3.0.0 obsahuje pouze 2 "
+                         "číselníkové endpointy + interní validační endpointy."),
+                "endpoints": [
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/ciselniky", "desc": "Číselníky v3"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/ciselniky/{kod}/polozky", "desc": "Položky číselníku v3"},
+                ],
+            },
+            "RO_NCPeH": {
+                "name": "Registr oprávnění NCPeH v1.0.7 (NOVÁ – jen NCPeH)",
+                "base": "/registrOpravneniNcpeh",
+                "version": "v1.0.7",
+                "note": ("Samostatná služba pro přeshraniční zdravotnictví (NCPeH/StátEHP). "
+                         "v1.0.7 BREAKING: GET /api/v1/Opravneni/Over už NEPŘIJÍMÁ IdSluzbyEZ ani role; "
+                         "služba je vždy SZZ, opravňující osoba vždy Pacient, oprávněná osoba vždy StátEHP. "
+                         "Pokud size není vyplněn, použije se výchozí 1000; size > 1000 vrátí 400 Bad Request. "
+                         "Pro běžné tuzemské PZS používejte standardní RO v1.0.7 (/registrOpravneni)."),
+                "endpoints": [
+                    {"method": "GET", "path": "/registrOpravneniNcpeh/api/v1/Opravneni/Over", "desc": "Ověření oprávnění Pacient ↔ StátEHP pro SZZ"},
+                    {"method": "GET", "path": "/registrOpravneniNcpeh/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZdraví"},
+                    {"method": "GET", "path": "/registrOpravneniNcpeh/api/v1/Ciselniky/SluzbyEZ/{id}", "desc": "Detail služby eZdraví"},
+                    {"method": "GET", "path": "/registrOpravneniNcpeh/api/v1/Ciselniky/TypyDokumentaci", "desc": "Číselník typů dokumentace"},
+                    {"method": "GET", "path": "/registrOpravneniNcpeh/api/v1/Ciselniky/TypyDokumentaci/{id}", "desc": "Detail typu dokumentace"},
                 ],
             },
         },
@@ -2400,6 +2765,30 @@ async def debug_jwt():
                 {"name": "Testovací identity (PZS, pacienti)", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/529793025"},
                 {"name": "První kroky pro testování", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/68321283"},
             ],
+        },
+        "swagger_check": {
+            "note": "Stav rozhraní na T2 gateway (/apidoc/config.json) k dnešnímu dni",
+            "checked_at": "2026-05-05",
+            "current_versions_on_t2": {
+                "DocasneUloziste": "v1.11.13",
+                "ElektronickePosudky_v1": "v1.0.7",
+                "ElektronickePosudky_v2": "v2.0.9",
+                "ElektronickePosudky_v3": "v3.0.0 (NOVÁ)",
+                "EZadanky": "v1.11.13",
+                "EZCA2": "v1.0.7 (BREAKING)",
+                "EZCA2-SpravaCertifikatu": "v1.0.2 (NOVÁ samostatná služba)",
+                "KRP_v2": "v2.0.2",
+                "KRP_v3": "v3.0.0 (NOVÁ MAJOR)",
+                "KRPZS": "v2.0.2",
+                "KRZP": "v2.0.1",
+                "Notifikace": "v1.0.5",
+                "RegistrOpravneni": "v1.0.7",
+                "RegistrOpravneniNcpeh": "v1.0.7 (NOVÁ – jen pro NCPeH)",
+                "SdilenyZdravotniZaznam_v1": "v1.0.9",
+                "SdilenyZdravotniZaznam_v2": "v2.0.1 (NOVÁ MAJOR – prevence + screeningy)",
+                "Terminologie": "v1.0.5",
+            },
+            "swagger_source": "https://gwy-ext-sec-t2.csez.cz/apidoc/config.json",
         },
     }
 
