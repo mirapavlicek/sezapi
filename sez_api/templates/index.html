@@ -3042,12 +3042,23 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card" style="border-left:3px solid #fbbf24">
           <div class="card-title">&#9889; Proxy timestamp (NOVÉ v1.0.7)</div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Vyžádání časového razítka přes externí TSA proxy. Nové endpointy <code>/api/stamp/proxytimestamp</code> a <code>/api/stampasync/proxytimestamp</code>.
+            Vyžádání důvěryhodného časového razítka <strong>přes externí TSA proxy</strong>.
+            Nové endpointy <code>/api/stamp/proxytimestamp</code> a <code>/api/stampasync/proxytimestamp</code> – použijte když interní TSA služba nestíhá nebo potřebujete razítko od konkrétní externí autority.
           </p>
-          <div class="form-group"><label>Body (JSON)</label>
-            <textarea id="ezcaProxyTsBody" rows="4" placeholder='{"hash":"...","algoritmus":"SHA256"}'>{"hash":"","algoritmus":"SHA256"}</textarea>
-          </div>
           <div class="form-row">
+            <div class="form-group" style="flex:2"><label>Hash hodnota (hex)</label>
+              <input id="ezcaProxyTsHash" placeholder="např. e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855">
+            </div>
+            <div class="form-group"><label>Algoritmus</label>
+              <select id="ezcaProxyTsAlg"><option value="SHA256">SHA-256</option><option value="SHA384">SHA-384</option><option value="SHA512">SHA-512</option></select>
+            </div>
+            <div class="form-group"><label>TSA URL (volitelné)</label>
+              <input id="ezcaProxyTsUrl" placeholder="https://tsa.example.com/tsa">
+            </div>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body (volitelné)</div>
+          <textarea id="ezcaProxyTsBody" rows="2" placeholder='{} = sestaví se z polí výše'></textarea>
+          <div class="form-row" style="margin-top:8px">
             <button class="btn btn-primary" onclick="ezcaProxyTimestamp(false)">Sync /api/stamp/proxytimestamp</button>
             <button class="btn" onclick="ezcaProxyTimestamp(true)">Async /api/stampasync/proxytimestamp</button>
           </div>
@@ -4015,78 +4026,316 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
     <div class="section" id="sec-krp3">
       <div class="card" style="background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%);border-color:#86efac;margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:8px">KRP v3.0.0 – nová majoritní verze (paralelně s v2.0.2)</div>
-        <div style="font-size:12px;color:#14532d;line-height:1.7">
-          BREAKING změny: cesty <code>snake_case</code> (např. <code>/jmeno_prijmeni_rc</code>), atributy bez diakritiky (<code>DatumNarozeni</code>), <code>MatkaNovorozence.DatumNarozeni</code> typ <code>date</code>.
-          Volá se přes prefix <code>/api/krp3/*</code> v naší aplikaci, gateway prefix <code>/krp/api/v3/*</code>.
+        <div style="font-size:13px;color:#14532d;line-height:1.7">
+          BREAKING změny: <strong>cesty snake_case</strong> (např. <code>/jmeno_prijmeni_rc</code>), <strong>atributy bez diakritiky</strong>
+          (<code>DatumNarozeni</code> místo <code>DatumNarození</code>), <code>MatkaNovorozence.DatumNarozeni</code> typ <code>date</code>.
+          Vše volání jsou nyní <strong>POST s body</strong>, žádné GET-by-RID.
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
+            <span><strong>Hledat</strong> — 12 typů (RID, jméno, RČ, NIABSI, UNI, doklady…)</span>
+            <span><strong>Historie</strong> — pojištění a reg. lékaři (POST)</span>
+            <span><strong>Správa</strong> — založit, změnit, sloučit, rozdělit, zrušit, reklamace</span>
+            <span><strong>Hromadné</strong> — žádost / výsledky / soubor</span>
+            <span><strong>DRID</strong> — generovat, přiřadit dočasné RID</span>
+            <span><strong>Notifikace</strong> — POST založit / DELETE zrušit / POST vyhledat</span>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #86efac;font-size:11px;color:var(--fg3)">
+            Rychlý výběr testovacích pacientů (předvyplní RID v sub-tabu „Hledat → RID"):
+            <button class="chip" onclick="document.getElementById('krp3Rid').value='8754287763';krp3QuickTab('krp3-rid')" title="Vilemína Zasněžená 1971-06-07">Zasněžená Vilemína</button>
+            <button class="chip" onclick="document.getElementById('krp3Rc').value='8159260010';document.getElementById('krp3Jmeno').value='Petra';document.getElementById('krp3Prijmeni').value='Nosková';krp3QuickTab('krp3-jmeno')" title="Petra Nosková (RČ)">Nosková Petra (RČ)</button>
+            <button class="chip" onclick="document.getElementById('krp3Rid').value='2667873559';krp3QuickTab('krp3-rid')" title="Mračena Mrakomorová – sdílená identita">Mrakomorová Mračena</button>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Hledání pacienta v3 (POST varianty)</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 240px">
-            <label>Typ hledání</label>
-            <select id="krp3SearchType">
-              <option value="rid">RID</option>
-              <option value="jmeno_prijmeni_rc">Jméno + Příjmení + RČ</option>
-              <option value="jmeno_prijmeni_datum_narozeni">Jméno + Příjmení + Datum nar.</option>
-              <option value="jmeno_prijmeni_cp">Jméno + Příjmení + CP</option>
-              <option value="cizinec_cp">Cizinec + CP</option>
-              <option value="doklady">Doklady</option>
-              <option value="historie_pojisteni">Historie pojištění</option>
-              <option value="historie_lekaru">Historie reg. lékařů</option>
-              <option value="mapovani_rid">Mapování RID</option>
-              <option value="niabsi">NIA BSI</option>
-              <option value="uni">UNI</option>
-              <option value="aifoulozenka">AIFO úložka</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex:1"><label>Body (JSON)</label>
-            <textarea id="krp3SearchBody" rows="4" placeholder='{"Rid":"8754287763"}'>{"Rid":"8754287763"}</textarea>
-          </div>
-        </div>
-        <div class="form-row">
-          <button class="btn btn-primary" onclick="krp3Search()">Vyhledat (v3)</button>
-          <button class="btn" onclick="krp3FillExample()">Příklad</button>
-        </div>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="krp3SearchResult">-</div></div>
+      <div class="sub-tabs">
+        <div class="sub-tab active" data-panel="krp3-search-panel">Hledat</div>
+        <div class="sub-tab" data-panel="krp3-historie-panel">Historie</div>
+        <div class="sub-tab" data-panel="krp3-sprava-panel">Správa</div>
+        <div class="sub-tab" data-panel="krp3-hromadne-panel">Hromadné ztotožnění</div>
+        <div class="sub-tab" data-panel="krp3-drid-panel">DRID</div>
+        <div class="sub-tab" data-panel="krp3-notif-panel">Notifikace</div>
+        <div class="sub-tab" data-panel="krp3-ciselnik-panel">Číselníky</div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Číselníky v3 (POST)</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 280px">
-            <label>Číselník</label>
-            <select id="krp3CiselnikName">
-              <option value="pohlavi">pohlavi</option>
-              <option value="stat">stat</option>
-              <option value="druh_dokladu">druh_dokladu</option>
-              <option value="zdravotni_pojistovna">zdravotni_pojistovna</option>
-              <option value="country_service_context">country_service_context</option>
-            </select>
+      <!-- Hledat -->
+      <div class="sub-panel active" id="krp3-search-panel">
+        <div class="card">
+          <div class="card-title">Hledání pacienta (POST /api/v3/pacient/hledat/*)</div>
+          <div class="sub-tabs">
+            <div class="sub-tab active" data-panel="krp3-rid">Podle RID</div>
+            <div class="sub-tab" data-panel="krp3-jmeno">Jméno + RČ</div>
+            <div class="sub-tab" data-panel="krp3-jmeno-dn">Jméno + DN</div>
+            <div class="sub-tab" data-panel="krp3-jmeno-cp">Jméno + ČP</div>
+            <div class="sub-tab" data-panel="krp3-cizinec">Cizinec + ČP</div>
+            <div class="sub-tab" data-panel="krp3-doklady">Doklady</div>
+            <div class="sub-tab" data-panel="krp3-niabsi">NIA BSI</div>
+            <div class="sub-tab" data-panel="krp3-uni">UNI</div>
+            <div class="sub-tab" data-panel="krp3-aifo">AIFO úložka</div>
           </div>
-          <button class="btn btn-primary" onclick="krp3Ciselnik()">Načíst číselník</button>
+          <div class="sub-panel active" id="krp3-rid">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="krp3Rid" placeholder="např. 8754287763" value="8754287763"></div>
+              <div class="form-group"><label>Účel</label>
+                <select id="krp3Ucel"><option value="LECBA">LECBA</option><option value="STATISTIKA">STATISTIKA</option><option value="POJISTENI">POJISTENI</option></select>
+              </div>
+              <button class="btn btn-primary" onclick="krp3HledatRid()">Hledat (v3)</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-jmeno">
+            <p style="font-size:11px;color:var(--fg3);margin-bottom:8px">v3 atributy: <code>Jmeno</code>, <code>Prijmeni</code>, <code>RodneCislo</code> (bez diakritiky).</p>
+            <div class="form-row">
+              <div class="form-group"><label>Jméno</label><input id="krp3Jmeno" placeholder="Petra"></div>
+              <div class="form-group"><label>Příjmení</label><input id="krp3Prijmeni" placeholder="Nosková"></div>
+              <div class="form-group"><label>Rodné číslo</label><input id="krp3Rc" placeholder="RRMMDD/XXXX"></div>
+              <button class="btn btn-primary" onclick="krp3HledatJmeno()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-jmeno-dn">
+            <div class="form-row">
+              <div class="form-group"><label>Jméno</label><input id="krp3JmenoDnJ" placeholder="Vilemína"></div>
+              <div class="form-group"><label>Příjmení</label><input id="krp3JmenoDnP" placeholder="Zasněžená"></div>
+              <div class="form-group"><label>Datum narození</label><input type="text" class="date-cs" id="krp3JmenoDnDn" placeholder="d.m.rrrr"></div>
+              <button class="btn btn-primary" onclick="krp3HledatJmenoDn()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-jmeno-cp">
+            <div class="form-row">
+              <div class="form-group"><label>Jméno</label><input id="krp3JmenoCpJ" placeholder="Jméno"></div>
+              <div class="form-group"><label>Příjmení</label><input id="krp3JmenoCpP" placeholder="Příjmení"></div>
+              <div class="form-group"><label>Číslo pojištěnce</label><input id="krp3JmenoCpCp" placeholder="ČP"></div>
+              <button class="btn btn-primary" onclick="krp3HledatJmenoCp()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-cizinec">
+            <div class="form-row">
+              <div class="form-group"><label>Číslo pojištěnce</label><input id="krp3CizCp" placeholder="ČP cizince"></div>
+              <div class="form-group"><label>Stát</label><input id="krp3CizStat" placeholder="např. SK, DE, UA"></div>
+              <button class="btn btn-primary" onclick="krp3HledatCizinec()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-doklady">
+            <div class="form-row">
+              <div class="form-group"><label>Druh dokladu (kód)</label><input id="krp3DokTyp" placeholder="např. OP"></div>
+              <div class="form-group"><label>Číslo dokladu</label><input id="krp3DokCislo" placeholder="Číslo"></div>
+              <div class="form-group"><label>Stát</label><input id="krp3DokStat" placeholder="CZ"></div>
+              <button class="btn btn-primary" onclick="krp3HledatDoklady()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-niabsi">
+            <div class="form-row">
+              <div class="form-group"><label>NIA BSI</label><input id="krp3Niabsi" placeholder="NIA BSI identifikátor"></div>
+              <button class="btn btn-primary" onclick="krp3HledatNiabsi()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-uni">
+            <div class="form-row">
+              <div class="form-group"><label>UNI</label><input id="krp3Uni" placeholder="UNI kód"></div>
+              <button class="btn btn-primary" onclick="krp3HledatUni()">Hledat</button>
+            </div>
+          </div>
+          <div class="sub-panel" id="krp3-aifo">
+            <div class="form-row">
+              <div class="form-group"><label>AIFO</label><input id="krp3Aifo" placeholder="AIFO úložky"></div>
+              <button class="btn btn-primary" onclick="krp3HledatAifo()">Hledat</button>
+            </div>
+          </div>
         </div>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="krp3CiselnikResult">-</div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="krp3SearchResult">-</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Notifikace v3 (odběry změn)</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 200px">
-            <label>Akce</label>
-            <select id="krp3NotifAkce">
-              <option value="vyhledat">vyhledat odběry (POST)</option>
-              <option value="zalozit">založit odběr (POST)</option>
-              <option value="zrusit">zrušit odběr (DELETE)</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex:1"><label>Body (JSON)</label>
-            <textarea id="krp3NotifBody" rows="3" placeholder='{}'>{}</textarea>
+      <!-- Historie -->
+      <div class="sub-panel" id="krp3-historie-panel">
+        <div class="card">
+          <div class="card-title">Historie pojištění (POST /api/v3/pacient/hledat/historie_pojisteni)</div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="krp3HistPojRid" placeholder="RID" value="8754287763"></div>
+            <button class="btn btn-primary" onclick="krp3HistPojisteni()">Načíst historii pojištění</button>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="krp3Notif()">Odeslat</button>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="krp3NotifResult">-</div></div>
+        <div class="card">
+          <div class="card-title">Historie registrujících lékařů (POST /api/v3/pacient/hledat/historie_registrujicich_lekaru)</div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="krp3HistLekRid" placeholder="RID" value="8754287763"></div>
+            <button class="btn btn-primary" onclick="krp3HistLekaru()">Načíst historii lékařů</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krp3HistResult">-</div></div>
+      </div>
+
+      <!-- Správa -->
+      <div class="sub-panel" id="krp3-sprava-panel">
+        <div class="card" style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border-color:#86efac">
+          <div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:8px">Správa pacientů v KRP v3</div>
+          <div style="font-size:12px;color:#14532d;line-height:1.7">
+            POST varianty s body. Atributy bez diakritiky (<code>DatumNarozeni</code>, <code>RodneCislo</code> atd.).
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">➕ Založit pacienta (POST /api/v3/pacient/zalozit/pacient)</div>
+          <div class="form-row">
+            <div class="form-group"><label>Jméno *</label><input id="krp3ZalJmeno" placeholder="Jan"></div>
+            <div class="form-group"><label>Příjmení *</label><input id="krp3ZalPrijmeni" placeholder="Novak"></div>
+            <div class="form-group"><label>Datum narození *</label><input type="text" class="date-cs" id="krp3ZalDn" placeholder="d.m.rrrr"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Rodné číslo</label><input id="krp3ZalRc" placeholder="RRMMDD/XXXX"></div>
+            <div class="form-group"><label>Pohlaví</label>
+              <select id="krp3ZalPohlavi">
+                <option value="M">M</option><option value="Z">Z</option><option value="N">N (neznámé)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Státní občanství</label><input id="krp3ZalStat" placeholder="CZ" value="CZ"></div>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body (volitelné, override)</div>
+          <textarea id="krp3ZalBodyOverride" rows="3" placeholder='{} = sestaví se z polí výše'></textarea>
+          <button class="btn btn-primary" onclick="krp3Zalozit()" style="margin-top:8px">Založit pacienta</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">✏️ Změnit pacienta (POST /api/v3/pacient/zmenit/pacient)</div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="krp3ZmenRid" placeholder="RID"></div>
+            <div class="form-group"><label>Jméno (nové)</label><input id="krp3ZmenJmeno" placeholder="Jméno"></div>
+            <div class="form-group"><label>Příjmení (nové)</label><input id="krp3ZmenPrijmeni" placeholder="Příjmení"></div>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body</div>
+          <textarea id="krp3ZmenBodyOverride" rows="3" placeholder='{} = sestaví se z polí výše'></textarea>
+          <button class="btn btn-primary" onclick="krp3Zmenit()" style="margin-top:8px">Uložit změnu</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📨 Reklamace údaje (POST /api/v3/pacient/reklamuj/udaj)</div>
+          <div class="form-row">
+            <div class="form-group"><label>RID</label><input id="krp3ReklRid" placeholder="RID"></div>
+            <div class="form-group"><label>Reklamovaný atribut</label><input id="krp3ReklAtr" placeholder="např. Jmeno"></div>
+            <div class="form-group"><label>Důvod</label><input id="krp3ReklDuvod" placeholder="Popis"></div>
+          </div>
+          <button class="btn btn-primary" onclick="krp3Reklamace()">Odeslat reklamaci</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔗 Sloučit / 🔓 Rozdělit / 🗑 Zrušit (POST žádosti)</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 200px">
+              <label>Akce</label>
+              <select id="krp3ZadostAkce">
+                <option value="slouceni">slouceni</option>
+                <option value="rozdeleni">rozdeleni</option>
+                <option value="zruseni">zruseni</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1"><label>Body žádosti (JSON)</label>
+              <textarea id="krp3ZadostBody" rows="3">{"Rid":"","CilRid":""}</textarea>
+            </div>
+            <button class="btn btn-primary" onclick="krp3Zadost()">Odeslat žádost</button>
+          </div>
+        </div>
+
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krp3SpravaResult">-</div></div>
+      </div>
+
+      <!-- Hromadné ztotožnění -->
+      <div class="sub-panel" id="krp3-hromadne-panel">
+        <div class="card">
+          <div class="card-title">📋 Hromadné ztotožnění – žádost</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:8px">
+            POST <code>/api/v3/pacient/ztotoznihromadne/zadost</code> – odešle dávku pacientů ke ztotožnění.
+          </p>
+          <textarea id="krp3HromZadostBody" rows="6">{"Pacienti":[]}</textarea>
+          <button class="btn btn-primary" onclick="krp3HromZadost()" style="margin-top:8px">Odeslat žádost</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Výsledky dávky</div>
+          <div class="form-row">
+            <div class="form-group"><label>ID dávky</label><input id="krp3HromVyslId" placeholder="ID"></div>
+            <button class="btn btn-primary" onclick="krp3HromVysledky()">Získat výsledky</button>
+            <button class="btn" onclick="krp3HromSoubor()">Získat výsledky (soubor)</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krp3HromResult">-</div></div>
+      </div>
+
+      <!-- DRID -->
+      <div class="sub-panel" id="krp3-drid-panel">
+        <div class="card">
+          <div class="card-title">Generovat dočasný RID (POST /api/v3/pacient/generovat/docasny_rid)</div>
+          <div class="form-row">
+            <div class="form-group"><label>Počet</label><input type="number" id="krp3DridPocet" value="1" min="1" max="100"></div>
+            <button class="btn btn-primary" onclick="krp3DridGenerovat()">Generovat</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Přiřadit dočasný RID ke skutečnému (POST /api/v3/pacient/priradit/docasny_rid)</div>
+          <div class="form-row">
+            <div class="form-group"><label>Dočasný RID</label><input id="krp3DridDocasny" placeholder="DRID"></div>
+            <div class="form-group"><label>Skutečný RID</label><input id="krp3DridSkutecny" placeholder="RID"></div>
+            <button class="btn btn-primary" onclick="krp3DridPriradit()">Přiřadit</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Mapování RID (POST /api/v3/pacient/hledat/mapovani_rid)</div>
+          <div class="form-row">
+            <div class="form-group"><label>RID</label><input id="krp3MapRid" placeholder="RID"></div>
+            <button class="btn btn-primary" onclick="krp3MapovaniRid()">Zjistit mapování</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krp3DridResult">-</div></div>
+      </div>
+
+      <!-- Notifikace -->
+      <div class="sub-panel" id="krp3-notif-panel">
+        <div class="card">
+          <div class="card-title">📡 Notifikace v3 – odběry změn pacientů</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:8px">
+            v3 přidává <code>DELETE /api/v3/notifikace/zrusit/odber</code>. Pro vyhledání a založení použijte POST.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-title">Vyhledat odběry (POST)</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1"><label>Body (JSON)</label><textarea id="krp3NotifVyhBody" rows="3">{}</textarea></div>
+            <button class="btn btn-primary" onclick="krp3NotifVyhledat()">Vyhledat</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Založit odběr (POST)</div>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="krp3NotifZalRid" placeholder="RID"></div>
+            <div class="form-group"><label>URL pro notifikace</label><input id="krp3NotifZalUrl" placeholder="https://..."></div>
+          </div>
+          <textarea id="krp3NotifZalBody" rows="3" placeholder='{} = sestaví se z polí'></textarea>
+          <button class="btn btn-primary" onclick="krp3NotifZalozit()" style="margin-top:8px">Založit</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Zrušit odběr (DELETE)</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1"><label>Body (JSON s ID odběru)</label><textarea id="krp3NotifZrusBody" rows="3">{"OdberId":""}</textarea></div>
+            <button class="btn btn-primary" onclick="krp3NotifZrusit()">Zrušit (DELETE)</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krp3NotifResult">-</div></div>
+      </div>
+
+      <!-- Číselníky -->
+      <div class="sub-panel" id="krp3-ciselnik-panel">
+        <div class="card">
+          <div class="card-title">Číselníky v3 (POST /api/v3/ciselnik/{nazev})</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 280px">
+              <label>Číselník</label>
+              <select id="krp3CisName">
+                <option value="pohlavi">pohlavi</option>
+                <option value="stat">stat</option>
+                <option value="druh_dokladu">druh_dokladu</option>
+                <option value="zdravotni_pojistovna">zdravotni_pojistovna</option>
+                <option value="country_service_context">country_service_context</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="krp3Ciselnik()">Načíst</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krp3CisResult">-</div></div>
       </div>
     </div>
 
@@ -4096,38 +4345,126 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
     <div class="section" id="sec-ro-ncpeh">
       <div class="card" style="background:linear-gradient(135deg,#fef3c7 0%,#fffbeb 100%);border-color:#fcd34d;margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#92400e;margin-bottom:8px">Registr oprávnění NCPeH v1.0.7 – přeshraniční zdravotnictví</div>
-        <div style="font-size:12px;color:#78350f;line-height:1.7">
-          Samostatná služba pro NCPeH (Národní kontaktní místo pro elektronické zdravotnictví).
-          Ověřuje oprávnění mezi <strong>Pacient ↔ StátEHP</strong> pro službu <strong>SZZ</strong>.
-          v1.0.7: <code>GET /Opravneni/Over</code> už NEPŘIJÍMÁ <code>IdSluzbyEZ</code> ani role.
-          Pokud <code>size</code> nezadáte, použije se výchozí <strong>1000</strong>; přes 1000 vrátí 400.
+        <div style="font-size:13px;color:#78350f;line-height:1.7">
+          Samostatná služba pro <strong>NCPeH</strong> (Národní kontaktní místo pro elektronické zdravotnictví).
+          Ověřuje oprávnění <strong>Pacient ↔ StátEHP</strong> pro službu SZZ.
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
+            <span><strong>Ověření</strong> — GET /Opravneni/Over (Pacient ↔ StátEHP)</span>
+            <span><strong>Číselníky</strong> — služby eZdraví, typy dokumentace</span>
+          </div>
+          <div style="margin-top:8px;padding:6px 10px;background:#fee2e2;border-left:3px solid #dc2626;font-size:11px;color:#7f1d1d">
+            <strong>v1.0.7 BREAKING:</strong> GET /Opravneni/Over už <strong>NEPŘIJÍMÁ</strong> <code>IdSluzbyEZ</code>, <code>OpravnujiciOsoba.Role</code>, <code>OpravnenaOsoba.Role</code>.
+            Služba je vždy <strong>SZZ</strong>, opravňující <strong>Pacient</strong>, oprávněná <strong>StátEHP</strong>.
+            Výchozí <code>size=1000</code>; nad 1000 vrátí 400.
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #fcd34d;font-size:11px;color:var(--fg3)">
+            Rychlý výběr testovacích identit:
+            <button class="chip" onclick="document.getElementById('roNcpehRid').value='8754287763';document.getElementById('roNcpehStat').value='SK'" title="Vilemína + SK">Zasněžená → SK</button>
+            <button class="chip" onclick="document.getElementById('roNcpehRid').value='5785446836';document.getElementById('roNcpehStat').value='DE'" title="Petra + DE">Nosková → DE</button>
+            <button class="chip" onclick="document.getElementById('roNcpehRid').value='2667873559';document.getElementById('roNcpehStat').value='AT'" title="Mračena + AT">Mrakomorová → AT</button>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Ověření oprávnění (Pacient ↔ StátEHP)</div>
-        <div class="form-row">
-          <div class="form-group"><label>RID pacienta (opravňující)</label>
-            <input id="roNcpehRid" placeholder="např. 8754287763">
-          </div>
-          <div class="form-group"><label>Stát EHP (kód)</label>
-            <input id="roNcpehStat" placeholder="např. DE, AT, SK">
-          </div>
-          <div class="form-group"><label>Typ dokumentace</label>
-            <input id="roNcpehTypDok" placeholder="např. PS, EP">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="roNcpehOver()">Ověřit oprávnění</button>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="roNcpehOverResult">-</div></div>
+      <div class="sub-tabs">
+        <div class="sub-tab active" data-panel="ncpeh-over-panel">Ověření oprávnění</div>
+        <div class="sub-tab" data-panel="ncpeh-sluzby-panel">Služby eZdraví</div>
+        <div class="sub-tab" data-panel="ncpeh-typy-panel">Typy dokumentace</div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Číselníky NCPeH</div>
-        <div class="form-row">
-          <button class="btn" onclick="roNcpehSluzbyEz()">Služby eZdraví</button>
-          <button class="btn" onclick="roNcpehTypyDok()">Typy dokumentace</button>
+      <!-- Ověření -->
+      <div class="sub-panel active" id="ncpeh-over-panel">
+        <div class="card">
+          <div class="card-title">🌐 Ověření přeshraničního oprávnění (GET /api/v1/Opravneni/Over)</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:12px">
+            Ověří, zda pacient (RID) udělil souhlas se sdílením SZZ pro daný stát EHP a typ dokumentace.
+            <strong>Není potřeba</strong> zadávat ID služby ani role – v1.0.7 je vše implicitně SZZ + Pacient + StátEHP.
+          </p>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta (opravňující)</label>
+              <input id="roNcpehRid" placeholder="např. 8754287763" value="8754287763">
+            </div>
+            <div class="form-group"><label>Stát EHP (kód, ISO 3166-1 alpha-2)</label>
+              <select id="roNcpehStat">
+                <option value="SK">SK – Slovensko</option>
+                <option value="DE">DE – Německo</option>
+                <option value="AT">AT – Rakousko</option>
+                <option value="PL">PL – Polsko</option>
+                <option value="HU">HU – Maďarsko</option>
+                <option value="FR">FR – Francie</option>
+                <option value="IT">IT – Itálie</option>
+                <option value="ES">ES – Španělsko</option>
+                <option value="NL">NL – Nizozemsko</option>
+                <option value="BE">BE – Belgie</option>
+                <option value="LU">LU – Lucembursko</option>
+                <option value="DK">DK – Dánsko</option>
+                <option value="SE">SE – Švédsko</option>
+                <option value="FI">FI – Finsko</option>
+                <option value="EE">EE – Estonsko</option>
+                <option value="LV">LV – Lotyšsko</option>
+                <option value="LT">LT – Litva</option>
+                <option value="IE">IE – Irsko</option>
+                <option value="PT">PT – Portugalsko</option>
+                <option value="GR">GR – Řecko</option>
+                <option value="CY">CY – Kypr</option>
+                <option value="MT">MT – Malta</option>
+                <option value="HR">HR – Chorvatsko</option>
+                <option value="SI">SI – Slovinsko</option>
+                <option value="BG">BG – Bulharsko</option>
+                <option value="RO">RO – Rumunsko</option>
+                <option value="NO">NO – Norsko (EHP)</option>
+                <option value="IS">IS – Island (EHP)</option>
+                <option value="LI">LI – Lichtenštejnsko (EHP)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Typ dokumentace (kód)</label>
+              <select id="roNcpehTypDok">
+                <option value="">-- nepovinné --</option>
+                <option value="PS">PS – Patient Summary (souhrn)</option>
+                <option value="EP">EP – ePrescription</option>
+                <option value="LR">LR – Laboratory Result</option>
+                <option value="MI">MI – Medical Imaging</option>
+                <option value="HD">HD – Hospital Discharge</option>
+                <option value="OO">OO – Original Document</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Velikost stránky (size, výchozí 1000, max 1000)</label>
+              <input type="number" id="roNcpehSize" value="" min="1" max="1000" placeholder="prázdné = výchozí 1000">
+            </div>
+            <button class="btn btn-primary" onclick="roNcpehOver()">Ověřit oprávnění</button>
+          </div>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="roNcpehOverResult">-</div></div>
         </div>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="roNcpehCiselnikResult">-</div></div>
+      </div>
+
+      <!-- Služby eZdraví -->
+      <div class="sub-panel" id="ncpeh-sluzby-panel">
+        <div class="card">
+          <div class="card-title">Služby eZdraví – číselník</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:12px">GET /api/v1/Ciselniky/SluzbyEZ – seznam všech služeb (pro NCPeH primárně SZZ).</p>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="roNcpehSluzbyEz()">Načíst seznam</button>
+            <div class="form-group"><label>Detail služby (ID)</label><input id="roNcpehSluzbaId" placeholder="GUID"></div>
+            <button class="btn" onclick="roNcpehSluzbaDetail()">Detail</button>
+          </div>
+          <div class="card" style="margin-top:10px"><div class="card-title">Výsledek</div><div class="json-box" id="roNcpehSluzbyResult">-</div></div>
+        </div>
+      </div>
+
+      <!-- Typy dokumentace -->
+      <div class="sub-panel" id="ncpeh-typy-panel">
+        <div class="card">
+          <div class="card-title">Typy dokumentace – číselník</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:12px">GET /api/v1/Ciselniky/TypyDokumentaci – PS/EP/LR/MI/HD/OO.</p>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="roNcpehTypyDok()">Načíst seznam</button>
+            <div class="form-group"><label>Detail typu (ID)</label><input id="roNcpehTypId" placeholder="GUID"></div>
+            <button class="btn" onclick="roNcpehTypDetail()">Detail</button>
+          </div>
+          <div class="card" style="margin-top:10px"><div class="card-title">Výsledek</div><div class="json-box" id="roNcpehTypyResult">-</div></div>
+        </div>
       </div>
     </div>
 
@@ -4137,150 +4474,360 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
     <div class="section" id="sec-szz2">
       <div class="card" style="background:linear-gradient(135deg,#dbeafe 0%,#eff6ff 100%);border-color:#93c5fd;margin-bottom:16px">
         <div style="font-weight:700;font-size:14px;color:#1e40af;margin-bottom:8px">SZZ v2.0.1 – Prevence + Screeningy + Emergentní záznam v2</div>
-        <div style="font-size:12px;color:#1e3a8a;line-height:1.7">
-          Nová majoritní verze SZZ s oddělenými moduly. Volá se přes <code>/api/szz2/*</code> v naší aplikaci, gateway <code>/sdilenyZdravotniZaznam/api/v2/*</code>.
-          U alergií v2 odstraněn <code>CasZjisteni</code>. U TOKS přidán typ POCT analyzátoru.
-          Souhrnné <code>/vyhledat</code> vrátí všechny záznamy pacienta podle RID.
+        <div style="font-size:13px;color:#1e3a8a;line-height:1.7">
+          Nová majoritní verze SZZ s oddělenými moduly. Volá se přes <code>/api/szz2/*</code>, gateway <code>/sdilenyZdravotniZaznam/api/v2/*</code>.
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
+            <span><strong>Souhrnné</strong> — všechny záznamy pacienta dle RID</span>
+            <span><strong>Prevence (5)</strong> — KV rizika, HPV, prev. prohlídky 3×</span>
+            <span><strong>Screeningy (10)</strong> — onkologie, USG aorty</span>
+            <span><strong>Emerg. záznam v2</strong> — alergie bez CasZjisteni</span>
+            <span><strong>Životní cyklus</strong> — vytvořit / upravit / obnovit / zneplatnit / zpochybnit</span>
+            <span><strong>Číselníky</strong> — typy alergií, screeningů…</span>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #93c5fd;font-size:11px;color:var(--fg3)">
+            Rychlý výběr testovacích pacientů (vyplní RID v sub-tabu „Souhrn"):
+            <button class="chip" onclick="document.getElementById('szz2RidSouhrn').value='8754287763';szz2QuickTab('szz2-souhrn-panel')" title="Vilemína">Zasněžená Vilemína</button>
+            <button class="chip" onclick="document.getElementById('szz2RidSouhrn').value='5785446836';szz2QuickTab('szz2-souhrn-panel')" title="Petra">Nosková Petra</button>
+            <button class="chip" onclick="document.getElementById('szz2RidSouhrn').value='2667873559';szz2QuickTab('szz2-souhrn-panel')" title="Mračena">Mrakomorová Mračena</button>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Souhrnné vyhledávání všech záznamů pacienta</div>
-        <div class="form-row">
-          <div class="form-group"><label>RID pacienta</label>
-            <input id="szz2RidSouhrn" placeholder="např. 8754287763" value="8754287763">
-          </div>
-        </div>
-        <div class="form-row">
-          <button class="btn btn-primary" onclick="szz2VyhledatPrevence()">Všechny prevence</button>
-          <button class="btn btn-primary" onclick="szz2VyhledatScreeningy()">Všechny screeningy</button>
-          <button class="btn btn-primary" onclick="szz2VyhledatEmergentni()">Emergentní záznam</button>
-          <button class="btn" onclick="szz2EmergentniPdf()">Emerg. záznam → PDF</button>
-        </div>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2SouhrnResult">-</div></div>
+      <div class="sub-tabs">
+        <div class="sub-tab active" data-panel="szz2-souhrn-panel">Souhrnné</div>
+        <div class="sub-tab" data-panel="szz2-prevence-panel">Prevence</div>
+        <div class="sub-tab" data-panel="szz2-screening-panel">Screeningy</div>
+        <div class="sub-tab" data-panel="szz2-emerg-panel">Emergentní záznam v2</div>
+        <div class="sub-tab" data-panel="szz2-cis-panel">Číselníky</div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Číselníky SZZ v2</div>
-        <div class="form-row">
-          <button class="btn" onclick="szz2Ciselniky()">Seznam číselníků</button>
-          <div class="form-group" style="flex:1"><label>Kód číselníku → položky</label>
-            <input id="szz2CiselnikKod" placeholder="např. typ-alergie">
+      <!-- Souhrnné -->
+      <div class="sub-panel active" id="szz2-souhrn-panel">
+        <div class="card">
+          <div class="card-title">Souhrnné vyhledání všech záznamů pacienta</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:12px">
+            POST <code>/api/v2/{prevence|screeningy|emergentniZaznam}/vyhledat</code> – načte VŠECHNY záznamy daného typu pro pacienta.
+          </p>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label>
+              <input id="szz2RidSouhrn" placeholder="např. 8754287763" value="8754287763">
+            </div>
           </div>
-          <button class="btn" onclick="szz2CiselnikPolozky()">Položky</button>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="szz2VyhledatPrevence()">📊 Všechny prevence</button>
+            <button class="btn btn-primary" onclick="szz2VyhledatScreeningy()">🔬 Všechny screeningy</button>
+            <button class="btn btn-primary" onclick="szz2VyhledatEmergentni()">🚨 Emergentní záznam</button>
+            <button class="btn" onclick="szz2EmergentniPdf()">📄 Emerg. → PDF</button>
+          </div>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2SouhrnResult">-</div></div>
         </div>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2CiselnikyResult">-</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Prevence (5 typů)</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 320px">
-            <label>Typ prevence</label>
-            <select id="szz2PrevenceTyp">
-              <option value="kardiovaskularniRizika">Kardiovaskulární rizika</option>
-              <option value="ockovaniHpv">Očkování HPV (gynekolog)</option>
-              <option value="preventivniProhlidky">Preventivní prohlídky (všeob. praktik)</option>
-              <option value="preventivniProhlidkyGynekologie">Preventivní prohlídky (gynekolog)</option>
-              <option value="preventivniProhlidkyPldd">Preventivní prohlídky (PLDD)</option>
-            </select>
+      <!-- Prevence -->
+      <div class="sub-panel" id="szz2-prevence-panel">
+        <div class="card">
+          <div class="card-title">Prevence – výběr typu</div>
+          <div class="sub-tabs" id="szz2PrevenceTabs">
+            <div class="sub-tab active" data-panel="szz2-prev-kvr">KV rizika</div>
+            <div class="sub-tab" data-panel="szz2-prev-hpv">Očkování HPV</div>
+            <div class="sub-tab" data-panel="szz2-prev-pp">Prev. prohlídka VPL</div>
+            <div class="sub-tab" data-panel="szz2-prev-ppg">Prev. prohlídka GYN</div>
+            <div class="sub-tab" data-panel="szz2-prev-ppldd">Prev. prohlídka PLDD</div>
           </div>
-          <div class="form-group" style="flex:0 0 200px">
-            <label>Akce</label>
-            <select id="szz2PrevenceAkce">
-              <option value="vyhledat">vyhledat (POST /vyhledat)</option>
-              <option value="vytvor">vytvořit (POST)</option>
-              <option value="uprav">upravit (PUT /{id})</option>
-              <option value="obnovit">obnovit (PATCH /{id}/obnovit)</option>
-              <option value="zneplatnit">zneplatnit (PATCH /{id}/zneplatnit)</option>
-              <option value="zpochybnit">zpochybnit (PATCH /{id}/zpochybnit)</option>
-            </select>
+          <div class="sub-panel active" id="szz2-prev-kvr">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Kardiovaskulární rizika (SCORE2 atd.).</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID pacienta</label><input id="szz2KvrRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum vyšetření</label><input type="text" class="date-cs" id="szz2KvrDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Skóre (%)</label><input type="number" id="szz2KvrSkore" placeholder="např. 5" min="0" max="100"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Riziková kategorie</label>
+                <select id="szz2KvrKat"><option value="LOW">LOW</option><option value="MODERATE">MODERATE</option><option value="HIGH">HIGH</option><option value="VERY_HIGH">VERY_HIGH</option></select>
+              </div>
+              <div class="form-group"><label>Doplnění (volné)</label><input id="szz2KvrPozn" placeholder="poznámka"></div>
+            </div>
           </div>
-          <div class="form-group"><label>ID záznamu (jen pro PUT/PATCH)</label>
-            <input id="szz2PrevenceId" placeholder="GUID">
+          <div class="sub-panel" id="szz2-prev-hpv">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Očkování proti HPV (gynekolog).</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2HpvRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum aplikace</label><input type="text" class="date-cs" id="szz2HpvDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Dávka (1/2/3)</label><select id="szz2HpvDavka"><option>1</option><option>2</option><option>3</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Vakcína (kód SUKL)</label><input id="szz2HpvVakcina" placeholder="např. 0234567"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-prev-pp">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Preventivní prohlídka u všeobecného praktického lékaře.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2PpRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum prohlídky</label><input type="text" class="date-cs" id="szz2PpDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Závěr</label><select id="szz2PpZaver"><option value="OK">OK</option><option value="DOSLEDOVANI">Vyžaduje dosledování</option><option value="ODESLAN">Odeslán k odborníkovi</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-prev-ppg">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Preventivní prohlídka u gynekologa.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2PpgRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum prohlídky</label><input type="text" class="date-cs" id="szz2PpgDatum" placeholder="d.m.rrrr"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-prev-ppldd">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Preventivní prohlídka u praktického lékaře pro děti a dorost.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2PplddRid" placeholder="RID" value="9058642060"></div>
+              <div class="form-group"><label>Datum prohlídky</label><input type="text" class="date-cs" id="szz2PplddDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Věkový limit (měsíce)</label><input type="number" id="szz2PplddVek" placeholder="3, 6, 12, 18..."></div>
+            </div>
           </div>
         </div>
-        <div class="form-group"><label>Body (JSON)</label>
-          <textarea id="szz2PrevenceBody" rows="4" placeholder='{"PacientRid":"8754287763"}'>{"PacientRid":"8754287763"}</textarea>
+
+        <div class="card">
+          <div class="card-title">Akce na záznamu prevence</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 220px"><label>Akce</label>
+              <select id="szz2PrevenceAkce">
+                <option value="vyhledat">📋 Vyhledat seznam</option>
+                <option value="vytvor">➕ Vytvořit (POST)</option>
+                <option value="uprav">✏️ Upravit (PUT /{id})</option>
+                <option value="obnovit">♻️ Obnovit (PATCH /{id}/obnovit)</option>
+                <option value="zneplatnit">❌ Zneplatnit (PATCH /{id}/zneplatnit)</option>
+                <option value="zpochybnit">❓ Zpochybnit (PATCH /{id}/zpochybnit)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>ID záznamu (PUT/PATCH)</label><input id="szz2PrevenceId" placeholder="GUID"></div>
+            <button class="btn btn-primary" onclick="szz2PrevenceCall()">Odeslat</button>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body (volitelné, override)</div>
+          <textarea id="szz2PrevenceBody" rows="3" placeholder='{} = sestaví se z polí výše dle aktivního sub-tabu'></textarea>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2PrevenceResult">-</div></div>
         </div>
-        <button class="btn btn-primary" onclick="szz2PrevenceCall()">Odeslat</button>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2PrevenceResult">-</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Screeningy (10 typů)</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 360px">
-            <label>Typ screeningu</label>
-            <select id="szz2ScreeningTyp">
-              <option value="kolorektalniKarcinomToks">Kolorektální karcinom (TOKS) + POCT</option>
-              <option value="karcinomPrsuMamografie">Karcinom prsu (mamografie)</option>
-              <option value="karcinomPrsuBiopsie">Karcinom prsu (biopsie)</option>
-              <option value="karcinomDeloznihoHrdlaCytologie">Karcinom děložního hrdla (cytologie)</option>
-              <option value="karcinomDDeloznihoHrdlaHpv">Karcinom děložního hrdla (HPV)</option>
-              <option value="karcinomDeloznihoHrdlaExpertniKolposkopie">Karcinom děložního hrdla (expert. kolposkopie)</option>
-              <option value="karcinomProstatyPsa">Karcinom prostaty (PSA)</option>
-              <option value="karcinomProstatyMri">Karcinom prostaty (MRI)</option>
-              <option value="karcinomPlicLdct">Karcinom plic (LDCT)</option>
-              <option value="aneurysmaAbdominalniAortyUsg">Aneurysma břišní aorty (USG)</option>
-            </select>
+      <!-- Screeningy -->
+      <div class="sub-panel" id="szz2-screening-panel">
+        <div class="card">
+          <div class="card-title">Screening – výběr typu</div>
+          <div class="sub-tabs" id="szz2ScreeningTabs">
+            <div class="sub-tab active" data-panel="szz2-scr-toks">TOKS</div>
+            <div class="sub-tab" data-panel="szz2-scr-mamo">Prsu mamografie</div>
+            <div class="sub-tab" data-panel="szz2-scr-biop">Prsu biopsie</div>
+            <div class="sub-tab" data-panel="szz2-scr-cyt">Hrdla cytologie</div>
+            <div class="sub-tab" data-panel="szz2-scr-hpv">Hrdla HPV</div>
+            <div class="sub-tab" data-panel="szz2-scr-kolp">Hrdla kolposkopie</div>
+            <div class="sub-tab" data-panel="szz2-scr-psa">Prostaty PSA</div>
+            <div class="sub-tab" data-panel="szz2-scr-mri">Prostaty MRI</div>
+            <div class="sub-tab" data-panel="szz2-scr-ldct">Plic LDCT</div>
+            <div class="sub-tab" data-panel="szz2-scr-aort">Aorty USG</div>
           </div>
-          <div class="form-group" style="flex:0 0 200px">
-            <label>Akce</label>
-            <select id="szz2ScreeningAkce">
-              <option value="vyhledat">vyhledat (POST /vyhledat)</option>
-              <option value="vytvor">vytvořit (POST)</option>
-              <option value="uprav">upravit (PUT /{id})</option>
-              <option value="obnovit">obnovit (PATCH /{id}/obnovit)</option>
-              <option value="zneplatnit">zneplatnit (PATCH /{id}/zneplatnit)</option>
-              <option value="zpochybnit">zpochybnit (PATCH /{id}/zpochybnit)</option>
-            </select>
+          <div class="sub-panel active" id="szz2-scr-toks">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Kolorektální karcinom – TOKS (test okultního krvácení) + POCT analyzátor (NOVÉ v2).</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2ToksRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum vyš.</label><input type="text" class="date-cs" id="szz2ToksDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Výsledek</label><select id="szz2ToksVysl"><option value="POSITIVNI">POSITIVNÍ</option><option value="NEGATIVNI">NEGATIVNÍ</option><option value="NEPLATNY">NEPLATNÝ</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Typ POCT analyzátoru (kód) <span style="color:#dc2626">v2 NOVÉ</span></label>
+                <input id="szz2ToksPoct" placeholder="kód analyzátoru z číselníku">
+              </div>
+            </div>
           </div>
-          <div class="form-group"><label>ID záznamu</label>
-            <input id="szz2ScreeningId" placeholder="GUID">
+          <div class="sub-panel" id="szz2-scr-mamo">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prsu – mamografické vyšetření.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2MamoRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum vyš.</label><input type="text" class="date-cs" id="szz2MamoDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>BI-RADS</label><select id="szz2MamoBirads"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-biop">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prsu – biopsie.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2BiopRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum biopsie</label><input type="text" class="date-cs" id="szz2BiopDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Výsledek</label><select id="szz2BiopVysl"><option>BENIGNI</option><option>MALIGNI</option><option>NEJASNY</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-cyt">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom děložního hrdla – cytologie (PAP).</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2CytRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum odběru</label><input type="text" class="date-cs" id="szz2CytDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Bethesda</label><select id="szz2CytBeth"><option>NILM</option><option>ASC-US</option><option>LSIL</option><option>HSIL</option><option>AGC</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-hpv">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom děložního hrdla – HPV.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2HpvscrRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum testu</label><input type="text" class="date-cs" id="szz2HpvscrDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Výsledek</label><select id="szz2HpvscrVysl"><option>POSITIVNI</option><option>NEGATIVNI</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-kolp">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Děložní hrdlo – expertní kolposkopie.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2KolpRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum</label><input type="text" class="date-cs" id="szz2KolpDatum" placeholder="d.m.rrrr"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-psa">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prostaty – PSA.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2PsaRid" placeholder="RID" value="3740100325"></div>
+              <div class="form-group"><label>Datum odběru</label><input type="text" class="date-cs" id="szz2PsaDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>PSA hodnota (ng/ml)</label><input type="number" step="0.01" id="szz2PsaHodnota" placeholder="např. 4.5"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-mri">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prostaty – MRI.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2MriRid" placeholder="RID" value="3740100325"></div>
+              <div class="form-group"><label>Datum vyš.</label><input type="text" class="date-cs" id="szz2MriDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>PI-RADS</label><select id="szz2MriPirads"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-ldct">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom plic – LDCT (low-dose CT).</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2LdctRid" placeholder="RID" value="3740100325"></div>
+              <div class="form-group"><label>Datum vyš.</label><input type="text" class="date-cs" id="szz2LdctDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Lung-RADS</label><select id="szz2LdctLrads"><option>1</option><option>2</option><option>3</option><option>4A</option><option>4B</option><option>4X</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-aort">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Aneurysma břišní aorty – USG.</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2AortRid" placeholder="RID" value="3740100325"></div>
+              <div class="form-group"><label>Datum vyš.</label><input type="text" class="date-cs" id="szz2AortDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Průměr aorty (mm)</label><input type="number" id="szz2AortPrumer" placeholder="např. 25"></div>
+            </div>
           </div>
         </div>
-        <div class="form-group"><label>Body (JSON)</label>
-          <textarea id="szz2ScreeningBody" rows="4" placeholder='{"PacientRid":"8754287763"}'>{"PacientRid":"8754287763"}</textarea>
+
+        <div class="card">
+          <div class="card-title">Akce na záznamu screeningu</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 220px"><label>Akce</label>
+              <select id="szz2ScreeningAkce">
+                <option value="vyhledat">📋 Vyhledat seznam</option>
+                <option value="vytvor">➕ Vytvořit (POST)</option>
+                <option value="uprav">✏️ Upravit (PUT /{id})</option>
+                <option value="obnovit">♻️ Obnovit (PATCH /{id}/obnovit)</option>
+                <option value="zneplatnit">❌ Zneplatnit (PATCH /{id}/zneplatnit)</option>
+                <option value="zpochybnit">❓ Zpochybnit (PATCH /{id}/zpochybnit)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>ID záznamu</label><input id="szz2ScreeningId" placeholder="GUID"></div>
+            <button class="btn btn-primary" onclick="szz2ScreeningCall()">Odeslat</button>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body (volitelné)</div>
+          <textarea id="szz2ScreeningBody" rows="3" placeholder='{} = sestaví se z polí výše'></textarea>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2ScreeningResult">-</div></div>
         </div>
-        <button class="btn btn-primary" onclick="szz2ScreeningCall()">Odeslat</button>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2ScreeningResult">-</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Emergentní záznam v2 (alergie, krev. skup., nežádoucí…)</div>
-        <div class="form-row">
-          <div class="form-group" style="flex:0 0 280px">
-            <label>Typ záznamu</label>
-            <select id="szz2EmergTyp">
-              <option value="alergie">alergie (bez CasZjisteni v v2)</option>
-              <option value="krevniSkupina">krevní skupina</option>
-              <option value="nezadouciPrihody">nežádoucí příhody</option>
-              <option value="nezadouciReakce">nežádoucí reakce</option>
-              <option value="nezadouciUcinky">nežádoucí účinky</option>
-              <option value="nezadouciUdalosti">nežádoucí události</option>
-            </select>
+      <!-- Emergentní záznam v2 -->
+      <div class="sub-panel" id="szz2-emerg-panel">
+        <div class="card">
+          <div class="card-title">Emergentní záznam v2 – výběr typu</div>
+          <div style="padding:8px 10px;background:#fef3c7;border-left:3px solid #fcd34d;font-size:11px;color:#78350f;margin-bottom:10px">
+            <strong>v2 BREAKING:</strong> alergie už <strong>nemají atribut <code>CasZjisteni</code></strong> v requestu/response. Ostatní záznamy zůstávají kompatibilní s v1.
           </div>
-          <div class="form-group" style="flex:0 0 200px">
-            <label>Akce</label>
-            <select id="szz2EmergAkce">
-              <option value="vyhledat">vyhledat</option>
-              <option value="vytvor">vytvořit</option>
-              <option value="uprav">upravit (PUT /{id})</option>
-              <option value="obnovit">obnovit</option>
-              <option value="zneplatnit">zneplatnit</option>
-              <option value="zpochybnit">zpochybnit</option>
-            </select>
+          <div class="sub-tabs" id="szz2EmergTabs">
+            <div class="sub-tab active" data-panel="szz2-emerg-alerg">Alergie</div>
+            <div class="sub-tab" data-panel="szz2-emerg-krev">Krevní skupina</div>
+            <div class="sub-tab" data-panel="szz2-emerg-prih">Nežád. příhody</div>
+            <div class="sub-tab" data-panel="szz2-emerg-reak">Nežád. reakce</div>
+            <div class="sub-tab" data-panel="szz2-emerg-ucin">Nežád. účinky</div>
+            <div class="sub-tab" data-panel="szz2-emerg-udal">Nežád. události</div>
           </div>
-          <div class="form-group"><label>ID</label>
-            <input id="szz2EmergId" placeholder="GUID">
+          <div class="sub-panel active" id="szz2-emerg-alerg">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2AlergRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Typ alergenu (kód)</label><input id="szz2AlergTyp" placeholder="např. PENICILIN"></div>
+              <div class="form-group"><label>Závažnost</label><select id="szz2AlergZav"><option value="MIRNA">MÍRNÁ</option><option value="STREDNI">STŘEDNÍ</option><option value="ZAVAZNA">ZÁVAŽNÁ</option><option value="KRITICKA">KRITICKÁ</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Popis</label><input id="szz2AlergPopis" placeholder="popis projevu"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-emerg-krev">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2KrevRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Skupina ABO</label><select id="szz2KrevAbo"><option>A</option><option>B</option><option>AB</option><option>0</option></select></div>
+              <div class="form-group"><label>Rh</label><select id="szz2KrevRh"><option value="POS">RhD+</option><option value="NEG">RhD-</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-emerg-prih">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2PrihRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum příhody</label><input type="text" class="date-cs" id="szz2PrihDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Typ</label><input id="szz2PrihTyp" placeholder="kód typu příhody"></div>
+            </div>
+            <div class="form-group"><label>Popis</label><input id="szz2PrihPopis" placeholder="popis"></div>
+          </div>
+          <div class="sub-panel" id="szz2-emerg-reak">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2ReakRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Substance</label><input id="szz2ReakSubst" placeholder="vyvolávající substance"></div>
+              <div class="form-group"><label>Závažnost</label><select id="szz2ReakZav"><option>MIRNA</option><option>STREDNI</option><option>ZAVAZNA</option></select></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-emerg-ucin">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2UcinRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Léčivá látka (ATC)</label><input id="szz2UcinAtc" placeholder="např. N02BE01"></div>
+              <div class="form-group"><label>Popis</label><input id="szz2UcinPopis" placeholder="popis účinku"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-emerg-udal">
+            <div class="form-row">
+              <div class="form-group"><label>RID</label><input id="szz2UdalRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>Datum události</label><input type="text" class="date-cs" id="szz2UdalDatum" placeholder="d.m.rrrr"></div>
+              <div class="form-group"><label>Typ</label><input id="szz2UdalTyp" placeholder="kód typu události"></div>
+            </div>
           </div>
         </div>
-        <div class="form-group"><label>Body (JSON)</label>
-          <textarea id="szz2EmergBody" rows="4">{"PacientRid":"8754287763"}</textarea>
+
+        <div class="card">
+          <div class="card-title">Akce na emergentním záznamu</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 220px"><label>Akce</label>
+              <select id="szz2EmergAkce">
+                <option value="vyhledat">📋 Vyhledat seznam</option>
+                <option value="vytvor">➕ Vytvořit</option>
+                <option value="uprav">✏️ Upravit (PUT /{id})</option>
+                <option value="obnovit">♻️ Obnovit</option>
+                <option value="zneplatnit">❌ Zneplatnit</option>
+                <option value="zpochybnit">❓ Zpochybnit</option>
+              </select>
+            </div>
+            <div class="form-group"><label>ID</label><input id="szz2EmergId" placeholder="GUID"></div>
+            <button class="btn btn-primary" onclick="szz2EmergCall()">Odeslat</button>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body</div>
+          <textarea id="szz2EmergBody" rows="3" placeholder='{} = sestaví se z polí výše'></textarea>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2EmergResult">-</div></div>
         </div>
-        <button class="btn btn-primary" onclick="szz2EmergCall()">Odeslat</button>
-        <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="szz2EmergResult">-</div></div>
+      </div>
+
+      <!-- Číselníky SZZ v2 -->
+      <div class="sub-panel" id="szz2-cis-panel">
+        <div class="card">
+          <div class="card-title">Číselníky SZZ v2</div>
+          <div class="form-row">
+            <button class="btn btn-primary" onclick="szz2Ciselniky()">Seznam všech číselníků</button>
+            <div class="form-group" style="flex:1"><label>Kód číselníku → položky</label>
+              <input id="szz2CiselnikKod" placeholder="např. typ-alergie">
+            </div>
+            <button class="btn" onclick="szz2CiselnikPolozky()">Položky</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="szz2CiselnikyResult">-</div></div>
       </div>
     </div>
 
@@ -4295,6 +4842,10 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           sledování stavu, stažení nového certifikátu, seznam, CRL.
           Gateway prefix: <code style="color:#fbbf24">/ezca2Certifikaty/api/v1</code>.
         </p>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #475569;font-size:11px;color:#94a3b8">
+          Doporučený workflow: <strong style="color:#fbbf24">1)</strong> Seznam &rarr; <strong style="color:#fbbf24">2)</strong> Vystavit/Obnovit &rarr;
+          <strong style="color:#fbbf24">3)</strong> Sledovat /stav (požadavek je async) &rarr; <strong style="color:#fbbf24">4)</strong> Stáhnout nově vydaný cert.
+        </div>
       </div>
 
       <div class="sub-tabs" style="margin-top:12px">
@@ -4309,12 +4860,17 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- Seznam & detail -->
       <div class="sub-panel active" id="ezca-cert-list-panel">
         <div class="card">
-          <div class="card-title">Seznam certifikátů aktuálního subjektu</div>
+          <div class="card-title">📜 Seznam certifikátů aktuálního subjektu (GET /seznam)</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Vrátí všechny aktivní i neaktivní cert. patřící k client_id, pod kterým je SEZ API přihlášené.
+            Klikněte na řádek v tabulce pro vyplnění ID do detailu / akcí.
+          </p>
           <button class="btn btn-primary" onclick="ezcaCertSeznam()">Načíst seznam</button>
-          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertSeznamResult">-</div></div>
+          <div id="ezcaCertSeznamTable" style="margin-top:10px"></div>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">RAW JSON</span></div><div class="json-box" id="ezcaCertSeznamResult">-</div></div>
         </div>
         <div class="card">
-          <div class="card-title">Detail certifikátu</div>
+          <div class="card-title">🔍 Detail certifikátu (GET /detail)</div>
           <div class="form-row">
             <div class="form-group"><label>Certificate ID</label>
               <input id="ezcaCertDetailId" placeholder="GUID nebo sériové č.">
@@ -4328,22 +4884,48 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- Vystavit / Obnovit -->
       <div class="sub-panel" id="ezca-cert-vystavit-panel">
         <div class="card">
-          <div class="card-title">Vystavit nový EZCA II cert (POST /vystavit)</div>
-          <div class="form-group"><label>Body (JSON dle swagger schema)</label>
-            <textarea id="ezcaCertVystavitBody" rows="8" placeholder='{}'>{"Ico":"25488627","Cn":"KrajskaZdravotniVerejnyTest02","Email":"it@kzcr.eu"}</textarea>
+          <div class="card-title">➕ Vystavit nový EZCA II cert (POST /vystavit)</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Pole vyplňte podle příjemce (PZS). Pravidla MZČR: <code>client_id = ICO_CN</code>.
+          </p>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)">Identifikace PZS</div>
+          <div class="form-row">
+            <div class="form-group"><label>IČO *</label><input id="ezcaCertVystIco" placeholder="25488627" value="25488627"></div>
+            <div class="form-group"><label>CN (název cert.) *</label><input id="ezcaCertVystCn" placeholder="KrajskaZdravotniVerejnyTest02"></div>
+            <div class="form-group"><label>Email kontaktu *</label><input id="ezcaCertVystEmail" placeholder="it@kzcr.eu"></div>
           </div>
-          <button class="btn btn-primary" onclick="ezcaCertVystavit()">Vystavit</button>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">Subjekt cert. (X.509)</div>
+          <div class="form-row">
+            <div class="form-group"><label>Organizace (O)</label><input id="ezcaCertVystOrg" placeholder="Krajská zdravotní, a.s."></div>
+            <div class="form-group"><label>Org. jednotka (OU)</label><input id="ezcaCertVystOu" placeholder="pzs"></div>
+            <div class="form-group"><label>Lokalita (L)</label><input id="ezcaCertVystL" placeholder="Test" value="Test"></div>
+            <div class="form-group"><label>Země (C)</label><input id="ezcaCertVystC" placeholder="CZ" value="CZ"></div>
+          </div>
+          <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body (volitelné, override)</div>
+          <textarea id="ezcaCertVystavitBody" rows="3" placeholder='{} = sestaví se z polí výše'></textarea>
+          <button class="btn btn-primary" onclick="ezcaCertVystavit()" style="margin-top:8px">Vystavit certifikát</button>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertVystavitResult">-</div></div>
         </div>
+
         <div class="card">
-          <div class="card-title">Obnovit cert (PUT /obnovit)</div>
-          <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
+          <div class="card-title">♻️ Obnovit cert (PUT /obnovit)</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
             Vytvoří požadavek na obnovu existujícího EZCA II certifikátu na základě dat původního certu.
+            Cílové datum platnosti se vypočte automaticky (zpravidla +3 měsíce u testovacích, +1 rok u produkčních).
           </p>
-          <div class="form-group"><label>Body (JSON)</label>
-            <textarea id="ezcaCertObnovitBody" rows="6">{"CertifikatId":""}</textarea>
+          <div class="form-row">
+            <div class="form-group"><label>ID původního cert. *</label><input id="ezcaCertObnovitId" placeholder="GUID nebo sériové č."></div>
+            <div class="form-group"><label>Důvod obnovy</label>
+              <select id="ezcaCertObnovitDuvod">
+                <option value="EXPIRACE">Blížící se expirace</option>
+                <option value="ZTRATA_KLICE">Ztráta soukromého klíče</option>
+                <option value="ZMENA_DAT">Změna údajů PZS</option>
+                <option value="JINY">Jiný</option>
+              </select>
+            </div>
           </div>
-          <button class="btn btn-primary" onclick="ezcaCertObnovit()">Obnovit</button>
+          <textarea id="ezcaCertObnovitBody" rows="2" placeholder='{} = sestaví se z polí'></textarea>
+          <button class="btn btn-primary" onclick="ezcaCertObnovit()" style="margin-top:8px">Obnovit cert</button>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertObnovitResult">-</div></div>
         </div>
       </div>
@@ -4351,14 +4933,22 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- Preregistrovat -->
       <div class="sub-panel" id="ezca-cert-preregistrovat-panel">
         <div class="card">
-          <div class="card-title">Preregistrovat (EZCA I → EZCA II)</div>
-          <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
-            Vystaví nový EZCA II cert na základě stávajícího EZCA I certifikátu (jednorázová migrace).
+          <div class="card-title">🔄 Preregistrovat (EZCA I → EZCA II)</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Jednorázová migrace: vystaví nový EZCA II cert na základě stávajícího EZCA I certifikátu.
+            Použijte pro PZS, kteří mají ještě staré certifikáty z první generace EZCA.
           </p>
-          <div class="form-group"><label>Body (JSON)</label>
-            <textarea id="ezcaCertPreregBody" rows="6">{"PuvodniCertifikat":""}</textarea>
+          <div class="form-row">
+            <div class="form-group"><label>Sériové číslo EZCA I cert. *</label><input id="ezcaCertPreregSerial" placeholder="hexadecimální serial"></div>
+            <div class="form-group"><label>SHA-256 původního cert.</label><input id="ezcaCertPreregSha" placeholder="64-znakový hash"></div>
           </div>
-          <button class="btn btn-primary" onclick="ezcaCertPreregistrovat()">Preregistrovat</button>
+          <div class="form-row">
+            <div class="form-group" style="flex:2"><label>PEM/DER původního cert. (Base64, volitelné)</label>
+              <textarea id="ezcaCertPreregPem" rows="3" placeholder="-----BEGIN CERTIFICATE-----..."></textarea>
+            </div>
+          </div>
+          <textarea id="ezcaCertPreregBody" rows="2" placeholder='{} = sestaví se z polí'></textarea>
+          <button class="btn btn-primary" onclick="ezcaCertPreregistrovat()" style="margin-top:8px">Preregistrovat</button>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertPreregResult">-</div></div>
         </div>
       </div>
@@ -4366,11 +4956,28 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- Revokovat -->
       <div class="sub-panel" id="ezca-cert-revokovat-panel">
         <div class="card">
-          <div class="card-title">Revokovat certifikát</div>
-          <div class="form-group"><label>Body (JSON)</label>
-            <textarea id="ezcaCertRevokBody" rows="6">{"CertifikatId":"","DuvodKod":""}</textarea>
+          <div class="card-title">❌ Revokovat certifikát</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            <strong>Nevratná operace</strong>. Revokovaný cert už nepůjde použít k autentizaci.
+            Zařadí se do CRL listu (viz záložka „CRL &amp; chyby").
+          </p>
+          <div class="form-row">
+            <div class="form-group"><label>ID certifikátu *</label><input id="ezcaCertRevokId" placeholder="GUID nebo serial"></div>
+            <div class="form-group"><label>Důvod (RFC 5280)</label>
+              <select id="ezcaCertRevokDuvod">
+                <option value="UNSPECIFIED">unspecified</option>
+                <option value="KEY_COMPROMISE">keyCompromise</option>
+                <option value="CA_COMPROMISE">cACompromise</option>
+                <option value="AFFILIATION_CHANGED">affiliationChanged</option>
+                <option value="SUPERSEDED">superseded</option>
+                <option value="CESSATION_OF_OPERATION">cessationOfOperation</option>
+                <option value="CERTIFICATE_HOLD">certificateHold</option>
+              </select>
+            </div>
           </div>
-          <button class="btn btn-primary" onclick="ezcaCertRevokovat()">Revokovat</button>
+          <div class="form-group"><label>Komentář</label><input id="ezcaCertRevokKomentar" placeholder="Volitelný popis důvodu"></div>
+          <textarea id="ezcaCertRevokBody" rows="2" placeholder='{} = sestaví se z polí'></textarea>
+          <button class="btn btn-primary" onclick="ezcaCertRevokovat()" style="margin-top:8px;background:#dc2626">Revokovat (nevratné)</button>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertRevokResult">-</div></div>
         </div>
       </div>
@@ -4378,21 +4985,25 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- Stav & stažení -->
       <div class="sub-panel" id="ezca-cert-stav-panel">
         <div class="card">
-          <div class="card-title">Zjištění stavu požadavku</div>
+          <div class="card-title">⏳ Zjištění stavu požadavku</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Vytvořené požadavky (vystavit/preregistrovat/obnovit) probíhají asynchronně.
+            Tímto sledujte jejich stav, dokud nejsou ve stavu <code>HOTOVO</code>.
+          </p>
           <div class="form-row">
-            <div class="form-group"><label>Request ID</label>
-              <input id="ezcaCertStavReqId" placeholder="GUID požadavku">
-            </div>
-            <button class="btn btn-primary" onclick="ezcaCertStav()">Stav</button>
+            <div class="form-group"><label>Request ID</label><input id="ezcaCertStavReqId" placeholder="GUID požadavku"></div>
+            <button class="btn btn-primary" onclick="ezcaCertStav()">Zjistit stav</button>
           </div>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertStavResult">-</div></div>
         </div>
+
         <div class="card">
-          <div class="card-title">Stažení vystaveného certifikátu</div>
+          <div class="card-title">⬇️ Stažení vystaveného certifikátu</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Po dokončení požadavku stáhněte vydaná data certifikátu (typicky veřejný klíč v PEM/DER formátu).
+          </p>
           <div class="form-row">
-            <div class="form-group"><label>Request ID</label>
-              <input id="ezcaCertStahnoutReqId" placeholder="GUID požadavku">
-            </div>
+            <div class="form-group"><label>Request ID</label><input id="ezcaCertStahnoutReqId" placeholder="GUID požadavku"></div>
             <button class="btn btn-primary" onclick="ezcaCertStahnout()">Stáhnout</button>
           </div>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertStahnoutResult">-</div></div>
@@ -4402,13 +5013,19 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- CRL & chyby -->
       <div class="sub-panel" id="ezca-cert-crl-panel">
         <div class="card">
-          <div class="card-title">CRL – seznam revokovaných certifikátů</div>
-          <button class="btn btn-primary" onclick="ezcaCertCrlList()">Načíst CRL list</button>
+          <div class="card-title">📋 CRL – seznam revokovaných certifikátů</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Vrátí kompletní Certificate Revocation List subjektu (sériová čísla revokovaných cert + datumy revokace).
+          </p>
+          <button class="btn btn-primary" onclick="ezcaCertCrlList()">Načíst CRL</button>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertCrlResult">-</div></div>
         </div>
         <div class="card">
-          <div class="card-title">Číselník chyb</div>
-          <button class="btn" onclick="ezcaCertSeznamChyb()">Seznam chyb</button>
+          <div class="card-title">⚠️ Číselník chyb</div>
+          <p style="font-size:12px;color:var(--fg3);margin-bottom:10px">
+            Seznam možných chybových stavů, které mohou nastat během lifecycle operací.
+          </p>
+          <button class="btn btn-primary" onclick="ezcaCertSeznamChyb()">Seznam chyb</button>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertChybyResult">-</div></div>
         </div>
       </div>
@@ -10852,7 +11469,7 @@ async function ds4GenerateAndValidate() {
 }
 
 // ===========================================================================
-// KRP v3.0.0 (NOVÁ MAJOR – paralelně k v2)
+// HELPERS pro nové sekce (KRP v3 / SZZ v2 / RO NCPeH / EZCA cert)
 // ===========================================================================
 function _parseJson(elemId, fallback) {
   const v = document.getElementById(elemId).value.trim();
@@ -10862,46 +11479,197 @@ function _parseJson(elemId, fallback) {
 function _showJson(elemId, data) {
   document.getElementById(elemId).textContent = JSON.stringify(data, null, 2);
 }
+function _val(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function _setVal(id, v) { const e = document.getElementById(id); if (e) e.value = v; }
+// Pokud má textarea s _bodyOverride hodnotu, použije ji; jinak vrátí body sestavený z polí
+function _bodyOrOverride(overrideId, builtBody) {
+  const ov = document.getElementById(overrideId);
+  if (ov && ov.value.trim()) {
+    try { return JSON.parse(ov.value); } catch (e) { toast('Chybný JSON v override: ' + e.message, true); throw e; }
+  }
+  return builtBody;
+}
+// Převede d.m.rrrr → yyyy-mm-dd (pro KRP v3 atd.)
+function _csDateToIso(s) {
+  s = (s || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!m) return s; // nech jak je (může už být ISO)
+  return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+}
 
-async function krp3Search() {
-  const typ = document.getElementById('krp3SearchType').value;
-  let body;
-  try { body = _parseJson('krp3SearchBody', {}); } catch { return; }
-  const r = await api('POST', '/api/krp3/hledat/' + typ, body);
+// Aktivovat sub-tab podle data-panel id (uvnitř sec-* sekce)
+function _activateSubTabById(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const section = panel.closest('.section');
+  if (!section) return;
+  const tabsContainer = section.querySelector('.sub-tabs');
+  if (!tabsContainer) return;
+  // klikat na tab který má data-panel = panelId
+  const tab = section.querySelector(`.sub-tab[data-panel="${panelId}"]`);
+  if (tab) tab.click();
+}
+function krp3QuickTab(panelId) {
+  // top-level tab "Hledat" + vnořený panel
+  _activateSubTabById('krp3-search-panel');
+  setTimeout(() => _activateSubTabById(panelId), 50);
+}
+function szz2QuickTab(panelId) { _activateSubTabById(panelId); }
+
+// ===========================================================================
+// KRP v3.0.0 – Hledání pacienta
+// ===========================================================================
+async function krp3HledatRid() {
+  const rid = _val('krp3Rid');
+  if (!rid) { toast('Zadejte RID', true); return; }
+  const r = await api('POST', '/api/krp3/hledat/rid', { Rid: rid, Ucel: _val('krp3Ucel') });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatJmeno() {
+  const r = await api('POST', '/api/krp3/hledat/jmeno_prijmeni_rc', {
+    Jmeno: _val('krp3Jmeno'), Prijmeni: _val('krp3Prijmeni'), RodneCislo: _val('krp3Rc')
+  });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatJmenoDn() {
+  const r = await api('POST', '/api/krp3/hledat/jmeno_prijmeni_datum_narozeni', {
+    Jmeno: _val('krp3JmenoDnJ'), Prijmeni: _val('krp3JmenoDnP'),
+    DatumNarozeni: _csDateToIso(_val('krp3JmenoDnDn'))
+  });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatJmenoCp() {
+  const r = await api('POST', '/api/krp3/hledat/jmeno_prijmeni_cp', {
+    Jmeno: _val('krp3JmenoCpJ'), Prijmeni: _val('krp3JmenoCpP'), CisloPojistence: _val('krp3JmenoCpCp')
+  });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatCizinec() {
+  const r = await api('POST', '/api/krp3/hledat/cizinec_cp', {
+    CisloPojistence: _val('krp3CizCp'), Stat: _val('krp3CizStat')
+  });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatDoklady() {
+  const r = await api('POST', '/api/krp3/hledat/doklady', {
+    DruhDokladuKod: _val('krp3DokTyp'), CisloDokladu: _val('krp3DokCislo'), Stat: _val('krp3DokStat')
+  });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatNiabsi() {
+  const r = await api('POST', '/api/krp3/hledat/niabsi', { Bsi: _val('krp3Niabsi') });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatUni() {
+  const r = await api('POST', '/api/krp3/hledat/uni', { Uni: _val('krp3Uni') });
+  _showJson('krp3SearchResult', r);
+}
+async function krp3HledatAifo() {
+  const r = await api('POST', '/api/krp3/hledat/aifoulozenka', { Aifo: _val('krp3Aifo') });
   _showJson('krp3SearchResult', r);
 }
 
-function krp3FillExample() {
-  const typ = document.getElementById('krp3SearchType').value;
-  const examples = {
-    'rid': '{"Rid":"8754287763"}',
-    'jmeno_prijmeni_rc': '{"Jmeno":"Petra","Prijmeni":"Noskova","RodneCislo":"8159260010"}',
-    'jmeno_prijmeni_datum_narozeni': '{"Jmeno":"Vilemina","Prijmeni":"Zasnezena","DatumNarozeni":"1971-06-07"}',
-    'jmeno_prijmeni_cp': '{"Jmeno":"Petra","Prijmeni":"Noskova","CisloPasu":""}',
-    'cizinec_cp': '{"Jmeno":"","Prijmeni":"","CisloPasu":""}',
-    'doklady': '{"DruhDokladuKod":"","CisloDokladu":""}',
-    'historie_pojisteni': '{"Rid":"8754287763"}',
-    'historie_lekaru': '{"Rid":"8754287763"}',
-    'mapovani_rid': '{"Rid":"8754287763"}',
-    'niabsi': '{"Bsi":""}',
-    'uni': '{"UniKod":""}',
-    'aifoulozenka': '{"Aifo":""}',
+// KRP v3 – Historie
+async function krp3HistPojisteni() {
+  const r = await api('POST', '/api/krp3/hledat/historie_pojisteni', { Rid: _val('krp3HistPojRid') });
+  _showJson('krp3HistResult', r);
+}
+async function krp3HistLekaru() {
+  const r = await api('POST', '/api/krp3/hledat/historie_lekaru', { Rid: _val('krp3HistLekRid') });
+  _showJson('krp3HistResult', r);
+}
+
+// KRP v3 – Správa
+async function krp3Zalozit() {
+  const built = {
+    Jmeno: _val('krp3ZalJmeno'),
+    Prijmeni: _val('krp3ZalPrijmeni'),
+    DatumNarozeni: _csDateToIso(_val('krp3ZalDn')),
+    RodneCislo: _val('krp3ZalRc') || undefined,
+    Pohlavi: _val('krp3ZalPohlavi'),
+    StatniObcanstvi: _val('krp3ZalStat') || 'CZ',
   };
-  document.getElementById('krp3SearchBody').value = examples[typ] || '{}';
+  let body; try { body = _bodyOrOverride('krp3ZalBodyOverride', built); } catch { return; }
+  const r = await api('POST', '/api/krp3/zalozit', body);
+  _showJson('krp3SpravaResult', r);
+}
+async function krp3Zmenit() {
+  const built = {
+    Rid: _val('krp3ZmenRid'),
+    Jmeno: _val('krp3ZmenJmeno') || undefined,
+    Prijmeni: _val('krp3ZmenPrijmeni') || undefined,
+  };
+  let body; try { body = _bodyOrOverride('krp3ZmenBodyOverride', built); } catch { return; }
+  const r = await api('POST', '/api/krp3/zmenit', body);
+  _showJson('krp3SpravaResult', r);
+}
+async function krp3Reklamace() {
+  const body = { Rid: _val('krp3ReklRid'), Atribut: _val('krp3ReklAtr'), Duvod: _val('krp3ReklDuvod') };
+  const rr = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/reklamuj/udaj', body });
+  _showJson('krp3SpravaResult', rr);
+}
+async function krp3Zadost() {
+  const akce = _val('krp3ZadostAkce');
+  let body; try { body = _parseJson('krp3ZadostBody', {}); } catch { return; }
+  const r = await api('POST', '/api/raw', { method: 'POST', path: `/krp/api/v3/pacient/${akce}/zadost`, body });
+  _showJson('krp3SpravaResult', r);
 }
 
-async function krp3Ciselnik() {
-  const nazev = document.getElementById('krp3CiselnikName').value;
-  const r = await api('POST', '/api/krp3/ciselnik/' + nazev, {});
-  _showJson('krp3CiselnikResult', r);
+// KRP v3 – Hromadné
+async function krp3HromZadost() {
+  let body; try { body = _parseJson('krp3HromZadostBody', {}); } catch { return; }
+  const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/ztotoznihromadne/zadost', body });
+  _showJson('krp3HromResult', r);
+}
+async function krp3HromVysledky() {
+  const id = _val('krp3HromVyslId');
+  const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/ztotoznihromadne/vysledky', body: { ZadostId: id } });
+  _showJson('krp3HromResult', r);
+}
+async function krp3HromSoubor() {
+  const id = _val('krp3HromVyslId');
+  const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/ztotoznihromadne/vysledky/soubor', body: { ZadostId: id } });
+  _showJson('krp3HromResult', r);
 }
 
-async function krp3Notif() {
-  const akce = document.getElementById('krp3NotifAkce').value;
-  let body;
-  try { body = _parseJson('krp3NotifBody', {}); } catch { return; }
-  const r = await api('POST', '/api/krp3/notifikace/' + akce, body);
+// KRP v3 – DRID
+async function krp3DridGenerovat() {
+  const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/generovat/docasny_rid', body: { Pocet: parseInt(_val('krp3DridPocet') || '1', 10) } });
+  _showJson('krp3DridResult', r);
+}
+async function krp3DridPriradit() {
+  const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/priradit/docasny_rid', body: { DocasnyRid: _val('krp3DridDocasny'), Rid: _val('krp3DridSkutecny') } });
+  _showJson('krp3DridResult', r);
+}
+async function krp3MapovaniRid() {
+  const r = await api('POST', '/api/krp3/hledat/mapovani_rid', { Rid: _val('krp3MapRid') });
+  _showJson('krp3DridResult', r);
+}
+
+// KRP v3 – Notifikace
+async function krp3NotifVyhledat() {
+  let body; try { body = _parseJson('krp3NotifVyhBody', {}); } catch { return; }
+  const r = await api('POST', '/api/krp3/notifikace/vyhledat', body);
   _showJson('krp3NotifResult', r);
+}
+async function krp3NotifZalozit() {
+  const built = { Rid: _val('krp3NotifZalRid'), CallbackUrl: _val('krp3NotifZalUrl') };
+  let body; try { body = _bodyOrOverride('krp3NotifZalBody', built); } catch { return; }
+  const r = await api('POST', '/api/krp3/notifikace/zalozit', body);
+  _showJson('krp3NotifResult', r);
+}
+async function krp3NotifZrusit() {
+  let body; try { body = _parseJson('krp3NotifZrusBody', {}); } catch { return; }
+  const r = await api('POST', '/api/krp3/notifikace/zrusit', body);
+  _showJson('krp3NotifResult', r);
+}
+
+// KRP v3 – Číselník
+async function krp3Ciselnik() {
+  const nazev = _val('krp3CisName');
+  const r = await api('POST', '/api/krp3/ciselnik/' + nazev, {});
+  _showJson('krp3CisResult', r);
 }
 
 // ===========================================================================
@@ -10909,47 +11677,55 @@ async function krp3Notif() {
 // ===========================================================================
 async function roNcpehOver() {
   const params = new URLSearchParams();
-  const rid = document.getElementById('roNcpehRid').value.trim();
-  const stat = document.getElementById('roNcpehStat').value.trim();
-  const td = document.getElementById('roNcpehTypDok').value.trim();
+  const rid = _val('roNcpehRid');
+  const stat = _val('roNcpehStat');
+  const td = _val('roNcpehTypDok');
+  const size = _val('roNcpehSize');
   if (rid) params.set('OpravnujiciOsoba.Identifikator', rid);
   if (stat) params.set('OpravnenaOsoba.StatEHP', stat);
   if (td) params.set('TypDokumentaceKod', td);
+  if (size) params.set('size', size);
   const r = await api('GET', '/api/ro-ncpeh/over' + (params.toString() ? '?' + params.toString() : ''));
   _showJson('roNcpehOverResult', r);
 }
-
 async function roNcpehSluzbyEz() {
   const r = await api('GET', '/api/ro-ncpeh/sluzby-ez');
-  _showJson('roNcpehCiselnikResult', r);
+  _showJson('roNcpehSluzbyResult', r);
 }
-
+async function roNcpehSluzbaDetail() {
+  const id = _val('roNcpehSluzbaId');
+  if (!id) { toast('Zadejte ID služby', true); return; }
+  const r = await api('GET', '/api/ro-ncpeh/sluzby-ez/' + encodeURIComponent(id));
+  _showJson('roNcpehSluzbyResult', r);
+}
 async function roNcpehTypyDok() {
   const r = await api('GET', '/api/ro-ncpeh/typy-dokumentaci');
-  _showJson('roNcpehCiselnikResult', r);
+  _showJson('roNcpehTypyResult', r);
+}
+async function roNcpehTypDetail() {
+  const id = _val('roNcpehTypId');
+  if (!id) { toast('Zadejte ID typu dokumentace', true); return; }
+  const r = await api('GET', '/api/ro-ncpeh/typy-dokumentaci/' + encodeURIComponent(id));
+  _showJson('roNcpehTypyResult', r);
 }
 
 // ===========================================================================
-// SZZ v2.0.1 – Prevence + Screeningy + Emergentní záznam v2
+// SZZ v2.0.1 – Souhrnné
 // ===========================================================================
 async function szz2VyhledatPrevence() {
-  const rid = document.getElementById('szz2RidSouhrn').value.trim();
-  const r = await api('POST', '/api/szz2/prevence/vyhledat', { PacientRid: rid });
+  const r = await api('POST', '/api/szz2/prevence/vyhledat', { PacientRid: _val('szz2RidSouhrn') });
   _showJson('szz2SouhrnResult', r);
 }
 async function szz2VyhledatScreeningy() {
-  const rid = document.getElementById('szz2RidSouhrn').value.trim();
-  const r = await api('POST', '/api/szz2/screeningy/vyhledat', { PacientRid: rid });
+  const r = await api('POST', '/api/szz2/screeningy/vyhledat', { PacientRid: _val('szz2RidSouhrn') });
   _showJson('szz2SouhrnResult', r);
 }
 async function szz2VyhledatEmergentni() {
-  const rid = document.getElementById('szz2RidSouhrn').value.trim();
-  const r = await api('POST', '/api/szz2/emergentni/vyhledat', { PacientRid: rid });
+  const r = await api('POST', '/api/szz2/emergentni/vyhledat', { PacientRid: _val('szz2RidSouhrn') });
   _showJson('szz2SouhrnResult', r);
 }
 async function szz2EmergentniPdf() {
-  const rid = document.getElementById('szz2RidSouhrn').value.trim();
-  const r = await api('POST', '/api/szz2/emergentni/pdf', { PacientRid: rid });
+  const r = await api('POST', '/api/szz2/emergentni/pdf', { PacientRid: _val('szz2RidSouhrn') });
   _showJson('szz2SouhrnResult', r);
 }
 
@@ -10958,18 +11734,136 @@ async function szz2Ciselniky() {
   _showJson('szz2CiselnikyResult', r);
 }
 async function szz2CiselnikPolozky() {
-  const kod = document.getElementById('szz2CiselnikKod').value.trim();
+  const kod = _val('szz2CiselnikKod');
   if (!kod) { toast('Zadejte kód číselníku', true); return; }
   const r = await api('GET', '/api/szz2/ciselniky/' + encodeURIComponent(kod) + '/polozky');
   _showJson('szz2CiselnikyResult', r);
 }
 
-async function _szz2GenericCall(modul, typSel, akceSel, idSel, bodySel, resultSel) {
-  const typ = document.getElementById(typSel).value;
-  const akce = document.getElementById(akceSel).value;
-  const id = document.getElementById(idSel).value.trim();
+// SZZ v2 – sestavovače body podle aktivního sub-tabu
+function _szz2GetActiveSubPanel(parentPanelId) {
+  const parent = document.getElementById(parentPanelId);
+  if (!parent) return null;
+  // hledá nested .sub-panel.active uvnitř karet parent panelu
+  const card = parent.querySelector('.card');
+  if (!card) return null;
+  const active = card.querySelector('.sub-panel.active');
+  return active ? active.id : null;
+}
+function _szz2BuildPrevenceBody() {
+  const sub = _szz2GetActiveSubPanel('szz2-prevence-panel');
+  const map = {
+    'szz2-prev-kvr': () => ({ typ: 'kardiovaskularniRizika', body: {
+      PacientRid: _val('szz2KvrRid'),
+      DatumVysetreni: _csDateToIso(_val('szz2KvrDatum')),
+      Skore: parseFloat(_val('szz2KvrSkore') || '0'),
+      RizikovaKategorie: _val('szz2KvrKat'),
+      Poznamka: _val('szz2KvrPozn') || undefined,
+    }}),
+    'szz2-prev-hpv': () => ({ typ: 'ockovaniHpv', body: {
+      PacientRid: _val('szz2HpvRid'),
+      DatumAplikace: _csDateToIso(_val('szz2HpvDatum')),
+      Davka: parseInt(_val('szz2HpvDavka') || '1', 10),
+      VakcinaKodSukl: _val('szz2HpvVakcina'),
+    }}),
+    'szz2-prev-pp': () => ({ typ: 'preventivniProhlidky', body: {
+      PacientRid: _val('szz2PpRid'),
+      DatumProhlidky: _csDateToIso(_val('szz2PpDatum')),
+      Zaver: _val('szz2PpZaver'),
+    }}),
+    'szz2-prev-ppg': () => ({ typ: 'preventivniProhlidkyGynekologie', body: {
+      PacientRid: _val('szz2PpgRid'),
+      DatumProhlidky: _csDateToIso(_val('szz2PpgDatum')),
+    }}),
+    'szz2-prev-ppldd': () => ({ typ: 'preventivniProhlidkyPldd', body: {
+      PacientRid: _val('szz2PplddRid'),
+      DatumProhlidky: _csDateToIso(_val('szz2PplddDatum')),
+      VekovyLimitMesice: parseInt(_val('szz2PplddVek') || '0', 10) || undefined,
+    }}),
+  };
+  return map[sub] ? map[sub]() : { typ: 'kardiovaskularniRizika', body: {} };
+}
+function _szz2BuildScreeningBody() {
+  const sub = _szz2GetActiveSubPanel('szz2-screening-panel');
+  const map = {
+    'szz2-scr-toks': () => ({ typ: 'kolorektalniKarcinomToks', body: {
+      PacientRid: _val('szz2ToksRid'), DatumVysetreni: _csDateToIso(_val('szz2ToksDatum')),
+      Vysledek: _val('szz2ToksVysl'), TypPoctAnalyzatoru: _val('szz2ToksPoct') || undefined,
+    }}),
+    'szz2-scr-mamo': () => ({ typ: 'karcinomPrsuMamografie', body: {
+      PacientRid: _val('szz2MamoRid'), DatumVysetreni: _csDateToIso(_val('szz2MamoDatum')),
+      BiRads: _val('szz2MamoBirads'),
+    }}),
+    'szz2-scr-biop': () => ({ typ: 'karcinomPrsuBiopsie', body: {
+      PacientRid: _val('szz2BiopRid'), DatumBiopsie: _csDateToIso(_val('szz2BiopDatum')),
+      Vysledek: _val('szz2BiopVysl'),
+    }}),
+    'szz2-scr-cyt': () => ({ typ: 'karcinomDeloznihoHrdlaCytologie', body: {
+      PacientRid: _val('szz2CytRid'), DatumOdberu: _csDateToIso(_val('szz2CytDatum')),
+      Bethesda: _val('szz2CytBeth'),
+    }}),
+    'szz2-scr-hpv': () => ({ typ: 'karcinomDDeloznihoHrdlaHpv', body: {
+      PacientRid: _val('szz2HpvscrRid'), DatumTestu: _csDateToIso(_val('szz2HpvscrDatum')),
+      Vysledek: _val('szz2HpvscrVysl'),
+    }}),
+    'szz2-scr-kolp': () => ({ typ: 'karcinomDeloznihoHrdlaExpertniKolposkopie', body: {
+      PacientRid: _val('szz2KolpRid'), DatumVysetreni: _csDateToIso(_val('szz2KolpDatum')),
+    }}),
+    'szz2-scr-psa': () => ({ typ: 'karcinomProstatyPsa', body: {
+      PacientRid: _val('szz2PsaRid'), DatumOdberu: _csDateToIso(_val('szz2PsaDatum')),
+      HodnotaNgMl: parseFloat(_val('szz2PsaHodnota') || '0'),
+    }}),
+    'szz2-scr-mri': () => ({ typ: 'karcinomProstatyMri', body: {
+      PacientRid: _val('szz2MriRid'), DatumVysetreni: _csDateToIso(_val('szz2MriDatum')),
+      PiRads: _val('szz2MriPirads'),
+    }}),
+    'szz2-scr-ldct': () => ({ typ: 'karcinomPlicLdct', body: {
+      PacientRid: _val('szz2LdctRid'), DatumVysetreni: _csDateToIso(_val('szz2LdctDatum')),
+      LungRads: _val('szz2LdctLrads'),
+    }}),
+    'szz2-scr-aort': () => ({ typ: 'aneurysmaAbdominalniAortyUsg', body: {
+      PacientRid: _val('szz2AortRid'), DatumVysetreni: _csDateToIso(_val('szz2AortDatum')),
+      PrumerMm: parseInt(_val('szz2AortPrumer') || '0', 10),
+    }}),
+  };
+  return map[sub] ? map[sub]() : { typ: 'kolorektalniKarcinomToks', body: {} };
+}
+function _szz2BuildEmergBody() {
+  const sub = _szz2GetActiveSubPanel('szz2-emerg-panel');
+  const map = {
+    'szz2-emerg-alerg': () => ({ typ: 'alergie', body: {
+      PacientRid: _val('szz2AlergRid'), TypAlergenu: _val('szz2AlergTyp'),
+      Zavaznost: _val('szz2AlergZav'), Popis: _val('szz2AlergPopis') || undefined,
+      // POZOR: v2 už NEMÁ CasZjisteni
+    }}),
+    'szz2-emerg-krev': () => ({ typ: 'krevniSkupina', body: {
+      PacientRid: _val('szz2KrevRid'), SkupinaAbo: _val('szz2KrevAbo'), RhFaktor: _val('szz2KrevRh'),
+    }}),
+    'szz2-emerg-prih': () => ({ typ: 'nezadouciPrihody', body: {
+      PacientRid: _val('szz2PrihRid'), DatumPrihody: _csDateToIso(_val('szz2PrihDatum')),
+      Typ: _val('szz2PrihTyp'), Popis: _val('szz2PrihPopis') || undefined,
+    }}),
+    'szz2-emerg-reak': () => ({ typ: 'nezadouciReakce', body: {
+      PacientRid: _val('szz2ReakRid'), Substance: _val('szz2ReakSubst'), Zavaznost: _val('szz2ReakZav'),
+    }}),
+    'szz2-emerg-ucin': () => ({ typ: 'nezadouciUcinky', body: {
+      PacientRid: _val('szz2UcinRid'), AtcKod: _val('szz2UcinAtc'), Popis: _val('szz2UcinPopis') || undefined,
+    }}),
+    'szz2-emerg-udal': () => ({ typ: 'nezadouciUdalosti', body: {
+      PacientRid: _val('szz2UdalRid'), DatumUdalosti: _csDateToIso(_val('szz2UdalDatum')),
+      Typ: _val('szz2UdalTyp'),
+    }}),
+  };
+  return map[sub] ? map[sub]() : { typ: 'alergie', body: {} };
+}
+
+async function _szz2DoCall(modul, builder, idSel, akceSel, overrideId, resultSel) {
+  const akce = _val(akceSel);
+  const id = _val(idSel);
+  const built = builder();
+  const typ = built.typ;
   let body;
-  try { body = _parseJson(bodySel, {}); } catch { return; }
+  try { body = _bodyOrOverride(overrideId, built.body); } catch { return; }
   let path, method;
   if (akce === 'vytvor') { path = `/api/szz2/${modul}/${typ}`; method = 'POST'; }
   else if (akce === 'vyhledat') { path = `/api/szz2/${modul}/${typ}/vyhledat`; method = 'POST'; }
@@ -10983,9 +11877,9 @@ async function _szz2GenericCall(modul, typSel, akceSel, idSel, bodySel, resultSe
   const r = await api(method, path, body);
   _showJson(resultSel, r);
 }
-function szz2PrevenceCall() { return _szz2GenericCall('prevence', 'szz2PrevenceTyp', 'szz2PrevenceAkce', 'szz2PrevenceId', 'szz2PrevenceBody', 'szz2PrevenceResult'); }
-function szz2ScreeningCall() { return _szz2GenericCall('screeningy', 'szz2ScreeningTyp', 'szz2ScreeningAkce', 'szz2ScreeningId', 'szz2ScreeningBody', 'szz2ScreeningResult'); }
-function szz2EmergCall() { return _szz2GenericCall('emergentniZaznam', 'szz2EmergTyp', 'szz2EmergAkce', 'szz2EmergId', 'szz2EmergBody', 'szz2EmergResult'); }
+function szz2PrevenceCall() { return _szz2DoCall('prevence', _szz2BuildPrevenceBody, 'szz2PrevenceId', 'szz2PrevenceAkce', 'szz2PrevenceBody', 'szz2PrevenceResult'); }
+function szz2ScreeningCall() { return _szz2DoCall('screeningy', _szz2BuildScreeningBody, 'szz2ScreeningId', 'szz2ScreeningAkce', 'szz2ScreeningBody', 'szz2ScreeningResult'); }
+function szz2EmergCall() { return _szz2DoCall('emergentniZaznam', _szz2BuildEmergBody, 'szz2EmergId', 'szz2EmergAkce', 'szz2EmergBody', 'szz2EmergResult'); }
 
 // ===========================================================================
 // EZCA II – Správa certifikátů v1.0.2
@@ -10993,41 +11887,96 @@ function szz2EmergCall() { return _szz2GenericCall('emergentniZaznam', 'szz2Emer
 async function ezcaCertSeznam() {
   const r = await api('GET', '/api/ezca-cert/seznam');
   _showJson('ezcaCertSeznamResult', r);
+  // pokus se postavit tabulku z odpovědi
+  const tableDiv = document.getElementById('ezcaCertSeznamTable');
+  if (!tableDiv) return;
+  const items = r && r.response ? (Array.isArray(r.response) ? r.response : (r.response.items || r.response.data || [])) : [];
+  if (Array.isArray(items) && items.length) {
+    let html = '<table style="font-size:12px"><thead><tr><th>ID</th><th>CN</th><th>Sériové č.</th><th>Platnost do</th><th>Stav</th><th>Akce</th></tr></thead><tbody>';
+    items.forEach(it => {
+      const id = it.id || it.Id || it.certificateId || it.CertifikatId || '';
+      const cn = it.cn || it.CN || it.subject || '';
+      const sn = it.sn || it.SerialNumber || it.SerioveCislo || '';
+      const validTo = it.validTo || it.PlatnostDo || it.notAfter || '';
+      const status = it.status || it.Stav || '';
+      html += `<tr>
+        <td><code style="font-size:10px">${String(id).substring(0,16)}…</code></td>
+        <td>${cn}</td><td>${sn}</td><td>${validTo}</td><td>${status}</td>
+        <td>
+          <button class="chip" onclick="_ezcaCertFill('${id}')">Použít ID</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    tableDiv.innerHTML = html;
+  } else {
+    tableDiv.innerHTML = '';
+  }
+}
+function _ezcaCertFill(id) {
+  ['ezcaCertDetailId','ezcaCertObnovitId','ezcaCertRevokId'].forEach(x => _setVal(x, id));
+  toast('ID předvyplněno do detailu / obnovit / revokovat');
 }
 async function ezcaCertDetail() {
-  const id = document.getElementById('ezcaCertDetailId').value.trim();
+  const id = _val('ezcaCertDetailId');
   if (!id) { toast('Zadejte Certificate ID', true); return; }
   const r = await api('GET', '/api/ezca-cert/detail/' + encodeURIComponent(id));
   _showJson('ezcaCertDetailResult', r);
 }
 async function ezcaCertVystavit() {
-  let body; try { body = _parseJson('ezcaCertVystavitBody', {}); } catch { return; }
+  const built = {
+    Ico: _val('ezcaCertVystIco'),
+    Cn: _val('ezcaCertVystCn'),
+    Email: _val('ezcaCertVystEmail'),
+    Subjekt: {
+      O: _val('ezcaCertVystOrg') || undefined,
+      OU: _val('ezcaCertVystOu') || undefined,
+      L: _val('ezcaCertVystL') || 'Test',
+      C: _val('ezcaCertVystC') || 'CZ',
+    },
+  };
+  let body; try { body = _bodyOrOverride('ezcaCertVystavitBody', built); } catch { return; }
   const r = await api('POST', '/api/ezca-cert/vystavit', body);
   _showJson('ezcaCertVystavitResult', r);
 }
 async function ezcaCertObnovit() {
-  let body; try { body = _parseJson('ezcaCertObnovitBody', {}); } catch { return; }
+  const built = {
+    CertifikatId: _val('ezcaCertObnovitId'),
+    Duvod: _val('ezcaCertObnovitDuvod'),
+  };
+  let body; try { body = _bodyOrOverride('ezcaCertObnovitBody', built); } catch { return; }
   const r = await api('PUT', '/api/ezca-cert/obnovit', body);
   _showJson('ezcaCertObnovitResult', r);
 }
 async function ezcaCertPreregistrovat() {
-  let body; try { body = _parseJson('ezcaCertPreregBody', {}); } catch { return; }
+  const built = {
+    SerioveCislo: _val('ezcaCertPreregSerial'),
+    Sha256: _val('ezcaCertPreregSha') || undefined,
+    Certifikat: _val('ezcaCertPreregPem') || undefined,
+  };
+  let body; try { body = _bodyOrOverride('ezcaCertPreregBody', built); } catch { return; }
   const r = await api('POST', '/api/ezca-cert/preregistrovat', body);
   _showJson('ezcaCertPreregResult', r);
 }
 async function ezcaCertRevokovat() {
-  let body; try { body = _parseJson('ezcaCertRevokBody', {}); } catch { return; }
+  const built = {
+    CertifikatId: _val('ezcaCertRevokId'),
+    DuvodKod: _val('ezcaCertRevokDuvod'),
+    Komentar: _val('ezcaCertRevokKomentar') || undefined,
+  };
+  let body; try { body = _bodyOrOverride('ezcaCertRevokBody', built); } catch { return; }
+  if (!confirm('Skutečně chcete revokovat certifikát ' + built.CertifikatId + '?\nOperace je NEVRATNÁ.')) return;
   const r = await api('POST', '/api/ezca-cert/revokovat', body);
   _showJson('ezcaCertRevokResult', r);
 }
 async function ezcaCertStav() {
-  const id = document.getElementById('ezcaCertStavReqId').value.trim();
+  const id = _val('ezcaCertStavReqId');
   if (!id) { toast('Zadejte Request ID', true); return; }
   const r = await api('GET', '/api/ezca-cert/stav/' + encodeURIComponent(id));
   _showJson('ezcaCertStavResult', r);
 }
 async function ezcaCertStahnout() {
-  const id = document.getElementById('ezcaCertStahnoutReqId').value.trim();
+  const id = _val('ezcaCertStahnoutReqId');
   if (!id) { toast('Zadejte Request ID', true); return; }
   const r = await api('GET', '/api/ezca-cert/stahnout/' + encodeURIComponent(id));
   _showJson('ezcaCertStahnoutResult', r);
@@ -11045,7 +11994,12 @@ async function ezcaCertSeznamChyb() {
 // EZCA II proxy timestamp (NOVÉ v1.0.7)
 // ===========================================================================
 async function ezcaProxyTimestamp(asyncMode) {
-  let body; try { body = _parseJson('ezcaProxyTsBody', {}); } catch { return; }
+  const built = {
+    hash: _val('ezcaProxyTsHash'),
+    algoritmus: _val('ezcaProxyTsAlg') || 'SHA256',
+    tsaUrl: _val('ezcaProxyTsUrl') || undefined,
+  };
+  let body; try { body = _bodyOrOverride('ezcaProxyTsBody', built); } catch { return; }
   const path = asyncMode ? '/api/ezca/stamp-proxy-timestamp-async' : '/api/ezca/stamp-proxy-timestamp';
   const r = await api('POST', path, body);
   _showJson('ezcaProxyTsResult', r);
