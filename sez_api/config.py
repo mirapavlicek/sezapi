@@ -28,12 +28,23 @@ HOST = env("SEZ_HOST", "0.0.0.0")
 PORT = int(env("SEZ_PORT", "8004"))
 WORKERS = int(env("SEZ_WORKERS", "1"))
 
+# Interní API (ztotožnění → RID). Když je SEZ_INTERNAL_API_KEY neprázdné,
+# vyžaduje se hlavička X-Api-Key. Prázdné = bez ochrany (jen interní síť).
+INTERNAL_API_KEY = env("SEZ_INTERNAL_API_KEY", "")
+# Prostředí, proti kterému interní API ztotožňuje (default produkce).
+INTERNAL_ENV = env("SEZ_INTERNAL_ENV", "PROD")
+
 PROD_CLIENT_ID = env("SEZ_PROD_CLIENT_ID", "")
 PROD_P12_PATH = env("SEZ_PROD_P12_PATH", "")
 PROD_P12_PASSWORD = env("SEZ_PROD_P12_PASSWORD", "")
 PROD_CERT_UID = env("SEZ_PROD_CERT_UID", "")
 PROD_GATEWAY = env("SEZ_PROD_GATEWAY", "")
 PROD_JSU_AUDIENCE = env("SEZ_PROD_JSU_AUDIENCE", "")
+
+# CMS2 = alternativní cesta pro PZS přes neveřejnou síť (vs. Internet).
+# Stejné credentials/cert jako pro Internet – jen jiný gateway hostname.
+T2_CMS_GATEWAY = env("SEZ_T2_CMS_GATEWAY", "")
+PROD_CMS_GATEWAY = env("SEZ_PROD_CMS_GATEWAY", "")
 
 PEER_URLS: list[str] = [
     u.strip() for u in env("SEZ_PEER_URLS", "").split(",") if u.strip()
@@ -129,6 +140,7 @@ SUKL_TEST_ERECEPTY = [
     {"id": "ABCDEF123456", "pacient_rid": "5785446836", "popis": "NOSKOVÁ PETRA – ukázka"},
 ]
 
+# CMS2 sdílí credentials s odpovídajícím Internet prostředím.
 ENV_CREDENTIALS = {
     "T2": {
         "client_id": CLIENT_ID,
@@ -136,7 +148,19 @@ ENV_CREDENTIALS = {
         "p12_password": P12_PASSWORD,
         "cert_uid": CERT_UID,
     },
+    "T2_CMS": {
+        "client_id": CLIENT_ID,
+        "p12_path": P12_PATH,
+        "p12_password": P12_PASSWORD,
+        "cert_uid": CERT_UID,
+    },
     "PROD": {
+        "client_id": PROD_CLIENT_ID,
+        "p12_path": PROD_P12_PATH,
+        "p12_password": PROD_P12_PASSWORD,
+        "cert_uid": PROD_CERT_UID,
+    },
+    "PROD_CMS": {
         "client_id": PROD_CLIENT_ID,
         "p12_path": PROD_P12_PATH,
         "p12_password": PROD_P12_PASSWORD,

@@ -1,0 +1,1856 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Notifikace",
+    "description": "<p>Notifikační služby jsou centrální systém, který se stará o rozesílání notifikací (tj. upozornění) na ostatní systémy ve zdravotnictví ale také poskytovatelům zdravotních služeb, pacientům a zdravotnickým pracovníkům. Důležitá informace se tak dostane bez prodlení příjemci dostupnou cestou.<br />\r\n<a href=\"https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/58556420/API+pro+p+jem+notifikac+IS+PZS\" target=\"_blank\">API pro příjem notifikací IS PZS - Manuál EZ pro PZS - Confluence</a>\r\n</p>\r\n\r\n<h2>Seznam změn &#128640;</h2>\r\n\r\n<h3>Aktuální verze</h3>\r\n\r\n<details open>\r\n  <summary><strong>1.0.5</strong></summary>\r\n  <p>&#10024; <strong>Přidáno</strong></p>\r\n  <ul>\r\n    <li>Stránkování s limitem velikosti stránky řízeným konfigurací (<code>Paging:MaxPageSize</code>)</li>\r\n    <li>Endpointy <code>GET /api/v1/kanaly/katalog</code>, <code>GET /api/v1/sablony/katalog</code> a <code>GET /api/v1/zdroje/katalog</code>: pokud parametr <code>size</code> není zadán, použije se výchozí hodnota z konfigurace</li>\r\n    <li>Endpointy <code>GET /api/v1/kanaly/katalog</code>, <code>GET /api/v1/sablony/katalog</code> a <code>GET /api/v1/zdroje/katalog</code>: pokud zadaný parametr <code>size</code> překročí konfigurovaný limit, je vrácena chyba <code>400 Bad Request</code> s informací o maximální povolené hodnotě</li>\r\n  </ul>\r\n  <p>&#128295; <strong>Změněno</strong></p>\r\n  <ul>\r\n    <li>Opravena logika sestavení skupiny příjemců (<code>ridSkupina</code>) při zpracování notifikace: PUSH agregace přes RID skupinu se nyní provádí pouze tehdy, když není explicitně určen cílový kanál. Tím se zamezuje duplicitnímu vytváření příjemců při doručení přes e-mail nebo SMS.</li>\r\n  </ul>\r\n</details>\r\n\r\n<details>\r\n  <summary><strong>1.0.4</strong></summary>\r\n  <p>&#10024; <strong>Přidáno</strong></p>\r\n  <ul>\r\n    <li>Přidány popisky metod</li>\r\n    <li>Přidán popis swagger API včetně release notes</li>\r\n  </ul>\r\n</details>",
+    "version": "v1.0.5"
+  },
+  "servers": [
+    {
+      "url": "/notifikace"
+    }
+  ],
+  "paths": {
+    "/api/v1/kanaly/katalog": {
+      "get": {
+        "tags": [
+          "Kanaly"
+        ],
+        "summary": "Katalog kanálů",
+        "description": "Vrací seznam aktivních kanálů. Podporuje stránkování, jednoduché filtrování a řazení.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Index stránky (0-based).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Velikost stránky. Pokud není zadáno, vrátí se všechny položky.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "kod",
+            "in": "query",
+            "description": "Filtr podle kódu (contains, case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nazev",
+            "in": "query",
+            "description": "Filtr podle názvu (contains, case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Řazení. Povolené hodnoty: `kod`, `nazev`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Směr řazení. Povolené hodnoty: `asc`, `desc`. Výchozí `asc`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanalVerejneDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "nazev": "E-mail",
+                      "kod": "EMAIL",
+                      "casovaZnacka": "2026-04-28T11:00:07.8762112Z"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "nazev": "E-mail",
+                          "kod": "EMAIL",
+                          "casovaZnacka": "2026-04-28T11:00:07.8762112Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanalVerejneDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "nazev": "E-mail",
+                      "kod": "EMAIL",
+                      "casovaZnacka": "2026-04-28T11:00:07.8762112Z"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "nazev": "E-mail",
+                          "kod": "EMAIL",
+                          "casovaZnacka": "2026-04-28T11:00:07.8762112Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanalVerejneDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "nazev": "E-mail",
+                      "kod": "EMAIL",
+                      "casovaZnacka": "2026-04-28T11:00:07.8762112Z"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "nazev": "E-mail",
+                          "kod": "EMAIL",
+                          "casovaZnacka": "2026-04-28T11:00:07.8762112Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/ping": {
+      "get": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Ping",
+        "description": "Ověření dostupnosti notifikační komponenty.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Notifikační komponenta úspěšně připojena",
+                "examples": {
+                  "default": {
+                    "value": "Notifikační komponenta úspěšně připojena"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Notifikační komponenta úspěšně připojena",
+                "examples": {
+                  "default": {
+                    "value": "Notifikační komponenta úspěšně připojena"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Notifikační komponenta úspěšně připojena",
+                "examples": {
+                  "default": {
+                    "value": "Notifikační komponenta úspěšně připojena"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/odeslat": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Odeslat notifikaci",
+        "description": "Vytvoří požadavek na odeslání notifikace. Request body je validován (např. příjemci nesmí být prázdní a musí dodržet limit).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifikaceOdeslatRequestModel"
+              },
+              "example": {
+                "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                "zdrojovySystem": "10000001_PZS",
+                "typ": "ZmenaPojistovny",
+                "kanal": "EMAIL",
+                "sablona": "TestEmail1",
+                "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                "planOdeslani": "2025-12-01T10:14:32.459Z",
+                "prijemce": [
+                  {
+                    "email": "test@email.cz"
+                  }
+                ],
+                "doruceni": {
+                  "priorita": "NORMAL"
+                },
+                "dataNotifikace": {
+                  "dataSablony": [
+                    {
+                      "nazev": "cislo",
+                      "popis": "hodnota čísla",
+                      "hodnota": "1"
+                    }
+                  ]
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifikaceOdeslatRequestModel"
+              },
+              "example": {
+                "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                "zdrojovySystem": "10000001_PZS",
+                "typ": "ZmenaPojistovny",
+                "kanal": "EMAIL",
+                "sablona": "TestEmail1",
+                "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                "planOdeslani": "2025-12-01T10:14:32.459Z",
+                "prijemce": [
+                  {
+                    "email": "test@email.cz"
+                  }
+                ],
+                "doruceni": {
+                  "priorita": "NORMAL"
+                },
+                "dataNotifikace": {
+                  "dataSablony": [
+                    {
+                      "nazev": "cislo",
+                      "popis": "hodnota čísla",
+                      "hodnota": "1"
+                    }
+                  ]
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifikaceOdeslatRequestModel"
+              },
+              "example": {
+                "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                "zdrojovySystem": "10000001_PZS",
+                "typ": "ZmenaPojistovny",
+                "kanal": "EMAIL",
+                "sablona": "TestEmail1",
+                "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                "planOdeslani": "2025-12-01T10:14:32.459Z",
+                "prijemce": [
+                  {
+                    "email": "test@email.cz"
+                  }
+                ],
+                "doruceni": {
+                  "priorita": "NORMAL"
+                },
+                "dataNotifikace": {
+                  "dataSablony": [
+                    {
+                      "nazev": "cislo",
+                      "popis": "hodnota čísla",
+                      "hodnota": "1"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceOdeslatResponseModel"
+                },
+                "example": {
+                  "id": "2b15b332-1d13-4bfc-a209-0e3e2fe2e21a",
+                  "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "id": "2b15b332-1d13-4bfc-a209-0e3e2fe2e21a",
+                      "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee"
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceOdeslatResponseModel"
+                },
+                "example": {
+                  "id": "2b15b332-1d13-4bfc-a209-0e3e2fe2e21a",
+                  "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "id": "2b15b332-1d13-4bfc-a209-0e3e2fe2e21a",
+                      "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee"
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceOdeslatResponseModel"
+                },
+                "example": {
+                  "id": "2b15b332-1d13-4bfc-a209-0e3e2fe2e21a",
+                  "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "id": "2b15b332-1d13-4bfc-a209-0e3e2fe2e21a",
+                      "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/vyhledat": {
+      "get": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Vyhledat notifikace příjemcem",
+        "description": "Vrací seznam notifikací pro příjemce (PZS). Parametr `odData` přijímá ISO 8601/RFC3339 (doporučeno) a vybrané lokální formáty.",
+        "parameters": [
+          {
+            "name": "idPrijemce",
+            "in": "query",
+            "description": "Identifikátor příjemce (PZS) – očekává se shoda s `client_id` z tokenu.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "odData",
+            "in": "query",
+            "description": "Počáteční datum/čas. Doporučený formát: RFC3339/ISO 8601 (např. `2025-12-01T10:14:32.459Z`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximální počet vrácených notifikací.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceVyhledatResponseModel"
+                },
+                "example": {
+                  "idPozadavek": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                  "pocet": 1,
+                  "posledniZnacka": "2025-12-01T10:14:32.459Z",
+                  "notifikace": [
+                    {
+                      "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                      "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                      "zdrojovySystem": "10000001_PZS",
+                      "priorita": "NORMAL",
+                      "typ": "ZmenaPojistovny",
+                      "hlavicka": "Změna pojišťovny",
+                      "obsah": "Pojišťovna byla změněna.",
+                      "predmet": [
+                        {
+                          "id": "1",
+                          "typ": "RID"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "idPozadavek": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                      "pocet": 1,
+                      "posledniZnacka": "2025-12-01T10:14:32.459Z",
+                      "notifikace": [
+                        {
+                          "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                          "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                          "zdrojovySystem": "10000001_PZS",
+                          "priorita": "NORMAL",
+                          "typ": "ZmenaPojistovny",
+                          "hlavicka": "Změna pojišťovny",
+                          "obsah": "Pojišťovna byla změněna.",
+                          "predmet": [
+                            {
+                              "id": "1",
+                              "typ": "RID"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceVyhledatResponseModel"
+                },
+                "example": {
+                  "idPozadavek": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                  "pocet": 1,
+                  "posledniZnacka": "2025-12-01T10:14:32.459Z",
+                  "notifikace": [
+                    {
+                      "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                      "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                      "zdrojovySystem": "10000001_PZS",
+                      "priorita": "NORMAL",
+                      "typ": "ZmenaPojistovny",
+                      "hlavicka": "Změna pojišťovny",
+                      "obsah": "Pojišťovna byla změněna.",
+                      "predmet": [
+                        {
+                          "id": "1",
+                          "typ": "RID"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "idPozadavek": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                      "pocet": 1,
+                      "posledniZnacka": "2025-12-01T10:14:32.459Z",
+                      "notifikace": [
+                        {
+                          "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                          "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                          "zdrojovySystem": "10000001_PZS",
+                          "priorita": "NORMAL",
+                          "typ": "ZmenaPojistovny",
+                          "hlavicka": "Změna pojišťovny",
+                          "obsah": "Pojišťovna byla změněna.",
+                          "predmet": [
+                            {
+                              "id": "1",
+                              "typ": "RID"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceVyhledatResponseModel"
+                },
+                "example": {
+                  "idPozadavek": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                  "pocet": 1,
+                  "posledniZnacka": "2025-12-01T10:14:32.459Z",
+                  "notifikace": [
+                    {
+                      "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                      "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                      "zdrojovySystem": "10000001_PZS",
+                      "priorita": "NORMAL",
+                      "typ": "ZmenaPojistovny",
+                      "hlavicka": "Změna pojišťovny",
+                      "obsah": "Pojišťovna byla změněna.",
+                      "predmet": [
+                        {
+                          "id": "1",
+                          "typ": "RID"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "idPozadavek": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                      "pocet": 1,
+                      "posledniZnacka": "2025-12-01T10:14:32.459Z",
+                      "notifikace": [
+                        {
+                          "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                          "casovaZnacka": "2025-12-01T10:14:32.459Z",
+                          "zdrojovySystem": "10000001_PZS",
+                          "priorita": "NORMAL",
+                          "typ": "ZmenaPojistovny",
+                          "hlavicka": "Změna pojišťovny",
+                          "obsah": "Pojišťovna byla změněna.",
+                          "predmet": [
+                            {
+                              "id": "1",
+                              "typ": "RID"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/pzs/prijem/vzor": {
+      "post": {
+        "tags": [
+          "Pzs"
+        ],
+        "summary": "PZS příjem (vzor)",
+        "description": "Vzorový endpoint pro příjem PZS push zprávy. Slouží primárně pro demonstraci kontraktu a Swagger příkladů.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPZSMessageRequest"
+              },
+              "example": {
+                "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                "prijemce": [
+                  {
+                    "id": "10000001",
+                    "typ": "ICO"
+                  }
+                ],
+                "id": "MSG-001",
+                "typ": "ZmenaPojistovny",
+                "priorita": "NORMAL",
+                "hlavicka": "Změna pojišťovny",
+                "obsah": "Pojišťovna byla změněna.",
+                "zdrojovySystem": "10000001_PZS",
+                "casovaZnacka": "2026-03-09T14:25:30.244Z",
+                "predmet": [
+                  {
+                    "id": "1",
+                    "typ": "RID"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPZSMessageRequest"
+              },
+              "example": {
+                "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                "prijemce": [
+                  {
+                    "id": "10000001",
+                    "typ": "ICO"
+                  }
+                ],
+                "id": "MSG-001",
+                "typ": "ZmenaPojistovny",
+                "priorita": "NORMAL",
+                "hlavicka": "Změna pojišťovny",
+                "obsah": "Pojišťovna byla změněna.",
+                "zdrojovySystem": "10000001_PZS",
+                "casovaZnacka": "2026-03-09T14:25:30.244Z",
+                "predmet": [
+                  {
+                    "id": "1",
+                    "typ": "RID"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPZSMessageRequest"
+              },
+              "example": {
+                "idKorelace": "e0595b3a-3a52-40bb-83c8-85953fe9c1ee",
+                "prijemce": [
+                  {
+                    "id": "10000001",
+                    "typ": "ICO"
+                  }
+                ],
+                "id": "MSG-001",
+                "typ": "ZmenaPojistovny",
+                "priorita": "NORMAL",
+                "hlavicka": "Změna pojišťovny",
+                "obsah": "Pojišťovna byla změněna.",
+                "zdrojovySystem": "10000001_PZS",
+                "casovaZnacka": "2026-03-09T14:25:30.244Z",
+                "predmet": [
+                  {
+                    "id": "1",
+                    "typ": "RID"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/sablony/katalog": {
+      "get": {
+        "tags": [
+          "Sablony"
+        ],
+        "summary": "Katalog šablon",
+        "description": "Vrací všechny publikované šablony s možností stránkování, filtrování (kod, nazev) a řazení.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Index stránky (0-based).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Velikost stránky. Pokud není zadáno, použije se výchozí hodnota z konfigurace.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "kod",
+            "in": "query",
+            "description": "Filtr podle kódu (contains, case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nazev",
+            "in": "query",
+            "description": "Filtr podle názvu (contains, case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Řazení. Povolené hodnoty: `kod`, `nazev`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Směr řazení. Povolené hodnoty: `asc`, `desc`. Výchozí `asc`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SablonyVerejneDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "nazev": "Test šablona",
+                      "kanal": "EMAIL",
+                      "jazyk": "cs",
+                      "kod": "TestEmail1",
+                      "poleSablony": [
+                        "cislo"
+                      ],
+                      "casovaZnacka": "2026-04-28T11:00:07.8804606Z"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "nazev": "Test šablona",
+                          "kanal": "EMAIL",
+                          "jazyk": "cs",
+                          "kod": "TestEmail1",
+                          "poleSablony": [
+                            "cislo"
+                          ],
+                          "casovaZnacka": "2026-04-28T11:00:07.8804606Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SablonyVerejneDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "nazev": "Test šablona",
+                      "kanal": "EMAIL",
+                      "jazyk": "cs",
+                      "kod": "TestEmail1",
+                      "poleSablony": [
+                        "cislo"
+                      ],
+                      "casovaZnacka": "2026-04-28T11:00:07.8804606Z"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "nazev": "Test šablona",
+                          "kanal": "EMAIL",
+                          "jazyk": "cs",
+                          "kod": "TestEmail1",
+                          "poleSablony": [
+                            "cislo"
+                          ],
+                          "casovaZnacka": "2026-04-28T11:00:07.8804606Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SablonyVerejneDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "nazev": "Test šablona",
+                      "kanal": "EMAIL",
+                      "jazyk": "cs",
+                      "kod": "TestEmail1",
+                      "poleSablony": [
+                        "cislo"
+                      ],
+                      "casovaZnacka": "2026-04-28T11:00:07.8804606Z"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "nazev": "Test šablona",
+                          "kanal": "EMAIL",
+                          "jazyk": "cs",
+                          "kod": "TestEmail1",
+                          "poleSablony": [
+                            "cislo"
+                          ],
+                          "casovaZnacka": "2026-04-28T11:00:07.8804606Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/zdroje/katalog": {
+      "get": {
+        "tags": [
+          "Zdroje"
+        ],
+        "summary": "Katalog zdrojů",
+        "description": "Vrací seznam zdrojů podle zadaných filtrů. Podporuje stránkování a řazení.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Index stránky (0-based).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Velikost stránky. Pokud není zadáno, použije se výchozí hodnota z konfigurace.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "kod",
+            "in": "query",
+            "description": "Filtr podle kódu (contains, case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nazev",
+            "in": "query",
+            "description": "Filtr podle názvu (contains, case-insensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stav",
+            "in": "query",
+            "description": "Filtr podle stavu zdroje (enum).",
+            "schema": {
+              "$ref": "#/components/schemas/StavZdroj"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Řazení. Povolené hodnoty: `kod`, `nazev`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Směr řazení. Povolené hodnoty: `asc`, `desc`. Výchozí `asc`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrojKatalogDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "kod": "ZDR001",
+                      "nazev": "Zdroj 1",
+                      "stav": "Aktivni"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "kod": "ZDR001",
+                          "nazev": "Zdroj 1",
+                          "stav": "Aktivni"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrojKatalogDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "kod": "ZDR001",
+                      "nazev": "Zdroj 1",
+                      "stav": "Aktivni"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "kod": "ZDR001",
+                          "nazev": "Zdroj 1",
+                          "stav": "Aktivni"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrojKatalogDtoPagedResult"
+                },
+                "example": {
+                  "pageNumber": 0,
+                  "pageSize": 100,
+                  "pageCount": 1,
+                  "nextPage": null,
+                  "totalCount": 1,
+                  "page": [
+                    {
+                      "kod": "ZDR001",
+                      "nazev": "Zdroj 1",
+                      "stav": "Aktivni"
+                    }
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "pageNumber": 0,
+                      "pageSize": 100,
+                      "pageCount": 1,
+                      "nextPage": null,
+                      "totalCount": 1,
+                      "page": [
+                        {
+                          "kod": "ZDR001",
+                          "nazev": "Zdroj 1",
+                          "stav": "Aktivni"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DataSablonyDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KanalVerejneDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KanalVerejneDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KanalVerejneDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceOdeslatRequestModel": {
+        "type": "object",
+        "properties": {
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdrojovySystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "kanal": {
+            "type": "string",
+            "nullable": true
+          },
+          "sablona": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "planOdeslani": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TypPrijemce"
+            },
+            "nullable": true
+          },
+          "doruceni": {
+            "$ref": "#/components/schemas/TypDoruceni"
+          },
+          "dataNotifikace": {
+            "$ref": "#/components/schemas/TypDataNotifikace"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceOdeslatResponseModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceVyhledat": {
+        "type": "object",
+        "properties": {
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "zdrojovySystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "priorita": {
+            "$ref": "#/components/schemas/TypPriority"
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "hlavicka": {
+            "type": "string",
+            "nullable": true
+          },
+          "obsah": {
+            "type": "string",
+            "nullable": true
+          },
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceVyhledatResponseModel": {
+        "type": "object",
+        "properties": {
+          "idPozadavek": {
+            "type": "string",
+            "nullable": true
+          },
+          "pocet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "posledniZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notifikace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotifikaceVyhledat"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredmetNotifikace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredmetPushPZS": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrijemcePushPZS": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "PushPZSMessageRequest": {
+        "type": "object",
+        "properties": {
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrijemcePushPZS"
+            },
+            "nullable": true
+          },
+          "id": {
+            "maxLength": 65,
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "priorita": {
+            "$ref": "#/components/schemas/TypPriority"
+          },
+          "hlavicka": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "obsah": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "zdrojovySystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetPushPZS"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SablonyVerejneDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "kanal": {
+            "type": "string",
+            "nullable": true
+          },
+          "jazyk": {
+            "type": "string",
+            "nullable": true
+          },
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "poleSablony": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SablonyVerejneDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SablonyVerejneDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StavZdroj": {
+        "enum": [
+          "Aktivni",
+          "Blokovany"
+        ],
+        "type": "string"
+      },
+      "TypDataNotifikace": {
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "type": "string",
+            "nullable": true
+          },
+          "obsah": {
+            "type": "string",
+            "nullable": true
+          },
+          "pushText": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataSablony": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSablonyDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypDoruceni": {
+        "type": "object",
+        "properties": {
+          "priorita": {
+            "$ref": "#/components/schemas/TypPriority"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypPrijemce": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefon": {
+            "type": "string",
+            "nullable": true
+          },
+          "urlSluzby": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypPriority": {
+        "enum": [
+          "NORMAL",
+          "URGENT"
+        ],
+        "type": "string"
+      },
+      "ZdrojKatalogDto": {
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/StavZdroj"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZdrojKatalogDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZdrojKatalogDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

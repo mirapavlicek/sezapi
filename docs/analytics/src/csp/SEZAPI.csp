@@ -1,0 +1,1124 @@
+<csp:class encoded=1 super="%CSP.Page">
+<html>
+<head>
+    <title>SEZ API – Ovládací panel</title>
+    <meta charset="UTF-8"/>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: #333; }
+        .header { background: linear-gradient(135deg, #1a5276, #2980b9); color: white; padding: 20px 30px; }
+        .header h1 { font-size: 22px; font-weight: 500; }
+        .header small { opacity: 0.8; font-size: 12px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tab { padding: 8px 16px; border: none; background: #f0f2f5; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .tab:hover { background: #dfe6ed; }
+        .tab.active { background: #2980b9; color: white; }
+        .panel { display: none; background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .panel.active { display: block; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 14px; font-family: inherit; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41,128,185,0.1);
+        }
+        textarea { min-height: 120px; font-family: 'Consolas', monospace; font-size: 12px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #2980b9; color: white; }
+        .btn-primary:hover { background: #1a6fa0; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #c0392b; color: white; }
+        .btn-sm { padding: 6px 14px; font-size: 12px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .result { margin-top: 16px; padding: 16px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; }
+        .result pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; max-height: 500px; overflow-y: auto; }
+        .result .status { font-weight: 600; margin-bottom: 8px; }
+        .status-ok { color: #27ae60; }
+        .status-err { color: #c0392b; }
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #2980b9; }
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .info-box { background: #eaf2f8; border-left: 4px solid #2980b9; padding: 12px; margin-bottom: 16px; font-size: 13px; border-radius: 0 6px 6px 0; }
+        .warn-box { background: #fef9e7; border-left: 4px solid #f39c12; padding: 12px; margin-bottom: 16px; font-size: 13px; border-radius: 0 6px 6px 0; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>SEZ API – Ovládací panel pro InterSystems IRIS</h1>
+    <small>Gateway: gwy-ext-sec-t2.csez.cz | Prostředí: T2 (testovací) | Auth: JWT assertion (EZCA II) → API Gateway</small>
+</div>
+
+<div class="container">
+
+<!-- ZÁLOŽKY -->
+<div class="tabs">
+    <button class="tab active" onclick="showTab('config')">Konfigurace</button>
+    <button class="tab" onclick="showTab('krp')">KRP Pacienti</button>
+    <button class="tab" onclick="showTab('krpzs')">KRPZS Poskytovatelé</button>
+    <button class="tab" onclick="showTab('krzp')">KRZP Pracovníci</button>
+    <button class="tab" onclick="showTab('uloziste')">Dočasné úložiště</button>
+    <button class="tab" onclick="showTab('ezadanky')">E-žádanky</button>
+    <button class="tab" onclick="showTab('elp')">Posudky (ELP)</button>
+    <button class="tab" onclick="showTab('szz')">Sdílený ZZ</button>
+    <button class="tab" onclick="showTab('notifikace')">Notifikace</button>
+    <button class="tab" onclick="showTab('ezca')">EZCA Podpisy</button>
+    <button class="tab" onclick="showTab('opravneni')">Oprávnění</button>
+</div>
+
+<!-- ================================================================ -->
+<!-- KONFIGURACE -->
+<!-- ================================================================ -->
+<div id="panel-config" class="panel active">
+    <div class="section-title">Konfigurace připojení</div>
+    <div class="info-box">
+        <strong>Režim private_key_jwt (doporučený):</strong> JWT assertion podepsaný EZCA II certifikátem
+        se posílá přímo jako Bearer token na API Gateway. Gateway interně provede výměnu za access token vůči JSU.
+        Vyžaduje: P12 certifikát, heslo a UID certifikátu (kid).
+    </div>
+    <div class="warn-box">
+        <strong>Důležité:</strong> Jeden certifikát EZCA II se používá pro mTLS i JWT signing.
+        SSL konfigurace v IRIS musí používat stejný certifikát.
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>Client ID</label>
+                <input type="text" id="cfg-clientid" value="" placeholder="25488627_KrajskaZdravotniVerejnyTest"/>
+            </div>
+            <div class="form-group">
+                <label>Client Secret (prázdný = private_key_jwt)</label>
+                <input type="password" id="cfg-clientsecret" value=""/>
+            </div>
+            <div class="form-group">
+                <label>P12 certifikát EZCA II (cesta na serveru)</label>
+                <input type="text" id="cfg-p12file" value="" placeholder="/opt/iris/certs/krajska_zdravotni.pfx"/>
+            </div>
+            <div class="form-group">
+                <label>P12 heslo</label>
+                <input type="password" id="cfg-p12password" value=""/>
+            </div>
+            <div class="form-group">
+                <label>UID certifikátu (kid v JWT)</label>
+                <input type="text" id="cfg-certuid" value="" placeholder="85cf28c4-c190-406f-bc96-f92ad25b3202"/>
+            </div>
+            <div class="form-group">
+                <label>OAuth2 Scope (jen pro client_secret režim)</label>
+                <input type="text" id="cfg-scope" value="openid" placeholder="openid role"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>IČO poskytovatele</label>
+                <input type="text" id="cfg-ico" value=""/>
+            </div>
+            <div class="form-group">
+                <label>KRZP ID pracovníka</label>
+                <input type="text" id="cfg-krzpid" value=""/>
+            </div>
+            <div class="form-group">
+                <label>IČP</label>
+                <input type="text" id="cfg-icp" value=""/>
+            </div>
+            <div class="form-group">
+                <label>SSL konfigurace</label>
+                <input type="text" id="cfg-ssl" value="SEZ_API_T2" readonly/>
+            </div>
+            <div class="form-group">
+                <label>Gateway</label>
+                <input type="text" id="cfg-gateway" value="gwy-ext-sec-t2.csez.cz" readonly/>
+            </div>
+            <button class="btn btn-primary" onclick="testConnection()">Otestovat připojení</button>
+            <button class="btn" style="margin-left:8px;background:#e67e22;color:#fff" onclick="diagToken()">Diagnostika tokenu</button>
+        </div>
+    </div>
+    <div id="result-config" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- KRP - REGISTR PACIENTŮ -->
+<!-- ================================================================ -->
+<div id="panel-krp" class="panel">
+    <div class="section-title">KRP – Kmenový registr pacientů</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="krpAction('rid')">Hledat podle RID</button>
+        <button class="btn btn-sm btn-primary" onclick="krpAction('jmenorc')">Hledat podle jména + RČ</button>
+        <button class="btn btn-sm btn-primary" onclick="krpAction('jmenodn')">Hledat podle jména + dat. nar.</button>
+        <button class="btn btn-sm btn-primary" onclick="krpAction('doklad')">Hledat podle dokladu</button>
+        <button class="btn btn-sm btn-primary" onclick="krpAction('pojisteni')">Historie pojištění</button>
+        <button class="btn btn-sm btn-success" onclick="krpAction('zalozit')">Založit pacienta</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>RID pacienta</label>
+                <input type="text" id="krp-rid" placeholder="7653800856"/>
+            </div>
+            <div class="form-group">
+                <label>Jméno</label>
+                <input type="text" id="krp-jmeno"/>
+            </div>
+            <div class="form-group">
+                <label>Příjmení</label>
+                <input type="text" id="krp-prijmeni"/>
+            </div>
+            <div class="form-group">
+                <label>Rodné číslo</label>
+                <input type="text" id="krp-rc" placeholder="8506151234"/>
+            </div>
+            <div class="form-group">
+                <label>Datum narození</label>
+                <input type="date" id="krp-datnar"/>
+            </div>
+            <div class="form-group">
+                <label>Číslo dokladu</label>
+                <input type="text" id="krp-doklad"/>
+            </div>
+            <div class="form-group">
+                <label>Účel</label>
+                <select id="krp-ucel">
+                    <option value="LECBA">LÉČBA</option>
+                    <option value="NEODKLADNA_PECE">NEODKLADNÁ PÉČE</option>
+                    <option value="OVERENI">OVĚŘENÍ</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="krp-body" rows="12"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeKRP()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-krp" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- KRPZS - REGISTR POSKYTOVATELŮ -->
+<!-- ================================================================ -->
+<div id="panel-krpzs" class="panel">
+    <div class="section-title">KRPZS – Kmenový registr poskytovatelů ZS</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="krpzsAction('ico')">Hledat podle IČO</button>
+        <button class="btn btn-sm btn-primary" onclick="krpzsAction('nazev')">Hledat podle názvu</button>
+        <button class="btn btn-sm btn-primary" onclick="krpzsAction('misto')">Hledat podle místa</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>IČO poskytovatele</label>
+                <input type="text" id="krpzs-ico" placeholder="25488627"/>
+            </div>
+            <div class="form-group">
+                <label>Název</label>
+                <input type="text" id="krpzs-nazev"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="krpzs-body" rows="8"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeKRPZS()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-krpzs" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- KRZP - REGISTR PRACOVNÍKŮ -->
+<!-- ================================================================ -->
+<div id="panel-krzp" class="panel">
+    <div class="section-title">KRZP – Kmenový registr zdravotnických pracovníků</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="krzpAction('krzpid')">Hledat podle KRZP ID</button>
+        <button class="btn btn-sm btn-primary" onclick="krzpAction('jmenodn')">Hledat podle jména + dat. nar.</button>
+        <button class="btn btn-sm btn-primary" onclick="krzpAction('zamestnavatel')">Podle zaměstnavatele</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>KRZP ID</label>
+                <input type="text" id="krzp-id"/>
+            </div>
+            <div class="form-group">
+                <label>Jméno</label>
+                <input type="text" id="krzp-jmeno"/>
+            </div>
+            <div class="form-group">
+                <label>Příjmení</label>
+                <input type="text" id="krzp-prijmeni"/>
+            </div>
+            <div class="form-group">
+                <label>Datum narození</label>
+                <input type="date" id="krzp-datnar"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="krzp-body" rows="8"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeKRZP()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-krzp" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- DOČASNÉ ÚLOŽIŠTĚ -->
+<!-- ================================================================ -->
+<div id="panel-uloziste" class="panel">
+    <div class="section-title">Dočasné úložiště SEZ</div>
+    <div class="warn-box">
+        <strong>DejZasilku</strong> vyžaduje identitu konkrétního zdravotnického pracovníka (ZP):
+        ZP musí existovat v KZR a mít oprávnění v Registru práv a mandátů na ZD daného pacienta.
+        Systémový PZS uživatel bez vazby na ZP → 400 "Pracovník nemá oprávnění".
+        <strong>VyhledejZasilku</strong> a <strong>UlozZasilku</strong> fungují i na úrovni PZS.
+        <br/><small><a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/58949648" target="_blank">Zdroj: MZČR – Případ užití: Stažení zásilky</a></small>
+    </div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="ulozisteAction('vyhledat')">Vyhledat zásilky</button>
+        <button class="btn btn-sm btn-primary" onclick="ulozisteAction('detail')">Načíst zásilku (ID)</button>
+        <button class="btn btn-sm btn-success" onclick="ulozisteAction('ulozit')">Uložit novou zásilku</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>ID zásilky</label>
+                <input type="text" id="ul-id"/>
+            </div>
+            <div class="form-group">
+                <label>Pacient (RID)</label>
+                <input type="text" id="ul-pacient"/>
+            </div>
+            <div class="form-group">
+                <label>Datum od</label>
+                <input type="datetime-local" id="ul-od"/>
+            </div>
+            <div class="form-group">
+                <label>Datum do</label>
+                <input type="datetime-local" id="ul-do"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="ul-body" rows="12"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeUloziste()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-uloziste" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- E-ŽÁDANKY -->
+<!-- ================================================================ -->
+<div id="panel-ezadanky" class="panel">
+    <div class="section-title">E-žádanky SEZ</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="ezAction('vyhledat')">Vyhledat žádanky</button>
+        <button class="btn btn-sm btn-primary" onclick="ezAction('aktivni')">Aktivní žádanky</button>
+        <button class="btn btn-sm btn-primary" onclick="ezAction('detail')">Načíst žádanku (ID)</button>
+        <button class="btn btn-sm btn-primary" onclick="ezAction('vizual')">Vizualizace</button>
+        <button class="btn btn-sm btn-success" onclick="ezAction('ulozit')">Nová žádanka</button>
+        <button class="btn btn-sm btn-primary" onclick="ezAction('prijmout')">Přijmout</button>
+        <button class="btn btn-sm btn-success" onclick="ezAction('vyridit')">Vyřídit</button>
+        <button class="btn btn-sm btn-danger" onclick="ezAction('stornovat')">Stornovat</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>ID žádanky</label>
+                <input type="text" id="ez-id"/>
+            </div>
+            <div class="form-group">
+                <label>Pacient (RID)</label>
+                <input type="text" id="ez-pacient"/>
+            </div>
+            <div class="form-group">
+                <label>Typ žádanky</label>
+                <select id="ez-typ">
+                    <option value="Z">Laboratorní (Z)</option>
+                    <option value="Ft">Fyzioterapeutická (Ft)</option>
+                    <option value="K">Konziliární (K)</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="ez-body" rows="12"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeEZadanky()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-ezadanky" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- ELEKTRONICKÉ POSUDKY -->
+<!-- ================================================================ -->
+<div id="panel-elp" class="panel">
+    <div class="section-title">Elektronické lékařské posudky (ELP)</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="elpAction('vyhledat')">Vyhledat posudky</button>
+        <button class="btn btn-sm btn-primary" onclick="elpAction('detail')">Detail posudku</button>
+        <button class="btn btn-sm btn-success" onclick="elpAction('vytvorit')">Nový posudek</button>
+        <button class="btn btn-sm btn-primary" onclick="elpAction('pdf')">Stáhnout PDF</button>
+        <button class="btn btn-sm btn-primary" onclick="elpAction('historie')">Historie</button>
+        <button class="btn btn-sm btn-primary" onclick="elpAction('ciselniky')">Číselníky</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>ID posudku</label>
+                <input type="text" id="elp-id"/>
+            </div>
+            <div class="form-group">
+                <label>RID pacienta</label>
+                <input type="text" id="elp-rid"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="elp-body" rows="12"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeELP()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-elp" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SDÍLENÝ ZDRAVOTNÍ ZÁZNAM -->
+<!-- ================================================================ -->
+<div id="panel-szz" class="panel">
+    <div class="section-title">Sdílený zdravotní záznam (SZZ)</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="szzAction('emergentni')">Emergentní záznam</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('emergentniPdf')">Emergentní PDF</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('alergie')">Alergie</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('krevni')">Krevní skupina</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('leciva')">Léčivé přípravky</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('nezadouciPrihody')">Nežádoucí příhody</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('nezadouciReakce')">Nežádoucí reakce</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('zdravotni')">Zdravotní záznamy</button>
+        <button class="btn btn-sm btn-success" onclick="szzAction('novaAlergie')">Nová alergie</button>
+        <button class="btn btn-sm btn-primary" onclick="szzAction('ciselniky')">Číselníky</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>RID pacienta</label>
+                <input type="text" id="szz-rid"/>
+            </div>
+            <div class="form-group">
+                <label>ID záznamu (pro úpravy)</label>
+                <input type="text" id="szz-id"/>
+            </div>
+            <div class="form-group">
+                <label>Typ nežádoucí události</label>
+                <select id="szz-nezadouci-typ">
+                    <option value="nezadouciPrihody">Příhody</option>
+                    <option value="nezadouciReakce">Reakce</option>
+                    <option value="nezadouciUcinky">Účinky</option>
+                    <option value="nezadouciUdalosti">Události</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Jen platné</label>
+                <select id="szz-jenplatne">
+                    <option value="true">Ano</option>
+                    <option value="false">Ne</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="szz-body" rows="12"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeSZZ()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-szz" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- NOTIFIKACE -->
+<!-- ================================================================ -->
+<div id="panel-notifikace" class="panel">
+    <div class="section-title">Notifikace CSSN</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="notifAction('ping')">Ping</button>
+        <button class="btn btn-sm btn-success" onclick="notifAction('odeslat')">Odeslat notifikaci</button>
+        <button class="btn btn-sm btn-primary" onclick="notifAction('vyhledat')">Vyhledat notifikace</button>
+        <button class="btn btn-sm btn-primary" onclick="notifAction('kanaly')">Katalog kanálů</button>
+        <button class="btn btn-sm btn-primary" onclick="notifAction('sablony')">Katalog šablon</button>
+        <button class="btn btn-sm btn-primary" onclick="notifAction('zdroje')">Katalog zdrojů</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>ID příjemce</label>
+                <input type="text" id="notif-prijemce"/>
+            </div>
+            <div class="form-group">
+                <label>Datum od</label>
+                <input type="datetime-local" id="notif-od"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="notif-body" rows="10"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeNotifikace()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-notifikace" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- EZCA -->
+<!-- ================================================================ -->
+<div id="panel-ezca" class="panel">
+    <div class="section-title">EZCA 2 – Elektronické podpisy a razítka</div>
+    <div class="quick-actions">
+        <button class="btn btn-sm btn-primary" onclick="ezcaAction('health')">Health check</button>
+        <button class="btn btn-sm btn-success" onclick="ezcaAction('podepsat')">Podepsat dokument</button>
+        <button class="btn btn-sm btn-primary" onclick="ezcaAction('validovat')">Validovat podpis</button>
+        <button class="btn btn-sm btn-primary" onclick="ezcaAction('razitko')">Časové razítko</button>
+        <button class="btn btn-sm btn-primary" onclick="ezcaAction('certifikaty')">Výpis certifikátů</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>ID úložiště (Storage ID)</label>
+                <input type="text" id="ezca-storageid"/>
+            </div>
+            <div class="form-group">
+                <label>ID certifikátu</label>
+                <input type="text" id="ezca-certid"/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Tělo požadavku (JSON)</label>
+                <textarea id="ezca-body" rows="10"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="executeEZCA()">Odeslat</button>
+        </div>
+    </div>
+    <div id="result-ezca" class="result" style="display:none"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- REGISTR OPRÁVNĚNÍ -->
+<!-- ================================================================ -->
+<div id="panel-opravneni" class="panel">
+    <div class="section-title">Registr oprávnění</div>
+    <div class="grid">
+        <div>
+            <div class="form-group">
+                <label>ID služby eZdravotnictví</label>
+                <input type="number" id="opr-sluzba" value="1"/>
+            </div>
+            <div class="form-group">
+                <label>ID typu dokumentace</label>
+                <input type="number" id="opr-doktip" value="5"/>
+            </div>
+            <div class="form-group">
+                <label>Role opravňující osoby</label>
+                <select id="opr-role1">
+                    <option value="PoskytovatelZdravotnickychSluzeb">Poskytovatel ZS</option>
+                    <option value="ZdravotniPracovnik">Zdravotní pracovník</option>
+                    <option value="Pacient">Pacient</option>
+                    <option value="Zastupce">Zástupce</option>
+                    <option value="PravnickaOsoba">Právnická osoba</option>
+                    <option value="FyzickaOsoba">Fyzická osoba</option>
+                    <option value="Interni">Interní</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hodnota opravňující osoby</label>
+                <input type="text" id="opr-hod1" placeholder="IČO, KRZP ID, ..."/>
+            </div>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>Role oprávněné osoby</label>
+                <select id="opr-role2">
+                    <option value="ZdravotniPracovnik">Zdravotní pracovník</option>
+                    <option value="PoskytovatelZdravotnickychSluzeb">Poskytovatel ZS</option>
+                    <option value="Pacient">Pacient</option>
+                    <option value="Zastupce">Zástupce</option>
+                    <option value="PravnickaOsoba">Právnická osoba</option>
+                    <option value="FyzickaOsoba">Fyzická osoba</option>
+                    <option value="Interni">Interní</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hodnota oprávněné osoby</label>
+                <input type="text" id="opr-hod2" placeholder="KRZP ID, RID, ..."/>
+            </div>
+            <button class="btn btn-primary" onclick="executeOpravneni()">Ověřit oprávnění</button>
+        </div>
+    </div>
+    <div id="result-opravneni" class="result" style="display:none"></div>
+</div>
+
+</div><!-- /container -->
+
+<script language="JavaScript">
+function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+}
+
+function showResult(panelId, statusCode, data) {
+    var el = document.getElementById('result-' + panelId);
+    el.style.display = 'block';
+    var isOk = statusCode >= 200 && statusCode < 300;
+    var formatted = data;
+    try { formatted = JSON.stringify(JSON.parse(data), null, 2); } catch(e) {}
+    el.innerHTML = '<div class="status ' + (isOk ? 'status-ok' : 'status-err') + '">HTTP ' + statusCode + '</div><pre>' + escapeHtml(formatted) + '</pre>';
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function collectConfig() {
+    return {
+        'clientid': document.getElementById('cfg-clientid').value,
+        'clientsecret': document.getElementById('cfg-clientsecret').value,
+        'p12file': document.getElementById('cfg-p12file').value,
+        'p12password': document.getElementById('cfg-p12password').value,
+        'certuid': document.getElementById('cfg-certuid').value,
+        'scope': document.getElementById('cfg-scope').value,
+        'ico': document.getElementById('cfg-ico').value,
+        'krzpid': document.getElementById('cfg-krzpid').value,
+        'icp': document.getElementById('cfg-icp').value
+    };
+}
+
+function submitForm(panelId, action, body, extra) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'SEZAPI.csp';
+    form.style.display = 'none';
+
+    var cfg = collectConfig();
+    cfg['panel'] = panelId;
+    cfg['action'] = action;
+    cfg['body'] = body || '';
+
+    if (extra) {
+        for (var k in extra) cfg[k] = extra[k];
+    }
+
+    for (var key in cfg) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = key;
+        inp.value = cfg[key];
+        form.appendChild(inp);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function krpAction(type) {
+    var body = {};
+    switch(type) {
+        case 'rid': body = {rid: document.getElementById('krp-rid').value}; break;
+        case 'jmenorc': body = {jmeno: document.getElementById('krp-jmeno').value, prijmeni: document.getElementById('krp-prijmeni').value, rc: document.getElementById('krp-rc').value}; break;
+        case 'jmenodn': body = {jmeno: document.getElementById('krp-jmeno').value, prijmeni: document.getElementById('krp-prijmeni').value, datumNarozeni: document.getElementById('krp-datnar').value}; break;
+        case 'doklad': body = {cislo: document.getElementById('krp-doklad').value, typDokladu: 'ID'}; break;
+        case 'pojisteni': body = {rid: document.getElementById('krp-rid').value, akce: 'pojisteni'}; break;
+    }
+    document.getElementById('krp-body').value = JSON.stringify(body, null, 2);
+}
+
+function krpzsAction(type) {
+    var body = {};
+    if (type == 'ico') body = {ico: document.getElementById('krpzs-ico').value};
+    else if (type == 'nazev') body = {nazev: document.getElementById('krpzs-nazev').value};
+    document.getElementById('krpzs-body').value = JSON.stringify(body, null, 2);
+}
+
+function krzpAction(type) {
+    var body = {};
+    if (type == 'krzpid') body = {krzpid: document.getElementById('krzp-id').value};
+    else if (type == 'jmenodn') body = {jmeno: document.getElementById('krzp-jmeno').value, prijmeni: document.getElementById('krzp-prijmeni').value, datumNarozeni: document.getElementById('krzp-datnar').value};
+    document.getElementById('krzp-body').value = JSON.stringify(body, null, 2);
+}
+
+function ulozisteAction(type) {
+    if (type == 'vyhledat') {
+        var od = document.getElementById('ul-od').value;
+        var doo = document.getElementById('ul-do').value;
+        if (!od) od = new Date(Date.now() - 30*86400000).toISOString();
+        if (!doo) doo = new Date().toISOString();
+        submitForm('uloziste', 'ul_vyhledat', '', {'ul-od': od, 'ul-do': doo, 'ul-pacient': document.getElementById('ul-pacient').value});
+    } else if (type == 'detail') {
+        submitForm('uloziste', 'ul_detail', '', {'ul-id': document.getElementById('ul-id').value});
+    } else if (type == 'ulozit') {
+        submitForm('uloziste', 'ul_ulozit', document.getElementById('ul-body').value);
+    }
+}
+
+function ezAction(type) {
+    var id = document.getElementById('ez-id').value;
+    if (type == 'vyhledat') {
+        submitForm('ezadanky', 'ez_vyhledat', '', {'ez-pacient': document.getElementById('ez-pacient').value});
+    } else if (type == 'aktivni') {
+        submitForm('ezadanky', 'ez_aktivni', '', {'ez-pacient': document.getElementById('ez-pacient').value});
+    } else if (type == 'detail') {
+        submitForm('ezadanky', 'ez_detail', '', {'ez-id': id});
+    } else if (type == 'vizual') {
+        submitForm('ezadanky', 'ez_vizual', '', {'ez-id': id});
+    } else if (type == 'ulozit') {
+        submitForm('ezadanky', 'ez_ulozit', document.getElementById('ez-body').value);
+    } else if (type == 'prijmout' || type == 'vyridit' || type == 'stornovat') {
+        submitForm('ezadanky', 'ez_' + type, document.getElementById('ez-body').value, {'ez-id': id});
+    }
+}
+
+function szzAction(type) {
+    var rid = document.getElementById('szz-rid').value;
+    if (type == 'novaAlergie') {
+        document.getElementById('szz-body').value = JSON.stringify({
+            "nazev": "Alergie na ...",
+            "alergen": {"kod": "", "verze": "1.0"},
+            "kategorieAlergenu": {"kod": "", "verze": "1.0"},
+            "kriticnost": {"kod": "", "verze": "1.0"},
+            "typReakce": {"kod": "", "verze": "1.0"},
+            "zavaznostReakce": {"kod": "", "verze": "1.0"},
+            "manifestaceReakce": [],
+            "datumZjisteni": new Date().toISOString(),
+            "poznamka": ""
+        }, null, 2);
+    } else {
+        submitForm('szz', 'szz_' + type, document.getElementById('szz-body').value,
+            {'szz-rid': rid, 'szz-id': document.getElementById('szz-id').value,
+             'szz-jenplatne': document.getElementById('szz-jenplatne').value,
+             'szz-nezadouci-typ': document.getElementById('szz-nezadouci-typ').value});
+    }
+}
+
+function notifAction(type) {
+    if (type == 'odeslat') {
+        document.getElementById('notif-body').value = JSON.stringify({
+            "zdrojovySystem": "NIS",
+            "typ": "",
+            "kanal": "",
+            "sablona": "",
+            "casovaZnacka": new Date().toISOString(),
+            "prijemce": [{"id": "", "typ": "PZS"}],
+            "doruceni": {"priorita": "NORMAL"},
+            "dataNotifikace": {"hlavicka": "", "obsah": "", "pushText": "", "dataSablony": []}
+        }, null, 2);
+    } else {
+        submitForm('notifikace', 'notif_' + type, document.getElementById('notif-body').value,
+            {'notif-prijemce': document.getElementById('notif-prijemce').value,
+             'notif-od': document.getElementById('notif-od').value});
+    }
+}
+
+function elpAction(type) {
+    if (type == 'vytvorit') {
+        document.getElementById('elp-body').value = JSON.stringify({
+            "rid": document.getElementById('elp-rid').value,
+            "krzpId": document.getElementById('cfg-krzpid').value,
+            "ico": document.getElementById('cfg-ico').value,
+            "icp": document.getElementById('cfg-icp').value,
+            "druhPosudku": {"kod": "", "verze": "1.0"},
+            "druhProhlidky": {"kod": "", "verze": "1.0"},
+            "odbornostLekare": {"kod": "", "verze": "1.0"},
+            "stavPosudku": {"kod": "PLATNY", "verze": "1.0"},
+            "typAkce": {"kod": "NOVY", "verze": "1.0"},
+            "vysledek": {"kod": "", "verze": "1.0"},
+            "skupinaZadatelRidic": {"kod": "", "verze": "1.0"},
+            "datumVysetreni": "",
+            "datumVystaveni": new Date().toISOString().split('T')[0],
+            "skupinyRidicskehoOpravneni": [],
+            "prilohy": []
+        }, null, 2);
+    } else {
+        submitForm('elp', 'elp_' + type, document.getElementById('elp-body').value,
+            {'elp-id': document.getElementById('elp-id').value,
+             'elp-rid': document.getElementById('elp-rid').value});
+    }
+}
+
+function ezcaAction(type) {
+    submitForm('ezca', 'ezca_' + type, document.getElementById('ezca-body').value,
+        {'ezca-storageid': document.getElementById('ezca-storageid').value,
+         'ezca-certid': document.getElementById('ezca-certid').value});
+}
+
+function executeKRP() { submitForm('krp', 'krp_execute', document.getElementById('krp-body').value, {'krp-ucel': document.getElementById('krp-ucel').value}); }
+function executeKRPZS() { submitForm('krpzs', 'krpzs_execute', document.getElementById('krpzs-body').value); }
+function executeKRZP() { submitForm('krzp', 'krzp_execute', document.getElementById('krzp-body').value); }
+function executeUloziste() { submitForm('uloziste', 'ul_execute', document.getElementById('ul-body').value); }
+function executeEZadanky() { submitForm('ezadanky', 'ez_execute', document.getElementById('ez-body').value); }
+function executeELP() { submitForm('elp', 'elp_execute', document.getElementById('elp-body').value); }
+function executeSZZ() { submitForm('szz', 'szz_execute', document.getElementById('szz-body').value, {'szz-rid': document.getElementById('szz-rid').value, 'szz-id': document.getElementById('szz-id').value}); }
+function executeNotifikace() { submitForm('notifikace', 'notif_execute', document.getElementById('notif-body').value); }
+function executeEZCA() { submitForm('ezca', 'ezca_execute', document.getElementById('ezca-body').value); }
+function executeOpravneni() { submitForm('opravneni', 'opr_execute', ''); }
+function testConnection() { submitForm('config', 'test', ''); }
+function diagToken() { submitForm('config', 'diag_token', ''); }
+</script>
+
+<script language="cache" runat="server">
+    If %request.Method = "POST" {
+
+        Set panel = %request.Get("panel")
+        Set action = %request.Get("action")
+        Set bodyStr = %request.Get("body")
+        Set clientId = %request.Get("clientid")
+        Set clientSecret = %request.Get("clientsecret")
+        Set ico = %request.Get("ico")
+
+        Set config = ##class(SEZ.API.Config).%New(clientId, clientSecret, ico)
+        Set config.P12CertFile = %request.Get("p12file")
+        Set config.P12CertPassword = %request.Get("p12password")
+        Set config.CertUID = %request.Get("certuid")
+        Set scope = %request.Get("scope")
+        If scope '= "" Set config.Scope = scope
+        Set config.KrzpId = %request.Get("krzpid")
+        Set config.ICP = %request.Get("icp")
+
+        Set statusCode = 0
+        Set resultJson = ""
+        Set sc = $$$OK
+
+        Try {
+            // ===================== KONFIGURACE =====================
+            If action = "test" {
+                Set sc = ##class(SEZ.API.Installer).TestConnection(clientId, clientSecret)
+                Set statusCode = $Select($$$ISOK(sc):200, 1:500)
+                Set resultJson = "{""status"":"""_$Select($$$ISOK(sc):"OK", 1:$System.Status.GetErrorText(sc))_"""}"
+            }
+            ElseIf action = "diag_token" {
+                Set diagConfig = ##class(SEZ.API.Config).%New(clientId, clientSecret, ico)
+                Set diagConfig.P12CertFile = config.P12CertFile
+                Set diagConfig.P12CertPassword = config.P12CertPassword
+                Set diagConfig.CertUID = config.CertUID
+                If scope '= "" Set diagConfig.Scope = scope
+                Set sc = diagConfig.DiagToken()
+                Set statusCode = $Select($$$ISOK(sc):200, 1:500)
+                Set resultJson = "{""status"":"""_$Select($$$ISOK(sc):"Token diagnostika dokoncena", 1:$System.Status.GetErrorText(sc))_"""}"
+            }
+
+            // ===================== KRP =====================
+            ElseIf action = "krp_execute" {
+                Set krp = ##class(SEZ.API.KRP).%New(config)
+                Set body = {}.%FromJSON(bodyStr)
+                Set ucel = %request.Get("krp-ucel", "LECBA")
+                If body.%Get("akce") = "pojisteni" {
+                    Set sc = krp.HledatHistoriePojisteni(body.%Get("rid"), ucel, .resp)
+                } ElseIf body.%Get("rid") '= "" {
+                    Set sc = krp.HledatPodleRID(body.%Get("rid"), ucel, .resp)
+                } ElseIf body.%Get("rc") '= "" {
+                    Set sc = krp.HledatJmenoPrijmeniRC(body.%Get("jmeno"), body.%Get("prijmeni"), body.%Get("rc"), ucel, .resp)
+                } ElseIf body.%Get("datumNarozeni") '= "" {
+                    Set sc = krp.HledatJmenoPrijmeniDN(body.%Get("jmeno"), body.%Get("prijmeni"), body.%Get("datumNarozeni"), ucel, .resp)
+                } ElseIf body.%Get("cislo") '= "" {
+                    Set sc = krp.HledatPodleDokladu(body.%Get("cislo"), body.%Get("typDokladu"), ucel, .resp)
+                }
+                Set statusCode = krp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:krp.Client.LastRawResponse)
+            }
+
+            // ===================== KRPZS =====================
+            ElseIf action = "krpzs_execute" {
+                Set krpzs = ##class(SEZ.API.KRPZS).%New(config)
+                Set body = {}.%FromJSON(bodyStr)
+                If body.%Get("ico") '= "" {
+                    Set sc = krpzs.HledatPodleICO(body.%Get("ico"), "LECBA", .resp)
+                } ElseIf body.%Get("nazev") '= "" {
+                    Set sc = krpzs.HledatPodleNazvu(body.%Get("nazev"), "LECBA", .resp)
+                }
+                Set statusCode = krpzs.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:krpzs.Client.LastRawResponse)
+            }
+
+            // ===================== KRZP =====================
+            ElseIf action = "krzp_execute" {
+                Set krzp = ##class(SEZ.API.KRZP).%New(config)
+                Set body = {}.%FromJSON(bodyStr)
+                If body.%Get("krzpid") '= "" {
+                    Set sc = krzp.HledatPodleKrzpId(body.%Get("krzpid"), "LECBA", .resp)
+                } ElseIf body.%Get("datumNarozeni") '= "" {
+                    Set sc = krzp.HledatJmenoDatumNarozeni(body.%Get("jmeno"), body.%Get("prijmeni"), body.%Get("datumNarozeni"), "LECBA", .resp)
+                }
+                Set statusCode = krzp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:krzp.Client.LastRawResponse)
+            }
+
+            // ===================== DOČASNÉ ÚLOŽIŠTĚ =====================
+            ElseIf action = "ul_vyhledat" {
+                Set du = ##class(SEZ.API.DocasneUloziste).%New(config)
+                Set sc = du.VyhledejZasilku(%request.Get("ul-od"), %request.Get("ul-do"), %request.Get("ul-pacient"), , , , , 1, 25, .resp)
+                Set statusCode = du.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:du.Client.LastRawResponse)
+            }
+            ElseIf action = "ul_detail" {
+                Set du = ##class(SEZ.API.DocasneUloziste).%New(config)
+                Set sc = du.DejZasilku(%request.Get("ul-id"), .resp)
+                Set statusCode = du.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:du.Client.LastRawResponse)
+            }
+            ElseIf (action = "ul_ulozit") || (action = "ul_execute") {
+                Set du = ##class(SEZ.API.DocasneUloziste).%New(config)
+                If bodyStr '= "" {
+                    Set body = {}.%FromJSON(bodyStr)
+                    Set sc = du.UlozZasilku(body, .resp)
+                }
+                Set statusCode = du.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:du.Client.LastRawResponse)
+            }
+
+            // ===================== E-ŽÁDANKY =====================
+            ElseIf action = "ez_vyhledat" {
+                Set ez = ##class(SEZ.API.EZadanky).%New(config)
+                Set od = $ZDATETIME($SYSTEM.SQL.DATEADD("dd", -30, $ZDATETIME($ZTIMESTAMP, 3, 1)), 3, 1)
+                Set doo = $ZDATETIME($ZTIMESTAMP, 3, 1)
+                Set sc = ez.VyhledejZadanku(od, doo, %request.Get("ez-pacient"), 1, 25, .resp)
+                Set statusCode = ez.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ez.Client.LastRawResponse)
+            }
+            ElseIf action = "ez_aktivni" {
+                Set ez = ##class(SEZ.API.EZadanky).%New(config)
+                Set body = {"pacient": (%request.Get("ez-pacient"))}
+                Set sc = ez.VyhledejAktivniZadanku(body, .resp)
+                Set statusCode = ez.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ez.Client.LastRawResponse)
+            }
+            ElseIf action = "ez_detail" {
+                Set ez = ##class(SEZ.API.EZadanky).%New(config)
+                Set sc = ez.NactiZadanku(%request.Get("ez-id"), , , , .resp)
+                Set statusCode = ez.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ez.Client.LastRawResponse)
+            }
+            ElseIf action = "ez_vizual" {
+                Set ez = ##class(SEZ.API.EZadanky).%New(config)
+                Set sc = ez.DejVizualZadanky(%request.Get("ez-id"), .resp)
+                Set statusCode = ez.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ez.Client.LastRawResponse)
+            }
+            ElseIf (action = "ez_ulozit") || (action = "ez_execute") {
+                Set ez = ##class(SEZ.API.EZadanky).%New(config)
+                If bodyStr '= "" {
+                    Set body = {}.%FromJSON(bodyStr)
+                    Set sc = ez.UlozZadanku(body, .resp)
+                }
+                Set statusCode = ez.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ez.Client.LastRawResponse)
+            }
+
+            // ===================== ELP =====================
+            ElseIf action = "elp_vyhledat" {
+                Set elp = ##class(SEZ.API.ELP).%New(config)
+                Set body = {"rid": (%request.Get("elp-rid"))}
+                Set sc = elp.VyhledatPosudky(body, .resp)
+                Set statusCode = elp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:elp.Client.LastRawResponse)
+            }
+            ElseIf action = "elp_detail" {
+                Set elp = ##class(SEZ.API.ELP).%New(config)
+                Set sc = elp.DetailPosudku(%request.Get("elp-id"), .resp)
+                Set statusCode = elp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:elp.Client.LastRawResponse)
+            }
+            ElseIf action = "elp_historie" {
+                Set elp = ##class(SEZ.API.ELP).%New(config)
+                Set sc = elp.HistoriePosudku(%request.Get("elp-id"), .resp)
+                Set statusCode = elp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:elp.Client.LastRawResponse)
+            }
+            ElseIf action = "elp_ciselniky" {
+                Set elp = ##class(SEZ.API.ELP).%New(config)
+                Set sc = elp.SeznamCiselniku(.resp)
+                Set statusCode = elp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:elp.Client.LastRawResponse)
+            }
+            ElseIf (action = "elp_vytvorit") || (action = "elp_execute") {
+                Set elp = ##class(SEZ.API.ELP).%New(config)
+                If bodyStr '= "" {
+                    Set body = {}.%FromJSON(bodyStr)
+                    Set sc = elp.VytvorPosudek(body, .resp)
+                }
+                Set statusCode = elp.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:elp.Client.LastRawResponse)
+            }
+
+            // ===================== SZZ =====================
+            ElseIf action = "szz_emergentni" {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set sc = szz.NactiEmergentniZaznam(%request.Get("szz-rid"), .resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf action = "szz_alergie" {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set sc = szz.NactiAlergie(%request.Get("szz-rid"), , .resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf action = "szz_krevni" {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set sc = szz.NactiKrevniSkupinu(%request.Get("szz-rid"), .resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf action = "szz_leciva" {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set sc = szz.NactiLeciva(%request.Get("szz-rid"), .resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf (action [ "szz_nezadouci") {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set typ = %request.Get("szz-nezadouci-typ", "nezadouciPrihody")
+                Set sc = szz.NactiNezadouci(typ, %request.Get("szz-rid"), , .resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf action = "szz_zdravotni" {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set sc = szz.VyhledatZdravotniZaznamy(%request.Get("szz-rid"), , , , .resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf action = "szz_ciselniky" {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set sc = szz.SeznamCiselniku(.resp)
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+            ElseIf (action = "szz_novaAlergie") || (action = "szz_execute") {
+                Set szz = ##class(SEZ.API.SZZ).%New(config)
+                Set rid = %request.Get("szz-rid","")
+                If bodyStr '= "" {
+                    Set body = {}.%FromJSON(bodyStr)
+                    Set sc = szz.VytvorAlergii(rid, body, .resp)
+                } Else {
+                    Set sc = szz.NactiEmergentniZaznam(rid, .resp)
+                }
+                Set statusCode = szz.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:szz.Client.LastRawResponse)
+            }
+
+            // ===================== NOTIFIKACE =====================
+            ElseIf action = "notif_ping" {
+                Set notif = ##class(SEZ.API.Notifikace).%New(config)
+                Set sc = notif.Ping(.resp)
+                Set statusCode = notif.Client.LastStatusCode
+                Set resultJson = notif.Client.LastRawResponse
+            }
+            ElseIf action = "notif_vyhledat" {
+                Set notif = ##class(SEZ.API.Notifikace).%New(config)
+                Set od = %request.Get("notif-od")
+                If od = "" Set od = "2024-01-01T00:00:00"
+                Set sc = notif.Vyhledat(%request.Get("notif-prijemce"), od, 50, .resp)
+                Set statusCode = notif.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:notif.Client.LastRawResponse)
+            }
+            ElseIf action = "notif_kanaly" {
+                Set notif = ##class(SEZ.API.Notifikace).%New(config)
+                Set sc = notif.KatalogKanalu(, , .resp)
+                Set statusCode = notif.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:notif.Client.LastRawResponse)
+            }
+            ElseIf action = "notif_sablony" {
+                Set notif = ##class(SEZ.API.Notifikace).%New(config)
+                Set sc = notif.KatalogSablon(, , .resp)
+                Set statusCode = notif.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:notif.Client.LastRawResponse)
+            }
+            ElseIf action = "notif_zdroje" {
+                Set notif = ##class(SEZ.API.Notifikace).%New(config)
+                Set sc = notif.KatalogZdroju(, , .resp)
+                Set statusCode = notif.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:notif.Client.LastRawResponse)
+            }
+            ElseIf (action = "notif_odeslat") || (action = "notif_execute") {
+                Set notif = ##class(SEZ.API.Notifikace).%New(config)
+                If bodyStr '= "" {
+                    Set body = {}.%FromJSON(bodyStr)
+                    Set sc = notif.Odeslat(body, .resp)
+                }
+                Set statusCode = notif.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:notif.Client.LastRawResponse)
+            }
+
+            // ===================== EZCA =====================
+            ElseIf action = "ezca_health" {
+                Set ezca = ##class(SEZ.API.EZCA).%New(config)
+                Set sc = ezca.HealthCheck(.ok)
+                Set statusCode = ezca.Client.LastStatusCode
+                Set resultJson = "{""healthy"":"_$Select(ok:"true", 1:"false")_"}"
+            }
+            ElseIf action = "ezca_certifikaty" {
+                Set ezca = ##class(SEZ.API.EZCA).%New(config)
+                Set sc = ezca.VypisCertifikatu(%request.Get("ezca-storageid"), , , .resp)
+                Set statusCode = ezca.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ezca.Client.LastRawResponse)
+            }
+            ElseIf action = "ezca_execute" {
+                Set ezca = ##class(SEZ.API.EZCA).%New(config)
+                If bodyStr '= "" {
+                    Set body = {}.%FromJSON(bodyStr)
+                    Set sc = ezca.PodpisDokumentu(body.%Get("content"), +body.%Get("documentType"), body.%Get("fileName"), body.%Get("sourceSystem"), %request.Get("ezca-certid"), "", %request.Get("ezca-storageid"), , , .resp)
+                }
+                Set statusCode = ezca.Client.LastStatusCode
+                Set resultJson = $Select($IsObject(resp):resp.%ToJSON(), 1:ezca.Client.LastRawResponse)
+            }
+
+            // ===================== OPRÁVNĚNÍ =====================
+            ElseIf action = "opr_execute" {
+                Set opr = ##class(SEZ.API.RegistrOpravneni).%New(config)
+                Set sluzba = +%request.Get("opr-sluzba","1")
+                Set doktip = +%request.Get("opr-doktip","5")
+                Set role1 = %request.Get("opr-role1","PoskytovatelZdravotnickychSluzeb")
+                Set hod1 = %request.Get("opr-hod1","")
+                Set role2 = %request.Get("opr-role2","ZdravotniPracovnik")
+                Set hod2 = %request.Get("opr-hod2","")
+                Set sc = opr.Over(sluzba, doktip, role1, hod1, role2, hod2, .opravnen)
+                Set statusCode = opr.Client.LastStatusCode
+                Set resultJson = "{""opravnen"":"_$Select(opravnen:"true", 1:"false")_"}"
+            }
+
+            If $$$ISERR(sc) && (resultJson = "") {
+                Set resultJson = "{""error"":"""_$Replace($System.Status.GetErrorText(sc), """", "\""")_"""}"
+                If statusCode = 0 Set statusCode = 500
+            }
+
+        } Catch ex {
+            Set statusCode = 500
+            Set resultJson = "{""error"":"""_$Replace(ex.DisplayString(), """", "\""")_"""}"
+        }
+
+        If statusCode > 0 {
+            &html<<script>showResult('#(panel)#', #(statusCode)#, '#($ZCONVERT(resultJson,"O","JS"))#');</script>>
+        }
+    }
+</script>
+
+</body>
+</html>
+</csp:class>

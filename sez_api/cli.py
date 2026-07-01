@@ -69,6 +69,7 @@ def _ping():
     from sez_api.client import (
         SEZAuth, SEZClient,
         KRP, KRZP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace, EZCA2,
+        Terminologie,
     )
 
     print(f"Připojuji se k {cfg.GATEWAY}...")
@@ -81,13 +82,15 @@ def _ping():
     client = SEZClient(auth)
 
     checks = [
-        ("Notifikace", lambda: Notifikace(client).ping()),
-        ("KRP",        lambda: KRP(client).hledat_rid("7653800856")),
-        ("SZZ",        lambda: SZZ(client).alergie("7706120004")),
-        ("ELP",        lambda: ELP(client).vyhledej_posudky({"strankovani": {"page": 0, "size": 1}})),
-        ("eZadanky",   lambda: EZadanky(client).vyhledej_zadanku({"strankovani": {"page": 1, "size": 1}})),
-        ("EZCA2",      lambda: EZCA2(client).simple_health()),
-        ("KRZP",       lambda: KRZP(client).hledat_jmeno("Novák", "Jan")),
+        ("Notifikace",   lambda: Notifikace(client).ping()),
+        ("KRP",          lambda: KRP(client).hledat_rid("7653800856")),
+        ("SZZ",          lambda: SZZ(client).alergie("7706120004")),
+        ("ELP",          lambda: ELP(client).vyhledej_posudky({"strankovani": {"page": 0, "size": 1}})),
+        ("eZadanky",     lambda: EZadanky(client).vyhledej_zadanku({"strankovani": {"page": 1, "size": 1}})),
+        ("EZCA2",        lambda: EZCA2(client).simple_health()),
+        ("KRZP",         lambda: KRZP(client).hledat_jmeno("Novák", "Jan")),
+        ("TermX",        lambda: Terminologie(client).metadata()),
+        ("TermX-Public", lambda: Terminologie(client, public=True).metadata()),
     ]
 
     ok = 0

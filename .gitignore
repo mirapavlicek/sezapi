@@ -3,6 +3,9 @@
 *.pfx
 *.p12
 *.pem
+# Výjimka: veřejně stažitelný TESTOVACÍ cert (T2) Krajské zdravotní z NCEZ.
+# POZOR: produkční homolka.pfx zůstává ignorovaný (nikdy necommitovat).
+!krajska_zdravotni.pfx
 
 # Python
 __pycache__/
@@ -48,3 +51,8 @@ checkmk/
 
 # Subagent web fetch cache
 .firecrawl/
+
+# Analytická dokumentace + swaggery (verzovaná podsložka – přebíjí *.json výše)
+!docs/analytics/
+!docs/analytics/**
+docs/analytics/**/*.zip

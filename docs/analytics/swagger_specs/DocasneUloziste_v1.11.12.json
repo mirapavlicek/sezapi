@@ -1,0 +1,1940 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Docasne uloziste",
+    "version": "v1.11.12"
+  },
+  "servers": [
+    {
+      "url": "/docasneUloziste"
+    }
+  ],
+  "paths": {
+    "/api/v1/Zasilka/UlozZasilku": {
+      "post": {
+        "tags": [
+          "Zásilky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UlozZasilkuCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Zásilka je uložena",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UlozZasilkuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/Zasilka/DejZasilku/{id}": {
+      "get": {
+        "tags": [
+          "Zásilky"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zásilka je nalezena",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DejZasilkuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Pro dané id nebyla nalezena žádná Zásilka"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/Zasilka/VyhledejZasilku": {
+      "post": {
+        "tags": [
+          "Zásilky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyhledejZasilkuExtQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zásilky poskytnuty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VyhledejZasilkuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/Zasilka/ZneplatniZasilku": {
+      "patch": {
+        "tags": [
+          "Zásilky"
+        ],
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "description": "Identifikátor zásilky",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "VerzeRadku",
+            "in": "query",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zásilka je zneplatněna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZneplatniZasilkuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Pro dané id nebyla nalezena žádná Zásilka"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/Zasilka/ZmenZasilku": {
+      "put": {
+        "tags": [
+          "Zásilky"
+        ],
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "description": "Identifikátor zásilky",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "VerzeRadku",
+            "in": "query",
+            "description": "Verze řádku",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZmenZasilkuCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zásilka je zpochybněna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZpochybniZasilkuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Pro dané id nebyla nalezena žádná Zásilka"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/Zasilka/PotvrdVyzvednutiZasilky": {
+      "patch": {
+        "tags": [
+          "Zásilky"
+        ],
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "query",
+            "description": "ID zásilky",
+            "schema": {
+              "type": "string",
+              "description": "ID zásilky",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "VerzeRadku",
+            "in": "query",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vyzvednutí zásilky je potvrzeno. Soubory zásilky byly vymazány.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PotvrdVyzvednutiZasilkyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Pro dané id nebyla nalezena žádná Zásilka"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdresatData": {
+        "title": "AdresatData",
+        "type": "object",
+        "properties": {
+          "zdravotnickyPracovnik": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "pacient": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "poskytovatel": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO obsahující data adresáta."
+      },
+      "DejZasilkuDto": {
+        "required": [
+          "autor",
+          "ispzs",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci"
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "odbornost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datum zpřístupnění dokumentů v Zásilce.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datum ukončení dostupnosti dokumentů.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření zásilky",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KZR."
+          },
+          "autorData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KZR."
+          },
+          "zdravotnickyPracovnikData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče."
+          },
+          "poskytovatelData": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID)."
+          },
+          "pacientData": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "ispzs": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Identifikátor služby přenosu dat (např. PACS, HIE)."
+          },
+          "adresat": {
+            "type": "string",
+            "description": "Identifikátor příjemce (lékař, nemocnice, pacient). Vazba na KZR.",
+            "nullable": true
+          },
+          "adresatData": {
+            "$ref": "#/components/schemas/AdresatData"
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Status dostupnosti dat",
+            "nullable": true
+          },
+          "rodic": {
+            "type": "string",
+            "description": "ID rodičovské zásilky pro případ hierarchického třídění.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "udalost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dokument": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Seznam dokumentů zásilky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratova data služby DejZasilku"
+      },
+      "Dokument": {
+        "title": "Dokument",
+        "required": [
+          "dostupnost",
+          "hash",
+          "nazev",
+          "pacient",
+          "typ"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor dokumentu",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string",
+            "description": "Krátký název dokumentu."
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis obsahu dokumentu",
+            "nullable": true
+          },
+          "jazyk": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "kod": {
+            "type": "string",
+            "description": "Externí kód zásilky (například: konkrétní kód žádanky)",
+            "nullable": true
+          },
+          "autor": {
+            "type": "string",
+            "description": "ID autora zásilky (väzba na kmeňový register – zdravotnikych pracovnikov).",
+            "nullable": true
+          },
+          "autorData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "poskytovatel": {
+            "type": "string",
+            "description": "ID subjektu (vazba na kmeňový register – poskytovatel).",
+            "nullable": true
+          },
+          "poskytovatelData": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "RID pacienta, ke kterému se zásilka vztahuje."
+          },
+          "pacientData": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Úroveň důvěrnosti dokumentu (chránený, soukromý, verejný).",
+            "default": true
+          },
+          "duvernost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "format": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "mime": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "hash": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Kontrolní hash dokumentu pro ověření integrity."
+          },
+          "velikost": {
+            "type": "integer",
+            "description": "Velikost dokumentu v bajtech. Automaticky vypočteno z obsahu souboru.",
+            "format": "int64",
+            "nullable": true
+          },
+          "vazanyDokument": {
+            "type": "string",
+            "description": "Vázaný dokument",
+            "format": "uuid",
+            "nullable": true
+          },
+          "soubor": {
+            "$ref": "#/components/schemas/Soubor"
+          },
+          "slozka": {
+            "$ref": "#/components/schemas/Slozka"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt Dokument párován na JSON dokument"
+      },
+      "ErrorItemResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Kód chyby",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "description": "Položka, u které došlo k chybě",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Parametry pro vyvolání chyby",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Zpráva chyby",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Položka chyby pro všeobecnou návratovou třídu pro chybu"
+      },
+      "ErrorsResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorItemResponse"
+            },
+            "description": "Seznam nalezených chyb",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data při vyvolání chyby se seznamem chyb"
+      },
+      "KRPacientDto": {
+        "title": "KRPacientDto",
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "Gets or sets the rid.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "jmeno": {
+            "type": "string",
+            "description": "Gets or sets the jmeno.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Gets or sets the prijmeni.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Gets or sets the datum narozeni.",
+            "format": "date",
+            "nullable": true,
+            "readOnly": true
+          },
+          "ruianId": {
+            "type": "string",
+            "description": "Gets or sets the ruian identifier.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "adresaCela": {
+            "type": "string",
+            "description": "Gets or sets the adresa cela.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "zdravotniPojistovnaKod": {
+            "type": "string",
+            "description": "Gets or sets the zdravotni pojistovna kod.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "zdravotniPojistovnaNazev": {
+            "type": "string",
+            "description": "Gets or sets the zdravotni pojistovna nazev.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "kontaktniEmail": {
+            "type": "string",
+            "description": "Gets or sets the kontaktni email.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "preferovanyJazyk": {
+            "type": "string",
+            "description": "Gets or sets the preferovany jazyk.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "description": "Gets or sets the cislo pojistence.",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KRPoskytovatelDto": {
+        "title": "KRPoskytovatelDto",
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "description": "Gets or sets the icon.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Gets or sets the nazev.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "ruianId": {
+            "type": "string",
+            "description": "Gets or sets the ruian identifier.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "adresaCela": {
+            "type": "string",
+            "description": "Gets or sets the adresa cela.",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KRZdravotnickyPracovnikDto": {
+        "title": "KRZdravotnickyPracovnikDto",
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "description": "Gets or sets the jmeno.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Gets or sets the prijmeni.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "titulPred": {
+            "type": "string",
+            "description": "Gets or sets the titul pred.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "titulZa": {
+            "type": "string",
+            "description": "Gets or sets the titul za.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "krzpId": {
+            "type": "string",
+            "description": "Gets or sets the KRZP identifier.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Gets or sets the datum narozeni.",
+            "format": "date",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PolozkaCiselnikuDto": {
+        "title": "PolozkaCiselniku",
+        "required": [
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "ciselnikKod": {
+            "type": "string",
+            "description": "Kód číselníku.",
+            "nullable": true
+          },
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód číselnikové položky"
+          },
+          "verze": {
+            "type": "string",
+            "description": "Verze číselníka",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název číselníkové hodnoty",
+            "nullable": true,
+            "readOnly": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis číselníkové hodnoty",
+            "nullable": true,
+            "readOnly": true
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Platnost číselníkové položky",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt PolozkaCiselniku párován na JSON dokument"
+      },
+      "PotvrdVyzvednutiZasilkyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikace zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control. Len Read-only.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "PotvrdVyzvednutiZasilkyDto"
+      },
+      "Slozka": {
+        "title": "Slozka",
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID zásilky pro zoskupení dokumentu do jednotní složky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název složky"
+          },
+          "autor": {
+            "type": "string",
+            "description": "ID uživatele, který složku vytvořil.",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření složky",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Složka dokumentu"
+      },
+      "Soubor": {
+        "title": "Soubor",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID souboru",
+            "format": "uuid",
+            "nullable": true
+          },
+          "soubor": {
+            "type": "string",
+            "description": "Base64 soubor",
+            "nullable": true
+          },
+          "cesta": {
+            "type": "string",
+            "description": "Cesta na externí úložiště",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data nebo informace o soubore"
+      },
+      "Strankovani": {
+        "title": "Strankovani",
+        "required": [
+          "page",
+          "size"
+        ],
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "Definuje požadované číslo stránky. Stránky jsou číslovány od 1.",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Definuje požadovaný počet záznamů na stránce.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifikace stránkování"
+      },
+      "UlozZasilkuCommand": {
+        "required": [
+          "autor",
+          "ispzs",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci"
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky",
+            "nullable": true
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "odbornost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datum zpřístupnění dokumentů v Zásilce.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datum ukončení dostupnosti dokumentů.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření zásilky",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KZR."
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KZR."
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče."
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID)."
+          },
+          "ispzs": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Identifikátor služby přenosu dat (např. PACS, HIE)."
+          },
+          "adresat": {
+            "type": "string",
+            "description": "Identifikátor příjemce (lékař, nemocnice, pacient). Vazba na KZR.",
+            "nullable": true
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Status dostupnosti dat",
+            "nullable": true
+          },
+          "rodic": {
+            "type": "string",
+            "description": "ID rodičovské zásilky pro případ hierarchického třídění.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "udalost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dokument": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Seznam dokumentů zásilky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request pro uládáni zásilky",
+        "example": {
+          "nazev": "Lekárska správa",
+          "popis": "Lekárska správa z vyšetření",
+          "typ": {
+            "kod": "07",
+            "verze": "1.0.0"
+          },
+          "klasifikace": {
+            "kod": "184216000",
+            "verze": "1.0.0"
+          },
+          "odbornost": {
+            "kod": "004",
+            "verze": "202420"
+          },
+          "datumOd": "2026-04-21T23:00:03.1054043+02:00",
+          "datumDo": "2029-04-21T23:00:03.1056036+02:00",
+          "autor": "5",
+          "zdravotnickyPracovnik": "6",
+          "poskytovatel": "1",
+          "pacient": "6653225891",
+          "ispzs": "Nemocniční informační systém XY",
+          "adresat": "4",
+          "adresatTyp": {
+            "kod": "PAT",
+            "verze": "1.0.0"
+          },
+          "dostupnost": true,
+          "udalost": {
+            "kod": "B",
+            "verze": "1.0.0"
+          },
+          "dokument": [
+            {
+              "nazev": "Lekárska správa pacienta",
+              "popis": "Lekárska správa z ortopedického vyšetření",
+              "jazyk": {
+                "kod": "cz",
+                "verze": "1.0"
+              },
+              "typ": {
+                "kod": "07",
+                "verze": "1.0.0"
+              },
+              "klasifikace": {
+                "kod": "184216000",
+                "verze": "1.0.0"
+              },
+              "kod": "KOD",
+              "autor": "5",
+              "poskytovatel": "1",
+              "pacient": "6653225891",
+              "dostupnost": true,
+              "duvernost": {
+                "kod": "M",
+                "verze": "1.0.0"
+              },
+              "format": {
+                "kod": "PDF",
+                "verze": "1.0.0"
+              },
+              "mime": {
+                "kod": "application/pdf",
+                "verze": "1.0.0"
+              },
+              "hash": "b1442e85b03bdcaf66dc58c7abb98745dd2687d86350be9a298a1d9382ac849b",
+              "velikost": 0,
+              "vazanyDokument": null,
+              "soubor": {
+                "soubor": "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+                "cesta": null
+              },
+              "slozka": {
+                "nazev": "Přílohy",
+                "autor": "5"
+              }
+            }
+          ]
+        }
+      },
+      "UlozZasilkuDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikace vygenerované zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratova data pro UlozZasilku"
+      },
+      "VyhledejZasilkuDto": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "description": "Reprezentuje číslo aktuální stránky",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "description": "Reprezentuje číslo další stránky. Pokud je aktuální stránka zároveň poslední stránkou seznamu, pak tento parametr není uveden nebo je uveden s hodnotou null.",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageCount": {
+            "type": "integer",
+            "description": "Reprezentuje celkový počet stránek dotazu",
+            "format": "int32",
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Reprezentuje počet záznamů na stránku. Tento parametr může odpovídat požadované hodnotě size z dotazu, s výjimkou případů, kdy se jedná o poslední stránku",
+            "format": "int64",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Je nepovinný a reprezentuje údaje o celkovém počtu záznamů pro všechny stránky. Pokud tuto hodnotu nelze přesně určit, neuvádí se.",
+            "format": "int64",
+            "nullable": true
+          },
+          "pocetNeprectenych": {
+            "type": "integer",
+            "description": "Počet neprečtených záznamů",
+            "format": "int64",
+            "nullable": true
+          },
+          "zasilka": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Zasilka"
+            },
+            "description": "Seznam nalezených zásilek",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data pro vyhledání zásilky"
+      },
+      "VyhledejZasilkuExtQuery": {
+        "required": [
+          "datumDo",
+          "datumOd"
+        ],
+        "type": "object",
+        "properties": {
+          "idZasilky": {
+            "type": "string",
+            "description": "Identifikace zásilky.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "pacient": {
+            "type": "string",
+            "description": "RID - Identifikátor pacienta, kterému seznam náleží.",
+            "nullable": true
+          },
+          "autor": {
+            "type": "string",
+            "description": "Identifikátor autora Zásilky, který zásilku vytvořil.",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "string",
+            "description": "Identifikátor příjemce Zásilky.",
+            "nullable": true
+          },
+          "poskytovatel": {
+            "type": "string",
+            "description": "Identifikátor poskytovatěle Zásilky.",
+            "nullable": true
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datumové ohraničení nejstaršího datumu vytvoření Zásilky.",
+            "format": "date-time"
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datumové ohraničení nejmladšího datumu vytvoření Zásilky.",
+            "format": "date-time"
+          },
+          "strankovani": {
+            "$ref": "#/components/schemas/Strankovani"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro filtraci externích zásilek",
+        "example": {
+          "pacient": null,
+          "autor": null,
+          "prijemce": null,
+          "poskytovatel": null,
+          "idZasilky": null,
+          "datumOd": "2025-01-01T00:00:00.0000000+01:00",
+          "datumDo": "2025-12-31T00:00:00.0000000+01:00",
+          "strankovani": {
+            "page": 1,
+            "size": 10
+          }
+        }
+      },
+      "Zasilka": {
+        "title": "Zasilka",
+        "required": [
+          "autor",
+          "ispzs",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci"
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "odbornost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datum zpřístupnění dokumentů v Zásilce.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datum ukončení dostupnosti dokumentů.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření zásilky",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KZR."
+          },
+          "autorData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KZR."
+          },
+          "zdravotnickyPracovnikData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče."
+          },
+          "poskytovatelData": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID)."
+          },
+          "pacientData": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "ispzs": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Identifikátor služby přenosu dat (např. PACS, HIE)."
+          },
+          "adresat": {
+            "type": "string",
+            "description": "Identifikátor příjemce (lékař, nemocnice, pacient). Vazba na KZR.",
+            "nullable": true
+          },
+          "adresatData": {
+            "$ref": "#/components/schemas/AdresatData"
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Status dostupnosti dat",
+            "nullable": true
+          },
+          "rodic": {
+            "type": "string",
+            "description": "ID rodičovské zásilky pro případ hierarchického třídění.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "udalost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dokument": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Seznam dokumentů zásilky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data zásilky"
+      },
+      "ZmenZasilkuCommand": {
+        "required": [
+          "autor",
+          "ispzs",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci"
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky",
+            "nullable": true
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "odbornost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datum zpřístupnění dokumentů v Zásilce.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datum ukončení dostupnosti dokumentů.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření zásilky",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KZR."
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KZR."
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče."
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID)."
+          },
+          "ispzs": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Identifikátor služby přenosu dat (např. PACS, HIE)."
+          },
+          "adresat": {
+            "type": "string",
+            "description": "Identifikátor příjemce (lékař, nemocnice, pacient). Vazba na KZR.",
+            "nullable": true
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Status dostupnosti dat",
+            "nullable": true
+          },
+          "rodic": {
+            "type": "string",
+            "description": "ID rodičovské zásilky pro případ hierarchického třídění.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "udalost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dokument": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Seznam dokumentů zásilky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request pro změnu zásilky",
+        "example": {
+          "nazev": "Lekárska správa",
+          "popis": "Lekárska správa z vyšetření",
+          "typ": {
+            "kod": "07",
+            "verze": "1.0.0"
+          },
+          "klasifikace": {
+            "kod": "184216000",
+            "verze": "1.0.0"
+          },
+          "odbornost": {
+            "kod": "004",
+            "verze": "202420"
+          },
+          "datumOd": "2026-04-21T23:00:03.1348151+02:00",
+          "datumDo": "2029-04-21T23:00:03.1348210+02:00",
+          "autor": "5",
+          "zdravotnickyPracovnik": "6",
+          "poskytovatel": "1",
+          "pacient": "6653225891",
+          "ispzs": "Nemocniční informační systém XY",
+          "adresat": "4",
+          "adresatTyp": {
+            "kod": "PAT",
+            "verze": "1.0.0"
+          },
+          "dostupnost": true,
+          "udalost": {
+            "kod": "B",
+            "verze": "1.0.0"
+          },
+          "dokument": [
+            {
+              "nazev": "Lekárska správa pacienta",
+              "popis": "Lekárska správa z ortopedického vyšetření",
+              "jazyk": {
+                "kod": "cz",
+                "verze": "1.0"
+              },
+              "typ": {
+                "kod": "07",
+                "verze": "1.0.0"
+              },
+              "klasifikace": {
+                "kod": "184216000",
+                "verze": "1.0.0"
+              },
+              "kod": "KOD",
+              "autor": "5",
+              "poskytovatel": "1",
+              "pacient": "6653225891",
+              "dostupnost": true,
+              "duvernost": {
+                "kod": "M",
+                "verze": "1.0.0"
+              },
+              "format": {
+                "kod": "PDF",
+                "verze": "1.0.0"
+              },
+              "mime": {
+                "kod": "application/pdf",
+                "verze": "1.0.0"
+              },
+              "hash": "b1442e85b03bdcaf66dc58c7abb98745dd2687d86350be9a298a1d9382ac849b",
+              "velikost": 0,
+              "vazanyDokument": null,
+              "soubor": {
+                "soubor": "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+                "cesta": null
+              },
+              "slozka": {
+                "nazev": "Přílohy",
+                "autor": "5"
+              }
+            }
+          ]
+        }
+      },
+      "ZneplatniZasilkuDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikace zneplatněné zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratova data služby ZneplatniZasilku"
+      },
+      "ZpochybniZasilkuDto": {
+        "required": [
+          "autor",
+          "ispzs",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci"
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "odbornost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datum zpřístupnění dokumentů v Zásilce.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datum ukončení dostupnosti dokumentů.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření zásilky",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KZR."
+          },
+          "autorData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KZR."
+          },
+          "zdravotnickyPracovnikData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče."
+          },
+          "poskytovatelData": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID)."
+          },
+          "pacientData": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "ispzs": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Identifikátor služby přenosu dat (např. PACS, HIE)."
+          },
+          "adresat": {
+            "type": "string",
+            "description": "Identifikátor příjemce (lékař, nemocnice, pacient). Vazba na KZR.",
+            "nullable": true
+          },
+          "adresatData": {
+            "$ref": "#/components/schemas/AdresatData"
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Status dostupnosti dat",
+            "nullable": true
+          },
+          "rodic": {
+            "type": "string",
+            "description": "ID rodičovské zásilky pro případ hierarchického třídění.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "udalost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dokument": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Seznam dokumentů zásilky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data služby ZpochybniZasilku"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

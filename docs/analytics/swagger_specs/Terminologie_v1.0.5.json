@@ -1,0 +1,3130 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Terminologie",
+    "description": "Standard Conformance Statement for the Terminology Server provided by TermX",
+    "contact": {},
+    "version": "v1.0.5"
+  },
+  "servers": [
+    {
+      "url": "/terminologie"
+    }
+  ],
+  "tags": [
+    {
+      "name": "root",
+      "description": "Whole System Interactions"
+    },
+    {
+      "name": "ValueSet",
+      "description": "ValueSet Resource Interactions"
+    },
+    {
+      "name": "CodeSystem",
+      "description": "CodeSystem Resource Interactions"
+    },
+    {
+      "name": "ConceptMap",
+      "description": "ConceptMap Resource Interactions"
+    },
+    {
+      "name": "StructureMap",
+      "description": "StructureMap Resource Interactions"
+    },
+    {
+      "name": "Provenance",
+      "description": "Provenance Resource Interactions"
+    }
+  ],
+  "paths": {
+    "/metadata": {
+      "get": {
+        "tags": [
+          "root"
+        ],
+        "summary": "conformance",
+        "responses": {
+          "200": {
+            "description": "resource 'CapabilityStatement'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"CapabilityStatement\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ValueSet/{id}": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'ValueSet'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"ValueSet\"\n}"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"ValueSet\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "create",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"ValueSet\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet/_search": {
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ValueSet/$expand": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "expand",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "description": "A canonical reference to a value set. The server must know the value set (e.g. it is defined explicitly in the server's value sets, or it is defined implicitly by some code system known to the server",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "valueSetVersion",
+            "in": "query",
+            "description": "The identifier that is used to identify a specific version of the value set to be used when generating the expansion. This is an arbitrary value managed by the value set author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "expand",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet/{id}/$expand": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "expand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "expand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet/$sync": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "resources",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet/{id}/$sync": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "resources",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet/$validate-code": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "description": "Value set Canonical URL. The server must know the value set (e.g. it is defined explicitly in the server's value sets, or it is defined implicitly by some code system known to the server",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "valueSetVersion",
+            "in": "query",
+            "description": "The identifier that is used to identify a specific version of the value set to be used when validating the code. This is an arbitrary value managed by the value set author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "The code that is to be validated. If a code is provided, a system or a context must be provided (if a context is provided, then the server SHALL ensure that the code is not ambiguous without a system)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system for the code that is to be validated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "systemVersion",
+            "in": "query",
+            "description": "The version of the system, if one was provided in the source data",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "display",
+            "in": "query",
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name using the display parameter in the outcome. Whether displays are case sensitive is code system dependent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "coding",
+            "in": "query",
+            "description": "A coding to validate",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "codeableConcept",
+            "in": "query",
+            "description": "A full codeableConcept to validate. The server returns true if one of the coding values is in the value set, and may also validate that the codings are not in conflict with each other if more than one is present",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ValueSet/{id}/$validate-code": {
+      "get": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "description": "The code that is to be validated. If a code is provided, a system or a context must be provided (if a context is provided, then the server SHALL ensure that the code is not ambiguous without a system)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system for the code that is to be validated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "systemVersion",
+            "in": "query",
+            "description": "The version of the system, if one was provided in the source data",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "display",
+            "in": "query",
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name using the display parameter in the outcome. Whether displays are case sensitive is code system dependent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "coding",
+            "in": "query",
+            "description": "A coding to validate",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "codeableConcept",
+            "in": "query",
+            "description": "A full codeableConcept to validate. The server returns true if one of the coding values is in the value set, and may also validate that the codings are not in conflict with each other if more than one is present",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ValueSet"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'CodeSystem'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"CodeSystem\"\n}"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"CodeSystem\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "content-mode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "create",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"CodeSystem\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/_search": {
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "content-mode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/CodeSystem/$find-matches": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "find-matches",
+        "parameters": [
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system in which composition is to be performed. This must be provided unless the operation is invoked on a code system instance",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The version of the system for the inferencing to be performed",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "description": "One or more properties that contain information to be composed into the code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exact",
+            "in": "query",
+            "description": "Whether the operation is being used by a human ('false'), or a machine ('true'). If the operation is being used by a human, the terminology server can return a list of possible matches, with commentary. For a machine, the server returns complete or partial matches, not possible matches. The default value is 'false'",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "find-matches",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$find-matches": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "find-matches",
+        "parameters": [
+          {
+            "name": "property",
+            "in": "query",
+            "description": "One or more properties that contain information to be composed into the code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exact",
+            "in": "query",
+            "description": "Whether the operation is being used by a human ('false'), or a machine ('true'). If the operation is being used by a human, the terminology server can return a list of possible matches, with commentary. For a machine, the server returns complete or partial matches, not possible matches. The default value is 'false'",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "find-matches",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/$lookup": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "lookup",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "description": "The code that is to be located. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system for the code that is to be located",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The version of the system, if one was provided in the source data",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "The date for which the information should be returned. Normally, this is the current conditions (which is the default value) but under some circumstances, systems need to acccess this information as it would have been in the past. A typical example of this would be where code selection is constrained to the set of codes that were available when the patient was treated, not when the record is being edited. Note that which date is appropriate is a matter for implementation policy.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "description": "A property that the client wishes to be returned in the output. If no properties are specified, the server chooses what to return. The following properties are defined for all code systems: name, version (code system info) and code information: display, designation, and lang.X where X is a designation language code. These properties are returned explicitly in named out parameters with matching names, or in designations. In addition, any property codes defined by [this specification](codesystem.html#defined-props) or by the CodeSystem ([CodeSystem.property.code](codesystem-definitions.html#CodeSystem.property)) are allowed, and these are returned in the out parameter ```property```",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "lookup",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$lookup": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "lookup",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "description": "The code that is to be located. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "The date for which the information should be returned. Normally, this is the current conditions (which is the default value) but under some circumstances, systems need to acccess this information as it would have been in the past. A typical example of this would be where code selection is constrained to the set of codes that were available when the patient was treated, not when the record is being edited. Note that which date is appropriate is a matter for implementation policy.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "description": "A property that the client wishes to be returned in the output. If no properties are specified, the server chooses what to return. The following properties are defined for all code systems: name, version (code system info) and code information: display, designation, and lang.X where X is a designation language code. These properties are returned explicitly in named out parameters with matching names, or in designations. In addition, any property codes defined by [this specification](codesystem.html#defined-props) or by the CodeSystem ([CodeSystem.property.code](codesystem-definitions.html#CodeSystem.property)) are allowed, and these are returned in the out parameter ```property```",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "lookup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/$subsumes": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "subsumes",
+        "parameters": [
+          {
+            "name": "codeA",
+            "in": "query",
+            "description": "The \"A\" code that is to be tested. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "codeB",
+            "in": "query",
+            "description": "The \"B\" code that is to be tested. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The code system in which subsumption testing is to be performed. This must be provided unless the operation is invoked on a code system instance",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The version of the code system, if one was provided in the source data",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "subsumes",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$subsumes": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "subsumes",
+        "parameters": [
+          {
+            "name": "codeA",
+            "in": "query",
+            "description": "The \"A\" code that is to be tested. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "codeB",
+            "in": "query",
+            "description": "The \"B\" code that is to be tested. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "subsumes",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/$sync": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "resources",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$sync": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "resources",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/$validate-code": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "description": "CodeSystem URL. The server must know the code system (e.g. it is defined explicitly in the server'scode systems, or it is known implicitly by the server",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "The code that is to be validated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The version of the code system, if one was provided in the source data",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "display",
+            "in": "query",
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name in an extension in the outcome. Whether displays are case sensitive is code system dependent",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$validate-code": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "description": "The code that is to be validated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "display",
+            "in": "query",
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name in an extension in the outcome. Whether displays are case sensitive is code system dependent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "validate-code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/$compare": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "compare",
+        "parameters": [
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system in which composition is to be performed. This must be provided unless the operation is invoked on a code system instance",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionA",
+            "in": "query",
+            "description": "The version A of the system ",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionB",
+            "in": "query",
+            "description": "The version B of the system ",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "compare",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$compare": {
+      "get": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "compare",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CodeSystem"
+        ],
+        "summary": "operation",
+        "description": "compare",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ConceptMap/{id}": {
+      "get": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'ConceptMap'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"ConceptMap\"\n}"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"ConceptMap\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ConceptMap": {
+      "get": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source-code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target-code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ConceptMap/_search": {
+      "post": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publisher",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source-code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target-code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ConceptMap/$sync": {
+      "get": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "resources",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ConceptMap/{id}/$sync": {
+      "get": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "resources",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "sync",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ConceptMap/$translate": {
+      "get": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "translate",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "description": "A canonical URL for a concept map. The server must know the concept map (e.g. it is defined explicitly in the server's concept maps, or it is defined implicitly by some code system known to the server.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "description": "The code that is to be translated. If a code is provided, a system must be provided\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system for the code that is to be translated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceCoding",
+            "in": "query",
+            "description": "A coding to translate",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceCodeableConcept",
+            "in": "query",
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetCode",
+            "in": "query",
+            "description": "The target code that is to be translated to. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetSystem",
+            "in": "query",
+            "description": "identifies a target code system in which a mapping is sought. This parameter is an alternative to the targetScope parameter - only one is required. Searching for any translation to a target code system irrespective of the context (e.g. target valueset) may lead to unsafe results, and it is at the discretion of the server to decide when to support this operation",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetCoding",
+            "in": "query",
+            "description": "A target coding to translate to",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetCodeableConcept",
+            "in": "query",
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "translate",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/ConceptMap/{id}/$translate": {
+      "get": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "translate",
+        "parameters": [
+          {
+            "name": "sourceCode",
+            "in": "query",
+            "description": "The code that is to be translated. If a code is provided, a system must be provided\n\n",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "system",
+            "in": "query",
+            "description": "The system for the code that is to be translated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceCoding",
+            "in": "query",
+            "description": "A coding to translate",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceCodeableConcept",
+            "in": "query",
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetCode",
+            "in": "query",
+            "description": "The target code that is to be translated to. If a code is provided, a system must be provided",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetSystem",
+            "in": "query",
+            "description": "identifies a target code system in which a mapping is sought. This parameter is an alternative to the targetScope parameter - only one is required. Searching for any translation to a target code system irrespective of the context (e.g. target valueset) may lead to unsafe results, and it is at the discretion of the server to decide when to support this operation",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetCoding",
+            "in": "query",
+            "description": "A target coding to translate to",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetCodeableConcept",
+            "in": "query",
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ConceptMap"
+        ],
+        "summary": "operation",
+        "description": "translate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/StructureMap/{id}": {
+      "get": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'StructureMap'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"StructureMap\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/StructureMap": {
+      "get": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "create",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"StructureMap\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/StructureMap/_search": {
+      "post": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "_count",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "The ID of the resource",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/StructureMap/$transform": {
+      "get": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "operation",
+        "description": "transform",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "The structure map to apply. This is only needed if the operation is invoked at the resource level and no structureMap has been provided. If the $transform operation is invoked on a particular structure map, this will be ignored by the server",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "content",
+            "in": "query",
+            "description": "The logical content to transform",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "operation",
+        "description": "transform",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/StructureMap/{id}/$transform": {
+      "get": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "operation",
+        "description": "transform",
+        "parameters": [
+          {
+            "name": "content",
+            "in": "query",
+            "description": "The logical content to transform",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StructureMap"
+        ],
+        "summary": "operation",
+        "description": "transform",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource Id",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "minimum": 1,
+              "type": "string"
+            },
+            "example": "123"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      }
+    },
+    "/Provenance": {
+      "get": {
+        "tags": [
+          "Provenance"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Provenance/_search": {
+      "post": {
+        "tags": [
+          "Provenance"
+        ],
+        "summary": "search-type",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "resource 'Bundle'",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "fhir_Resource": {
+        "type": "object",
+        "description": "FHIR Resource"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Zadejde `Assertion Token (JWT)`"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

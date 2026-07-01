@@ -1,0 +1,5613 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Veřejné API pro PZS",
+    "description": "API poskytuje služby pro práci s pacienty\n\n<a href=\"mailto:csez@mzd.gov.cz\" rel=\"noopener noreferrer\" class=\"link\">Kmenové registry - podpora veřejného testování</a>",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/ciselnik/{zadostId}/druh_dokladu": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku druhů dokladů",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ciselnik/{zadostId}/country_service_context": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku druhů dokladů EU (MyHealth@EU)",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselnikuCountryServiceContext"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselnikuCountryServiceContext"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselnikuCountryServiceContext"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselnikuCountryServiceContext"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselnikuCountryServiceContext"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ciselnik/{zadostId}/stat": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku států",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ciselnik/{zadostId}/pohlavi": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku pohlaví",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ciselnik/{zadostId}/zdravotni_pojistovna": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku zdravotních pojišťoven",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/zalozit/{zadostId}/odber": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Žádost o založení odběru notifikací",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o založení odběru notifikací",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOOdberNotifikaci"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/zrusit/{zadostId}/odber": {
+      "delete": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Žádost o zrušení odběru notifikací",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o zrušení odběru notifikací",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZruseniOdberuNotifikaci"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/vyhledat/{zadostId}/odber": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Žádost o vyhledání odběru notifikací",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o vyhledání odběru notifikací",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniOdberuZmenPacientuProPZS"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/uni": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle parametrů ze zadaného požadavku.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, obsahují různé parametry pro vyhledávání.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniUniverzal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/cizinec_cp": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle parametrů ze zadaného požadavku.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, obsahují různé parametry pro vyhledávání.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCizincePodleCP"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/historie_pojisteni": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá historii pojištění pacienta",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniHistoriePojisteniPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistoriePojisteni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistoriePojisteni"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistoriePojisteni"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistoriePojisteni"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistoriePojisteni"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/historie_registrujicich_lekaru": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá historii registrujících lékařů pacienta",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniHistorieRegistrujicichLekaruPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistorieRegistrujicichLekaru"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistorieRegistrujicichLekaru"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistorieRegistrujicichLekaru"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistorieRegistrujicichLekaru"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistorieRegistrujicichLekaru"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/mapovani_rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle parametrů ze zadaného požadavku.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, obsahují různé parametry pro vyhledávání.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOMapovaniRID"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniMapovaniRID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniMapovaniRID"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniMapovaniRID"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniMapovaniRID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniMapovaniRID"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/doklady": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle dokladu.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleDokladuVCUD"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/jmeno_prijmeni_cp": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle jména, příjmení a čísla pojištěnce.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleJmenoPrijmeniCP"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/jmeno_prijmeni_datum_narozeni": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle jména, příjmení a data narození.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleJmenoPrijmeniDatumNarozeni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/jmeno_prijmeni_rc": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle jména, příjmení a rodného čísla.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleJmenoPrijmeniRC"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/niabsi": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle NIA BSI",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleNIABSI"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle RID",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleRID"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/hledat/{zadostId}/aifoulozenka": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vyhledá pacienta, dle AIFO v uložence",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Objekt obsahující data požadavku na vyhledání pacienta dle AIFO v uložence",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleAIFOUlozenky"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/generovat/{zadostId}/docasny_rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Vygeneruje docasny RID",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVygenerovaniDocasnehoRIDu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/zalozit/{zadostId}/pacient": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Založí pacienta",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZalozeniPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/priradit/{zadostId}/docasny_rid": {
+      "put": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Přiřadí dočasný RID",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOPrirazeniDocasnehoRIDu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/zmenit/{zadostId}/pacient": {
+      "put": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Změní pacienta",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZmenuPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZmenaPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZmenaPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZmenaPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZmenaPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZmenaPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/zrusit/{zadostId}/zadost": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Zruší pacienta",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostNavrhZruseniZaznamu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZruseniZaznamu"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZruseniZaznamu"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZruseniZaznamu"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZruseniZaznamu"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZruseniZaznamu"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/reklamuj/{zadostId}/udaj": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Reklamuje požadovaný údaj pacienta",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data reklamace",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostReklamaceUdaju"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/ztotoznihromadne/{zadostId}/zadost": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Žádost o hromadné ztotožnění. Přijme dávku pacientů na hromadné ztotožnění a potvrdí její přijetí. Samotné hromadné ztotožnění je učiněno asynchronně vzhledem\r\nk tomuto požadavku a výsledek ztotožnění je nutno vyzvednout později voláním jiné metody",
+        "description": "Id odpovědi na tento požadavek je současně Id, na jehož základě jsou později vyzvedávány výsledky hromadného ztotožnění pacientů. Proto jej uchovejte.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ZadostData.RegistrovatOdber": {
+                    "type": "boolean",
+                    "description": "Zda-li současně registrovat odběr změn dat u zaslaných pacientů"
+                  },
+                  "ZadostInfo.Datum": {
+                    "type": "string",
+                    "description": "Datum odeslání požadavku v ISO 8601 formátu (yyyy-MM-dd)",
+                    "format": "date-time"
+                  },
+                  "ZadostInfo.Ucel": {
+                    "type": "string",
+                    "description": "Popis účelu požadavku"
+                  },
+                  "ZadostInfo.ZadostId": {
+                    "type": "string",
+                    "description": "Identifikátor požadavku",
+                    "format": "uuid"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "ZadostData.RegistrovatOdber": {
+                  "style": "form"
+                },
+                "ZadostInfo.Datum": {
+                  "style": "form"
+                },
+                "ZadostInfo.Ucel": {
+                  "style": "form"
+                },
+                "ZadostInfo.ZadostId": {
+                  "style": "form"
+                },
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedHromadneZtotozneni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/ztotoznihromadne/{zadostId}/vysledky": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Žádost o stažení dat provedeného hromadného ztotožnění",
+        "description": "Id žádosti, jenž je nutno předat je Id odpovědi na předchozí žádost o hromadné ztotožnění",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o stažení výsledků hromadného ztotožnění",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOStazeniDatHromadnehoZtotozneni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/ztotoznihromadne/{zadostId}/vysledky/soubor": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "summary": "Žádost o stažení dat provedeného hromadného ztotožnění v souboru",
+        "description": "Id žádosti, jenž je nutno předat je Id odpovědi na předchozí žádost o hromadné ztotožnění. Hromadné ztotožnění již musí být dokončeno. Stav dokončení hromadného ztotožnění\r\nzjistíte voláním jiné metody tohoto API. V případě, že hromadné ztotožnění nebylo dokončeno, nebo dávka hromadného ztotožnění vůbec neexistuje, vrací funkčnost HTTP 404. Standardně\r\njsou výsledky hromadného ztotožnění vraceny jako soubor, pokud obsahují více jak 10 000 položek. O soubor si ovšem volitelně můžete zažádat, i když je počet položek nižší.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o stažení výsledků hromadného ztotožnění",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOStazeniDatHromadnehoZtotozneni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/pacient/slouceni/{zadostId}/zadost": {
+      "post": {
+        "tags": [
+          "Slucovani"
+        ],
+        "summary": "Podání návrhu na sloučení pacientů",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostNavrhSlouceniPacientu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedSlouceniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedSlouceniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedSlouceniPacienta"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedSlouceniPacienta"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedSlouceniPacienta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pojistenec/ztotoznihromadne/{zadostId}/zadost": {
+      "post": {
+        "tags": [
+          "Zp"
+        ],
+        "summary": "Zpracuje žádost Zdravotní pojišťovny na hromadné ztotožnění pojištěnců vůči KRP, prostřednictvím nahraného XML souboru.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ZadostInfo.Datum": {
+                    "type": "string",
+                    "description": "Datum odeslání požadavku v ISO 8601 formátu (yyyy-MM-dd)",
+                    "format": "date-time"
+                  },
+                  "ZadostInfo.Ucel": {
+                    "type": "string",
+                    "description": "Popis účelu požadavku"
+                  },
+                  "ZadostInfo.ZadostId": {
+                    "type": "string",
+                    "description": "Identifikátor požadavku",
+                    "format": "uuid"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "ZadostInfo.Datum": {
+                  "style": "form"
+                },
+                "ZadostInfo.Ucel": {
+                  "style": "form"
+                },
+                "ZadostInfo.ZadostId": {
+                  "style": "form"
+                },
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedHromadneZtotozneni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/pojistenec/ztotoznihromadne/{zadostId}/vysledky": {
+      "post": {
+        "tags": [
+          "Zp"
+        ],
+        "summary": "Žádost na zjištění stavu zpracování konkrétního souboru hromadného ztotožnění",
+        "description": "Id žádosti, jenž je nutno předat je Id odpovědi na předchozí žádost o hromadné ztotožnění",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o zjištění stavu zpracování hromadného ztotožnění",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOStazeniDatHromadnehoZtotozneni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniVysledekHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniVysledekHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniVysledekHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniVysledekHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniVysledekHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniVysledekHromadnehoZtotozneni"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pojistenec/ztotoznihromadne/{zadostId}/vysledky/soubor": {
+      "post": {
+        "tags": [
+          "Zp"
+        ],
+        "summary": "Stažení ZIP souboru s výsledky zpracování žádosti na hromadného ztotožnění pojištěnců Zdravotní pojišťovny.",
+        "parameters": [
+          {
+            "name": "zadostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data žádosti o stažení souboru s výsledky hromadného ztotožnění.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOStazeniDatHromadnehoZtotozneni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "$ref": "#/components/schemas/File"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AIFO": {
+        "required": [
+          "agendaKod",
+          "aifoKod"
+        ],
+        "type": "object",
+        "properties": {
+          "aifoKod": {
+            "type": "string",
+            "description": "AIFO (Agendový Identifikátor Fyzické Osoby) pacienta.",
+            "nullable": true
+          },
+          "agendaKod": {
+            "type": "string",
+            "description": "Kód agendy, ke které AIFO patří.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Slouží pro uchovávání Agendového Identifikátoru Fyzické Osoby (AIFO)."
+      },
+      "AIFOUlozenka": {
+        "type": "object",
+        "properties": {
+          "aifo": {
+            "type": "string",
+            "description": "AIFO, podle kterého hledán pacient",
+            "nullable": true
+          },
+          "ulozkaId": {
+            "type": "string",
+            "description": "ID úložky, podle níž je hledán pacient",
+            "nullable": true
+          },
+          "ulozkaRef": {
+            "type": "integer",
+            "description": "Pořadí úložky, dle níž je hledán pacient",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání pacienta dle AIFA v uložence"
+      },
+      "Adresa": {
+        "type": "object",
+        "properties": {
+          "ruianId": {
+            "type": "integer",
+            "description": "Identifikátor v systému RUIAN",
+            "format": "int64",
+            "nullable": true
+          },
+          "stat": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Stát v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          },
+          "obec": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Obec / město",
+            "nullable": true
+          },
+          "psc": {
+            "type": "integer",
+            "description": "Poštovní směrovací číslo",
+            "format": "int32",
+            "nullable": true
+          },
+          "ulice": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Ulice",
+            "nullable": true
+          },
+          "cisloPopisne": {
+            "type": "integer",
+            "description": "Číslo popisné",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloEvidencni": {
+            "type": "integer",
+            "description": "Číslo evidenční",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloOrientacni": {
+            "maxLength": 5,
+            "type": "string",
+            "description": "Číslo orientační",
+            "nullable": true
+          },
+          "cisloJine": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "Jiné číslo - pokud není k dispozici číslo popisné ani číslo evidenční",
+            "nullable": true
+          },
+          "poBox": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "Post office box",
+            "nullable": true
+          },
+          "popis": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Doplňující popis k adrese",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Slouží pro data adresy"
+      },
+      "CUDDoklad": {
+        "required": [
+          "cislo",
+          "typDokladu"
+        ],
+        "type": "object",
+        "properties": {
+          "cislo": {
+            "maxLength": 4000,
+            "type": "string",
+            "description": "Číslo dokladu"
+          },
+          "typDokladu": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Typ dokladu"
+          },
+          "stat": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Stát, který vydal doklad",
+            "nullable": true
+          },
+          "pouzeCizince": {
+            "type": "boolean",
+            "description": "Pokud je true, vrací pouze cizince",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro dotaz na doklady"
+      },
+      "CiselnikCountryServiceContext": {
+        "required": [
+          "countryCode",
+          "homeCommunityId",
+          "inPreProduction",
+          "inProduction",
+          "kod",
+          "nazev",
+          "obsah",
+          "platnostOd",
+          "serviceContext"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "description": "Kód číselníkové položky",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název číselníkové položky",
+            "nullable": true
+          },
+          "platnostOd": {
+            "type": "string",
+            "description": "Platnost od číselníkové položky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "platnostDo": {
+            "type": "string",
+            "description": "Platnost do číselníkové položky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "Kód statu",
+            "nullable": true
+          },
+          "serviceContext": {
+            "type": "string",
+            "description": "ServiceContext",
+            "nullable": true
+          },
+          "homeCommunityId": {
+            "type": "string",
+            "description": "HomeCommunityId",
+            "nullable": true
+          },
+          "inProduction": {
+            "type": "boolean",
+            "description": "V produkci"
+          },
+          "inPreProduction": {
+            "type": "boolean",
+            "description": "V předprodukci"
+          },
+          "obsah": {
+            "type": "string",
+            "description": "Obsah",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro číselník CountryServiceContext - číselník dokladů EU"
+      },
+      "DataReklamace": {
+        "required": [
+          "datumReklamace",
+          "polozkyReklamace",
+          "popisReklamace",
+          "reklamujici",
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "datumReklamace": {
+            "type": "string",
+            "description": "Datum reklamace v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "popisReklamace": {
+            "type": "string",
+            "description": "Popis reklamace. Povinný údaj. Zde nedošlo k omylu. Popis reklamace je skutečně povinný údaj a zdůvodnění nikoli"
+          },
+          "zduvodneni": {
+            "type": "string",
+            "description": "Zdůvodnění reklamace. Není povinné. Zde nedošlo k omylu. Popis reklamace je skutečně povinný údaj a zdůvodnění nikoli",
+            "nullable": true
+          },
+          "polozkyReklamace": {
+            "$ref": "#/components/schemas/UdajReklamace"
+          },
+          "reklamujici": {
+            "$ref": "#/components/schemas/Reklamujici"
+          },
+          "rid": {
+            "type": "string",
+            "description": "Resortní identifikátor"
+          },
+          "ulozka": {
+            "type": "string",
+            "description": "Úložka ORG",
+            "nullable": true
+          },
+          "ulozkaRef": {
+            "type": "integer",
+            "description": "Úložka ORG - reference na záznam v úložce",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro reklamaci"
+      },
+      "Doklad": {
+        "required": [
+          "cislo",
+          "typDokladu"
+        ],
+        "type": "object",
+        "properties": {
+          "cislo": {
+            "maxLength": 4000,
+            "type": "string",
+            "description": "Číslo dokladu"
+          },
+          "typDokladu": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Typ dokladu"
+          },
+          "stat": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Stát, který vydal doklad",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro dotaz na doklady"
+      },
+      "ErrorModel": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Popis chyby",
+            "nullable": true
+          },
+          "fieldName": {
+            "type": "string",
+            "description": "Nazev vlastnosti, ke ktere se vaze chyba",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string",
+            "description": "Zavaznost chyby",
+            "nullable": true
+          },
+          "errorLevel": {
+            "type": "string",
+            "description": "Úroveň chyby",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model pro předávání chyb"
+      },
+      "File": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "HromadneZtotozneni": {
+        "required": [
+          "hromadneZtotozneniID"
+        ],
+        "type": "object",
+        "properties": {
+          "hromadneZtotozneniID": {
+            "type": "string",
+            "description": "Identifikátor hromadného ztotožnění."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Reprezentuje odpověď obsahující ID hromadného ztotožnění."
+      },
+      "JednaNotifikace": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "Id subskripce",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "string",
+            "description": "Id predmetu, pro který byla notifikace založena",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o jednom založeném odběru notifikací"
+      },
+      "KZRAdresaDetail": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "ruianId": {
+            "type": "integer",
+            "description": "Identifikátor v systému RUIAN",
+            "format": "int64",
+            "nullable": true
+          },
+          "stat": {
+            "type": "string",
+            "description": "Stát",
+            "nullable": true
+          },
+          "obec": {
+            "type": "string",
+            "description": "Obec / město",
+            "nullable": true
+          },
+          "psc": {
+            "type": "integer",
+            "description": "Poštovní směrovací číslo",
+            "format": "int32",
+            "nullable": true
+          },
+          "ulice": {
+            "type": "string",
+            "description": "Ulice",
+            "nullable": true
+          },
+          "cisloPopisne": {
+            "type": "integer",
+            "description": "Číslo popisné",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloEvidencni": {
+            "type": "integer",
+            "description": "Číslo evideční",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloOrientacni": {
+            "type": "string",
+            "description": "Číslo orientační",
+            "nullable": true
+          },
+          "cisloJine": {
+            "type": "string",
+            "description": "Jiné číslo v případě, že není známo číslo popisné ani číslo evidenční",
+            "nullable": true
+          },
+          "poBox": {
+            "type": "string",
+            "description": "Post office box",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Další popis adresy",
+            "nullable": true
+          },
+          "krajKod": {
+            "type": "string",
+            "description": "Identifikátor kraje zadaného jako ID, nebo NutsLau",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro adresu"
+      },
+      "KZRDate": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "description": "Datum hodnota",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s datumem a s dalšími informacemi"
+      },
+      "KZRDoklad": {
+        "required": [
+          "cislo",
+          "typDokladu"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "cislo": {
+            "maxLength": 4000,
+            "type": "string",
+            "description": "Číslo dokladu"
+          },
+          "typDokladu": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Typ dokladu"
+          },
+          "stat": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Stát, který vydal doklad",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro doklad"
+      },
+      "KZRDotaz": {
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "description": "Datum odeslání požadavku v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "ucel": {
+            "type": "string",
+            "description": "Popis účelu požadavku",
+            "nullable": true
+          },
+          "zadostId": {
+            "type": "string",
+            "description": "Identifikátor požadavku",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Základní parametdy dotazu\r\nJe použito v každém dotazu"
+      },
+      "KZRLong": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "integer",
+            "description": "Long Hodnota",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s long hodnotou a s dalšími informacemi"
+      },
+      "KZROdpoved": {
+        "required": [
+          "odpovedId",
+          "stav",
+          "zadostId"
+        ],
+        "type": "object",
+        "properties": {
+          "chybyZpracovani": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorModel"
+            },
+            "description": "Chyby při zpracování požadavku",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav vyřízení požadavku",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis ke stavu požadavku",
+            "nullable": true
+          },
+          "subStav": {
+            "type": "string",
+            "description": "Pod-stav požadavku",
+            "nullable": true
+          },
+          "zadostId": {
+            "type": "string",
+            "description": "Identifikátor požadavku",
+            "format": "uuid"
+          },
+          "odpovedId": {
+            "type": "string",
+            "description": "Identifikátor odpovědi",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data odpovědi se základními informacemi - obsahuje každá odpověď"
+      },
+      "KZRPrubehPojisteni": {
+        "required": [
+          "platneOd",
+          "zdravotniPojistovnaKod"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "platneOd": {
+            "type": "string",
+            "description": "Pojištění platné od",
+            "format": "date"
+          },
+          "platneDo": {
+            "type": "string",
+            "description": "Pojištění platné do",
+            "format": "date",
+            "nullable": true
+          },
+          "zdravotniPojistovnaKod": {
+            "type": "string",
+            "description": "Kód zdravotní pojišťovny",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data o průběhu pojištění"
+      },
+      "KZRReferencniOsoba": {
+        "required": [
+          "prijmeni"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "description": "Jméno refereční osoby",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Příjmení refereční osoby",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození refereční osoby v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "description": "Rodné číslo refereční osoby",
+            "nullable": true
+          },
+          "typVazby": {
+            "type": "string",
+            "description": "Typ vazby\r\nRodič, Dítě, Osvojenec, Partner",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro refereční osobu"
+      },
+      "KZRRegistrujiciLekar": {
+        "required": [
+          "datumZahajeni",
+          "ico",
+          "odbornost"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "datumZahajeni": {
+            "type": "string",
+            "description": "Datum zahájení činnosti registrujícího lékaře",
+            "format": "date"
+          },
+          "datumUkonceni": {
+            "type": "string",
+            "description": "Datum ukončení činnosti registrujícího lékaře",
+            "format": "date",
+            "nullable": true
+          },
+          "ico": {
+            "type": "string",
+            "description": "IČO lékaře",
+            "nullable": true
+          },
+          "icp": {
+            "type": "string",
+            "description": "IČP lékaře",
+            "nullable": true
+          },
+          "odbornost": {
+            "type": "string",
+            "description": "Odbornost lékaře",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro registrujícího lékaře"
+      },
+      "KZRString": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "description": "String hodnota",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data se string hodnotou a s dalšími informacemi"
+      },
+      "MapaRID": {
+        "type": "object",
+        "properties": {
+          "aktualniRID": {
+            "type": "string",
+            "description": "Aktuální RID pacienta",
+            "nullable": true
+          },
+          "historickyRID": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Původní / historické RIDy pacienta",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data mapování RID"
+      },
+      "MatkaNovorozence": {
+        "type": "object",
+        "properties": {
+          "adresa": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "jmeno": {
+            "type": "string",
+            "description": "Jméno matky",
+            "nullable": true
+          },
+          "prijmení": {
+            "type": "string",
+            "description": "Příjmení matky",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "description": "Rezortní identifikátor matky",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození matky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "description": "Rodné číslo matky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Slouží pro data o matce novorozence"
+      },
+      "NavrhSlouceniPacientu": {
+        "required": [
+          "ridCilovehoSlucujicihoPacienta",
+          "ridSlucovanehoPacienta"
+        ],
+        "type": "object",
+        "properties": {
+          "ridCilovehoSlucujicihoPacienta": {
+            "type": "string",
+            "description": "RID cílového slučujícího pacienta - MASTER"
+          },
+          "ulozkaIdCilovehoSlucujicihoPacienta": {
+            "type": "string",
+            "description": "Uložka Id cílového slučujícího pacienta - MASTER",
+            "nullable": true
+          },
+          "ulozkaRefCilovehoSlucujicihoPacienta": {
+            "type": "string",
+            "description": "Uložka ref cílového slučujícího pacienta - MASTER",
+            "nullable": true
+          },
+          "ridSlucovanehoPacienta": {
+            "type": "string",
+            "description": "RID slučovaného pacienta - SLAVE"
+          },
+          "ulozkaIdSlucovanehoPacienta": {
+            "type": "string",
+            "description": "Uložka Id slučovaného pacienta - SLAVE",
+            "nullable": true
+          },
+          "ulozkaRefSlucovanehoPacienta": {
+            "type": "string",
+            "description": "Uložka ref slučovaného pacienta - SLAVE",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data potřebná pro návrh sloučení pacientů"
+      },
+      "NavrhZruseniZaznamu": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "RID",
+            "nullable": true
+          },
+          "ulozkaId": {
+            "type": "string",
+            "description": "Uložka ID",
+            "nullable": true
+          },
+          "ulozkaRef": {
+            "type": "integer",
+            "description": "Uložka ref",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti"
+      },
+      "NovyPacient": {
+        "required": [
+          "datumNarozeni",
+          "prijmeni"
+        ],
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Jméno pacienta",
+            "nullable": true
+          },
+          "prijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Příjmení pacienta"
+          },
+          "rodneCislo": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Rodné číslo pacienta",
+            "nullable": true
+          },
+          "kontaktniEmail": {
+            "maxLength": 120,
+            "type": "string",
+            "description": "Kontaktní e-mail pacienta",
+            "nullable": true
+          },
+          "kontaktniTelefon": {
+            "maxLength": 120,
+            "type": "string",
+            "description": "Kontaktní telefon pacienta",
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "maxLength": 22,
+            "type": "string",
+            "description": "Číslo pojištěnce pacienta",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození pacienta v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "datumUmrti": {
+            "type": "string",
+            "description": "Datum úmrtí pacienta v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pohlavi": {
+            "maxLength": 1,
+            "type": "string",
+            "description": "Pohlaví pacienta",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "maxLength": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "description": "Doklady pacienta",
+            "nullable": true
+          },
+          "matka": {
+            "$ref": "#/components/schemas/MatkaNovorozence"
+          },
+          "mistoNarozeniRuianObecId": {
+            "type": "integer",
+            "description": "Místo narození - RUIAN Id obce",
+            "format": "int64",
+            "nullable": true
+          },
+          "mistoNarozeniZemeKod": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Místo narození - kód země",
+            "nullable": true
+          },
+          "mistoNarozeniSvetNazev": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Místo narození - název",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vytvoření nového pacienta"
+      },
+      "ObalkaOdberuNotifikaci": {
+        "type": "object",
+        "properties": {
+          "defaultniURL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Defaultní URL notifikace",
+            "nullable": true
+          },
+          "odberNotifikaciPZS": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OdberNotifikaciPZS"
+            },
+            "description": "Odběr notifikací",
+            "nullable": true
+          },
+          "pouzivajiSeVychozi": {
+            "type": "boolean",
+            "description": "Zda-li se používají výchozí notifikace"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o vyhledané založené notifikaci"
+      },
+      "OdberNotifikaci": {
+        "type": "object",
+        "properties": {
+          "zalozeneNotifikace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JednaNotifikace"
+            },
+            "description": "Založené notifikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o založeném odběru notifikací"
+      },
+      "OdberNotifikaciPZS": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "Id subskripce k odběru notifikací",
+            "nullable": true
+          },
+          "kanalEndpoint": {
+            "type": "string",
+            "description": "Endpoint kanálu notifikace",
+            "nullable": true
+          },
+          "kanalTyp": {
+            "type": "string",
+            "description": "Typ kanálu. Nyní pouze \"API\"",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "string",
+            "description": "ID předmětu nofifikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o vyhledaném odběru notifikace pro PZS"
+      },
+      "OdpovedHromadneZtotozneni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/HromadneZtotozneni"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď o hromadném ztotožnění pacienta"
+      },
+      "OdpovedOdberNotifikaci": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/OdberNotifikaci"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď na přihlášení k odběru notifikací"
+      },
+      "OdpovedPrirazeniDocasnehoRIDu": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s odpovědí přiřazení dočasného RIDu"
+      },
+      "OdpovedSlouceniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď na požadavek slučování pacienta / slučování pacienta"
+      },
+      "OdpovedStazeniSouboruHromadnehoZtotozneni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/StazeniSouboruHromadnehoZtotozneni"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s odpovědí na žádost o stažení výsledku hromadného ztotožnění"
+      },
+      "OdpovedStazeniVysledekHromadnehoZtotozneni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/StazeniVysledekHromadnehoZtotozneni"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s odpovědí na žádost o stažení výsledku hromadného ztotožnění"
+      },
+      "OdpovedVygenerovaniDocasnyRID": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Popis odpovědi",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vygenerovaného dočasného RID"
+      },
+      "OdpovedVyhledaniCiselniku": {
+        "required": [
+          "odpovedData",
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZakladniCiselnik"
+            },
+            "description": "Data základního číselníku",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání číselníku"
+      },
+      "OdpovedVyhledaniCiselnikuCountryServiceContext": {
+        "required": [
+          "odpovedData",
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CiselnikCountryServiceContext"
+            },
+            "description": "Data základního číselníku",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání číselníku CountryServiceContex - číselníku dokladů EU"
+      },
+      "OdpovedVyhledaniHistoriePojisteni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrubehPojisteni"
+            },
+            "description": "Data s průběhem pojištění",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání historie pojištění pacienta"
+      },
+      "OdpovedVyhledaniHistorieRegistrujicichLekaru": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegistrujiciLekar"
+            },
+            "description": "Data se seznamem registrujících lékařů",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání historie registrujících lékařů pacienta"
+      },
+      "OdpovedVyhledaniMapovaniRID": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/MapaRID"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání mapování RID pacienta"
+      },
+      "OdpovedVyhledaniOdberuNotifikaciPZS": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObalkaOdberuNotifikaci"
+            },
+            "description": "Data s informací ohledně vyhledaného odběru notifikací",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď na vyhledání informací ohledně odběru notifikací"
+      },
+      "OdpovedVyhledaniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pacient"
+            },
+            "description": "Data se seznamem pacientů",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání pacienta"
+      },
+      "OdpovedZalozeniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/Pacient"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď založení pacienta"
+      },
+      "OdpovedZalozeniReklamace": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď na založení reklamace údaje"
+      },
+      "OdpovedZmenaPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/Pacient"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď změny pacienta"
+      },
+      "OdpovedZruseniZaznamu": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď na žádost o zrušení záznamu"
+      },
+      "Pacient": {
+        "required": [
+          "cisloPojistence",
+          "datumNarozeni",
+          "kontaktniEmail",
+          "kontaktniTelefon",
+          "omezeniSvepravnosti",
+          "opravneniZbraneMunice",
+          "preferovanyJazyk",
+          "prijmeni",
+          "rid",
+          "stavZaznamu",
+          "typZaznamu"
+        ],
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "Rezortní id pacienta",
+            "nullable": true
+          },
+          "stavZaznamu": {
+            "$ref": "#/components/schemas/StatusZaznamu"
+          },
+          "typZaznamu": {
+            "$ref": "#/components/schemas/TypZaznamuPacienta"
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/KZRAdresaDetail"
+          },
+          "datovaSchranka": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "datumNarozeni": {
+            "$ref": "#/components/schemas/KZRDate"
+          },
+          "datumUmrti": {
+            "$ref": "#/components/schemas/KZRDate"
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRDoklad"
+            },
+            "description": "Doklady pacienta",
+            "nullable": true
+          },
+          "jmeno": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "prijmeni": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "rodnePrijmeni": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniAdresa": {
+            "$ref": "#/components/schemas/KZRAdresaDetail"
+          },
+          "omezeniSvepravnosti": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "pohlavi": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "rodneCislo": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "zakonniZastupci": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRReferencniOsoba"
+            },
+            "description": "Zákonný zástupce pacienta",
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "opravneniZbraneMunice": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniEmail": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniTelefon": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "preferovanyJazyk": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "mistoNarozeniRuianObecId": {
+            "$ref": "#/components/schemas/KZRLong"
+          },
+          "mistoNarozeniZemeKod": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "mistoNarozeniSvetNazev": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "registrujiciLekar": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRRegistrujiciLekar"
+            },
+            "description": "Registrující lékaři pacienta",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRString"
+            },
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          },
+          "zdravotniPojisteni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRPrubehPojisteni"
+            },
+            "description": "Zdravotní pojišťovna pacienta",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro pacienta"
+      },
+      "PredmetNotifikace": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta, o němž bude notifikace zasílána",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Předmět notifikace"
+      },
+      "PriraditDocasnyRID": {
+        "required": [
+          "docasnyRID",
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "docasnyRID": {
+            "type": "string",
+            "description": "Dočasný RID pacienta"
+          },
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s dočasným RID pro pacienta"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "PrubehPojisteni": {
+        "required": [
+          "platneOd",
+          "zdravotniPojistovnaKod"
+        ],
+        "type": "object",
+        "properties": {
+          "platneOd": {
+            "type": "string",
+            "description": "Pojištění platné od",
+            "format": "date"
+          },
+          "platneDo": {
+            "type": "string",
+            "description": "Pojištění platné do",
+            "format": "date",
+            "nullable": true
+          },
+          "zdravotniPojistovnaKod": {
+            "type": "string",
+            "description": "Kód zdravotní pojišťovny",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data o průběhu pojištění"
+      },
+      "RegistrujiciLekar": {
+        "required": [
+          "datumZahajeni",
+          "ico",
+          "odbornost"
+        ],
+        "type": "object",
+        "properties": {
+          "datumZahajeni": {
+            "type": "string",
+            "description": "Datum zahájení činnosti registrujícího lékaře",
+            "format": "date"
+          },
+          "datumUkonceni": {
+            "type": "string",
+            "description": "Datum ukončení činnosti registrujícího lékaře",
+            "format": "date",
+            "nullable": true
+          },
+          "ico": {
+            "type": "string",
+            "description": "IČO lékaře",
+            "nullable": true
+          },
+          "icp": {
+            "type": "string",
+            "description": "IČP lékaře",
+            "nullable": true
+          },
+          "odbornost": {
+            "type": "string",
+            "description": "Odbornost lékaře",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro registrujícího lékaře"
+      },
+      "Reklamujici": {
+        "required": [
+          "idSubjektu",
+          "typSubjektu"
+        ],
+        "type": "object",
+        "properties": {
+          "idSubjektu": {
+            "type": "integer",
+            "description": "ID",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "description": "Jméno",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Příjmení",
+            "nullable": true
+          },
+          "typSubjektu": {
+            "type": "string",
+            "description": "Typ subjektu\r\nJiny\r\nPacient\r\nZdravotnickyPracovnik\r\nPZS\r\nOVM\r\nZdravotniPojistovna",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Reklamujici"
+      },
+      "SouborHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "description": "Křestní jméno pacienta",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Příjmení pacienta",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "description": "Rodné číslo pacienta",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození pacienta",
+            "format": "date",
+            "nullable": true
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "description": "Doklady pacienta",
+            "nullable": true
+          },
+          "datumUmrti": {
+            "type": "string",
+            "description": "Datum úmrtí pacienta",
+            "format": "date",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta",
+            "nullable": true
+          },
+          "subskripceID": {
+            "type": "string",
+            "description": "ID subskripce k notifikacím u pacienta",
+            "nullable": true
+          },
+          "substavZtotozneni": {
+            "type": "string",
+            "description": "Stav ztotožnění pacienta",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Jedna položka souboru výsledku hromadného ztotožnění pacientů"
+      },
+      "StatusZaznamu": {
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "description": "Název stavu záznamu",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro stav záznamu"
+      },
+      "StazeniDatHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "idZadosti": {
+            "type": "string",
+            "description": "Id žádosti o hromadné ztotožnění",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k nastavení odběru notifikací"
+      },
+      "StazeniSouboruHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "dataVSouboru": {
+            "type": "boolean",
+            "description": "Zda-li budou data navrácena coby soubor. V tomto případě je nutno soubor vyzvedout separátním voláním API"
+          },
+          "hromadneZtotozneniDokonceno": {
+            "type": "boolean",
+            "description": "Zda-li bylo hromadné ztotožnění dané dávky již dokončeno, či ne"
+          },
+          "souborHromadnehoZtotozneni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SouborHromadnehoZtotozneni"
+            },
+            "description": "Soubor s daty výsledku hromadného ztotožnění. Je navracen pouze pokud je počet záznamů menší jak 10 000, v opačném případě je navracen soubor",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s odpovědí na žádost o stažení výsledku hromadného ztotožnění"
+      },
+      "StazeniVysledekHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "hromadneZtotozneniDokonceno": {
+            "type": "boolean",
+            "description": "Zda-li bylo hromadné ztotožnění dané dávky již dokončeno, či ne"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s odpovědí na žádost o stažení výsledku hromadného ztotožnění"
+      },
+      "SubjektZalozeniNotifikace": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL, na něž bude notifikace odesílána",
+            "nullable": true
+          },
+          "jenomPull": {
+            "type": "boolean",
+            "description": "Zda-li budou notifikace realizovány pouze jako pull"
+          },
+          "pouzitDefaultniURL": {
+            "type": "boolean",
+            "description": "Zda-li použít defaultní URL"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Subjekt založení notifikace"
+      },
+      "SubskripceNotifikace": {
+        "type": "object",
+        "properties": {
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "description": "Předměty notifikací - o kom budeme notifikováni",
+            "nullable": true
+          },
+          "prijemci": {
+            "$ref": "#/components/schemas/SubjektZalozeniNotifikace"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k nastavení odběru notifikací"
+      },
+      "TypZaznamuPacienta": {
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "description": "Název typu záznamu",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro typ záznamu"
+      },
+      "UdajReklamace": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Správné znění reklamovaného křestního jména pacienta",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Správné znění reklamovaného příjmení jména pacienta",
+            "nullable": true
+          },
+          "rodnePrijmeni": {
+            "type": "string",
+            "description": "Správné znění reklamovaného rodného příjmení pacienta",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Správné znění reklamovaného data narození pacienta",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumUmrti": {
+            "type": "string",
+            "description": "Správné znění reklamovaného datum úmrtí pacienta",
+            "format": "date-time",
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "kontaktniAdresa": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "rodneCislo": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Správné znění reklamovaného rodné číslo pacienta",
+            "nullable": true
+          },
+          "pohlavi": {
+            "maxLength": 1,
+            "type": "string",
+            "description": "Správné znění reklamovaného pohlaví pacienta",
+            "nullable": true
+          },
+          "doklady": {
+            "$ref": "#/components/schemas/Doklad"
+          },
+          "datovaSchranka": {
+            "type": "string",
+            "description": "Správné znění reklamované adresy datové schránky pacienta",
+            "nullable": true
+          },
+          "omezeniSvepravnosti": {
+            "type": "string",
+            "description": "Správné znění reklamovaného omezení svéprávnosti pacienta\r\nMožné hodnoty\r\nANO\r\nNE\r\nNEZNAMO",
+            "nullable": true
+          },
+          "registrujiciLekar": {
+            "maxLength": 500,
+            "type": "string",
+            "description": "Informace nutná pro změnu jméno registrujícího lékaře.",
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "description": "Navrhované číslo pojištěnce",
+            "nullable": true
+          },
+          "zdravotniPojisteni": {
+            "maxLength": 500,
+            "type": "string",
+            "description": "Informace nutná pro změnu zdravorního pojištění.",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "maxLength": 500,
+            "type": "string",
+            "description": "Informace nutná pro změnu státního občanství.",
+            "nullable": true
+          },
+          "opravneniZbraneMunice": {
+            "type": "string",
+            "description": "Správné znění reklamované hodnoty\r\nMožné hodnoty\r\nANO\r\nNE\r\nNEZNAMO",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Údaj reklamace"
+      },
+      "VyhledaniCizincePodleCP": {
+        "required": [
+          "cisloPojistence"
+        ],
+        "type": "object",
+        "properties": {
+          "cisloPojistence": {
+            "maxLength": 22,
+            "type": "string",
+            "description": "Číslo pojištěnce pacienta"
+          },
+          "statniObcanstvi": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání pacienta cizince podle čísla pojištěnce"
+      },
+      "VyhledaniHistorieRegistrujicihLekaru": {
+        "required": [
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "description": "Datum ke kterému se historie vyhledává, formát yyyy-MM-dd\r\n\r\nPro PZS je hodnota \"datum\" povinná.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání historie registrujících lékářů pacienta"
+      },
+      "VyhledaniHistorieZdravotnihoPojisteni": {
+        "required": [
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "description": "Datum ke kterému se historie vyhledává, formát yyyy-MM-dd\r\n\r\nPro PZS je hodnota \"datum\" povinná.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání historie zdravotního pojištění"
+      },
+      "VyhledaniMapovaniRID": {
+        "required": [
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "jenAktualni": {
+            "type": "boolean",
+            "description": "Omezení, zda hledat pouze aktuální"
+          },
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání mapování RID pacienta"
+      },
+      "VyhledaniOdberNotifikaciPZS": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "ID subskripce",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "description": "Předmět notifikace",
+            "nullable": true
+          },
+          "vsechnySubskripce": {
+            "type": "boolean",
+            "description": "Zda-li vyhledat všechny subskripce. V případě, že je vyplněno nevyplňovat ID subskripce."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k vyhledání odběru notifikací"
+      },
+      "VyhledaniPacientaUniverzal": {
+        "type": "object",
+        "properties": {
+          "cisloPojistence": {
+            "maxLength": 22,
+            "type": "string",
+            "description": "Číslo pojištěnce pacienta",
+            "nullable": true
+          },
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Jméno pacienta",
+            "nullable": true
+          },
+          "prijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Příjmení pacienta",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Rodné číslo pacienta",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození pacienta v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "string",
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "description": "Doklady pacienta",
+            "nullable": true
+          },
+          "hledatPredchoziPrijmeni": {
+            "type": "boolean",
+            "description": "Omezení, zda se má hledat i dle předchozího příjmení",
+            "nullable": true
+          },
+          "mistoNarozeniRuianId": {
+            "type": "integer",
+            "description": "Místo narození osoby",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání pacienta podle různých parametrů"
+      },
+      "VyhledaniPodleJmenoPrijmeniCP": {
+        "required": [
+          "cisloPojistence",
+          "jmeno",
+          "prijmeni"
+        ],
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Jméno pacienta"
+          },
+          "prijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Příjmení pacienta"
+          },
+          "cisloPojistence": {
+            "maxLength": 22,
+            "type": "string",
+            "description": "Číslo pojištěnce pacienta"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání podle jména, příjmení a čísla pojištění"
+      },
+      "VyhledaniPodleJmenoPrijmeniDatumNarozeni": {
+        "required": [
+          "datumNarozeni",
+          "jmeno",
+          "prijmeni"
+        ],
+        "type": "object",
+        "properties": {
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození pacienta v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Jméno pacienta"
+          },
+          "prijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Příjmení pacienta"
+          },
+          "statniObcanstvi": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání pacienta podle jména, příjmení a data narození"
+      },
+      "VyhledaniPodleJmenoPrijmeniRC": {
+        "required": [
+          "jmeno",
+          "prijmeni",
+          "rodneCislo"
+        ],
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Jméno pacienta"
+          },
+          "prijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Příjmení pacienta"
+          },
+          "rodneCislo": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Rodné číslo pacienta"
+          },
+          "statniObcanstvi": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání podle jména, příjmení a rodného čísla"
+      },
+      "VyhledaniPodleRID": {
+        "required": [
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta, podle kterého se hledá"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro vyhledání pacienta podle RID"
+      },
+      "ZadostNavrhSlouceniPacientu": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NavrhSlouceniPacientu"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o navržení sloučení pacientů"
+      },
+      "ZadostNavrhZruseniZaznamu": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NavrhZruseniZaznamu"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Žádost o zrušení záznamu"
+      },
+      "ZadostODocasnyRID": {
+        "type": "object",
+        "properties": {
+          "pocet": {
+            "type": "integer",
+            "description": "Požadovaný počet RIDů, které se mají vrátit",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o dočasný RID"
+      },
+      "ZadostOMapovaniRID": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniMapovaniRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro mapování RID pacienta"
+      },
+      "ZadostOOdberNotifikaci": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/SubskripceNotifikace"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro přihlášení k odběru notifikací"
+      },
+      "ZadostOPrirazeniDocasnehoRIDu": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/PriraditDocasnyRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro přiřazení dočásného RID"
+      },
+      "ZadostOStazeniDatHromadnehoZtotozneni": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/StazeniDatHromadnehoZtotozneni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o stažení dat hromadného ztotožnění"
+      },
+      "ZadostOVygenerovaniDocasnehoRIDu": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZadostODocasnyRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vygenerování dočasného RIDu"
+      },
+      "ZadostOVyhledaniCiselniku": {
+        "required": [
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání číselníku"
+      },
+      "ZadostOVyhledaniCizincePodleCP": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniCizincePodleCP"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání cizince podle čísla pojištěnce"
+      },
+      "ZadostOVyhledaniHistoriePojisteniPacienta": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniHistorieZdravotnihoPojisteni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání historie pojištění pacienta"
+      },
+      "ZadostOVyhledaniHistorieRegistrujicichLekaruPacienta": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniHistorieRegistrujicihLekaru"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání historie registrujících lékařů pacienta"
+      },
+      "ZadostOVyhledaniOdberuZmenPacientuProPZS": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniOdberNotifikaciPZS"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o vyhledání odběru notifikací pro PZS a subjekty údajů"
+      },
+      "ZadostOVyhledaniPodleAIFOUlozenky": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/AIFOUlozenka"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle AIFO nebo uloženky"
+      },
+      "ZadostOVyhledaniPodleDokladuVCUD": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/CUDDoklad"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle dokladu"
+      },
+      "ZadostOVyhledaniPodleJmenoPrijmeniCP": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleJmenoPrijmeniCP"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle jména, příjmení a čísla pojištěnce"
+      },
+      "ZadostOVyhledaniPodleJmenoPrijmeniDatumNarozeni": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleJmenoPrijmeniDatumNarozeni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle jména, příjmení a data narození"
+      },
+      "ZadostOVyhledaniPodleJmenoPrijmeniRC": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleJmenoPrijmeniRC"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle jména, příjmení a rodného čísla"
+      },
+      "ZadostOVyhledaniPodleNIABSI": {
+        "required": [
+          "niabsi",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "niabsi": {
+            "type": "string",
+            "description": "NIA BSI indetifikátor, podle kterého se vyhledává"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle NIA BSI"
+      },
+      "ZadostOVyhledaniPodleRID": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle rezortního ID"
+      },
+      "ZadostOVyhledaniUniverzal": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPacientaUniverzal"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání pacienta podle zadaných paramterů"
+      },
+      "ZadostOZalozeniPacienta": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NovyPacient"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro založení nového pacienta"
+      },
+      "ZadostOZmenuPacienta": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZmenaPacienta"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro změnu údajů pacienta"
+      },
+      "ZadostOZruseniOdberuNotifikaci": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZruseniOdberuNotifikaci"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o zrušení k odběru notifikací pro PZS a subjekty údajů"
+      },
+      "ZadostReklamaceUdaju": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/DataReklamace"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Zadost o reklamaci udajů"
+      },
+      "ZakladniCiselnik": {
+        "required": [
+          "kod",
+          "nazev",
+          "platnostOd"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "description": "Kód číselníkové položky",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název číselníkové položky",
+            "nullable": true
+          },
+          "platnostOd": {
+            "type": "string",
+            "description": "Platnost od číselníkové položky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "platnostDo": {
+            "type": "string",
+            "description": "Platnost do číselníkové položky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro základní číselník"
+      },
+      "ZmenaPacienta": {
+        "required": [
+          "datumNarozeni",
+          "omezeniSvepravnosti",
+          "prijmeni",
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "RID pacienta"
+          },
+          "aifo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AIFO"
+            },
+            "description": "AIFA (Agendový Identifikátory Fyzické Osoby) pacienta.",
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "cisloPojistence": {
+            "maxLength": 22,
+            "type": "string",
+            "description": "Číslo pojištěnce pacienta",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Datum narození pacienta v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "datumUmrti": {
+            "type": "string",
+            "description": "Datum úmrtí pacienta v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "description": "Doklady pacienta",
+            "nullable": true
+          },
+          "omezeniSvepravnosti": {
+            "type": "string",
+            "description": "Příznak omezení sváprávnosti pacienta"
+          },
+          "jmeno": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Jméno pacienta",
+            "nullable": true
+          },
+          "prijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Příjmení pacienta"
+          },
+          "rodnePrijmeni": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Rodné příjmení",
+            "nullable": true
+          },
+          "pohlavi": {
+            "maxLength": 1,
+            "type": "string",
+            "description": "Pohlaví pacienta",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "maxLength": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Státní občanství pacienta v ISO 3166 formátu (Aplha2Kod)",
+            "nullable": true
+          },
+          "mistoNarozeniRuianObecId": {
+            "type": "integer",
+            "description": "Místo narození - RUIAN Id obce",
+            "format": "int64",
+            "nullable": true
+          },
+          "mistoNarozeniZemeKod": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "Místo narození - kód země",
+            "nullable": true
+          },
+          "mistoNarozeniSvetNazev": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Místo narození - název",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro změnu pacienta"
+      },
+      "ZruseniOdberuNotifikaci": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "ID subskripce",
+            "nullable": true
+          },
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "description": "Předmět notifikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k zrušení odběru notifikací"
+      }
+    }
+  }
+}

@@ -1,0 +1,4154 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "eZadanky",
+    "version": "v1.11.12"
+  },
+  "servers": [
+    {
+      "url": "/eZadanky"
+    }
+  ],
+  "paths": {
+    "/api/v1/eZadanka/UlozZadanku": {
+      "post": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UlozZadankuExtRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Žádanka je uložena",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UlozZadankuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/VyhledejZadanku": {
+      "post": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyhledejZadankuExtRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka je nalezena",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VyhledejZadankuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/VyhledejAktivniZadanku": {
+      "post": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyhledejAktivniZadankuRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka je nalezena",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VyhledejAktivniZadankuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/StornujZadanku": {
+      "patch": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StornujZadankuRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka úspěšně stornována !",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StornujZadankuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/PrijmiZadanku": {
+      "patch": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrijmiZadankuCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka úspěšně přijata !",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrijmiZadankuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/ZaznacNeproveditelnostZadanky": {
+      "patch": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZaznacNeproveditelnostZadankyCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka zaznačena jako neproveditelná !",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZaznacNeproveditelnostZadankyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/VratZadankuDoObehu": {
+      "patch": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VratZadankuDoObehuCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka úspěšně vrácena do oběhu !",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VratZadankuDoObehuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/VyridZadanku": {
+      "patch": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyridZadankuCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka úspěšně vyřízena !",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VyridZadankuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/UpravZadanku": {
+      "patch": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpravZadankuExtCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Žádanka upravena !",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpravZadankuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    },
+    "/api/v1/eZadanka/NactiZadanku/{id}": {
+      "get": {
+        "tags": [
+          "Žádanky"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "KodZadanky",
+            "in": "query",
+            "description": "Gets or sets the kod zadanky.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "KodVzorku",
+            "in": "query",
+            "description": "Gets or sets the kod vzorku.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "CisloDokladu",
+            "in": "query",
+            "description": "Gets or sets the cislo dokladu.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Žádanka načtena!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NactiZadankuDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči Dočasnému úložišti"
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu Dočasného úložiště"
+          },
+          "404": {
+            "description": "Žádanka nenalezena"
+          },
+          "500": {
+            "description": "Nefunkční stav služby"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdresatData": {
+        "title": "AdresatData",
+        "type": "object",
+        "properties": {
+          "zdravotnickyPracovnik": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "pacient": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "poskytovatel": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO obsahující data adresáta."
+      },
+      "AlergieIntolerance": {
+        "type": "object",
+        "properties": {
+          "identifikator": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifikatorModel"
+            },
+            "description": "Gets or sets the identifikator.",
+            "nullable": true
+          },
+          "kod": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Alergie Intolerance"
+      },
+      "BiometrickeUdaje": {
+        "title": "BiometrickeUdaje",
+        "required": [
+          "vaha",
+          "vyska"
+        ],
+        "type": "object",
+        "properties": {
+          "vyska": {
+            "$ref": "#/components/schemas/Vyska"
+          },
+          "vaha": {
+            "$ref": "#/components/schemas/Vaha"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt s biometrickými údajmi pro klinické informace"
+      },
+      "CodeableConcept": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Coding"
+            },
+            "description": "Gets or sets the coding.",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "description": "Gets or sets the text.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Codeable Concept"
+      },
+      "Coding": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "description": "Gets or sets the system.",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "description": "Gets or sets the code.",
+            "nullable": true
+          },
+          "display": {
+            "type": "string",
+            "description": "Gets or sets the display.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Coding"
+      },
+      "DalsiRelevantniUdaje": {
+        "type": "object",
+        "properties": {
+          "kod": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Dalsi Relevantni Udaje"
+      },
+      "DetailyObjednavky": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifikatorModel"
+            },
+            "description": "Gets or sets the identifier.",
+            "nullable": true
+          },
+          "datumACas": {
+            "type": "string",
+            "description": "Gets or sets the datum a cas.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPozadovanehoProvedeni": {
+            "type": "string",
+            "description": "Gets or sets the datum pozadovaneho provedeni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "textObjednavky": {
+            "type": "string",
+            "description": "Gets or sets the text objednavky.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Detaily Objednavky"
+      },
+      "DiagnozaDto": {
+        "title": "DiagnozaDto",
+        "type": "object",
+        "properties": {
+          "hlavniDiagnoza": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "vedlejsiDiagnoza": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the vedlejsi diagnoza.",
+            "nullable": true
+          },
+          "duvod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the duvod.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class for DiagnozaDto"
+      },
+      "DodatecnyPrijemce": {
+        "required": [
+          "adresat",
+          "adresatTyp"
+        ],
+        "type": "object",
+        "properties": {
+          "adresat": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Adresát dodatečního příjemce"
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "adresatData": {
+            "$ref": "#/components/schemas/AdresatData"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifikace třídy dodatečný příjemce"
+      },
+      "Dokument": {
+        "title": "Dokument",
+        "required": [
+          "dostupnost",
+          "hash",
+          "nazev",
+          "pacient",
+          "typ"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor dokumentu",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string",
+            "description": "Krátký název dokumentu."
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis obsahu dokumentu",
+            "nullable": true
+          },
+          "jazyk": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "kod": {
+            "type": "string",
+            "description": "Externí kód zásilky (například: konkrétní kód žádanky)",
+            "nullable": true
+          },
+          "autor": {
+            "type": "string",
+            "description": "ID autora zásilky (väzba na kmeňový register – zdravotnikych pracovnikov).",
+            "nullable": true
+          },
+          "autorData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "poskytovatel": {
+            "type": "string",
+            "description": "ID subjektu (vazba na kmeňový register – poskytovatel).",
+            "nullable": true
+          },
+          "poskytovatelData": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "RID pacienta, ke kterému se zásilka vztahuje."
+          },
+          "pacientData": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Úroveň důvěrnosti dokumentu (chránený, soukromý, verejný).",
+            "default": true
+          },
+          "duvernost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "format": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "mime": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "hash": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Kontrolní hash dokumentu pro ověření integrity."
+          },
+          "velikost": {
+            "type": "integer",
+            "description": "Velikost dokumentu v bajtech. Automaticky vypočteno z obsahu souboru.",
+            "format": "int64",
+            "nullable": true
+          },
+          "vazanyDokument": {
+            "type": "string",
+            "description": "Vázaný dokument",
+            "format": "uuid",
+            "nullable": true
+          },
+          "soubor": {
+            "$ref": "#/components/schemas/Soubor"
+          },
+          "slozka": {
+            "$ref": "#/components/schemas/Slozka"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt Dokument párován na JSON dokument"
+      },
+      "DuvodObjednavky": {
+        "type": "object",
+        "properties": {
+          "problem": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "vedlejsiProblem": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the problem.",
+            "nullable": true
+          },
+          "klinickaOtazkaKod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the klinicka otazka kod.",
+            "nullable": true
+          },
+          "klinickaOtazkaText": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets or sets the klinicka otazka text.",
+            "nullable": true
+          },
+          "duvodKod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the duvod kod.",
+            "nullable": true
+          },
+          "duvodText": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets or sets the duvod text.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Duvod Objednavky"
+      },
+      "ErrorItemResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Kód chyby",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "description": "Položka, u které došlo k chybě",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Parametry pro vyvolání chyby",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Zpráva chyby",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Položka chyby pro všeobecnou návratovou třídu pro chybu"
+      },
+      "ErrorsResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorItemResponse"
+            },
+            "description": "Seznam nalezených chyb",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data při vyvolání chyby se seznamem chyb"
+      },
+      "IdentifikatorModel": {
+        "type": "object",
+        "properties": {
+          "use": {
+            "type": "string",
+            "description": "Gets or sets the use.",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "system": {
+            "type": "string",
+            "description": "Gets or sets the system.",
+            "nullable": true
+          },
+          "value": {
+            "type": "string",
+            "description": "Gets or sets the value.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Identifikator Model"
+      },
+      "ImplantatModel": {
+        "type": "object",
+        "properties": {
+          "typZarizeni": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "lokace": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "vyrobce": {
+            "type": "string",
+            "description": "Gets or sets the vyrobce.",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "description": "Gets or sets the model.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Implantat Model"
+      },
+      "InformaceOObjednavceModel": {
+        "type": "object",
+        "properties": {
+          "detailyObjednavky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailyObjednavky"
+            },
+            "description": "Gets or sets the detaily objednavky.",
+            "nullable": true
+          },
+          "duvodObjednavky": {
+            "$ref": "#/components/schemas/DuvodObjednavky"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace O Objednavce Model"
+      },
+      "KRPacientDto": {
+        "title": "KRPacientDto",
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "description": "Gets or sets the rid.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "jmeno": {
+            "type": "string",
+            "description": "Gets or sets the jmeno.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Gets or sets the prijmeni.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Gets or sets the datum narozeni.",
+            "format": "date",
+            "nullable": true,
+            "readOnly": true
+          },
+          "ruianId": {
+            "type": "string",
+            "description": "Gets or sets the ruian identifier.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "adresaCela": {
+            "type": "string",
+            "description": "Gets or sets the adresa cela.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "zdravotniPojistovnaKod": {
+            "type": "string",
+            "description": "Gets or sets the zdravotni pojistovna kod.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "zdravotniPojistovnaNazev": {
+            "type": "string",
+            "description": "Gets or sets the zdravotni pojistovna nazev.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "kontaktniEmail": {
+            "type": "string",
+            "description": "Gets or sets the kontaktni email.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "preferovanyJazyk": {
+            "type": "string",
+            "description": "Gets or sets the preferovany jazyk.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "description": "Gets or sets the cislo pojistence.",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KRPoskytovatelDto": {
+        "title": "KRPoskytovatelDto",
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "description": "Gets or sets the icon.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Gets or sets the nazev.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "ruianId": {
+            "type": "string",
+            "description": "Gets or sets the ruian identifier.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "adresaCela": {
+            "type": "string",
+            "description": "Gets or sets the adresa cela.",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KRZdravotnickyPracovnikDto": {
+        "title": "KRZdravotnickyPracovnikDto",
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "description": "Gets or sets the jmeno.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Gets or sets the prijmeni.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "titulPred": {
+            "type": "string",
+            "description": "Gets or sets the titul pred.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "titulZa": {
+            "type": "string",
+            "description": "Gets or sets the titul za.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "krzpId": {
+            "type": "string",
+            "description": "Gets or sets the KRZP identifier.",
+            "nullable": true,
+            "readOnly": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "description": "Gets or sets the datum narozeni.",
+            "format": "date",
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Kontraindikace": {
+        "title": "Kontraindikace",
+        "type": "object",
+        "properties": {
+          "medikace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Medikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Kontraindikace"
+      },
+      "NactiZadankuDto": {
+        "type": "object",
+        "properties": {
+          "zadanka": {
+            "$ref": "#/components/schemas/Zadanka"
+          },
+          "zadankaZ": {
+            "$ref": "#/components/schemas/ZadankaResponseDto"
+          },
+          "zadankaFt": {
+            "$ref": "#/components/schemas/ZadankaFtResponseDto"
+          },
+          "zadankaK": {
+            "$ref": "#/components/schemas/ZadankaKonziliarniResponseDto"
+          },
+          "vysledkyZadanky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Zasilka"
+            },
+            "description": "Gets or sets the vysledky zadanky.",
+            "nullable": true
+          },
+          "podrizeneZadanky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Zadanka"
+            },
+            "description": "Gets or sets the podrizene zadanky.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Nacti Zadanku Dto"
+      },
+      "PolozkaCiselnikuDto": {
+        "title": "PolozkaCiselniku",
+        "required": [
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "ciselnikKod": {
+            "type": "string",
+            "description": "Kód číselníku.",
+            "nullable": true
+          },
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód číselnikové položky"
+          },
+          "verze": {
+            "type": "string",
+            "description": "Verze číselníka",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název číselníkové hodnoty",
+            "nullable": true,
+            "readOnly": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis číselníkové hodnoty",
+            "nullable": true,
+            "readOnly": true
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Platnost číselníkové položky",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt PolozkaCiselniku párován na JSON dokument"
+      },
+      "PozadovaneVysetreniZDto": {
+        "title": "PozadovaneVysetreniDto",
+        "required": [
+          "castTela",
+          "kodVysetreni",
+          "metodaMereni",
+          "nazevVysetreni"
+        ],
+        "type": "object",
+        "properties": {
+          "kodVysetreni": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "nazevVysetreni": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Název vyšetření"
+          },
+          "metodaMereni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Metóda měření"
+          },
+          "castTela": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "lateralita": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "poznamka": {
+            "type": "string",
+            "description": "Poznámka",
+            "nullable": true
+          },
+          "urgentnost": {
+            "type": "string",
+            "description": "Urgentnost",
+            "nullable": true
+          },
+          "informaceProPacienta": {
+            "type": "string",
+            "description": "InformaceProPacienta",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadované vyšetření"
+      },
+      "PrijmiZadankuCommand": {
+        "required": [
+          "id",
+          "verzeRadku"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid"
+          },
+          "verzeRadku": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary"
+          },
+          "cisloDokladu": {
+            "type": "string",
+            "description": "Číslo dokladu",
+            "nullable": true
+          },
+          "kodZadanky": {
+            "type": "string",
+            "description": "Kód žádanky",
+            "nullable": true
+          },
+          "cisloVzorku": {
+            "type": "string",
+            "description": "Číslo vzorku",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Datum plánovaného vyšetření.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro přijetí žádanky",
+        "example": {
+          "id": "49073b5d-8749-4155-b413-86560bad5b63",
+          "verzeRadku": "base64",
+          "kodZadanky": null,
+          "cisloVzorku": "KOD-VZOREK",
+          "cisloDokladu": "OP123456",
+          "datumPlanovanehoVysetreni": null
+        }
+      },
+      "PrijmiZadankuDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikace zneplatněné zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výstupní data pro službu PrijmiZadanku"
+      },
+      "Priloha": {
+        "type": "object",
+        "properties": {
+          "typObsahu": {
+            "type": "string",
+            "description": "Gets or sets the typ obsahu.",
+            "nullable": true
+          },
+          "jazyk": {
+            "type": "string",
+            "description": "Gets or sets the jazyk.",
+            "nullable": true
+          },
+          "data": {
+            "type": "string",
+            "description": "Obsah přílohy kódovaný ve formátu Base64",
+            "format": "byte",
+            "default": "Base64DefaultniHodnotaProSwagger",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "description": "Gets or sets the URL.",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Gets or sets the nazev.",
+            "nullable": true
+          },
+          "vytvoreni": {
+            "type": "string",
+            "description": "Gets or sets the vytvoreni.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Priloha"
+      },
+      "PrilohaInfoDto": {
+        "title": "PrilohaInfoDto",
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "description": "Gets or sets the nazev.",
+            "nullable": true
+          },
+          "typObsahu": {
+            "type": "string",
+            "description": "Gets or sets the typ obsahu.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o příloze"
+      },
+      "SestavSouborFtZadankyRequestDto": {
+        "title": "SestavSouborFtZadankyRequestDto",
+        "type": "object",
+        "properties": {
+          "autorId": {
+            "type": "string",
+            "description": "Gets or sets the autor identifier.",
+            "nullable": true
+          },
+          "zadatelId": {
+            "type": "string",
+            "description": "Gets or sets the zadatel identifier.",
+            "nullable": true
+          },
+          "pacient": {
+            "type": "string",
+            "description": "Gets or sets the pacient.",
+            "nullable": true
+          },
+          "adresatId": {
+            "type": "string",
+            "description": "Gets or sets the adresat identifier.",
+            "nullable": true
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets or sets the dodatecny prijemce.",
+            "nullable": true
+          },
+          "typZadanky": {
+            "type": "string",
+            "description": "Gets or sets the typ zadanky.",
+            "nullable": true
+          },
+          "uhrada": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "icp": {
+            "type": "string",
+            "description": "Gets or sets the icp.",
+            "nullable": true
+          },
+          "pojistovnaKod": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "kodNahrady": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "prilohy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Priloha"
+            },
+            "description": "Gets or sets the prilohy.",
+            "nullable": true
+          },
+          "stavPacienta": {
+            "type": "string",
+            "description": "Gets or sets the stav pacienta.",
+            "nullable": true
+          },
+          "cil": {
+            "type": "string",
+            "description": "Gets or sets the cil.",
+            "nullable": true
+          },
+          "datumPlanovaneKontroly": {
+            "type": "string",
+            "description": "Gets or sets the datum planovane kontroly.",
+            "format": "date",
+            "nullable": true
+          },
+          "castTela": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the cast tela.",
+            "nullable": true
+          },
+          "adresa": {
+            "type": "string",
+            "description": "Gets or sets the adresa.",
+            "nullable": true
+          },
+          "duvodZadanky": {
+            "$ref": "#/components/schemas/DiagnozaDto"
+          },
+          "pozadovanaVysetreni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VykonFtDto"
+            },
+            "description": "Gets or sets the pozadovana vysetreni.",
+            "nullable": true
+          },
+          "druhPece": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "doplnujiciInformace": {
+            "type": "string",
+            "description": "Gets or sets the doplnujici informace.",
+            "nullable": true
+          },
+          "vylouceniUpravyIndikace": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [vylouceni upravy indikace]."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class for SestavSouborFtZadankyRequestDto"
+      },
+      "SestavSouborKonziliarniZadankyRequestDto": {
+        "title": "SestavSouborKonziliarniZadankyRequestDto",
+        "type": "object",
+        "properties": {
+          "autorId": {
+            "type": "string",
+            "description": "Gets or sets the autor identifier.",
+            "nullable": true
+          },
+          "zadatelId": {
+            "type": "string",
+            "description": "Gets or sets the zadatel identifier.",
+            "nullable": true
+          },
+          "pacient": {
+            "type": "string",
+            "description": "Gets or sets the pacient.",
+            "nullable": true
+          },
+          "adresatId": {
+            "type": "string",
+            "description": "Gets or sets the adresat identifier.",
+            "nullable": true
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets or sets the dodatecny prijemce.",
+            "nullable": true
+          },
+          "typZadanky": {
+            "type": "string",
+            "description": "Gets or sets the typ zadanky.",
+            "nullable": true
+          },
+          "uhrada": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "icp": {
+            "type": "string",
+            "description": "Gets or sets the icp.",
+            "nullable": true
+          },
+          "pojistovnaKod": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "kodNahrady": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "prilohy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Priloha"
+            },
+            "description": "Gets or sets the prilohy.",
+            "nullable": true
+          },
+          "typVysetreni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "doporuceni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "pozadovanaVysetreni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the pozadovana vysetreni.",
+            "nullable": true
+          },
+          "doporuceniDetail": {
+            "type": "string",
+            "description": "Gets or sets the doporuceni detail.",
+            "nullable": true
+          },
+          "duvodZadanky": {
+            "$ref": "#/components/schemas/DiagnozaDto"
+          },
+          "zavaznaAnamnestickaData": {
+            "type": "string",
+            "description": "Gets or sets the zavazna anamnesticka data.",
+            "nullable": true
+          },
+          "vysledkyVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the vysledky vysetreni.",
+            "nullable": true
+          },
+          "soucasnaLecba": {
+            "type": "string",
+            "description": "Gets or sets the soucasna lecba.",
+            "nullable": true
+          },
+          "diferencialneDiagnostickaRozvaha": {
+            "type": "string",
+            "description": "Gets or sets the diferencialne diagnosticka rozvaha.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class for SestavSouborKonziliarniZadankyRequestDto"
+      },
+      "SestavSouborZadankyRequestDto": {
+        "title": "SestavSouborZadankyRequestDto",
+        "type": "object",
+        "properties": {
+          "autorId": {
+            "type": "string",
+            "description": "Gets or sets the autor identifier.",
+            "nullable": true
+          },
+          "zadatelId": {
+            "type": "string",
+            "description": "Gets or sets the zadatel identifier.",
+            "nullable": true
+          },
+          "pacient": {
+            "type": "string",
+            "description": "Gets or sets the pacient.",
+            "nullable": true
+          },
+          "adresatId": {
+            "type": "string",
+            "description": "Gets or sets the adresat identifier.",
+            "nullable": true
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets or sets the dodatecny prijemce.",
+            "nullable": true
+          },
+          "typZadanky": {
+            "type": "string",
+            "description": "Gets or sets the typ zadanky.",
+            "nullable": true
+          },
+          "uhrada": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "icp": {
+            "type": "string",
+            "description": "Gets or sets the icp.",
+            "nullable": true
+          },
+          "pojistovnaKod": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "kodNahrady": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "prilohy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Priloha"
+            },
+            "description": "Gets or sets the prilohy.",
+            "nullable": true
+          },
+          "biometrickeUdaje": {
+            "$ref": "#/components/schemas/BiometrickeUdaje"
+          },
+          "informaceOObjednavce": {
+            "$ref": "#/components/schemas/InformaceOObjednavceModel"
+          },
+          "pozadovanaVysetreni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PozadovaneVysetreniZDto"
+            },
+            "description": "Gets or sets the pozadovana vysetreni.",
+            "nullable": true
+          },
+          "urgentniInformace": {
+            "$ref": "#/components/schemas/UrgentniInformaceModel"
+          },
+          "kontraindikace": {
+            "$ref": "#/components/schemas/Kontraindikace"
+          },
+          "dalsiRelevantniUdaje": {
+            "$ref": "#/components/schemas/DalsiRelevantniUdaje"
+          },
+          "implantat": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImplantatModel"
+            },
+            "description": "Gets or sets the implantat.",
+            "nullable": true
+          },
+          "omezeniMobility": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class for SestavSouborZadankyRequestDto\r\n"
+      },
+      "Slozka": {
+        "title": "Slozka",
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID zásilky pro zoskupení dokumentu do jednotní složky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název složky"
+          },
+          "autor": {
+            "type": "string",
+            "description": "ID uživatele, který složku vytvořil.",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření složky",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Složka dokumentu"
+      },
+      "Soubor": {
+        "title": "Soubor",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID souboru",
+            "format": "uuid",
+            "nullable": true
+          },
+          "soubor": {
+            "type": "string",
+            "description": "Base64 soubor",
+            "nullable": true
+          },
+          "cesta": {
+            "type": "string",
+            "description": "Cesta na externí úložiště",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data nebo informace o soubore"
+      },
+      "StornujZadankuRequest": {
+        "required": [
+          "duvodStornaZadanky",
+          "id",
+          "verzeRadku"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky",
+            "format": "uuid"
+          },
+          "verzeRadku": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary"
+          },
+          "duvodStornaZadanky": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "duvodStornaUpresneni": {
+            "type": "string",
+            "description": "Důvod storna upresnění",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request pro storno žádanky",
+        "example": {
+          "id": "0da10d5f-f7c8-461b-bfc0-28b23b93f5db",
+          "verzeRadku": "base64",
+          "duvodStornaZadanky": {
+            "kod": "1",
+            "verze": "1.0.0"
+          },
+          "duvodStornaUpresneni": "Upřesnení důvodu storna"
+        }
+      },
+      "StornujZadankuResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikace stornované žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratova data pro StornujZadanku"
+      },
+      "Strankovani": {
+        "title": "Strankovani",
+        "required": [
+          "page",
+          "size"
+        ],
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "Definuje požadované číslo stránky. Stránky jsou číslovány od 1.",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Definuje požadovaný počet záznamů na stránce.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifikace stránkování"
+      },
+      "UlozZadankuExtRequest": {
+        "required": [
+          "zadanka"
+        ],
+        "type": "object",
+        "properties": {
+          "zadanka": {
+            "$ref": "#/components/schemas/Zadanka"
+          },
+          "zadankaZ": {
+            "$ref": "#/components/schemas/SestavSouborZadankyRequestDto"
+          },
+          "zadankaFt": {
+            "$ref": "#/components/schemas/SestavSouborFtZadankyRequestDto"
+          },
+          "zadankaK": {
+            "$ref": "#/components/schemas/SestavSouborKonziliarniZadankyRequestDto"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro ukladání žádanky v externím API",
+        "example": {
+          "zadanka": {
+            "kod": "KOD-ZADANKA",
+            "stav": {
+              "kod": "0",
+              "verze": "1.0.0"
+            },
+            "urgentnost": {
+              "kod": "asap",
+              "verze": "5.0.2"
+            },
+            "pacientPojistovna": {
+              "kod": "",
+              "verze": "1.0"
+            },
+            "samoplatce": false,
+            "prilozenVzorek": false,
+            "omezeniMobility": false,
+            "popisOmezeniMobility": "Popis omezení mobility",
+            "instrukceProPacienta": "Instrukce pro pacienta",
+            "zpusobVyrizeni": {
+              "kod": "1",
+              "verze": "1.0.0"
+            },
+            "zpusobVyrizeniUpresneni": "Upřesnění způsobu vyřízení",
+            "nadrizenaZadankaId": null,
+            "zasilkaVysledekId": null,
+            "vzorekData": [
+              {
+                "materialVzorku": {
+                  "kod": "BAFTOX",
+                  "verze": "1.0.0"
+                },
+                "datumCasOdberu": "2026-04-21T22:00:08.2726036+02:00",
+                "pokynyZachazeni": "Pokyny zacházení",
+                "kodVzorku": "KOD-VZOREK",
+                "vzorekOdebralId": null,
+                "vzorekOdebralTyp": null
+              }
+            ],
+            "zasilka": {
+              "nazev": "Lekárska správa",
+              "popis": "Lekárska správa z vyšetření",
+              "typ": {
+                "kod": "07",
+                "verze": "1.0.0"
+              },
+              "klasifikace": {
+                "kod": "721963009",
+                "verze": "1.0.0"
+              },
+              "odbornost": {
+                "kod": "004",
+                "verze": "202420"
+              },
+              "datumOd": "2026-04-21T22:00:08.2732140+02:00",
+              "datumDo": "2029-04-21T22:00:08.2732175+02:00",
+              "autor": "5",
+              "zdravotnickyPracovnik": "6",
+              "poskytovatel": "1",
+              "pacient": "6653225891",
+              "ispzs": "Nemocniční informační systém XY",
+              "adresat": "4",
+              "adresatTyp": {
+                "kod": "PAT",
+                "verze": "1.0.0"
+              },
+              "dostupnost": true,
+              "udalost": {
+                "kod": "B",
+                "verze": "1.0.0"
+              },
+              "dokument": [
+                {
+                  "nazev": "Lekárska správa pacienta",
+                  "popis": "Lekárska správa z ortopedického vyšetření",
+                  "jazyk": {
+                    "kod": "cz",
+                    "verze": "1.0"
+                  },
+                  "typ": {
+                    "kod": "07",
+                    "verze": "1.0.0"
+                  },
+                  "klasifikace": {
+                    "kod": "721963009",
+                    "verze": "1.0.0"
+                  },
+                  "kod": "KOD",
+                  "autor": "5",
+                  "poskytovatel": "1",
+                  "pacient": "6653225891",
+                  "dostupnost": true,
+                  "duvernost": {
+                    "kod": "M",
+                    "verze": "1.0.0"
+                  },
+                  "format": {
+                    "kod": "PDF",
+                    "verze": "1.0.0"
+                  },
+                  "mime": {
+                    "kod": "application/pdf",
+                    "verze": "1.0.0"
+                  },
+                  "hash": "b1442e85b03bdcaf66dc58c7abb98745dd2687d86350be9a298a1d9382ac849b",
+                  "velikost": 0,
+                  "vazanyDokument": null,
+                  "soubor": {
+                    "soubor": "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+                    "cesta": null
+                  },
+                  "slozka": {
+                    "nazev": "Přílohy",
+                    "autor": "5"
+                  }
+                }
+              ]
+            },
+            "metodaData": [
+              {
+                "kod": "RTG",
+                "verze": "1.0"
+              }
+            ],
+            "dodatecnyPrijemce": [
+              {
+                "adresat": "1",
+                "adresatTyp": {
+                  "kod": "PAT",
+                  "verze": "1.0.0"
+                }
+              },
+              {
+                "adresat": "2",
+                "adresatTyp": {
+                  "kod": "PAT",
+                  "verze": "1.0.0"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "UlozZadankuResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikace vygenerované žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratova data pro UlozZadanku"
+      },
+      "UpravZadankuDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výstupní data služby pro úpravu žádanky"
+      },
+      "UpravZadankuExtCommand": {
+        "required": [
+          "id",
+          "upravenaPriorita",
+          "upravenyPacient",
+          "verzeRadku"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid"
+          },
+          "verzeRadku": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary"
+          },
+          "upravenyPacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Upravený pacient žádanky"
+          },
+          "upravenyPrijemce": {
+            "type": "string",
+            "description": "Upravený příjemce žádanky",
+            "nullable": true
+          },
+          "upravenyPrijemceTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "upravenaPriorita": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "upraveneVzorky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vzorek"
+            },
+            "description": "Upravené vzorky žádanky",
+            "nullable": true
+          },
+          "upravenyDokument": {
+            "$ref": "#/components/schemas/Dokument"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní data služby pro úpravu žádanky pro externí API",
+        "example": {
+          "id": "a49dc54c-67f4-431b-adc8-8e0ac46d86ad",
+          "verzeRadku": "base64",
+          "upravenyPacient": "6653225891",
+          "upravenyPrijemce": "4",
+          "upravenyPrijemceTyp": {
+            "kod": "PAT",
+            "verze": "1.0.0"
+          },
+          "upravenaPriorita": {
+            "kod": "asap",
+            "verze": "5.0.2"
+          },
+          "upraveneVzorky": [
+            {
+              "materialVzorku": {
+                "kod": "BAFTOX",
+                "verze": "1.0.0"
+              },
+              "datumCasOdberu": "2026-04-21T22:00:08.3152174+02:00",
+              "pokynyZachazeni": "Pokyny zacházení",
+              "kodVzorku": "KOD-VZOREK",
+              "vzorekOdebralId": null,
+              "vzorekOdebralTyp": null
+            }
+          ],
+          "upravenyDokument": {
+            "nazev": "Lekárska správa pacienta",
+            "popis": "Lekárska správa z ortopedického vyšetření",
+            "jazyk": {
+              "kod": "cz",
+              "verze": "1.0"
+            },
+            "typ": {
+              "kod": "07",
+              "verze": "1.0.0"
+            },
+            "klasifikace": {
+              "kod": "721963009",
+              "verze": "1.0.0"
+            },
+            "kod": "KOD",
+            "autor": "5",
+            "poskytovatel": "1",
+            "pacient": "6653225891",
+            "dostupnost": true,
+            "duvernost": {
+              "kod": "M",
+              "verze": "1.0.0"
+            },
+            "format": {
+              "kod": "PDF",
+              "verze": "1.0.0"
+            },
+            "mime": {
+              "kod": "application/pdf",
+              "verze": "1.0.0"
+            },
+            "hash": "b1442e85b03bdcaf66dc58c7abb98745dd2687d86350be9a298a1d9382ac849b",
+            "velikost": 0,
+            "vazanyDokument": null,
+            "soubor": {
+              "soubor": "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+              "cesta": null
+            },
+            "slozka": {
+              "nazev": "Přílohy",
+              "autor": "5"
+            }
+          }
+        }
+      },
+      "UrgentniInformaceModel": {
+        "type": "object",
+        "properties": {
+          "alergieIntolerance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlergieIntolerance"
+            },
+            "description": "Gets or sets the alergie intolerance.",
+            "nullable": true
+          },
+          "varovani": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gets or sets the varovani.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Urgentni Informace Model"
+      },
+      "Vaha": {
+        "title": "Vaha",
+        "required": [
+          "hodnota",
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód pro váhu"
+          },
+          "hodnota": {
+            "type": "integer",
+            "description": "Hodnota váhy",
+            "format": "int32"
+          },
+          "datum": {
+            "type": "string",
+            "description": "Datum měření váhy",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt pro určení váhy pro biometrické údaje"
+      },
+      "VratZadankuDoObehuCommand": {
+        "required": [
+          "duvodVraceniZadanky",
+          "id",
+          "verzeRadku"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid"
+          },
+          "verzeRadku": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary"
+          },
+          "duvodVraceniZadanky": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "duvodVraceniUpresneni": {
+            "type": "string",
+            "description": "Důvod vrácení žádanky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro vrácení žádanky do oběhu",
+        "example": {
+          "id": "69cb3a16-e6a3-493a-bc1b-aa8bfb840e73",
+          "verzeRadku": "base64",
+          "duvodVraceniZadanky": {
+            "kod": "NEDOSTKAPACITA",
+            "verze": "1.0"
+          },
+          "duvodVraceniUpresneni": "Upřesnění důvodu vrácení žádanky do oběhu"
+        }
+      },
+      "VratZadankuDoObehuDto": {
+        "required": [
+          "icpZadatele",
+          "omezeniMobility",
+          "pacientImplantat",
+          "prilozenVzorek",
+          "samoplatce",
+          "urgentnost",
+          "zasilka"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "kod": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Kód žádanky",
+            "nullable": true
+          },
+          "urgentnost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "samoplatce": {
+            "type": "boolean",
+            "description": "Informace o tom, zda je osoba samoplátcem."
+          },
+          "prilozenVzorek": {
+            "type": "boolean",
+            "description": "Informace o tom, zda byl přiložen vzorek (laboratorní)."
+          },
+          "omezeniMobility": {
+            "type": "boolean",
+            "description": "Informace o tom, zda se jedná o pacienta s omezenou mobilitou (obrazová)."
+          },
+          "popisOmezeniMobility": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Nepovinné textové pole pro upřesnění omezení mobility pacienta (obrazová, omezeniMobility == 1).",
+            "nullable": true
+          },
+          "instrukceProPacienta": {
+            "type": "string",
+            "description": "Instrukce pro pacienta.",
+            "nullable": true
+          },
+          "zpusobVyrizeni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "zpusobVyrizeniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Upřesnění způsobu vyřízení žádanky",
+            "nullable": true
+          },
+          "nadrizenaZadankaId": {
+            "type": "string",
+            "description": "Odkaz na záznam nadřízené žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "zasilkaVysledekId": {
+            "type": "string",
+            "description": "Odkaz na záznam zásilky, v rámci které byl přiložen výsledek",
+            "format": "uuid",
+            "nullable": true
+          },
+          "datumStorna": {
+            "type": "string",
+            "description": "Gets or sets the datum storna.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumZaznaceniNeproveditelnosti": {
+            "type": "string",
+            "description": "Gets or sets the datum zaznaceni neproveditelnosti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoVraceniDoObehu": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho vraceni do obehu.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoPrijeti": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho prijeti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumRozdeleni": {
+            "type": "string",
+            "description": "Gets or sets the datum rozdeleni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVyrizeni": {
+            "type": "string",
+            "description": "Gets or sets the datum vyrizeni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumExpirace": {
+            "type": "string",
+            "description": "Gets or sets the datum expirace.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum planovaneho vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum skutecne realizace vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pacientPojistovna": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "icpZadatele": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Gets or sets the icp zadatele."
+          },
+          "pacientImplantat": {
+            "type": "boolean",
+            "description": "Gets or sets the pacient implantat."
+          },
+          "vzorekData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vzorek"
+            },
+            "description": "Seznam vzorků žádanky",
+            "nullable": true
+          },
+          "zasilka": {
+            "$ref": "#/components/schemas/Zasilka"
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DodatecnyPrijemce"
+            },
+            "description": "Seznam dodatečních příjemců žádanky",
+            "nullable": true
+          },
+          "metodaData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+            },
+            "description": "Metoda konkrétní žádanky. Liší se dle typu žádanky (číselník: referralorder-types).\r\nPro typ \"žádanka o vyšetření (K)\" (kód: \"57133-1\") musí být uvedena položka číselníku: \"korder-type-vs\";\r\nPro typ \"žádanka o zobrazovací vyšetření (Z)\" (kód: \"721964003\") musí být uvedena položka číselníku: \"cz-modality\";\r\nPro typ \"žádanka o fyzioterapii (FT)\" (kód: \"57154-7\") nemusí být pole vyplněno",
+            "nullable": true
+          },
+          "obsahujePrilohy": {
+            "type": "boolean",
+            "description": "Příznak, zda žádanka obsahuje přílohy",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výstupní data pro službu PrijmiZadanku"
+      },
+      "VyhledejAktivniZadankuRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Jedinečný identifikátor žádanky (zadanka.id)",
+            "format": "uuid",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "description": "Jedinečný identifikátor pacienta v KRP",
+            "nullable": true
+          },
+          "kodZadanky": {
+            "type": "string",
+            "description": "Alfanumerický kód Žádanky",
+            "nullable": true
+          },
+          "kodVzorku": {
+            "type": "string",
+            "description": "Alfanumerický kód vzorku.",
+            "nullable": true
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Refresh vyhledávaní.",
+            "nullable": true
+          },
+          "strankovani": {
+            "$ref": "#/components/schemas/Strankovani"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro filtraci aktivních žádanek",
+        "example": {
+          "id": null,
+          "rID": null,
+          "kodZadanky": null,
+          "kodVzorku": null,
+          "strankovani": {
+            "page": 1,
+            "size": 10
+          }
+        }
+      },
+      "VyhledejAktivniZadankuResponse": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "description": "Reprezentuje číslo aktuální stránky",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "description": "Reprezentuje číslo další stránky. Pokud je aktuální stránka zároveň poslední stránkou seznamu, pak tento parametr není uveden nebo je uveden s hodnotou null.",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageCount": {
+            "type": "integer",
+            "description": "Reprezentuje celkový počet stránek dotazu",
+            "format": "int32",
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Reprezentuje počet záznamů na stránku. Tento parametr může odpovídat požadované hodnotě size z dotazu, s výjimkou případů, kdy se jedná o poslední stránku",
+            "format": "int64",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Je nepovinný a reprezentuje údaje o celkovém počtu záznamů pro všechny stránky. Pokud tuto hodnotu nelze přesně určit, neuvádí se.",
+            "format": "int64",
+            "nullable": true
+          },
+          "zadanky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VyhledejZadankuDto"
+            },
+            "description": "Seznam nalezených žádanek",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data pro vyhledání aktívních žádanek"
+      },
+      "VyhledejZadankuDto": {
+        "type": "object",
+        "properties": {
+          "zadanka": {
+            "$ref": "#/components/schemas/Zadanka"
+          },
+          "zadankaZ": {
+            "$ref": "#/components/schemas/ZadankaResponseDto"
+          },
+          "zadankaFt": {
+            "$ref": "#/components/schemas/ZadankaFtResponseDto"
+          },
+          "zadankaK": {
+            "$ref": "#/components/schemas/ZadankaKonziliarniResponseDto"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class for <span class=\"identifier\">VyhledejZadankuDto</span>"
+      },
+      "VyhledejZadankuExtRequest": {
+        "required": [
+          "strankovani"
+        ],
+        "type": "object",
+        "properties": {
+          "pacient": {
+            "type": "string",
+            "description": "RID - Identifikátor pacienta, kterému seznam náleží.",
+            "nullable": true
+          },
+          "autor": {
+            "type": "string",
+            "description": "Identifikátor autora žádanky, který zásilku vytvořil.",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "string",
+            "description": "Identifikátor příjemce žádanky.",
+            "nullable": true
+          },
+          "poskytovatel": {
+            "type": "string",
+            "description": "Identifikátor poskytovatěle žádanky.",
+            "nullable": true
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datumové ohraničení nejstaršího datumu vytvoření žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datumové ohraničení nejmladšího datumu vytvoření žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "kod": {
+            "type": "string",
+            "description": "Alfanumerický kód žádanky.",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "refresh": {
+            "type": "boolean",
+            "description": "Refresh vyhledávaní.",
+            "nullable": true
+          },
+          "strankovani": {
+            "$ref": "#/components/schemas/Strankovani"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro vyhledání žádanky v externím API",
+        "example": {
+          "id": null,
+          "pacient": null,
+          "autor": null,
+          "prijemce": null,
+          "poskytovatel": null,
+          "kod": null,
+          "datumOd": "2025-01-01T00:00:00.0000000+01:00",
+          "datumDo": "2025-12-31T00:00:00.0000000+01:00",
+          "strankovani": {
+            "page": 1,
+            "size": 10
+          }
+        }
+      },
+      "VyhledejZadankuResponse": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "description": "Reprezentuje číslo aktuální stránky",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "description": "Reprezentuje číslo další stránky. Pokud je aktuální stránka zároveň poslední stránkou seznamu, pak tento parametr není uveden nebo je uveden s hodnotou null.",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageCount": {
+            "type": "integer",
+            "description": "Reprezentuje celkový počet stránek dotazu",
+            "format": "int32",
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Reprezentuje počet záznamů na stránku. Tento parametr může odpovídat požadované hodnotě size z dotazu, s výjimkou případů, kdy se jedná o poslední stránku",
+            "format": "int64",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Je nepovinný a reprezentuje údaje o celkovém počtu záznamů pro všechny stránky. Pokud tuto hodnotu nelze přesně určit, neuvádí se.",
+            "format": "int64",
+            "nullable": true
+          },
+          "pocetNeprectenych": {
+            "type": "integer",
+            "description": "Počet neprečtených záznamů",
+            "format": "int64",
+            "nullable": true
+          },
+          "zadanky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VyhledejZadankuDto"
+            },
+            "description": "Seznam nalezených žádanek",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data pro vyhledání žádanek"
+      },
+      "VykonFtDto": {
+        "title": "VykonFtDto",
+        "type": "object",
+        "properties": {
+          "vykon": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "poznamka": {
+            "type": "string",
+            "description": "Gets or sets the poznamka.",
+            "nullable": true
+          },
+          "pocet": {
+            "type": "integer",
+            "description": "Gets or sets the pocet.",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Class for VykonFt"
+      },
+      "VyridZadankuCommand": {
+        "required": [
+          "id",
+          "verzeRadku",
+          "zpusobVyrizeniZadanky"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid"
+          },
+          "verzeRadku": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary"
+          },
+          "zpusobVyrizeniZadanky": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "zpusobVyrizeniUpresneni": {
+            "type": "string",
+            "description": "Upřesnění způsobu vyřízení žádanky",
+            "nullable": true
+          },
+          "vysledek": {
+            "$ref": "#/components/schemas/Zasilka"
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Datum skutečné realizace vyšetření",
+            "format": "date-time",
+            "nullable": true
+          },
+          "zaslatVysledekPacientovi": {
+            "type": "boolean",
+            "description": "Zaslat vysledek pacientovi."
+          },
+          "zaslatVysledekPraktikovi": {
+            "type": "boolean",
+            "description": "Zaslat vysledek praktikovi."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro vyřízení žádanky",
+        "example": {
+          "id": "0fd2c997-2270-4933-adce-39056420a3af",
+          "verzeRadku": "base64",
+          "zpusobVyrizeniZadanky": {
+            "kod": "1",
+            "verze": "1.0.0"
+          },
+          "zpusobVyrizeniUpresneni": "Upřesnění způsobu vyřízení žádanky",
+          "vysledek": {
+            "nazev": "Lekárska správa",
+            "popis": "Lekárska správa z vyšetření",
+            "typ": {
+              "kod": "07",
+              "verze": "1.0.0"
+            },
+            "klasifikace": {
+              "kod": "721963009",
+              "verze": "1.0.0"
+            },
+            "odbornost": {
+              "kod": "004",
+              "verze": "202420"
+            },
+            "datumOd": "2026-04-21T22:00:08.3095705+02:00",
+            "datumDo": "2029-04-21T22:00:08.3095785+02:00",
+            "autor": "5",
+            "zdravotnickyPracovnik": "6",
+            "poskytovatel": "1",
+            "pacient": "6653225891",
+            "ispzs": "Nemocniční informační systém XY",
+            "adresat": "4",
+            "adresatTyp": {
+              "kod": "PAT",
+              "verze": "1.0.0"
+            },
+            "dostupnost": true,
+            "udalost": {
+              "kod": "B",
+              "verze": "1.0.0"
+            },
+            "dokument": [
+              {
+                "nazev": "Lekárska správa pacienta",
+                "popis": "Lekárska správa z ortopedického vyšetření",
+                "jazyk": {
+                  "kod": "cz",
+                  "verze": "1.0"
+                },
+                "typ": {
+                  "kod": "07",
+                  "verze": "1.0.0"
+                },
+                "klasifikace": {
+                  "kod": "721963009",
+                  "verze": "1.0.0"
+                },
+                "kod": "KOD",
+                "autor": "5",
+                "poskytovatel": "1",
+                "pacient": "6653225891",
+                "dostupnost": true,
+                "duvernost": {
+                  "kod": "M",
+                  "verze": "1.0.0"
+                },
+                "format": {
+                  "kod": "PDF",
+                  "verze": "1.0.0"
+                },
+                "mime": {
+                  "kod": "application/pdf",
+                  "verze": "1.0.0"
+                },
+                "hash": "b1442e85b03bdcaf66dc58c7abb98745dd2687d86350be9a298a1d9382ac849b",
+                "velikost": 0,
+                "vazanyDokument": null,
+                "soubor": {
+                  "soubor": "R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+                  "cesta": null
+                },
+                "slozka": {
+                  "nazev": "Přílohy",
+                  "autor": "5"
+                }
+              }
+            ]
+          },
+          "datumSkutecneRealizaceVysetreni": "2026-04-21T22:00:08.3095981+02:00"
+        }
+      },
+      "VyridZadankuDto": {
+        "required": [
+          "icpZadatele",
+          "omezeniMobility",
+          "pacientImplantat",
+          "prilozenVzorek",
+          "samoplatce",
+          "urgentnost",
+          "zasilka"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "kod": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Kód žádanky",
+            "nullable": true
+          },
+          "urgentnost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "samoplatce": {
+            "type": "boolean",
+            "description": "Informace o tom, zda je osoba samoplátcem."
+          },
+          "prilozenVzorek": {
+            "type": "boolean",
+            "description": "Informace o tom, zda byl přiložen vzorek (laboratorní)."
+          },
+          "omezeniMobility": {
+            "type": "boolean",
+            "description": "Informace o tom, zda se jedná o pacienta s omezenou mobilitou (obrazová)."
+          },
+          "popisOmezeniMobility": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Nepovinné textové pole pro upřesnění omezení mobility pacienta (obrazová, omezeniMobility == 1).",
+            "nullable": true
+          },
+          "instrukceProPacienta": {
+            "type": "string",
+            "description": "Instrukce pro pacienta.",
+            "nullable": true
+          },
+          "zpusobVyrizeni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "zpusobVyrizeniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Upřesnění způsobu vyřízení žádanky",
+            "nullable": true
+          },
+          "nadrizenaZadankaId": {
+            "type": "string",
+            "description": "Odkaz na záznam nadřízené žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "zasilkaVysledekId": {
+            "type": "string",
+            "description": "Odkaz na záznam zásilky, v rámci které byl přiložen výsledek",
+            "format": "uuid",
+            "nullable": true
+          },
+          "datumStorna": {
+            "type": "string",
+            "description": "Gets or sets the datum storna.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumZaznaceniNeproveditelnosti": {
+            "type": "string",
+            "description": "Gets or sets the datum zaznaceni neproveditelnosti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoVraceniDoObehu": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho vraceni do obehu.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoPrijeti": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho prijeti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumRozdeleni": {
+            "type": "string",
+            "description": "Gets or sets the datum rozdeleni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVyrizeni": {
+            "type": "string",
+            "description": "Gets or sets the datum vyrizeni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumExpirace": {
+            "type": "string",
+            "description": "Gets or sets the datum expirace.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum planovaneho vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum skutecne realizace vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pacientPojistovna": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "icpZadatele": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Gets or sets the icp zadatele."
+          },
+          "pacientImplantat": {
+            "type": "boolean",
+            "description": "Gets or sets the pacient implantat."
+          },
+          "vzorekData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vzorek"
+            },
+            "description": "Seznam vzorků žádanky",
+            "nullable": true
+          },
+          "zasilka": {
+            "$ref": "#/components/schemas/Zasilka"
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DodatecnyPrijemce"
+            },
+            "description": "Seznam dodatečních příjemců žádanky",
+            "nullable": true
+          },
+          "metodaData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+            },
+            "description": "Metoda konkrétní žádanky. Liší se dle typu žádanky (číselník: referralorder-types).\r\nPro typ \"žádanka o vyšetření (K)\" (kód: \"57133-1\") musí být uvedena položka číselníku: \"korder-type-vs\";\r\nPro typ \"žádanka o zobrazovací vyšetření (Z)\" (kód: \"721964003\") musí být uvedena položka číselníku: \"cz-modality\";\r\nPro typ \"žádanka o fyzioterapii (FT)\" (kód: \"57154-7\") nemusí být pole vyplněno",
+            "nullable": true
+          },
+          "obsahujePrilohy": {
+            "type": "boolean",
+            "description": "Příznak, zda žádanka obsahuje přílohy",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výstupní data pro službu VyridZadanku"
+      },
+      "Vyska": {
+        "title": "Vyska",
+        "required": [
+          "hodnota",
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód pro výšku"
+          },
+          "hodnota": {
+            "type": "integer",
+            "description": "Hodnota výšky",
+            "format": "int32"
+          },
+          "datum": {
+            "type": "string",
+            "description": "Hodnota výšky",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Objekt pro určení výšky pro biometrické údaje"
+      },
+      "Vzorek": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor vzorku",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "materialVzorku": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumCasOdberu": {
+            "type": "string",
+            "description": "Datum a čas provedení odběru vzorku.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pokynyZachazeni": {
+            "type": "string",
+            "description": "Pokyny k zacházení se vzorkem.",
+            "nullable": true
+          },
+          "kodVzorku": {
+            "type": "string",
+            "description": "Kód vzorku.",
+            "nullable": true
+          },
+          "vzorekOdebralId": {
+            "type": "string",
+            "description": "Identifikace, kto odebral zvorek.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "vzorekOdebralTyp": {
+            "type": "integer",
+            "description": "Identifikace typu odebrání vzorku.",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifikace třídy vorek pro žádanku"
+      },
+      "Zadanka": {
+        "title": "Zadanka",
+        "required": [
+          "icpZadatele",
+          "omezeniMobility",
+          "pacientImplantat",
+          "prilozenVzorek",
+          "samoplatce",
+          "urgentnost",
+          "zasilka"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "kod": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Kód žádanky",
+            "nullable": true
+          },
+          "urgentnost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "samoplatce": {
+            "type": "boolean",
+            "description": "Informace o tom, zda je osoba samoplátcem."
+          },
+          "prilozenVzorek": {
+            "type": "boolean",
+            "description": "Informace o tom, zda byl přiložen vzorek (laboratorní)."
+          },
+          "omezeniMobility": {
+            "type": "boolean",
+            "description": "Informace o tom, zda se jedná o pacienta s omezenou mobilitou (obrazová)."
+          },
+          "popisOmezeniMobility": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Nepovinné textové pole pro upřesnění omezení mobility pacienta (obrazová, omezeniMobility == 1).",
+            "nullable": true
+          },
+          "instrukceProPacienta": {
+            "type": "string",
+            "description": "Instrukce pro pacienta.",
+            "nullable": true
+          },
+          "zpusobVyrizeni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "zpusobVyrizeniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Upřesnění způsobu vyřízení žádanky",
+            "nullable": true
+          },
+          "nadrizenaZadankaId": {
+            "type": "string",
+            "description": "Odkaz na záznam nadřízené žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "zasilkaVysledekId": {
+            "type": "string",
+            "description": "Odkaz na záznam zásilky, v rámci které byl přiložen výsledek",
+            "format": "uuid",
+            "nullable": true
+          },
+          "datumStorna": {
+            "type": "string",
+            "description": "Gets or sets the datum storna.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumZaznaceniNeproveditelnosti": {
+            "type": "string",
+            "description": "Gets or sets the datum zaznaceni neproveditelnosti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoVraceniDoObehu": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho vraceni do obehu.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoPrijeti": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho prijeti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumRozdeleni": {
+            "type": "string",
+            "description": "Gets or sets the datum rozdeleni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVyrizeni": {
+            "type": "string",
+            "description": "Gets or sets the datum vyrizeni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumExpirace": {
+            "type": "string",
+            "description": "Gets or sets the datum expirace.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum planovaneho vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum skutecne realizace vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pacientPojistovna": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "icpZadatele": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Gets or sets the icp zadatele."
+          },
+          "pacientImplantat": {
+            "type": "boolean",
+            "description": "Gets or sets the pacient implantat."
+          },
+          "vzorekData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vzorek"
+            },
+            "description": "Seznam vzorků žádanky",
+            "nullable": true
+          },
+          "zasilka": {
+            "$ref": "#/components/schemas/Zasilka"
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DodatecnyPrijemce"
+            },
+            "description": "Seznam dodatečních příjemců žádanky",
+            "nullable": true
+          },
+          "metodaData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+            },
+            "description": "Metoda konkrétní žádanky. Liší se dle typu žádanky (číselník: referralorder-types).\r\nPro typ \"žádanka o vyšetření (K)\" (kód: \"57133-1\") musí být uvedena položka číselníku: \"korder-type-vs\";\r\nPro typ \"žádanka o zobrazovací vyšetření (Z)\" (kód: \"721964003\") musí být uvedena položka číselníku: \"cz-modality\";\r\nPro typ \"žádanka o fyzioterapii (FT)\" (kód: \"57154-7\") nemusí být pole vyplněno",
+            "nullable": true
+          },
+          "obsahujePrilohy": {
+            "type": "boolean",
+            "description": "Příznak, zda žádanka obsahuje přílohy",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifikace třídy žádanka"
+      },
+      "ZadankaFtResponseDto": {
+        "title": "ZadankaFtResponseDto",
+        "type": "object",
+        "properties": {
+          "kodNahrady": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "uhrada": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "prilohy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrilohaInfoDto"
+            },
+            "description": "Gets or sets the prilohy.",
+            "nullable": true
+          },
+          "stavPacienta": {
+            "type": "string",
+            "description": "Gets or sets the stav pacienta.",
+            "nullable": true
+          },
+          "cil": {
+            "type": "string",
+            "description": "Gets or sets the cil.",
+            "nullable": true
+          },
+          "datumPlanovaneKontroly": {
+            "type": "string",
+            "description": "Gets or sets the datum planovane kontroly.",
+            "format": "date",
+            "nullable": true
+          },
+          "castTela": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the cast tela.",
+            "nullable": true
+          },
+          "adresa": {
+            "type": "string",
+            "description": "Gets or sets the adresa.",
+            "nullable": true
+          },
+          "duvodZadanky": {
+            "$ref": "#/components/schemas/DiagnozaDto"
+          },
+          "pozadovanaVysetreni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VykonFtDto"
+            },
+            "description": "Gets or sets the pozadovana vysetreni.",
+            "nullable": true
+          },
+          "druhPece": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "doplnujiciInformace": {
+            "type": "string",
+            "description": "Gets or sets the doplnujici informace.",
+            "nullable": true
+          },
+          "vylouceniUpravyIndikace": {
+            "type": "boolean",
+            "description": "Gets or sets a value indicating whether [vylouceni upravy indikace]."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response DTO žádanky Ft"
+      },
+      "ZadankaKonziliarniResponseDto": {
+        "title": "ZadankaKonziliarniResponseDto",
+        "type": "object",
+        "properties": {
+          "kodNahrady": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "uhrada": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "prilohy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrilohaInfoDto"
+            },
+            "description": "Gets or sets the prilohy.",
+            "nullable": true
+          },
+          "typVysetreni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "doporuceni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "pozadovanaVysetreni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeableConcept"
+            },
+            "description": "Gets or sets the pozadovana vysetreni.",
+            "nullable": true
+          },
+          "doporuceniDetail": {
+            "type": "string",
+            "description": "Gets or sets the doporuceni detail.",
+            "nullable": true
+          },
+          "duvodZadanky": {
+            "$ref": "#/components/schemas/DiagnozaDto"
+          },
+          "zavaznaAnamnestickaData": {
+            "type": "string",
+            "description": "Gets or sets the zavazna anamnesticka data.",
+            "nullable": true
+          },
+          "vysledkyVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the vysledky vysetreni.",
+            "nullable": true
+          },
+          "soucasnaLecba": {
+            "type": "string",
+            "description": "Gets or sets the soucasna lecba.",
+            "nullable": true
+          },
+          "diferencialneDiagnostickaRozvaha": {
+            "type": "string",
+            "description": "Gets or sets the diferencialne diagnosticka rozvaha.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response DTO konziliárni žádanky"
+      },
+      "ZadankaResponseDto": {
+        "title": "ZadankaResponseDto",
+        "type": "object",
+        "properties": {
+          "kodNahrady": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "uhrada": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          },
+          "prilohy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrilohaInfoDto"
+            },
+            "description": "Gets or sets the prilohy.",
+            "nullable": true
+          },
+          "biometrickeUdaje": {
+            "$ref": "#/components/schemas/BiometrickeUdaje"
+          },
+          "informaceOObjednavce": {
+            "$ref": "#/components/schemas/InformaceOObjednavceModel"
+          },
+          "pozadovanaVysetreni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PozadovaneVysetreniZDto"
+            },
+            "description": "Gets or sets the pozadovana vysetreni.",
+            "nullable": true
+          },
+          "urgentniInformace": {
+            "$ref": "#/components/schemas/UrgentniInformaceModel"
+          },
+          "kontraindikace": {
+            "$ref": "#/components/schemas/Kontraindikace"
+          },
+          "dalsiRelevantniUdaje": {
+            "$ref": "#/components/schemas/DalsiRelevantniUdaje"
+          },
+          "implantat": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImplantatModel"
+            },
+            "description": "Gets or sets the implantat.",
+            "nullable": true
+          },
+          "omezeniMobility": {
+            "$ref": "#/components/schemas/CodeableConcept"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response DTO žádanky"
+      },
+      "Zasilka": {
+        "title": "Zasilka",
+        "required": [
+          "autor",
+          "ispzs",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci"
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "typ": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "klasifikace": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "odbornost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datum zpřístupnění dokumentů v Zásilce.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datum ukončení dostupnosti dokumentů.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum vytvoření zásilky",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KZR."
+          },
+          "autorData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KZR."
+          },
+          "zdravotnickyPracovnikData": {
+            "$ref": "#/components/schemas/KRZdravotnickyPracovnikDto"
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče."
+          },
+          "poskytovatelData": {
+            "$ref": "#/components/schemas/KRPoskytovatelDto"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID)."
+          },
+          "pacientData": {
+            "$ref": "#/components/schemas/KRPacientDto"
+          },
+          "ispzs": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Identifikátor služby přenosu dat (např. PACS, HIE)."
+          },
+          "adresat": {
+            "type": "string",
+            "description": "Identifikátor příjemce (lékař, nemocnice, pacient). Vazba na KZR.",
+            "nullable": true
+          },
+          "adresatData": {
+            "$ref": "#/components/schemas/AdresatData"
+          },
+          "adresatTyp": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dostupnost": {
+            "type": "boolean",
+            "description": "Status dostupnosti dat",
+            "nullable": true
+          },
+          "rodic": {
+            "type": "string",
+            "description": "ID rodičovské zásilky pro případ hierarchického třídění.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "udalost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "dokument": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Seznam dokumentů zásilky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data zásilky"
+      },
+      "ZaznacNeproveditelnostZadankyCommand": {
+        "required": [
+          "duvodNeproveditelnostiZadanky",
+          "id",
+          "verzeRadku"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor zásilky",
+            "format": "uuid"
+          },
+          "verzeRadku": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary"
+          },
+          "duvodNeproveditelnostiZadanky": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "duvodNeproveditelnostiUpresneni": {
+            "type": "string",
+            "description": "Upřesnění důvodu neproveditelnosti žádanky",
+            "nullable": true
+          },
+          "kodZadanky": {
+            "type": "string",
+            "description": "Kód žádanky",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "ZaznacNeproveditelnostZadankyCommand",
+        "example": {
+          "id": "a4264091-59df-4be1-910d-d0c41f398ef8",
+          "verzeRadku": "base64",
+          "duvodNeproveditelnostiZadanky": {
+            "kod": "KOVOVYPREDMETVTELEPACIENTA",
+            "verze": "1.0"
+          },
+          "duvodNeproveditelnostiUpresneni": "Upřesnění důvodu zaznačení neproveditelnosti žádanky",
+          "kodZadanky": "KOD-ZADANKY"
+        }
+      },
+      "ZaznacNeproveditelnostZadankyDto": {
+        "required": [
+          "icpZadatele",
+          "omezeniMobility",
+          "pacientImplantat",
+          "prilozenVzorek",
+          "samoplatce",
+          "urgentnost",
+          "zasilka"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "verzeRadku": {
+            "type": "string",
+            "description": "Verze aktuálniho řádku pro concurrency control v Base64.",
+            "format": "binary",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "kod": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Kód žádanky",
+            "nullable": true
+          },
+          "urgentnost": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "samoplatce": {
+            "type": "boolean",
+            "description": "Informace o tom, zda je osoba samoplátcem."
+          },
+          "prilozenVzorek": {
+            "type": "boolean",
+            "description": "Informace o tom, zda byl přiložen vzorek (laboratorní)."
+          },
+          "omezeniMobility": {
+            "type": "boolean",
+            "description": "Informace o tom, zda se jedná o pacienta s omezenou mobilitou (obrazová)."
+          },
+          "popisOmezeniMobility": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Nepovinné textové pole pro upřesnění omezení mobility pacienta (obrazová, omezeniMobility == 1).",
+            "nullable": true
+          },
+          "instrukceProPacienta": {
+            "type": "string",
+            "description": "Instrukce pro pacienta.",
+            "nullable": true
+          },
+          "zpusobVyrizeni": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "zpusobVyrizeniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Upřesnění způsobu vyřízení žádanky",
+            "nullable": true
+          },
+          "nadrizenaZadankaId": {
+            "type": "string",
+            "description": "Odkaz na záznam nadřízené žádanky",
+            "format": "uuid",
+            "nullable": true
+          },
+          "zasilkaVysledekId": {
+            "type": "string",
+            "description": "Odkaz na záznam zásilky, v rámci které byl přiložen výsledek",
+            "format": "uuid",
+            "nullable": true
+          },
+          "datumStorna": {
+            "type": "string",
+            "description": "Gets or sets the datum storna.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumZaznaceniNeproveditelnosti": {
+            "type": "string",
+            "description": "Gets or sets the datum zaznaceni neproveditelnosti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoVraceniDoObehu": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho vraceni do obehu.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoPrijeti": {
+            "type": "string",
+            "description": "Gets or sets the datum posledniho prijeti.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumRozdeleni": {
+            "type": "string",
+            "description": "Gets or sets the datum rozdeleni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVyrizeni": {
+            "type": "string",
+            "description": "Gets or sets the datum vyrizeni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumExpirace": {
+            "type": "string",
+            "description": "Gets or sets the datum expirace.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum planovaneho vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Gets or sets the datum skutecne realizace vysetreni.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pacientPojistovna": {
+            "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+          },
+          "icpZadatele": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Gets or sets the icp zadatele."
+          },
+          "pacientImplantat": {
+            "type": "boolean",
+            "description": "Gets or sets the pacient implantat."
+          },
+          "vzorekData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vzorek"
+            },
+            "description": "Seznam vzorků žádanky",
+            "nullable": true
+          },
+          "zasilka": {
+            "$ref": "#/components/schemas/Zasilka"
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DodatecnyPrijemce"
+            },
+            "description": "Seznam dodatečních příjemců žádanky",
+            "nullable": true
+          },
+          "metodaData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolozkaCiselnikuDto"
+            },
+            "description": "Metoda konkrétní žádanky. Liší se dle typu žádanky (číselník: referralorder-types).\r\nPro typ \"žádanka o vyšetření (K)\" (kód: \"57133-1\") musí být uvedena položka číselníku: \"korder-type-vs\";\r\nPro typ \"žádanka o zobrazovací vyšetření (Z)\" (kód: \"721964003\") musí být uvedena položka číselníku: \"cz-modality\";\r\nPro typ \"žádanka o fyzioterapii (FT)\" (kód: \"57154-7\") nemusí být pole vyplněno",
+            "nullable": true
+          },
+          "obsahujePrilohy": {
+            "type": "boolean",
+            "description": "Příznak, zda žádanka obsahuje přílohy",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výstupní data služby ZaznacNeproveditelnostZadanky"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

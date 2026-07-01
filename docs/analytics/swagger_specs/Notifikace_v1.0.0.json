@@ -1,0 +1,911 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Notifikace CSSN API",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/notifikace"
+    }
+  ],
+  "paths": {
+    "/api/v1/kanaly/katalog": {
+      "get": {
+        "tags": [
+          "Kanaly"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "kod",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nazev",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanalVerejneDtoPagedResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanalVerejneDtoPagedResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanalVerejneDtoPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/ping": {
+      "get": {
+        "tags": [
+          "Notifikace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/odeslat": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifikaceOdeslatRequestModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifikaceOdeslatRequestModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifikaceOdeslatRequestModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceOdeslatResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceOdeslatResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceOdeslatResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifikace/vyhledat": {
+      "get": {
+        "tags": [
+          "Notifikace"
+        ],
+        "parameters": [
+          {
+            "name": "idPrijemce",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "odData",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceVyhledatResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceVyhledatResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifikaceVyhledatResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pzs/prijem/vzor": {
+      "post": {
+        "tags": [
+          "Pzs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPZSMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPZSMessageRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPZSMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/sablony/katalog": {
+      "get": {
+        "tags": [
+          "Sablony"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "kod",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nazev",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SablonyVerejneDtoPagedResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SablonyVerejneDtoPagedResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SablonyVerejneDtoPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zdroje/katalog": {
+      "get": {
+        "tags": [
+          "Zdroje"
+        ],
+        "parameters": [
+          {
+            "name": "kod",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nazev",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stav",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StavZdroj"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrojKatalogDtoPagedResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrojKatalogDtoPagedResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrojKatalogDtoPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DataSablonyDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KanalVerejneDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KanalVerejneDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KanalVerejneDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceOdeslatRequestModel": {
+        "type": "object",
+        "properties": {
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdrojovySystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "kanal": {
+            "type": "string",
+            "nullable": true
+          },
+          "sablona": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "planOdeslani": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TypPrijemce"
+            },
+            "nullable": true
+          },
+          "doruceni": {
+            "$ref": "#/components/schemas/TypDoruceni"
+          },
+          "dataNotifikace": {
+            "$ref": "#/components/schemas/TypDataNotifikace"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceOdeslatResponseModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceVyhledat": {
+        "type": "object",
+        "properties": {
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "zdrojovySystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "priorita": {
+            "$ref": "#/components/schemas/TypPriority"
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "hlavicka": {
+            "type": "string",
+            "nullable": true
+          },
+          "obsah": {
+            "type": "string",
+            "nullable": true
+          },
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotifikaceVyhledatResponseModel": {
+        "type": "object",
+        "properties": {
+          "idPozadavek": {
+            "type": "string",
+            "nullable": true
+          },
+          "pocet": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "posledniZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notifikace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotifikaceVyhledat"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredmetNotifikace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredmetPushPZS": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrijemcePushPZS": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PushPZSMessageRequest": {
+        "type": "object",
+        "properties": {
+          "idKorelace": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrijemcePushPZS"
+            },
+            "nullable": true
+          },
+          "id": {
+            "maxLength": 65,
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "priorita": {
+            "$ref": "#/components/schemas/TypPriority"
+          },
+          "hlavicka": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "obsah": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "zdrojovySystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetPushPZS"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SablonyVerejneDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "kanal": {
+            "type": "string",
+            "nullable": true
+          },
+          "jazyk": {
+            "type": "string",
+            "nullable": true
+          },
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "poleSablony": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "casovaZnacka": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SablonyVerejneDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SablonyVerejneDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StavZdroj": {
+        "enum": [
+          "Aktivni",
+          "Blokovany"
+        ],
+        "type": "string"
+      },
+      "TypDataNotifikace": {
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "type": "string",
+            "nullable": true
+          },
+          "obsah": {
+            "type": "string",
+            "nullable": true
+          },
+          "pushText": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataSablony": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSablonyDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypDoruceni": {
+        "type": "object",
+        "properties": {
+          "priorita": {
+            "$ref": "#/components/schemas/TypPriority"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypPrijemce": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "typ": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefon": {
+            "type": "string",
+            "nullable": true
+          },
+          "urlSluzby": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypPriority": {
+        "enum": [
+          "NORMAL",
+          "URGENT"
+        ],
+        "type": "string"
+      },
+      "ZdrojKatalogDto": {
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "stav": {
+            "$ref": "#/components/schemas/StavZdroj"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZdrojKatalogDtoPagedResult": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZdrojKatalogDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Vložte `JWT Token`"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": [ ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+ROUTINE __NAME__ [Type=MAC]
+__NAME__ ; __DESC__
+ ; A .mac routine (macros allowed; compiles to __NAME__.int). Prefer class methods
+ ; for new code; routines are for legacy M and low-level utilities.
+ ;
+ #include %occInclude
+ Quit  ; no top-level entry; call labels below
+
+ ; ---- Modern style: procedure block with Try/Catch ----
+Process(id) public {
+    Set sc = $$$OK
+    Try {
+        If id="" $$$ThrowStatus($$$ERROR($$$GeneralError,"id required"))
+        // ... work ...
+    }
+    Catch ex {
+        Set sc = ex.AsStatus()
+        Do LOG^%ETN            ; also record to the application error log
+    }
+    Quit sc
+}
+
+ ; ---- Legacy M style with $ZTRAP (maintain, don't write new) ----
+Legacy(a,b) ; extrinsic: $$Legacy^__NAME__(1,2)
+ New $ZTrap Set $ZTrap="LErr"
+ Quit a+b
+LErr Write "error: ",$ZError,! Set $ZTrap="" Quit ""

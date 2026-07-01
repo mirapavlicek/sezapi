@@ -31,22 +31,54 @@ logger = logging.getLogger("sez_api")
 _PROD_GATEWAY_DEFAULT = "https://api.csez.gov.cz"
 _PROD_JSU_DEFAULT = "https://jsuint-auth-ez.csez.cz/connect/token"
 
+# CMS2 = Centrální místo služeb 2 – alternativní cesta pro PZS k SEZ API
+# přes neveřejnou síť spravovanou NAKIT (vs. cesta přes Internet).
+# Specifika dle Standardu Akreditovaných afinitních domén AAfD v0.9d
+# a katalogu služeb CMS v2.9.0 (NAKIT/MV ČR):
+#   • Stejné EZCA II certifikáty, stejný JWT assertion, stejný JSU audience
+#   • Stejný client_id, stejné API endpointy/služby (musí být dostupné z obou cest)
+#   • Hostnames žijí v privátní DNS zóně cms2.cz (resolver 10.254.8.10),
+#     publikované službou CMS2-02-1 a NEresolvovatelné z Internetu.
+#   • Konkrétní hostnamy MZČR/NAKIT vydává až při CMS2 onboardingu (CMS2-08-*).
+# Default placeholder hodnoty – přebijí se env proměnnými
+# SEZ_T2_CMS_GATEWAY a SEZ_PROD_CMS_GATEWAY.
+_T2_CMS_GATEWAY_DEFAULT = "https://gwy-ext-sec-t2.csez.cz"  # nepředělané – stejné jako Internet (placeholder)
+_PROD_CMS_GATEWAY_DEFAULT = "https://api.csez.gov.cz"  # nepředělané – stejné jako Internet (placeholder)
+
 SEZ_ENVIRONMENTS = {
     "T2": {
-        "name": "Test T2",
+        "name": "Test T2 (Internet)",
         "gateway": "https://gwy-ext-sec-t2.csez.cz",
         "jsu_audience": "https://jsuint-auth-t2.csez.cz/connect/token",
+        "channel": "INTERNET",
+        "base_env": "T2",
+    },
+    "T2_CMS": {
+        "name": "Test T2 (CMS2)",
+        "gateway": _T2_CMS_GATEWAY_DEFAULT,
+        "jsu_audience": "https://jsuint-auth-t2.csez.cz/connect/token",
+        "channel": "CMS2",
+        "base_env": "T2",
     },
     "PROD": {
-        "name": "Produkce",
+        "name": "Produkce (Internet)",
         "gateway": _PROD_GATEWAY_DEFAULT,
         "jsu_audience": _PROD_JSU_DEFAULT,
+        "channel": "INTERNET",
+        "base_env": "PROD",
+    },
+    "PROD_CMS": {
+        "name": "Produkce (CMS2)",
+        "gateway": _PROD_CMS_GATEWAY_DEFAULT,
+        "jsu_audience": _PROD_JSU_DEFAULT,
+        "channel": "CMS2",
+        "base_env": "PROD",
     },
 }
 
 
 def _apply_prod_overrides():
-    """Allow overriding PROD gateway/JSU URLs from env vars."""
+    """Allow overriding PROD/CMS gateway and JSU URLs from env vars."""
     try:
         from sez_api import config as _cfg
         gw = getattr(_cfg, "PROD_GATEWAY", "") or ""
@@ -55,6 +87,14 @@ def _apply_prod_overrides():
             SEZ_ENVIRONMENTS["PROD"]["gateway"] = gw
         if jsu:
             SEZ_ENVIRONMENTS["PROD"]["jsu_audience"] = jsu
+            SEZ_ENVIRONMENTS["PROD_CMS"]["jsu_audience"] = jsu
+        # CMS overrides
+        t2_cms = getattr(_cfg, "T2_CMS_GATEWAY", "") or os.environ.get("SEZ_T2_CMS_GATEWAY", "")
+        prod_cms = getattr(_cfg, "PROD_CMS_GATEWAY", "") or os.environ.get("SEZ_PROD_CMS_GATEWAY", "")
+        if t2_cms:
+            SEZ_ENVIRONMENTS["T2_CMS"]["gateway"] = t2_cms
+        if prod_cms:
+            SEZ_ENVIRONMENTS["PROD_CMS"]["gateway"] = prod_cms
     except Exception:
         pass
 
@@ -480,11 +520,17 @@ class SEZClient:
 
         return resp
 
-    def get(self, path, params=None):
-        return self._request("GET", path, params=params)
+    def get(self, path, params=None, timeout=None):
+        kw = {"params": params}
+        if timeout is not None:
+            kw["timeout"] = timeout
+        return self._request("GET", path, **kw)
 
-    def post(self, path, body=None):
-        return self._request("POST", path, json=body)
+    def post(self, path, body=None, timeout=None):
+        kw = {"json": body}
+        if timeout is not None:
+            kw["timeout"] = timeout
+        return self._request("POST", path, **kw)
 
     def patch(self, path, body=None, params=None, **kwargs):
         return self._request("PATCH", path, json=body, params=params, **kwargs)
@@ -495,10 +541,30 @@ class SEZClient:
     def delete(self, path, body=None):
         return self._request("DELETE", path, json=body)
 
-    def get_external(self, url: str, timeout: int = 30) -> requests.Response:
+    def get_external(self, url: str, timeout: int = 30,
+                      params: dict = None, headers: dict = None) -> requests.Response:
         """GET an arbitrary external URL using the same mTLS session (no gateway prefix)."""
         hdrs = {"Accept": "application/json", "Accept-Language": "cs"}
-        resp = self.session.get(url, headers=hdrs, timeout=timeout, verify=True)
+        if headers:
+            hdrs.update(headers)
+        resp = self.session.get(url, headers=hdrs, params=params,
+                                timeout=timeout, verify=True)
+        self.last_status = resp.status_code
+        try:
+            self.last_response = resp.json()
+        except Exception:
+            self.last_response = resp.text
+        return resp
+
+    def request_external(self, method: str, url: str, timeout: int = 30,
+                          params: dict = None, headers: dict = None,
+                          json_body: dict = None) -> requests.Response:
+        """Generic external (non-gateway) mTLS request."""
+        hdrs = {"Accept": "application/json", "Accept-Language": "cs"}
+        if headers:
+            hdrs.update(headers)
+        resp = self.session.request(method, url, headers=hdrs, params=params,
+                                     json=json_body, timeout=timeout, verify=True)
         self.last_status = resp.status_code
         try:
             self.last_response = resp.json()
@@ -648,7 +714,19 @@ class KRP:
 
     def ztotozneni_zadost(self, file_bytes: bytes, filename: str = "ztotozneni.csv",
                           ucel="LECBA", registrovat_odber: bool = False):
-        """Submit a batch identification request via multipart/form-data file upload."""
+        """Submit a batch identification request via multipart/form-data file upload.
+
+        Brána KRP očekává XML dávku dle ``PZS_Import_pacienti_v1.xsd``
+        (kořen ``<Davka>`` s elementy ``<Pacient>``). Vstup může být CSV, JSON
+        nebo už hotové XML – formát se detekuje automaticky a převede na XML."""
+        if isinstance(file_bytes, (bytes, bytearray)):
+            raw = file_bytes.decode("utf-8-sig")
+        else:
+            raw = str(file_bytes)
+        base = (filename or "davka").rsplit(".", 1)[0] or "davka"
+        xml_text = self.to_davka_xml(raw)
+        out_name = base + ".xml"
+
         url = self.c.config.GATEWAY + f"{self.BASE}/api/v2/pacient/ztotoznihromadne/zadost"
         assertion = self.c.auth.build_assertion()
         headers = {
@@ -664,7 +742,7 @@ class KRP:
             "ZadostInfo.ZadostId": str(uuid.uuid4()),
             "ZadostData.RegistrovatOdber": str(registrovat_odber).lower(),
         }
-        files = {"file": (filename, file_bytes, "text/csv")}
+        files = {"file": (out_name, xml_text.encode("utf-8"), "application/xml")}
         resp = self.c.session.post(url, headers=headers, data=form_data,
                                    files=files, timeout=60)
         self.c.last_status = resp.status_code
@@ -688,12 +766,328 @@ class KRP:
 
     @staticmethod
     def csv_sablona() -> str:
-        """Return a CSV template for batch identification."""
+        """CSV šablona pro hromadné ztotožnění.
+
+        ``sourceId`` = vlastní (interní) identifikátor pacienta v systému PZS –
+        vrací se zpět ve výsledcích, takže podle něj spárujete RID. Doporučeno
+        vždy vyplnit (ÚZIS portál ho vyžaduje). Číslo dokladu musí být numerické.
+        """
         return (
-            "jmeno;prijmeni;rodneCislo;datumNarozeni;cisloDokladu;typDokladu;datumUmrti\r\n"
-            "Jan;Novák;8501011234;1985-01-01;;;\r\n"
-            "Marie;Svobodová;;1990-05-15;AB123456;OP;\r\n"
+            "sourceId;jmeno;prijmeni;rodneCislo;datumNarozeni;cisloDokladu;typDokladu;datumUmrti\r\n"
+            "PAC-001;Jan;Novák;8501011234;1985-01-01;;;\r\n"
+            "PAC-002;Marie;Svobodová;;1990-05-15;;;\r\n"
         )
+
+    @staticmethod
+    def _davka_xml_from_patients(patients: list) -> str:
+        """Sestaví XML dávku ``<Davka>`` ze seznamu pacientů s kanonickými klíči:
+        ``sourceId, jmeno, prijmeni, rodneCislo, datumNarozeni, datumUmrti,
+        zemeNarozeniKod, mistoNarozeniText, doklad{typ,cislo}, adresa{ulice,
+        cisloDomovni, cisloOrientacniHodnota, obecNazev, psc}``.
+
+        Pořadí elementů v ``<Pacient>`` je dáno XSD sekvencí a musí být
+        dodrženo: Doklad, SourceId, Jmeno, Prijmeni, Adresa, DatumUmrti,
+        DatumNarozeni, ZemeNarozeniKod, MistoNarozeniText, RodneCislo."""
+        from xml.sax.saxutils import escape
+
+        def s(v):
+            return ("" if v is None else str(v)).strip()
+
+        lines = ['<?xml version="1.0" encoding="utf-8"?>',
+                 '<Davka xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">']
+
+        def _el(tag, val, indent="    "):
+            return f"{indent}<{tag}>{escape(str(val))}</{tag}>"
+
+        for p in patients:
+            source_id = s(p.get("sourceId"))
+            jmeno = s(p.get("jmeno"))
+            prijmeni = s(p.get("prijmeni"))
+            rc = s(p.get("rodneCislo"))
+            dn = s(p.get("datumNarozeni"))
+            du = s(p.get("datumUmrti"))
+            zeme = s(p.get("zemeNarozeniKod"))
+            misto = s(p.get("mistoNarozeniText"))
+            doklad = p.get("doklad") or {}
+            d_typ = s(doklad.get("typ"))
+            d_cislo = s(doklad.get("cislo"))
+            adr = p.get("adresa") or {}
+            a_ulice = s(adr.get("ulice"))
+            a_cd = s(adr.get("cisloDomovni"))
+            a_co = s(adr.get("cisloOrientacniHodnota"))
+            a_obec = s(adr.get("obecNazev"))
+            a_psc = s(adr.get("psc"))
+
+            if not any([source_id, jmeno, prijmeni, rc, dn, du, zeme, misto,
+                        d_typ, d_cislo, a_ulice, a_cd, a_co, a_obec, a_psc]):
+                continue
+
+            lines.append("  <Pacient>")
+            # Doklad – Cislo je xs:unsignedLong, tedy jen číselné doklady
+            if d_typ and d_cislo and d_cislo.isdigit():
+                lines.append("    <Doklad>")
+                lines.append(_el("Typ", d_typ, "      "))
+                lines.append(_el("Cislo", d_cislo, "      "))
+                lines.append("    </Doklad>")
+            if source_id:
+                lines.append(_el("SourceId", source_id))
+            if jmeno:
+                lines.append(_el("Jmeno", jmeno))
+            if prijmeni:
+                lines.append(_el("Prijmeni", prijmeni))
+            # Adresa – XSD vyžaduje VŠECHNY prvky; vložíme jen je-li kompletní.
+            # (Pozn.: oficiální XSD Adresa neobsahuje prvek „Stat".)
+            if all([a_ulice, a_cd, a_co, a_obec, a_psc]):
+                lines.append("    <Adresa>")
+                lines.append(_el("Ulice", a_ulice, "      "))
+                lines.append(_el("CisloDomovni", a_cd, "      "))
+                lines.append(_el("CisloOrientacniHodnota", a_co, "      "))
+                lines.append(_el("ObecNazev", a_obec, "      "))
+                lines.append(_el("Psc", a_psc, "      "))
+                lines.append("    </Adresa>")
+            if du:
+                lines.append(_el("DatumUmrti", du))
+            if dn:
+                lines.append(_el("DatumNarozeni", dn))
+            if zeme:
+                lines.append(_el("ZemeNarozeniKod", zeme))
+            if misto:
+                lines.append(_el("MistoNarozeniText", misto))
+            if rc:
+                lines.append(_el("RodneCislo", rc))
+            lines.append("  </Pacient>")
+
+        lines.append("</Davka>")
+        return "\r\n".join(lines) + "\r\n"
+
+    @staticmethod
+    def csv_to_davka_xml(csv_text: str) -> str:
+        """Převede CSV (oddělovač ``;``) na XML dávku ``<Davka>`` dle
+        ``PZS_Import_pacienti_v1.xsd``.
+
+        Sloupce (case-insensitive): ``sourceId``, ``jmeno``, ``prijmeni``,
+        ``rodneCislo``, ``datumNarozeni`` (YYYY-MM-DD), ``datumUmrti``,
+        ``cisloDokladu`` + ``typDokladu``, ``zemeNarozeniKod``,
+        ``mistoNarozeniText``, příp. adresa (``ulice``, ``cisloDomovni``,
+        ``cisloOrientacniHodnota``, ``obecNazev``, ``psc``)."""
+        import csv as _csv
+        import io
+
+        reader = _csv.DictReader(io.StringIO(csv_text), delimiter=";")
+        patients = []
+        for raw_row in reader:
+            row = {(k or "").strip().lower(): (v or "").strip()
+                   for k, v in raw_row.items() if k is not None}
+            if not any(row.values()):
+                continue
+
+            def g(*names):
+                for n in names:
+                    if row.get(n):
+                        return row[n]
+                return ""
+
+            patients.append({
+                "sourceId": g("sourceid", "source_id", "id"),
+                "jmeno": g("jmeno"),
+                "prijmeni": g("prijmeni"),
+                "rodneCislo": g("rodnecislo", "rodne_cislo"),
+                "datumNarozeni": g("datumnarozeni", "datum_narozeni"),
+                "datumUmrti": g("datumumrti", "datum_umrti"),
+                "zemeNarozeniKod": g("zemenarozenikod", "zeme_narozeni_kod"),
+                "mistoNarozeniText": g("mistonarozenitext", "misto_narozeni_text"),
+                "doklad": {"typ": g("typdokladu", "typ_dokladu"),
+                           "cislo": g("cislodokladu", "cislo_dokladu", "cislodoklad")},
+                "adresa": {"ulice": g("ulice"), "cisloDomovni": g("cislodomovni"),
+                           "cisloOrientacniHodnota": g("cisloorientacnihodnota", "cisloorientacni"),
+                           "obecNazev": g("obecnazev", "obec"), "psc": g("psc")},
+            })
+        return KRP._davka_xml_from_patients(patients)
+
+    @staticmethod
+    def json_to_davka_xml(json_data) -> str:
+        """Převede JSON na XML dávku ``<Davka>`` dle ``PZS_Import_pacienti_v1.xsd``.
+
+        Akceptuje pole pacientů ``[{...}]`` nebo objekt s klíčem ``polozky`` /
+        ``pacienti`` / ``Pacient`` / ``Davka.Pacient``. Klíče jsou
+        case-insensitive (``Jmeno``, ``RodneCislo``, vnořený ``Doklad``
+        {``CisloDokladu``,``TypDokladu``}, ``Adresa`` …). Pozn.: oficiální XSD
+        Adresa neobsahuje „Stat"; adresa se zařadí jen je-li kompletní
+        (Ulice, CisloDomovni, CisloOrientacniHodnota, ObecNazev, Psc)."""
+        import json as _json
+
+        data = json_data
+        if isinstance(data, (str, bytes, bytearray)):
+            data = _json.loads(data)
+
+        def _low(d):
+            return {(k or "").strip().lower(): v for k, v in d.items()} \
+                if isinstance(d, dict) else {}
+
+        # Rozbalení na seznam pacientů
+        if isinstance(data, dict):
+            picked = None
+            for k in ("polozky", "pacienti", "patients", "items", "pacient",
+                      "Pacient", "Pacienti"):
+                v = data.get(k)
+                if isinstance(v, list):
+                    picked = v
+                    break
+            if picked is None:
+                dv = data.get("Davka") or data.get("davka")
+                if isinstance(dv, dict) and isinstance(dv.get("Pacient"), list):
+                    picked = dv["Pacient"]
+                elif isinstance(dv, list):
+                    picked = dv
+            data = picked if picked is not None else [data]
+        if not isinstance(data, list):
+            data = [data]
+
+        patients = []
+        for obj in data:
+            if not isinstance(obj, dict):
+                continue
+            low = _low(obj)
+
+            def gv(*names):
+                for n in names:
+                    val = low.get(n)
+                    if val not in (None, "", [], {}):
+                        return val
+                return ""
+
+            dl = _low(gv("doklad") if isinstance(gv("doklad"), dict) else {})
+            al = _low(gv("adresa") if isinstance(gv("adresa"), dict) else {})
+
+            patients.append({
+                "sourceId": gv("sourceid", "source_id", "id"),
+                "jmeno": gv("jmeno"),
+                "prijmeni": gv("prijmeni"),
+                "rodneCislo": gv("rodnecislo", "rodne_cislo"),
+                "datumNarozeni": gv("datumnarozeni", "datum_narozeni"),
+                "datumUmrti": gv("datumumrti", "datum_umrti"),
+                "zemeNarozeniKod": gv("zemenarozenikod", "zeme_narozeni_kod"),
+                "mistoNarozeniText": gv("mistonarozenitext", "misto_narozeni_text"),
+                "doklad": {
+                    "typ": dl.get("typdokladu") or dl.get("typ") or dl.get("typdoklad") or "",
+                    "cislo": dl.get("cislodokladu") or dl.get("cislo") or dl.get("cislodoklad") or "",
+                },
+                "adresa": {
+                    "ulice": al.get("ulice") or "",
+                    "cisloDomovni": al.get("cislodomovni") or "",
+                    "cisloOrientacniHodnota": al.get("cisloorientacnihodnota") or al.get("cisloorientacni") or "",
+                    "obecNazev": al.get("obecnazev") or al.get("obec") or "",
+                    "psc": al.get("psc") or "",
+                },
+            })
+        return KRP._davka_xml_from_patients(patients)
+
+    @staticmethod
+    def to_davka_xml(text) -> str:
+        """Detekuje formát vstupu (XML / JSON / CSV) a vrátí XML dávku ``<Davka>``.
+        XML projde beze změny, JSON i CSV se převedou dle XSD."""
+        raw = text
+        if isinstance(raw, (bytes, bytearray)):
+            raw = raw.decode("utf-8-sig")
+        stripped = (raw or "").lstrip()
+        if stripped.startswith("<"):
+            return raw
+        if stripped.startswith("[") or stripped.startswith("{"):
+            return KRP.json_to_davka_xml(raw)
+        return KRP.csv_to_davka_xml(raw)
+
+    # Oficiální XSD schéma dávky pro hromadné ztotožnění (ÚZIS/NCEZ,
+    # Manuál EZ pro PZS → API KRP, příloha PZS_Import_pacienti_v1.xsd).
+    IMPORT_XSD = (
+        '<?xml version="1.0" encoding="utf-8"?>\r\n'
+        '<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" '
+        'xmlns:xs="http://www.w3.org/2001/XMLSchema">\r\n'
+        '  <xs:element name="Davka">\r\n'
+        '    <xs:complexType>\r\n'
+        '      <xs:sequence>\r\n'
+        '        <xs:element maxOccurs="unbounded" name="Pacient">\r\n'
+        '          <xs:complexType>\r\n'
+        '            <xs:sequence>\r\n'
+        '              <xs:element minOccurs="0" name="Doklad">\r\n'
+        '                <xs:complexType>\r\n'
+        '                  <xs:sequence>\r\n'
+        '                    <xs:element name="Typ" type="xs:string" />\r\n'
+        '                    <xs:element name="Cislo" type="xs:unsignedLong" />\r\n'
+        '                  </xs:sequence>\r\n'
+        '                </xs:complexType>\r\n'
+        '              </xs:element>\r\n'
+        '              <xs:element minOccurs="0" name="SourceId" type="xs:string" />\r\n'
+        '              <xs:element minOccurs="0" name="Jmeno" type="xs:string" />\r\n'
+        '              <xs:element minOccurs="0" name="Prijmeni" type="xs:string" />\r\n'
+        '              <xs:element minOccurs="0" name="Adresa">\r\n'
+        '                <xs:complexType>\r\n'
+        '                  <xs:sequence>\r\n'
+        '                    <xs:element name="Ulice" type="xs:string" />\r\n'
+        '                    <xs:element name="CisloDomovni" type="xs:string" />\r\n'
+        '                    <xs:element name="CisloOrientacniHodnota" type="xs:string" />\r\n'
+        '                    <xs:element name="ObecNazev" type="xs:string" />\r\n'
+        '                    <xs:element name="Psc" type="xs:string" />\r\n'
+        '                  </xs:sequence>\r\n'
+        '                </xs:complexType>\r\n'
+        '              </xs:element>\r\n'
+        '              <xs:element minOccurs="0" name="DatumUmrti" type="xs:date" />\r\n'
+        '              <xs:element minOccurs="0" name="DatumNarozeni" type="xs:date" />\r\n'
+        '              <xs:element minOccurs="0" name="ZemeNarozeniKod" type="xs:string" />\r\n'
+        '              <xs:element minOccurs="0" name="MistoNarozeniText" type="xs:string" />\r\n'
+        '              <xs:element minOccurs="0" name="RodneCislo" type="xs:string" />\r\n'
+        '            </xs:sequence>\r\n'
+        '          </xs:complexType>\r\n'
+        '        </xs:element>\r\n'
+        '      </xs:sequence>\r\n'
+        '    </xs:complexType>\r\n'
+        '  </xs:element>\r\n'
+        '</xs:schema>\r\n'
+    )
+
+    @staticmethod
+    def import_xsd() -> str:
+        """Vrátí XSD schéma dávky hromadného ztotožnění (PZS_Import_pacienti_v1.xsd)."""
+        return KRP.IMPORT_XSD
+
+    # Kanonický vzorek pacientů (klíče dle XSD PZS_Import_pacienti_v1.xsd).
+    # 1. pacient plně vyplněný (Doklad + kompletní Adresa), 2. minimální.
+    SABLONA_PACIENTI = [
+        {
+            "SourceId": "PAC-001",
+            "Jmeno": "Mračena",
+            "Prijmeni": "Mrakomorová",
+            "RodneCislo": "7161264528",
+            "DatumNarozeni": "1971-07-26",
+            "Doklad": {"TypDokladu": "OP", "CisloDokladu": "222333069"},
+            "Adresa": {
+                "Ulice": "Sokolská",
+                "CisloDomovni": "490",
+                "CisloOrientacniHodnota": "31",
+                "ObecNazev": "Praha",
+                "Psc": "12000",
+            },
+        },
+        {
+            "SourceId": "PAC-002",
+            "Jmeno": "Jiří",
+            "Prijmeni": "Plos",
+            "RodneCislo": "520111076",
+            "DatumNarozeni": "1952-01-11",
+        },
+    ]
+
+    @staticmethod
+    def json_sablona() -> str:
+        """Vzorové JSON pole pacientů (klíče dle XSD), které po převodu plní
+        ``PZS_Import_pacienti_v1.xsd`` – vč. kompletní Adresy a Dokladu."""
+        import json as _json
+        return _json.dumps(KRP.SABLONA_PACIENTI, ensure_ascii=False, indent=2) + "\n"
+
+    @staticmethod
+    def xml_sablona() -> str:
+        """Vzorová XML dávka ``<Davka>`` (validní proti PZS_Import_pacienti_v1.xsd),
+        demonstrující všechny podporované elementy (Doklad, Adresa, SourceId…)."""
+        return KRP.json_to_davka_xml(KRP.SABLONA_PACIENTI)
 
     @staticmethod
     def csv_to_records(csv_text: str) -> list[dict]:
@@ -718,7 +1112,7 @@ class KRP:
         import csv, io
         if not records:
             return ""
-        fields = ["jmeno", "prijmeni", "rodneCislo", "datumNarozeni",
+        fields = ["sourceId", "jmeno", "prijmeni", "rodneCislo", "datumNarozeni",
                    "rid", "substavZtotozneni", "subskripceID",
                    "cisloDokladu", "typDokladu", "datumUmrti"]
         out = io.StringIO()
@@ -727,6 +1121,11 @@ class KRP:
         w.writeheader()
         for r in records:
             flat = dict(r)
+            if "sourceId" not in flat:
+                for k in ("SourceId", "sourceID", "SourceID", "source_id"):
+                    if r.get(k) not in (None, ""):
+                        flat["sourceId"] = r[k]
+                        break
             doklady = r.get("doklady")
             if isinstance(doklady, list) and doklady:
                 flat["cisloDokladu"] = doklady[0].get("cislo", "")
@@ -1096,6 +1495,17 @@ class DocasneUloziste:
             params={"Id": zasilka_id, "VerzeRadku": verze_radku},
         )
 
+    def zpochybni_zasilku(self, zasilka_id, verze_radku, duvod=None):
+        # ZpochybniZasilku – přidáno v Popisu API DÚ v1.2 (publikováno 5. 6. 2026).
+        # Příjemce zpochybní obsah/doručení zásilky; důvod je volitelný (dle kontraktu).
+        body = {"duvod": duvod} if duvod else None
+        return self._du_request(
+            "PATCH",
+            f"{self.BASE}/api/v1/Zasilka/ZpochybniZasilku",
+            params={"Id": zasilka_id, "VerzeRadku": verze_radku},
+            body=body,
+        )
+
 
 class KRZP:
     """Kmenový registr zdravotnických pracovníků – PZS API v2."""
@@ -1158,7 +1568,8 @@ class KRZP:
 
     def ciselnik(self, nazev_ciselniku, ucel="OVERENI"):
         return self.c.post(f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
-                           {"zadostInfo": {"datum": self._now(), "ucel": ucel}})
+                           {"zadostInfo": {"datum": self._now(), "ucel": ucel,
+                                           "zadostId": str(uuid.uuid4())}})
 
     def notifikace_stav(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="OVERENI"):
         data = {"kanalTyp": kanal_typ}
@@ -1231,19 +1642,6 @@ class KRPZS:
             self._envelope(ucel, data),
         )
 
-    # Legacy aliases pro zpětnou kompatibilitu (PROD v2.0.0 endpointy)
-    def hledat_pracoviste(self, ico: str, ucel="OVERENI"):
-        return self.c.post(
-            f"{self.BASE}/api/v2/Poskytovatel/hledat/pracoviste",
-            self._envelope(ucel, {"ico": ico}),
-        )
-
-    def detail(self, ico: str, ucel="OVERENI"):
-        return self.c.post(
-            f"{self.BASE}/api/v2/Poskytovatel/detail",
-            self._envelope(ucel, {"ico": ico}),
-        )
-
     def nastavit_url_pro_notifikace(self, ico: str, url: str, ucel="OVERENI"):
         """v2.0.2: nastavení URL pro notifikace poskytovatele."""
         return self.c.post(
@@ -1253,7 +1651,8 @@ class KRPZS:
 
     def ciselnik(self, nazev_ciselniku, ucel="OVERENI"):
         return self.c.post(f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
-                           {"zadostInfo": {"datum": self._now(), "ucel": ucel}})
+                           {"zadostInfo": {"datum": self._now(), "ucel": ucel,
+                                           "zadostId": str(uuid.uuid4())}})
 
     def reklamuj_udaj(self, reklamace_data, ucel="OVERENI"):
         return self.c.post(f"{self.BASE}/api/v2/Poskytovatel/reklamuj/udaj",
@@ -1344,9 +1743,6 @@ class RegistrOpravneni:
 
     def typ_dokumentace_detail(self, item_id: int):
         return self.c.get(f"{self.BASE}/api/v1/Ciselniky/TypyDokumentaci/{item_id}")
-
-    def opravnujici_osoby(self, rid: str):
-        return self.c.get(f"{self.BASE}/api/v1/Osoby/Opravnujici/{rid}")
 
 
 class SZZ:
@@ -1641,6 +2037,49 @@ class ELPv2:
             f"{self.BASE}/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni", body)
 
 
+class ELPv3:
+    """ELP v3.0.1 – Elektronické posudky pro řidičská oprávnění (path /api/v3)."""
+    BASE = "/elektronickePosudky"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # -- Číselníky --
+    def ciselniky(self):
+        return self.c.get(f"{self.BASE}/api/v3/ciselniky")
+
+    def ciselnik_polozky(self, kod: str):
+        return self.c.get(f"{self.BASE}/api/v3/ciselniky/{kod}/polozky")
+
+    # -- CRUD Posudky ŘO --
+    def vytvor(self, body: dict):
+        return self.c.post(f"{self.BASE}/api/v3/posudky/ridicskeOpravneni", body)
+
+    def vyhledej(self, body: dict):
+        return self.c.post(f"{self.BASE}/api/v3/posudky/ridicskeOpravneni/vyhledat", body)
+
+    def detail(self, posudek_id: str):
+        return self.c.get(f"{self.BASE}/api/v3/posudky/ridicskeOpravneni/{posudek_id}")
+
+    def historie(self, posudek_id: str):
+        return self.c.get(f"{self.BASE}/api/v3/posudky/ridicskeOpravneni/{posudek_id}/historie")
+
+    def pdf(self, posudek_id: str):
+        return self.c.get(f"{self.BASE}/api/v3/posudky/ridicskeOpravneni/{posudek_id}/pdf")
+
+    def zneplatnit(self, posudek_id: str, etag: str = ""):
+        kw = {}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
+        return self.c.patch(
+            f"{self.BASE}/api/v3/posudky/ridicskeOpravneni/{posudek_id}/zneplatnit", {}, **kw)
+
+    # -- Oprávnění --
+    def over_opravneni(self, body: dict):
+        return self.c.post(
+            f"{self.BASE}/api/v3/posudky/ridicskeOpravneni/zalozeni/opravneni", body)
+
+
 class EZadanky:
     BASE = "/eZadanky"
 
@@ -1801,6 +2240,269 @@ class Notifikace:
 
     def pzs_prijem_vzor(self, body):
         return self.c.post(f"{self.BASE}/api/v1/pzs/prijem/vzor", body)
+
+
+class Terminologie:
+    """Terminologický server (TermX) – FHIR R4 v1.0.5.
+
+    Swagger: ``/apidoc/Terminologie_v1.0.5.json`` (servers ``/terminologie``).
+
+    Třída pokrývá kompletní swagger v1.0.5 (Whole System, ValueSet,
+    CodeSystem, ConceptMap, StructureMap, Provenance) ve dvou režimech:
+
+    * ``public=False`` (default) – přes SEZ API Gateway na cestě
+      ``/terminologie/fhir/...`` s mTLS + JWT assertion (stejný flow
+      jako ostatní SEZ služby).
+    * ``public=True`` – přímý mirror ``https://termx-api-t2-pub.csez.cz/fhir/...``
+      (jen mTLS, bez JWT, bez gateway).
+
+    Všechny metody vrací ``requests.Response`` (FHIR JSON v ``application/fhir+json``).
+    """
+
+    BASE = "/terminologie"
+    GATEWAY_PREFIX = "/terminologie/fhir"
+    PUBLIC_BASE_DEFAULT = "https://termx-api-t2-pub.csez.cz/fhir"
+
+    FHIR_GET_HEADERS = {
+        "Accept": "application/fhir+json",
+    }
+    FHIR_WRITE_HEADERS = {
+        "Accept": "application/fhir+json",
+        "Content-Type": "application/fhir+json",
+    }
+
+    def __init__(self, client: SEZClient, public: bool = False,
+                 public_base: str = None):
+        self.c = client
+        self.public = public
+        self.public_base = (public_base or self.PUBLIC_BASE_DEFAULT).rstrip("/")
+
+    @property
+    def base_url(self) -> str:
+        if self.public:
+            return self.public_base
+        return f"{self.c.config.GATEWAY}{self.GATEWAY_PREFIX}"
+
+    def _clean(self, params):
+        if not params:
+            return None
+        out = {}
+        for k, v in params.items():
+            if v is None:
+                continue
+            # FHIR vyžaduje boolean jako lower-case string (true/false), ne True/False
+            if isinstance(v, bool):
+                out[k] = "true" if v else "false"
+            else:
+                out[k] = v
+        return out or None
+
+    def _request(self, method: str, op_path: str, *,
+                  params: dict = None, body: dict = None, timeout: int = 30):
+        """Provede FHIR request. ``op_path`` je vždy bez prefixu
+        ``/terminologie/fhir`` (např. ``/metadata`` či ``/ValueSet/$expand``)."""
+        params = self._clean(params)
+        write = method.upper() in ("POST", "PUT", "PATCH")
+        hdrs = self.FHIR_WRITE_HEADERS if write else self.FHIR_GET_HEADERS
+
+        if self.public:
+            url = self.public_base + op_path
+            return self.c.request_external(
+                method, url, timeout=timeout,
+                params=params, headers=hdrs, json_body=body,
+            )
+
+        full_path = self.GATEWAY_PREFIX + op_path
+        return self.c._request(
+            method, full_path,
+            params=params, json=body,
+            extra_headers=hdrs, timeout=timeout,
+        )
+
+    # ------------------------------------------------------------------
+    # Whole System Interactions
+    # ------------------------------------------------------------------
+
+    def metadata(self):
+        """``GET /metadata`` – CapabilityStatement serveru."""
+        return self._request("GET", "/metadata")
+
+    # ------------------------------------------------------------------
+    # ValueSet
+    # ------------------------------------------------------------------
+
+    def valueset_read(self, id: str):
+        return self._request("GET", f"/ValueSet/{id}")
+
+    def valueset_search(self, **params):
+        return self._request("GET", "/ValueSet", params=params)
+
+    def valueset_search_post(self, **params):
+        return self._request("POST", "/ValueSet/_search", params=params)
+
+    def valueset_create(self, body: dict):
+        return self._request("POST", "/ValueSet", body=body)
+
+    def valueset_update(self, id: str, body: dict):
+        return self._request("PUT", f"/ValueSet/{id}", body=body)
+
+    def valueset_expand(self, *, url: str = None, id: str = None,
+                         valueSetVersion: str = None, **extra):
+        params = {"url": url, "valueSetVersion": valueSetVersion, **extra}
+        if id:
+            return self._request("GET", f"/ValueSet/{id}/$expand", params=params)
+        return self._request("GET", "/ValueSet/$expand", params=params)
+
+    def valueset_validate_code(self, *, code: str, url: str = None, id: str = None,
+                                 system: str = None, systemVersion: str = None,
+                                 display: str = None, **extra):
+        params = {"code": code, "url": url, "system": system,
+                   "systemVersion": systemVersion, "display": display, **extra}
+        if id:
+            return self._request("GET", f"/ValueSet/{id}/$validate-code", params=params)
+        return self._request("GET", "/ValueSet/$validate-code", params=params)
+
+    def valueset_sync(self, *, resources: str = None, id: str = None):
+        params = {"resources": resources}
+        if id:
+            return self._request("GET", f"/ValueSet/{id}/$sync", params=params)
+        return self._request("GET", "/ValueSet/$sync", params=params)
+
+    # ------------------------------------------------------------------
+    # CodeSystem
+    # ------------------------------------------------------------------
+
+    def codesystem_read(self, id: str):
+        return self._request("GET", f"/CodeSystem/{id}")
+
+    def codesystem_search(self, **params):
+        return self._request("GET", "/CodeSystem", params=params)
+
+    def codesystem_search_post(self, **params):
+        return self._request("POST", "/CodeSystem/_search", params=params)
+
+    def codesystem_create(self, body: dict):
+        return self._request("POST", "/CodeSystem", body=body)
+
+    def codesystem_update(self, id: str, body: dict):
+        return self._request("PUT", f"/CodeSystem/{id}", body=body)
+
+    def codesystem_lookup(self, *, code: str, system: str = None, id: str = None,
+                            version: str = None, property: str = None, **extra):
+        params = {"code": code, "system": system, "version": version,
+                   "property": property, **extra}
+        if id:
+            return self._request("GET", f"/CodeSystem/{id}/$lookup", params=params)
+        return self._request("GET", "/CodeSystem/$lookup", params=params)
+
+    def codesystem_validate_code(self, *, code: str, url: str = None, id: str = None,
+                                   system: str = None, version: str = None,
+                                   display: str = None, **extra):
+        params = {"code": code, "url": url, "system": system,
+                   "version": version, "display": display, **extra}
+        if id:
+            return self._request("GET", f"/CodeSystem/{id}/$validate-code", params=params)
+        return self._request("GET", "/CodeSystem/$validate-code", params=params)
+
+    def codesystem_subsumes(self, *, codeA: str, codeB: str, system: str = None,
+                              id: str = None, version: str = None):
+        params = {"codeA": codeA, "codeB": codeB, "system": system, "version": version}
+        if id:
+            return self._request("GET", f"/CodeSystem/{id}/$subsumes", params=params)
+        return self._request("GET", "/CodeSystem/$subsumes", params=params)
+
+    def codesystem_find_matches(self, *, system: str = None, id: str = None,
+                                  property: str = None, exact: bool = False, **extra):
+        params = {"system": system, "property": property,
+                   "exact": "true" if exact else "false", **extra}
+        if id:
+            return self._request("GET", f"/CodeSystem/{id}/$find-matches", params=params)
+        return self._request("GET", "/CodeSystem/$find-matches", params=params)
+
+    def codesystem_compare(self, *, id: str = None, body: dict = None, **params):
+        if body is not None:
+            if id:
+                return self._request("POST", f"/CodeSystem/{id}/$compare", body=body)
+            return self._request("POST", "/CodeSystem/$compare", body=body)
+        if id:
+            return self._request("GET", f"/CodeSystem/{id}/$compare", params=params)
+        return self._request("GET", "/CodeSystem/$compare", params=params)
+
+    def codesystem_sync(self, *, resources: str = None, id: str = None):
+        params = {"resources": resources}
+        if id:
+            return self._request("GET", f"/CodeSystem/{id}/$sync", params=params)
+        return self._request("GET", "/CodeSystem/$sync", params=params)
+
+    # ------------------------------------------------------------------
+    # ConceptMap
+    # ------------------------------------------------------------------
+
+    def conceptmap_read(self, id: str):
+        return self._request("GET", f"/ConceptMap/{id}")
+
+    def conceptmap_search(self, **params):
+        return self._request("GET", "/ConceptMap", params=params)
+
+    def conceptmap_search_post(self, **params):
+        return self._request("POST", "/ConceptMap/_search", params=params)
+
+    def conceptmap_update(self, id: str, body: dict):
+        return self._request("PUT", f"/ConceptMap/{id}", body=body)
+
+    def conceptmap_translate(self, *, code: str, system: str = None,
+                               url: str = None, id: str = None,
+                               target: str = None, source: str = None, **extra):
+        params = {"code": code, "system": system, "url": url,
+                   "target": target, "source": source, **extra}
+        if id:
+            return self._request("GET", f"/ConceptMap/{id}/$translate", params=params)
+        return self._request("GET", "/ConceptMap/$translate", params=params)
+
+    def conceptmap_sync(self, *, resources: str = None, id: str = None):
+        params = {"resources": resources}
+        if id:
+            return self._request("GET", f"/ConceptMap/{id}/$sync", params=params)
+        return self._request("GET", "/ConceptMap/$sync", params=params)
+
+    # ------------------------------------------------------------------
+    # StructureMap
+    # ------------------------------------------------------------------
+
+    def structuremap_read(self, id: str):
+        return self._request("GET", f"/StructureMap/{id}")
+
+    def structuremap_search(self, **params):
+        return self._request("GET", "/StructureMap", params=params)
+
+    def structuremap_search_post(self, **params):
+        return self._request("POST", "/StructureMap/_search", params=params)
+
+    def structuremap_create(self, body: dict):
+        return self._request("POST", "/StructureMap", body=body)
+
+    def structuremap_transform(self, *, source: str = None, id: str = None,
+                                 body: dict = None):
+        params = {"source": source}
+        if id:
+            return self._request("POST", f"/StructureMap/{id}/$transform",
+                                  params=params, body=body)
+        return self._request("POST", "/StructureMap/$transform",
+                              params=params, body=body)
+
+    # ------------------------------------------------------------------
+    # Provenance
+    # ------------------------------------------------------------------
+
+    def provenance_search(self, **params):
+        return self._request("GET", "/Provenance", params=params)
+
+    def provenance_search_post(self, **params):
+        return self._request("POST", "/Provenance/_search", params=params)
+
+
+# Krátký alias, který odpovídá názvu serveru v dokumentaci
+TermX = Terminologie
 
 
 class EZCA2:
@@ -1977,48 +2679,131 @@ class EZCA2SpravaCertifikatu:
     """EZCA II Správa certifikátů – REST API pro životní cyklus systémových certů."""
 
     BASE = "/ezca2Certifikaty"
+    # EZCA II administrace (vystavení/obnova/revokace…) bývá na backendu pomalá –
+    # delší upstream timeout platí POUZE pro tuto službu, nikde jinde.
+    TIMEOUT = 180
 
     def __init__(self, client: SEZClient):
         self.c = client
 
+    def _get(self, path, params=None):
+        return self.c.get(path, params=params, timeout=self.TIMEOUT)
+
+    def _post(self, path, body=None):
+        return self.c.post(path, body, timeout=self.TIMEOUT)
+
+    def _put(self, path, body=None):
+        return self.c.put(path, body, timeout=self.TIMEOUT)
+
     # --- Lifecycle (POST) ---
     def vystavit(self, body: dict):
         """Vytvoří požadavek na vydání nového EZCA II systémového cert."""
-        return self.c.post(f"{self.BASE}/api/v1/vystavit", body)
+        return self._post(f"{self.BASE}/api/v1/vystavit", body)
 
     def preregistrovat(self, body: dict):
         """Vystaví nový EZCA II cert na základě stávajícího EZCA I."""
-        return self.c.post(f"{self.BASE}/api/v1/preregistrovat", body)
+        return self._post(f"{self.BASE}/api/v1/preregistrovat", body)
 
     def obnovit(self, body: dict):
         """PUT – vytvoří požadavek na obnovu certifikátu EZCA II."""
-        return self.c.put(f"{self.BASE}/api/v1/obnovit", body)
+        return self._put(f"{self.BASE}/api/v1/obnovit", body)
 
     def revokovat(self, body: dict):
         """Vytvoří požadavek na revokaci certifikátu."""
-        return self.c.post(f"{self.BASE}/api/v1/revokovat", body)
+        return self._post(f"{self.BASE}/api/v1/revokovat", body)
 
     # --- Stavy + stažení (GET) ---
-    def stav(self, request_id: str):
-        return self.c.get(f"{self.BASE}/api/v1/stav?requestId={request_id}")
+    # Pozn.: dle swagger v1.0.4 se používají query parametry IczId / SerioveCislo /
+    # ExterniIdentifikator (ne requestId/certificateId). ExterniIdentifikator
+    # vyplňuje pouze nadřazený systém PZS; při přímém volání PZS se IČO přebírá
+    # z client_id a hodnota se ignoruje.
+    def stav(self, icz_id=None, externi_identifikator=None):
+        params = {}
+        if icz_id:
+            params["IczId"] = icz_id
+        if externi_identifikator:
+            params["ExterniIdentifikator"] = externi_identifikator
+        return self._get(f"{self.BASE}/api/v1/stav", params=params or None)
 
-    def stahnout(self, request_id: str):
-        return self.c.get(f"{self.BASE}/api/v1/stahnout?requestId={request_id}")
+    def stahnout(self, seriove_cislo, externi_identifikator=None):
+        params = {"SerioveCislo": seriove_cislo}
+        if externi_identifikator:
+            params["ExterniIdentifikator"] = externi_identifikator
+        return self._get(f"{self.BASE}/api/v1/stahnout", params=params)
 
-    def detail(self, cert_id: str):
-        return self.c.get(f"{self.BASE}/api/v1/detail?certificateId={cert_id}")
+    def detail(self, icz_id=None, seriove_cislo=None, externi_identifikator=None):
+        params = {}
+        if icz_id:
+            params["IczId"] = icz_id
+        if seriove_cislo:
+            params["SerioveCislo"] = seriove_cislo
+        if externi_identifikator:
+            params["ExterniIdentifikator"] = externi_identifikator
+        return self._get(f"{self.BASE}/api/v1/detail", params=params or None)
 
-    def seznam(self):
-        """Seznam certifikátů pro aktuální subjekt."""
-        return self.c.get(f"{self.BASE}/api/v1/seznam")
+    def seznam(self, typ_seznamu=None, hledany_nazev=None, stranka=None,
+               velikost_stranky=None, seradit_podle=None, smer_razeni=None,
+               externi_identifikator=None):
+        """Seznam certifikátů pro aktuální subjekt (volitelné filtry).
 
-    def crl_list(self):
-        """Kompletní seznam revokovaných certifikátů."""
-        return self.c.get(f"{self.BASE}/api/v1/crl-list")
+        v1.0.4: přidáno stránkování (VelikostStranky) a řazení
+        (SeraditPodle / SmerRazeni).
+          TypSeznamu  : Platne | Stazene | Revokovane | Expirovane
+          SeraditPodle: Id|IczId|NazevSluzby|SerioveCislo|PlatnostOd|PlatnostDo|
+                        DatumStazeni|ExterniIdentifikator|NazevSubjektu|Uid|Sablona
+          SmerRazeni  : Vzestupne | Sestupne
+        """
+        params = {}
+        if typ_seznamu:
+            params["TypSeznamu"] = typ_seznamu
+        if hledany_nazev:
+            params["HledanyNazev"] = hledany_nazev
+        if stranka is not None:
+            params["Stranka"] = stranka
+        if velikost_stranky is not None:
+            params["VelikostStranky"] = velikost_stranky
+        if seradit_podle:
+            params["SeraditPodle"] = seradit_podle
+        if smer_razeni:
+            params["SmerRazeni"] = smer_razeni
+        if externi_identifikator:
+            params["ExterniIdentifikator"] = externi_identifikator
+        return self._get(f"{self.BASE}/api/v1/seznam", params=params or None)
+
+    def crl_list(self, externi_identifikator=None, stat=None, datum_od=None,
+                 seriove_cislo=None):
+        """Seznam revokovaných certifikátů.
+
+        v1.0.4: přidány volitelné filtry ExterniIdentifikator / Stat /
+        DatumOd (date-time) / SerioveCislo.
+        """
+        params = {}
+        if externi_identifikator:
+            params["ExterniIdentifikator"] = externi_identifikator
+        if stat:
+            params["Stat"] = stat
+        if datum_od:
+            params["DatumOd"] = datum_od
+        if seriove_cislo:
+            params["SerioveCislo"] = seriove_cislo
+        return self._get(f"{self.BASE}/api/v1/crl-list", params=params or None)
 
     def seznam_chyb(self):
         """Seznam možných chyb (číselník)."""
-        return self.c.get(f"{self.BASE}/api/v1/seznam-chyb")
+        return self._get(f"{self.BASE}/api/v1/seznam-chyb")
+
+    # --- Health endpointy (mimo /api/v1) ---
+    def health(self):
+        """Health check (uvádí stav závislých služeb)."""
+        return self._get(f"{self.BASE}/health")
+
+    def simple_health(self):
+        """Lehký health check pro K8s liveness probe."""
+        return self._get(f"{self.BASE}/simple-health")
+
+    def detail_health(self):
+        """Detailní health check (dependencies + DB)."""
+        return self._get(f"{self.BASE}/detail-health")
 
 
 # ===========================================================================
@@ -2102,6 +2887,48 @@ class KRPv3:
         return self.c.post(f"{self.BASE}/api/v3/pacient/priradit/docasny_rid", body)
 
     # --- Hromadné ztotožnění ---
+    @staticmethod
+    def _now():
+        from datetime import date
+        return date.today().isoformat()
+
+    def ztotozneni_zadost(self, file_bytes, filename="ztotozneni.csv",
+                          ucel="LECBA", registrovat_odber=False):
+        """KRP v3 hromadné ztotožnění – multipart/form-data upload XML dávky
+        (<Davka> dle PZS_Import_pacienti_v1.xsd). Vstup CSV/JSON/XML se převede
+        automaticky na XML (stejně jako u v2)."""
+        if isinstance(file_bytes, (bytes, bytearray)):
+            raw = file_bytes.decode("utf-8-sig")
+        else:
+            raw = str(file_bytes)
+        base = (filename or "davka").rsplit(".", 1)[0] or "davka"
+        xml_text = KRP.to_davka_xml(raw)
+        url = self.c.config.GATEWAY + f"{self.BASE}/api/v3/pacient/ztotoznihromadne/zadost"
+        assertion = self.c.auth.build_assertion()
+        headers = {
+            "Authorization": f"Bearer {assertion}",
+            "Accept": "application/json",
+            "Accept-Language": "cs",
+            "X-Correlation-Id": str(uuid.uuid4()),
+            "X-Trace-Id": str(uuid.uuid4()),
+        }
+        form_data = {
+            "ZadostInfo.Datum": self._now(),
+            "ZadostInfo.Ucel": ucel,
+            "ZadostInfo.ZadostId": str(uuid.uuid4()),
+            "ZadostData.RegistrovatOdber": str(registrovat_odber).lower(),
+        }
+        files = {"file": (base + ".xml", xml_text.encode("utf-8"), "application/xml")}
+        resp = self.c.session.post(url, headers=headers, data=form_data,
+                                   files=files, timeout=60)
+        self.c.last_status = resp.status_code
+        try:
+            self.c.last_response = resp.json()
+        except Exception:
+            self.c.last_response = resp.text
+        return resp
+
+    # zpětná kompatibilita (JSON varianta – některé starší volání)
     def hrom_zadost(self, body):
         return self.c.post(f"{self.BASE}/api/v3/pacient/ztotoznihromadne/zadost", body)
 
@@ -2144,7 +2971,7 @@ class SZZv2:
     # Známé typy v modulu /screeningy
     SCREENINGY_TYPY = [
         "aneurysmaAbdominalniAortyUsg",
-        "karcinomDDeloznihoHrdlaHpv",
+        "karcinomDeloznihoHrdlaHpv",
         "karcinomDeloznihoHrdlaCytologie",
         "karcinomDeloznihoHrdlaExpertniKolposkopie",
         "karcinomPlicLdct",
@@ -2218,6 +3045,31 @@ class SZZv2:
     def emergentni_pdf(self, body):
         """POST /api/v2/emergentniZaznam/pdf – PDF souhrn emergentního záznamu."""
         return self.c.post(f"{self.BASE}/api/v2/emergentniZaznam/pdf", body)
+
+    # --- Lecive pripravky (CRUD bez podkategorií) ---
+    def lecive_pripravky_vytvor(self, body):
+        """POST /api/v2/lecivePripravky – nový záznam léčivého přípravku."""
+        return self.c.post(f"{self.BASE}/api/v2/lecivePripravky", body)
+
+    def lecive_pripravky_vyhledat(self, body):
+        """POST /api/v2/lecivePripravky/vyhledat – seznam léčivých přípravků pacienta."""
+        return self.c.post(f"{self.BASE}/api/v2/lecivePripravky/vyhledat", body)
+
+    def lecive_pripravky_uprav(self, id_: str, body):
+        """PUT /api/v2/lecivePripravky/{id} – aktualizace záznamu."""
+        return self.c.put(f"{self.BASE}/api/v2/lecivePripravky/{id_}", body)
+
+    def lecive_pripravky_obnovit(self, id_: str, body=None):
+        """PATCH /api/v2/lecivePripravky/{id}/obnovit."""
+        return self.c.patch(f"{self.BASE}/api/v2/lecivePripravky/{id_}/obnovit", body or {})
+
+    def lecive_pripravky_zneplatnit(self, id_: str, body=None):
+        """PATCH /api/v2/lecivePripravky/{id}/zneplatnit."""
+        return self.c.patch(f"{self.BASE}/api/v2/lecivePripravky/{id_}/zneplatnit", body or {})
+
+    def lecive_pripravky_zpochybnit(self, id_: str, body=None):
+        """PATCH /api/v2/lecivePripravky/{id}/zpochybnit."""
+        return self.c.patch(f"{self.BASE}/api/v2/lecivePripravky/{id_}/zpochybnit", body or {})
 
 
 # ===========================================================================

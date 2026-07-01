@@ -1,0 +1,13 @@
+zn "USER"
+write !,"== Loading and compiling /home/irisowner/src ==",!
+set lsc = $System.OBJ.LoadDir("/home/irisowner/src","ck",.err,1)
+do $System.OBJ.DisplayError(lsc)
+write !,"== Smoke gate (HSDemo.Tests.Smoke) ==",!
+set sc = 1
+try { set sc = ##class(HSDemo.Tests.Smoke).Run() } catch ex { set sc = ex.AsStatus() }
+if $System.Status.IsError(sc) { do $System.Status.DisplayError(sc) write !,"BUILD_RESULT:FAIL",! halt }
+write !,"== %UnitTest suite (informational) ==",!
+set ^UnitTestRoot = "/home/irisowner/src"
+try { do ##class(%UnitTest.Manager).RunTest("HSDemo/Tests","/noload/nodelete/recursive") } catch ex { write !,"(%UnitTest run skipped: ",ex.DisplayString(),")",! }
+write !,"BUILD_RESULT:PASS",!
+halt

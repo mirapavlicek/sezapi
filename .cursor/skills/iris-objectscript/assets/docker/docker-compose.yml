@@ -1,0 +1,15 @@
+services:
+  iris:
+    # IRIS for Health, Community Edition — free, no license key, includes HL7/FHIR.
+    # Multi-arch (works on Apple Silicon and x86_64). To force a platform, uncomment:
+    # platform: linux/amd64
+    image: intersystemsdc/irishealth-community:latest
+    container_name: hsdemo-iris
+    init: true
+    ports:
+      - "1972:1972"     # superserver (IDE / SQL / Native SDK)
+      - "52773:52773"   # web (Management Portal, REST)
+    volumes:
+      - ./../example-app/src:/home/irisowner/src:ro
+      - ./load_and_test.script:/home/irisowner/load_and_test.script:ro
+    # Default Community credentials are _SYSTEM / SYS (change for anything real).
