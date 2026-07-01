@@ -237,6 +237,82 @@ UZIS_CISELNIKY_SAMPLE = {
         {"kod": "S", "nazev": "specializovaná"},
         {"kod": "N", "nazev": "následná"},
     ],
+    "pojistovny": [
+        {"kod": "111", "nazev": "Všeobecná zdravotní pojišťovna ČR"},
+        {"kod": "201", "nazev": "Vojenská zdravotní pojišťovna ČR"},
+        {"kod": "205", "nazev": "Česká průmyslová zdravotní pojišťovna"},
+        {"kod": "207", "nazev": "Oborová zdravotní pojišťovna zaměstnanců bank a pojišťoven"},
+        {"kod": "209", "nazev": "Zaměstnanecká pojišťovna Škoda"},
+        {"kod": "211", "nazev": "Zdravotní pojišťovna ministerstva vnitra ČR"},
+        {"kod": "213", "nazev": "RBP, zdravotní pojišťovna"},
+    ],
+    "okresy": [
+        {"kod": "CZ0100", "nazev": "Hlavní město Praha"},
+        {"kod": "CZ0421", "nazev": "Děčín"},
+        {"kod": "CZ0427", "nazev": "Ústí nad Labem"},
+        {"kod": "CZ0802", "nazev": "Ostrava-město"},
+        {"kod": "CZ0642", "nazev": "Brno-město"},
+        {"kod": "CZ0521", "nazev": "Hradec Králové"},
+    ],
+    "staty": [
+        {"kod": "CZ", "nazev": "Česká republika"},
+        {"kod": "SK", "nazev": "Slovensko"},
+        {"kod": "UA", "nazev": "Ukrajina"},
+        {"kod": "DE", "nazev": "Německo"},
+        {"kod": "PL", "nazev": "Polsko"},
+        {"kod": "VN", "nazev": "Vietnam"},
+    ],
+}
+
+# Formulářová pole hlášení do jednotlivých Národních zdravotnických registrů.
+# Vzor základních položek dle datového rozhraní DASTA v4 (blok *nr, dastacr.cz).
+# Slouží k vygenerování strukturovaného formuláře v UI; plnou strukturu viz DASTA.
+_UZIS_POLE_SPOLECNA = [
+    {"kod": "rodneCislo", "label": "Rodné číslo pacienta", "typ": "text", "povinny": True},
+    {"kod": "ico", "label": "IČO poskytovatele", "typ": "text", "povinny": True},
+    {"kod": "pcz", "label": "PČZ (pořadové číslo zařízení)", "typ": "text", "povinny": False},
+]
+UZIS_NZR_FORMULARE = {
+    "NOR": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumStanoveniDg", "label": "Datum stanovení diagnózy", "typ": "date", "povinny": True},
+        {"kod": "diagnozaMKN", "label": "Diagnóza (MKN-10, C/D)", "typ": "text", "povinny": True},
+        {"kod": "morfologieMKNO", "label": "Morfologie (MKN-O)", "typ": "text", "povinny": False},
+        {"kod": "tnmT", "label": "TNM – T", "typ": "text", "povinny": False},
+        {"kod": "tnmN", "label": "TNM – N", "typ": "text", "povinny": False},
+        {"kod": "tnmM", "label": "TNM – M", "typ": "text", "povinny": False},
+        {"kod": "stadium", "label": "Klinické stadium", "typ": "text", "povinny": False},
+    ],
+    "NRHOSP": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumPrijeti", "label": "Datum přijetí", "typ": "date", "povinny": True},
+        {"kod": "datumPropusteni", "label": "Datum propuštění", "typ": "date", "povinny": False},
+        {"kod": "hlavniDg", "label": "Hlavní diagnóza (MKN-10)", "typ": "text", "povinny": True},
+        {"kod": "vedlejsiDg", "label": "Vedlejší diagnózy (MKN-10, oddělené ;)", "typ": "text", "povinny": False},
+        {"kod": "oborPece", "label": "Obor péče (L.. / N..)", "typ": "text", "povinny": True},
+        {"kod": "zpusobUkonceni", "label": "Způsob ukončení hospitalizace", "typ": "text", "povinny": False},
+    ],
+    "LPZ": [
+        {"kod": "rodneCislo", "label": "Rodné číslo zemřelého", "typ": "text", "povinny": True},
+        {"kod": "datumUmrti", "label": "Datum úmrtí", "typ": "date", "povinny": True},
+        {"kod": "mistoUmrti", "label": "Místo úmrtí (kód)", "typ": "text", "povinny": False},
+        {"kod": "zakladniPricinaSmrti", "label": "Základní příčina smrti (MKN-10)", "typ": "text", "povinny": True},
+        {"kod": "bezprostredniPricina", "label": "Bezprostřední příčina (MKN-10)", "typ": "text", "povinny": False},
+        {"kod": "pitva", "label": "Provedena pitva", "typ": "bool", "povinny": False},
+    ],
+    "NRVV": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumZjisteni", "label": "Datum zjištění vady", "typ": "date", "povinny": True},
+        {"kod": "vadaMKN", "label": "Vrozená vada (MKN-10, Q)", "typ": "text", "povinny": True},
+        {"kod": "gestacniTyden", "label": "Gestační týden", "typ": "number", "povinny": False},
+    ],
+    "NRKI": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumVykonu", "label": "Datum výkonu", "typ": "date", "povinny": True},
+        {"kod": "typIntervence", "label": "Typ intervence", "typ": "text", "povinny": True},
+        {"kod": "diagnozaMKN", "label": "Diagnóza (MKN-10, I)", "typ": "text", "povinny": False},
+    ],
+    "NRLUD": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumKontaktu", "label": "Datum kontaktu", "typ": "date", "povinny": True},
+        {"kod": "zakladniDroga", "label": "Základní droga", "typ": "text", "povinny": True},
+        {"kod": "zpusobAplikace", "label": "Způsob aplikace", "typ": "text", "povinny": False},
+    ],
 }
 
 # Vzoroví poskytovatelé (offline fallback pro NRPZS, když API není dostupné).

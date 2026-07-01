@@ -7353,6 +7353,126 @@ async def uzis_luzka_prehled():
                                                  "pocet": len(_uzis_sim_luzka)}})
 
 
+# --- Strukturované formuláře hlášení dle registru --------------------------
+
+@app.get("/api/uzis/registr/{kod}/formular")
+async def uzis_registr_formular(kod: str):
+    pole = getattr(cfg, "UZIS_NZR_FORMULARE", {}).get(kod.upper())
+    if pole is None:
+        return JSONResponse({"status": 200, "data": {"kod": kod.upper(), "pole": [],
+                             "poznamka": "Pro tento registr není definován strukturovaný formulář – použijte volný JSON."}})
+    return JSONResponse({"status": 200, "data": {"kod": kod.upper(), "pole": pole}})
+
+
+# --- Import přes GUI (DASTA dávka / CSV číselník) ---------------------------
+
+_UZIS_NR_TAGS = {"nrh", "nrz", "nor", "nkr", "nrki", "nrn", "nrr", "nrv", "nrlud", "nrpatv"}
+
+
+@app.post("/api/uzis/import/dasta")
+async def uzis_import_dasta(file: UploadFile = File(...), seed: str = Form("false")):
+    """Nahrání DASTA XML (příp. ZIP) dávky pro NZIS – parsování a přehled bloků.
+    Při seed=true založí simulovaná hlášení pro nalezené bloky národních registrů."""
+    import io
+    import zipfile
+    import xml.etree.ElementTree as ET
+
+    raw = await file.read()
+    name = file.filename or "davka.xml"
+    try:
+        if name.lower().endswith(".zip") or raw[:2] == b"PK":
+            zf = zipfile.ZipFile(io.BytesIO(raw))
+            xmls = [n for n in zf.namelist() if n.lower().endswith(".xml")]
+            if not xmls:
+                return error_response("ZIP neobsahuje žádný XML soubor", 400)
+            raw = zf.read(xmls[0])
+            name = xmls[0]
+        # DASTA bývá v kódování windows-1250
+        text = None
+        for enc in ("utf-8", "windows-1250"):
+            try:
+                text = raw.decode(enc)
+                break
+            except UnicodeDecodeError:
+                continue
+        root = ET.fromstring(text or raw.decode("windows-1250", errors="replace"))
+    except Exception as exc:
+        return error_response(f"Soubor se nepodařilo naparsovat jako DASTA XML: {exc}", 400)
+
+    def _local(tag):
+        return tag.rsplit("}", 1)[-1].lower()
+
+    counts, total, registry_found = {}, 0, []
+    for el in root.iter():
+        total += 1
+        lt = _local(el.tag)
+        counts[lt] = counts.get(lt, 0) + 1
+        if lt in _UZIS_NR_TAGS:
+            registry_found.append(lt)
+
+    seeded = 0
+    if str(seed).lower() in ("true", "1", "yes", "ano") and registry_found:
+        dasta_to_kod = {r["dasta"]: r["kod"] for r in cfg.UZIS_NZR_KATALOG if r.get("dasta")}
+        for tag in registry_found:
+            rec = {"_id": _sukl_gen_id(8), "registr": dasta_to_kod.get(tag, tag.upper()),
+                   "dasta": tag, "stav": {"kod": "PRIJATO", "nazev": "Přijato (import)"},
+                   "datumPrijeti": _sukl_now(), "zdroj": f"import:{name}"}
+            _uzis_sim_hlaseni[rec["_id"]] = rec
+            seeded += 1
+
+    nr_summary = {t: registry_found.count(t) for t in set(registry_found)}
+    return JSONResponse({"status": 200, "data": {
+        "soubor": name,
+        "korenElement": _local(root.tag),
+        "pocetElementu": total,
+        "nalezeneRegistry": nr_summary,
+        "topElementy": dict(sorted(counts.items(), key=lambda x: -x[1])[:15]),
+        "seeded": seeded,
+    }})
+
+
+@app.post("/api/uzis/import/ciselnik")
+async def uzis_import_ciselnik(file: UploadFile = File(...)):
+    """Nahrání CSV číselníku (kód;název) – naparsování a náhled položek."""
+    import csv
+    import io
+
+    raw = await file.read()
+    text = None
+    for enc in ("utf-8-sig", "utf-8", "windows-1250"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    if text is None:
+        return error_response("Soubor nelze dekódovat (očekává se UTF-8 nebo Windows-1250)", 400)
+
+    delim = ";" if text.count(";") >= text.count(",") else ","
+    reader = csv.reader(io.StringIO(text), delimiter=delim)
+    rows = [r for r in reader if r and any(c.strip() for c in r)]
+    if not rows:
+        return error_response("CSV je prázdné", 400)
+
+    header = [h.strip().lower() for h in rows[0]]
+    has_header = "kod" in header or "kód" in header or "nazev" in header or "název" in header
+    data_rows = rows[1:] if has_header else rows
+    polozky = []
+    for r in data_rows:
+        if len(r) >= 2:
+            polozky.append({"kod": r[0].strip(), "nazev": r[1].strip()})
+        elif len(r) == 1:
+            polozky.append({"kod": r[0].strip(), "nazev": ""})
+
+    return JSONResponse({"status": 200, "data": {
+        "soubor": file.filename,
+        "oddelovac": delim,
+        "hlavicka": has_header,
+        "pocet": len(polozky),
+        "polozky": polozky[:500],
+    }})
+
+
 # ---------------------------------------------------------------------------
 # FHIR Imaging Order – HL7 Czech Imaging Order FHIR IG v0.1.0
 #   bridge na NCEZ /eZadanky (UlozZadanku, NactiZadanku, …)
