@@ -1,0 +1,2426 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "EZCA2 - Sprava certifikatu",
+    "description": "<p>\n  <strong>EZCA II Správa certifikátů REST API</strong> slouží ke správě přístupových systémových certifikátů\n  pro služby elektronického zdravotnictví.\n</p>\n\n<p>\n  API umožňuje vytvořit požadavek na vystavení nového certifikátu EZCA II, vytvořit požadavek na obnovu\n  stávajícího certifikátu EZCA II, přeregistrovat certifikát EZCA I na EZCA II a revokovat certifikát.\n</p>\n\n<h2>Doporučený proces volání API metod</h2>\n\n<ol>\n  <li>\n    Vytvoření požadavku jednou z operací\n    <code>/vystavit</code>, <code>/preregistrovat</code> nebo <code>/obnovit</code>.\n  </li>\n  <li>\n    Sledování stavu požadavku přes <code>/stav</code>, dokud požadavek není úspěšně zpracován.\n  </li>\n  <li>\n    Načtení detailu přes <code>/detail</code> pro získání sériového čísla certifikátu.\n  </li>\n  <li>\n    Stažení certifikátu přes <code>/stahnout</code>. Data certifikátu jsou vrácena jako Base64 řetězec.\n  </li>\n</ol>",
+    "version": "v1.0.2"
+  },
+  "servers": [
+    {
+      "url": "/ezca2Certifikaty"
+    }
+  ],
+  "paths": {
+    "/api/v1/stav": {
+      "get": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda pro zjištění stavu požadavku operací vystavit, přeregistrovat a obnovit.",
+        "description": "Zjišťuje stav požadavku ve frontě, tj. zda byl požadavek zpracován.\r\nCílový stav požadavku je `Ok`.",
+        "parameters": [
+          {
+            "name": "ExterniIdentifikator",
+            "in": "query",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "schema": {
+              "type": "string",
+              "example": "25488627"
+            },
+            "example": "25488627"
+          },
+          {
+            "name": "IczId",
+            "in": "query",
+            "schema": {
+              "maximum": 9.2233720368547758E+18,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int64",
+              "example": 6359
+            },
+            "example": 6359
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StavCertifikatuResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StavCertifikatuResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StavCertifikatuResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detail": {
+      "get": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vrací informace o vystaveném nebo revokovaném certifikátu.",
+        "description": "Je nutné zadat sériové číslo certifikátu, nebo IczId (popř. oba identifikátory).",
+        "parameters": [
+          {
+            "name": "ExterniIdentifikator",
+            "in": "query",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "schema": {
+              "type": "string",
+              "example": "25488627"
+            },
+            "example": "25488627"
+          },
+          {
+            "name": "IczId",
+            "in": "query",
+            "schema": {
+              "maximum": 9.2233720368547758E+18,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int64",
+              "example": 6370
+            },
+            "example": 6370
+          },
+          {
+            "name": "SerioveCislo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "210000016E0861F223C70C3FE000000000016E"
+            },
+            "example": "210000016E0861F223C70C3FE000000000016E"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailCertifikatuResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailCertifikatuResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailCertifikatuResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stahnout": {
+      "get": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda umožňuje stažení dat nově vydaného certifikátu.",
+        "description": "Hodnotu atributu `SerioveCislo` zjistíte pomocí metody `/detail`.\r\nData odpovědi jsou ve formátu Base64 a výsledný formát souboru je `.pfx`.\r\n            \r\nCertifikát lze stáhnout pouze jednou.",
+        "parameters": [
+          {
+            "name": "ExterniIdentifikator",
+            "in": "query",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "schema": {
+              "type": "string",
+              "example": "25488627"
+            },
+            "example": "25488627"
+          },
+          {
+            "name": "SerioveCislo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "210000016E0861F223C70C3FE000000000016E"
+            },
+            "example": "210000016E0861F223C70C3FE000000000016E"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StahnoutCertifikatResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StahnoutCertifikatResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StahnoutCertifikatResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/seznam": {
+      "get": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vrací seznam certifikátů pro aktuální subjekt.",
+        "description": "Na základě vybraného typu seznamu jsou vráceny certifikáty v příslušném stavu.",
+        "parameters": [
+          {
+            "name": "ExterniIdentifikator",
+            "in": "query",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "schema": {
+              "type": "string",
+              "example": "25488627"
+            },
+            "example": "25488627"
+          },
+          {
+            "name": "TypSeznamu",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TypSeznamuCertifikatuEnum"
+            }
+          },
+          {
+            "name": "HledanyNazev",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "Systemovy"
+            },
+            "example": "Systemovy"
+          },
+          {
+            "name": "Stranka",
+            "in": "query",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "example": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "VelikostStranky",
+            "in": "query",
+            "schema": {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "example": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "SeraditPodle",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SeraditSeznamCertifikatuPodleEnum"
+            },
+            "example": "PlatnostDo"
+          },
+          {
+            "name": "SmerRazeni",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SmerRazeniEnum"
+            },
+            "example": "Sestupne"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeznamCertifikatuResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeznamCertifikatuResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeznamCertifikatuResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crl-list": {
+      "get": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vrací kompletní seznam certifikátů, které byly revokované.",
+        "description": "Pokud není zadán ani jeden parametr, pak je vrácen kompletní seznam.",
+        "parameters": [
+          {
+            "name": "ExterniIdentifikator",
+            "in": "query",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "schema": {
+              "type": "string",
+              "example": "25488627"
+            },
+            "example": "25488627"
+          },
+          {
+            "name": "Stat",
+            "in": "query",
+            "description": "Stát subjektu. Vyplňuje pouze nadřazený systém PZS; pokud hodnota chybí, použije se CZ.",
+            "schema": {
+              "type": "string",
+              "example": "CZ"
+            },
+            "example": "CZ"
+          },
+          {
+            "name": "DatumOd",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-04-01T00:00:00+00:00"
+            },
+            "example": "2026-04-01T00:00:00+00:00"
+          },
+          {
+            "name": "SerioveCislo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "210000016E0861F223C70C3FE000000000016E"
+            },
+            "example": "210000016E0861F223C70C3FE000000000016E"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolozkaSeznamuRevokovanychCertifikatuResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolozkaSeznamuRevokovanychCertifikatuResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolozkaSeznamuRevokovanychCertifikatuResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/seznam-chyb": {
+      "get": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vrací seznam možných chyb.",
+        "description": "Seznam se bude rozšiřovat s ohledem na chybové stavy certifikátu.",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolozkaChyby"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolozkaChyby"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolozkaChyby"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/preregistrovat": {
+      "post": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vystaví nový EZCA II certifikát na základě stávajícího EZCA I certifikátu.",
+        "description": "Certifikát musí být registrovaný manuálně přes EZCA II portál nebo automaticky přes rozhraní SÚKL, tzn. že certifikáty musí být evidovány v systému EZCA II nebo původním EZCA I, jiné certifikáty není možné přeregistrovat.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreregistrovatPristupovyCertifikatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreregistrovatPristupovyCertifikatRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreregistrovatPristupovyCertifikatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vystavit": {
+      "post": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vytvoří požadavek na vydání nového EZCA II systémového přístupového certifikátu.",
+        "description": "Stav požadavku lze sledovat přes metodu `/stav`.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VystavitPristupovyCertifikatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VystavitPristupovyCertifikatRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VystavitPristupovyCertifikatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/obnovit": {
+      "put": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vytvoří požadavek na obnovu certifikátu EZCA II na základě dat původního systémového přístupového certifikátu.",
+        "description": "Stav požadavku lze sledovat přes metodu `/stav`.\r\nObnova certifikátu prodlouží jeho platnost o 3 měsíce.\r\nObnovit lze pouze stažený certifikát který už je registrovaný v systému EZCA II.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObnovitCertifikatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObnovitCertifikatRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObnovitCertifikatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/revokovat": {
+      "post": {
+        "tags": [
+          "Certifikaty"
+        ],
+        "summary": "Metoda vytvoří požadavek na revokaci certifikátu.",
+        "description": "Je nutné zadat sériové číslo certifikátu, nebo IczId (popř. oba identifikátory).\r\n            \r\n<b>Po dokončení akce nebudete moci dále využívat certifikát v systémech elektronického zdravotnictví. Revokace je nevratná.</b>",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokovatCertifikatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokovatCertifikatRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokovatCertifikatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VysledekOperaceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChybaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simple-health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "SimpleHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JednoduchaHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "Health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/detail-health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "DetailHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Certifikat": {
+        "type": "object",
+        "properties": {
+          "serioveCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "1B000001674E82ED676FEA7373000000000167"
+          },
+          "stav": {
+            "$ref": "#/components/schemas/StavCertifikatuEnum"
+          },
+          "typDrzitele": {
+            "$ref": "#/components/schemas/TypDrziteleCertifikatuEnum"
+          },
+          "ucel": {
+            "$ref": "#/components/schemas/UcelCertifikatuEnum"
+          },
+          "zpusobVyuzi": {
+            "$ref": "#/components/schemas/ZpusobVyuziPodpisovehoCertifikatuEnum"
+          },
+          "platnostOd": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-23T13:25:59+00:00"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2027-04-23T13:25:59+00:00"
+          },
+          "subjekt": {
+            "$ref": "#/components/schemas/SubjektInfo"
+          },
+          "datumRevokace": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-04-23T13:37:10.4691395+00:00"
+          },
+          "datumStazeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-04-23T13:37:10.4691395+00:00"
+          },
+          "vydavatelCertifikatu": {
+            "type": "string",
+            "nullable": true,
+            "example": "T1 CSEZ CA 1"
+          },
+          "typKanalu": {
+            "type": "string",
+            "nullable": true,
+            "example": "PortalWeb"
+          },
+          "sablona": {
+            "type": "string",
+            "nullable": true,
+            "example": "ExtendedSignSubject"
+          },
+          "typCertifikatuText": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pečetící certifikát pro subjekt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChybaResponse": {
+        "type": "object",
+        "properties": {
+          "httpStatusKod": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chyby": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailChyby"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DetailCertifikatuResponse": {
+        "type": "object",
+        "properties": {
+          "iczId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3360
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true,
+            "example": "f888d100-f53e-415a-9d4c-6238e21d1134"
+          },
+          "nazevSluzby": {
+            "type": "string",
+            "nullable": true,
+            "example": "PZSSystemovyPristupovy"
+          },
+          "technickyKontakt": {
+            "$ref": "#/components/schemas/TechnickyKontakt"
+          },
+          "certifikat": {
+            "$ref": "#/components/schemas/Certifikat"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DetailChyby": {
+        "type": "object",
+        "properties": {
+          "nazevPole": {
+            "type": "string",
+            "nullable": true
+          },
+          "zprava": {
+            "type": "string",
+            "nullable": true
+          },
+          "uzivatelskaZprava": {
+            "type": "string",
+            "nullable": true
+          },
+          "idChyby": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthCheckResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "number",
+            "format": "double"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "releaseId": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JednoduchaHealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ObnovitCertifikatRequest": {
+        "required": [
+          "heslo",
+          "serioveCislo"
+        ],
+        "type": "object",
+        "properties": {
+          "serioveCislo": {
+            "minLength": 1,
+            "type": "string",
+            "example": "210000016E0861F223C70C3FE000000000016E"
+          },
+          "heslo": {
+            "minLength": 1,
+            "type": "string",
+            "example": "MojeSilneHeslo2026@"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PolozkaChyby": {
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "integer",
+            "format": "int32",
+            "example": 2101
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true,
+            "example": "Certifikát je revokovaný."
+          },
+          "kategorie": {
+            "type": "string",
+            "nullable": true,
+            "example": "Stav certifikátu"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PolozkaSeznamuCertifikatuResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3359
+          },
+          "iczId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3360
+          },
+          "nazevSluzby": {
+            "type": "string",
+            "nullable": true,
+            "example": "PZSSystemovyPristupovy"
+          },
+          "zpusobVyuzi": {
+            "$ref": "#/components/schemas/ZpusobVyuziPodpisovehoCertifikatuEnum"
+          },
+          "serioveCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "1B000001674E82ED676FEA7373000000000167"
+          },
+          "revokovany": {
+            "type": "boolean",
+            "example": false
+          },
+          "stav": {
+            "$ref": "#/components/schemas/StavCertifikatuEnum"
+          },
+          "platnostOd": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-23T13:25:59+00:00"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2027-04-23T13:25:59+00:00"
+          },
+          "datumStazeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-04-23T13:37:10.4691395+00:00"
+          },
+          "externiIdentifikator": {
+            "type": "string",
+            "nullable": true,
+            "example": "25488627"
+          },
+          "nazevSubjektu": {
+            "type": "string",
+            "nullable": true,
+            "example": "Ordinace Pokorná a Bezdíčková s.r.o."
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true,
+            "example": "f888d100-f53e-415a-9d4c-6238e21d1134"
+          },
+          "krzpId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 102129137
+          },
+          "typDrzitele": {
+            "$ref": "#/components/schemas/TypDrziteleCertifikatuEnum"
+          },
+          "ucel": {
+            "$ref": "#/components/schemas/UcelCertifikatuEnum"
+          },
+          "sablona": {
+            "type": "string",
+            "nullable": true,
+            "example": "ExtendedSignSubject"
+          },
+          "typCertifikatuText": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pečetící certifikát pro subjekt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PolozkaSeznamuRevokovanychCertifikatuResponse": {
+        "type": "object",
+        "properties": {
+          "serioveCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "1B000001449CA1708F7E0444EB000000000144"
+          },
+          "platnostOd": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-07T15:03:17+00:00"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-09T09:53:23.3833333+00:00"
+          },
+          "datumRevokace": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-07T15:21:31.0166213+00:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PreregistrovatPristupovyCertifikatRequest": {
+        "required": [
+          "heslo"
+        ],
+        "type": "object",
+        "properties": {
+          "iczId": {
+            "maximum": 9.2233720368547758E+18,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "example": 6371
+          },
+          "serioveCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "210000016F31DB9FF631DDFD8700000000016F"
+          },
+          "nazevSluzby": {
+            "maxLength": 150,
+            "minLength": 0,
+            "pattern": "^[A-Za-z0-9 '()\\-\\.\\/]+$",
+            "type": "string",
+            "nullable": true,
+            "example": "PZSTESTSystemovyPristupovy"
+          },
+          "heslo": {
+            "minLength": 1,
+            "type": "string",
+            "example": "MojeSilneHeslo2026@"
+          },
+          "technickyKontakt": {
+            "$ref": "#/components/schemas/TechnickyKontaktPozadavku"
+          },
+          "subjekt": {
+            "$ref": "#/components/schemas/SubjektPozadavku"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevokovatCertifikatRequest": {
+        "type": "object",
+        "properties": {
+          "externiIdentifikator": {
+            "type": "string",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "nullable": true,
+            "example": "25488627"
+          },
+          "serioveCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "210000016F31DB9FF631DDFD8700000000016F"
+          },
+          "iczId": {
+            "maximum": 9.2233720368547758E+18,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "example": 6371
+          }
+        },
+        "additionalProperties": false
+      },
+      "SeraditSeznamCertifikatuPodleEnum": {
+        "enum": [
+          "Id",
+          "IczId",
+          "NazevSluzby",
+          "SerioveCislo",
+          "PlatnostOd",
+          "PlatnostDo",
+          "DatumStazeni",
+          "ExterniIdentifikator",
+          "NazevSubjektu",
+          "Uid",
+          "Sablona"
+        ],
+        "type": "string"
+      },
+      "SeznamCertifikatuResponse": {
+        "type": "object",
+        "properties": {
+          "celkovyPocet": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1007
+          },
+          "stranka": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "velikostStranky": {
+            "type": "integer",
+            "format": "int32",
+            "example": 20
+          },
+          "polozky": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolozkaSeznamuCertifikatuResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SmerRazeniEnum": {
+        "enum": [
+          "Vzestupne",
+          "Sestupne"
+        ],
+        "type": "string"
+      },
+      "StahnoutCertifikatResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "nullable": true,
+            "example": "MII..."
+          },
+          "serioveCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "1B00000164AFFDEE6530523AFB000000000164"
+          },
+          "hash": {
+            "type": "string",
+            "nullable": true,
+            "example": "8D35F20B6F6A4D34D13D5E760F1F2D646A82F0B2C7240D1E7C10E04A51B6AA21"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StavCertifikatuEnum": {
+        "enum": [
+          "NA",
+          "Valid",
+          "Revoked",
+          "Expirovany"
+        ],
+        "type": "string"
+      },
+      "StavCertifikatuResponse": {
+        "type": "object",
+        "properties": {
+          "iczId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3360
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true,
+            "example": "f888d100-f53e-415a-9d4c-6238e21d1134"
+          },
+          "stavPozadavku": {
+            "$ref": "#/components/schemas/StavPozadavku"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StavOperaceEnum": {
+        "enum": [
+          "Ok",
+          "Warn",
+          "Error"
+        ],
+        "type": "string"
+      },
+      "StavPozadavku": {
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "example": 1101
+          },
+          "stav": {
+            "$ref": "#/components/schemas/StavPozadavkuEnum"
+          },
+          "typPozadavku": {
+            "$ref": "#/components/schemas/TypPozadavkuEnum"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StavPozadavkuEnum": {
+        "enum": [
+          "Manual",
+          "New",
+          "InProgress",
+          "Ok",
+          "Error",
+          "FatalError"
+        ],
+        "type": "string"
+      },
+      "SubjektInfo": {
+        "type": "object",
+        "properties": {
+          "externiIdentifikator": {
+            "type": "string",
+            "nullable": true,
+            "example": "25488627"
+          },
+          "nazev": {
+            "type": "string",
+            "nullable": true,
+            "example": "Ordinace Pokorná a Bezdíčková s.r.o."
+          },
+          "stat": {
+            "type": "string",
+            "nullable": true,
+            "example": "CZ"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "ordinace.pokorna@example.cz"
+          },
+          "telefonniCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "+420123456789"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubjektPozadavku": {
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "externiIdentifikator": {
+            "maxLength": 50,
+            "minLength": 3,
+            "type": "string",
+            "description": "Vyplňuje pouze nadřazený systém PZS. Pokud volá přímo PZS, hodnota se ignoruje a IČO se přebírá z client_id.",
+            "nullable": true,
+            "example": "25488627"
+          },
+          "nazev": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "example": "Krajská zdravotní"
+          },
+          "stat": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Stát subjektu. Vyplňuje pouze nadřazený systém PZS; pokud hodnota chybí, použije se CZ.",
+            "nullable": true,
+            "example": "CZ"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "example": "test@example.cz"
+          },
+          "telefonniCislo": {
+            "type": "string",
+            "nullable": true,
+            "example": "+420123456789"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TechnickyKontakt": {
+        "type": "object",
+        "properties": {
+          "telefon": {
+            "type": "string",
+            "nullable": true,
+            "example": "+420123456789"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "ordinace.pokorna@example.cz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TechnickyKontaktPozadavku": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "telefon": {
+            "type": "string",
+            "nullable": true,
+            "example": "+420123456789"
+          },
+          "email": {
+            "minLength": 1,
+            "type": "string",
+            "format": "email",
+            "example": "test@example.cz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypDrziteleCertifikatuEnum": {
+        "enum": [
+          "Neznamy",
+          "Osoba",
+          "Subjekt"
+        ],
+        "type": "string"
+      },
+      "TypPozadavkuEnum": {
+        "enum": [
+          "Issue",
+          "Revoke",
+          "Renew"
+        ],
+        "type": "string"
+      },
+      "TypSeznamuCertifikatuEnum": {
+        "enum": [
+          "Platne",
+          "Stazene",
+          "Revokovane",
+          "Expirovane"
+        ],
+        "type": "string"
+      },
+      "UcelCertifikatuEnum": {
+        "enum": [
+          "Neznamy",
+          "Autentizace",
+          "Podpis"
+        ],
+        "type": "string"
+      },
+      "VysledekOperaceResponse": {
+        "type": "object",
+        "properties": {
+          "iczId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 3360
+          },
+          "uid": {
+            "type": "string",
+            "nullable": true,
+            "example": "f888d100-f53e-415a-9d4c-6238e21d1134"
+          },
+          "zprava": {
+            "type": "string",
+            "nullable": true,
+            "example": "Požadavek byl úspěšně přijat ke zpracování."
+          },
+          "stav": {
+            "$ref": "#/components/schemas/StavOperaceEnum"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VystavitPristupovyCertifikatRequest": {
+        "required": [
+          "heslo",
+          "nazevSluzby",
+          "subjekt",
+          "technickyKontakt"
+        ],
+        "type": "object",
+        "properties": {
+          "nazevSluzby": {
+            "maxLength": 150,
+            "minLength": 0,
+            "pattern": "^[A-Za-z0-9 '()\\-\\.\\/]+$",
+            "type": "string",
+            "example": "PZSTESTSystemovyPristupovy"
+          },
+          "heslo": {
+            "minLength": 1,
+            "type": "string",
+            "example": "MojeSilneHeslo2026@"
+          },
+          "technickyKontakt": {
+            "$ref": "#/components/schemas/TechnickyKontaktPozadavku"
+          },
+          "subjekt": {
+            "$ref": "#/components/schemas/SubjektPozadavku"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZpusobVyuziPodpisovehoCertifikatuEnum": {
+        "enum": [
+          "Neznamy",
+          "Lokalni",
+          "Vzdalene"
+        ],
+        "type": "string"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Certifikaty"
+    },
+    {
+      "name": "Health"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

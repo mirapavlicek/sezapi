@@ -1,0 +1,4323 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "KRP",
+    "description": "API poskytuje služby pro práci s kmenovým registrem pacientů<br><details><summary><strong>Verze 3.0.0</strong></summary><p><strong>Změny:</strong></p><ul><li>Odstranění diakritiky v API atributech</li><li>Změna datového typu property MatkaNovorozence.DatumNarození z date-time na date</li></ul></details>",
+    "contact": {
+      "name": "SLE01 - Kmenové registry - podpora vývoje",
+      "email": "support.csez.t1@i.cz"
+    },
+    "version": "v3.0.0"
+  },
+  "servers": [
+    {
+      "url": "/krp"
+    }
+  ],
+  "paths": {
+    "/api/v3/notifikace/zalozit/odber": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOOdberNotifikaciInterni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/notifikace/zrusit/odber": {
+      "delete": {
+        "tags": [
+          "Notifikace"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZruseniOdberuNotifikaciInterni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/notifikace/vyhledat/odber": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniOdberuZmenPacientuProPZSInterni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/reklamuj/udaj": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostReklamaceUdaju"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/zruseni/zadost": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostNavrhZruseniZaznamu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZruseniZaznamu"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/uni": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniUniverzal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/cizinec_cp": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCizincePodleCP"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/historie_pojisteni": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniHistoriePojisteniPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistoriePojisteni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/historie_registrujicich_lekaru": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniHistorieRegistrujicichLekaruPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniHistorieRegistrujicichLekaru"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/doklady": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleDokladu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/jmeno_prijmeni_cp": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleJmenoPrijmeniCP"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/jmeno_prijmeni_datum_narozeni": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleJmenoPrijmeniDatumNarozeni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/jmeno_prijmeni_rc": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleJmenoPrijmeniRC"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/niabsi": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleNIABSI"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleRID"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/aifoulozenka": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleAIFOUlozenky"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/generovat/docasny_rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVygenerovaniDocasnehoRIDu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVygenerovaniDocasnyRID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/zalozit/pacient": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZalozeniPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/priradit/docasny_rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOPrirazeniDocasnehoRIDu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedPrirazeniDocasnehoRIDu"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/zmenit/pacient": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZmenuPacienta"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZmenaPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/hledat/mapovani_rid": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOMapovaniRID"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniMapovaniRID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/ztotoznihromadne/zadost": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ZadostData.RegistrovatOdber": {
+                    "type": "boolean"
+                  },
+                  "ZadostInfo.Datum": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "ZadostInfo.Ucel": {
+                    "type": "string"
+                  },
+                  "ZadostInfo.ZadostId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "ZadostData.RegistrovatOdber": {
+                  "style": "form"
+                },
+                "ZadostInfo.Datum": {
+                  "style": "form"
+                },
+                "ZadostInfo.Ucel": {
+                  "style": "form"
+                },
+                "ZadostInfo.ZadostId": {
+                  "style": "form"
+                },
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedHromadneZtotozneni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/rozdeleni/zadost": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostRozdeleniPacientu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedRozdeleniPacienta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/ztotoznihromadne/vysledky": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOStazeniDatHromadnehoZtotozneni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouboruHromadnehoZtotozneni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/ztotoznihromadne/vysledky/soubor": {
+      "post": {
+        "tags": [
+          "Pacient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOStazeniDatHromadnehoZtotozneni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedStazeniSouborHromadnehoZtotozneniInterni"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/pacient/slouceni/zadost": {
+      "post": {
+        "tags": [
+          "Slucovani"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostNavrhSlouceniPacientu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedSlouceniPacienta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/ciselnik/druh_dokladu": {
+      "post": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/ciselnik/stat": {
+      "post": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/ciselnik/pohlavi": {
+      "post": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/ciselnik/zdravotni_pojistovna": {
+      "post": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v3/ciselnik/country_service_context": {
+      "post": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AIFO": {
+        "required": [
+          "agendaKod",
+          "aifoKod"
+        ],
+        "type": "object",
+        "properties": {
+          "aifoKod": {
+            "type": "string",
+            "nullable": true
+          },
+          "agendaKod": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AIFOUlozenka": {
+        "type": "object",
+        "properties": {
+          "aifo": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaRef": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Adresa": {
+        "type": "object",
+        "properties": {
+          "ruianId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "stat": {
+            "type": "string",
+            "nullable": true
+          },
+          "obec": {
+            "type": "string",
+            "nullable": true
+          },
+          "psc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "ulice": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloPopisne": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloEvidencni": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloOrientacni": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloJine": {
+            "type": "string",
+            "nullable": true
+          },
+          "poBox": {
+            "type": "string",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DataReklamace": {
+        "type": "object",
+        "properties": {
+          "datumReklamace": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "popisReklamace": {
+            "type": "string",
+            "nullable": true
+          },
+          "zduvodneni": {
+            "type": "string",
+            "nullable": true
+          },
+          "polozkyReklamace": {
+            "$ref": "#/components/schemas/UdajReklamace"
+          },
+          "reklamujici": {
+            "$ref": "#/components/schemas/Reklamujici"
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozka": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaRef": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Doklad": {
+        "type": "object",
+        "properties": {
+          "cislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "typDokladu": {
+            "type": "string",
+            "nullable": true
+          },
+          "stat": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorModel": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "fieldName": {
+            "type": "string",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorLevel": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HromadneZtotozneni": {
+        "type": "object",
+        "properties": {
+          "hromadneZtotozneniID": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JednaNotifikace": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRAdresaDetail": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "ruianId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "stat": {
+            "type": "string",
+            "nullable": true
+          },
+          "obec": {
+            "type": "string",
+            "nullable": true
+          },
+          "psc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "ulice": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloPopisne": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloEvidencni": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloOrientacni": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloJine": {
+            "type": "string",
+            "nullable": true
+          },
+          "poBox": {
+            "type": "string",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true
+          },
+          "krajKod": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRDate": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRDoklad": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "cislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "typDokladu": {
+            "type": "string",
+            "nullable": true
+          },
+          "stat": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRDotaz": {
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ucel": {
+            "type": "string",
+            "nullable": true
+          },
+          "zadostId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRLong": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZROdpoved": {
+        "required": [
+          "odpovedId",
+          "stav",
+          "zadostId"
+        ],
+        "type": "object",
+        "properties": {
+          "chybyZpracovani": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorModel"
+            },
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true
+          },
+          "subStav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zadostId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "odpovedId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRPrubehPojisteni": {
+        "required": [
+          "platneOd",
+          "zdravotniPojistovnaKod"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "platneOd": {
+            "type": "string",
+            "format": "date"
+          },
+          "platneDo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "zdravotniPojistovnaKod": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRReferencniOsoba": {
+        "required": [
+          "prijmeni"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "typVazby": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRRegistrujiciLekar": {
+        "required": [
+          "datumZahajeni",
+          "ico",
+          "odbornost"
+        ],
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumZahajeni": {
+            "type": "string",
+            "format": "date"
+          },
+          "datumUkonceni": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "ico": {
+            "type": "string",
+            "nullable": true
+          },
+          "icp": {
+            "type": "string",
+            "nullable": true
+          },
+          "odbornost": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRString": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MapaRID": {
+        "type": "object",
+        "properties": {
+          "aktualniRID": {
+            "type": "string",
+            "nullable": true
+          },
+          "historickyRID": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MatkaNovorozence": {
+        "type": "object",
+        "properties": {
+          "adresa": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NavrhSlouceniPacientu": {
+        "type": "object",
+        "properties": {
+          "ridCilovehoSlucujicihoPacienta": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaIdCilovehoSlucujicihoPacienta": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaRefCilovehoSlucujicihoPacienta": {
+            "type": "string",
+            "nullable": true
+          },
+          "ridSlucovanehoPacienta": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaIdSlucovanehoPacienta": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaRefSlucovanehoPacienta": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NavrhZruseniZaznamu": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ulozkaRef": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NovyPacient": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "kontaktniEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "kontaktniTelefon": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumUmrti": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "pohlavi": {
+            "type": "string",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "nullable": true
+          },
+          "matka": {
+            "$ref": "#/components/schemas/MatkaNovorozence"
+          },
+          "mistoNarozeniRuianObecId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "mistoNarozeniZemeKod": {
+            "type": "string",
+            "nullable": true
+          },
+          "mistoNarozeniSvetNazev": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ObalkaOdberuNotifikaci": {
+        "type": "object",
+        "properties": {
+          "defaultniURL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "odberNotifikaciPZS": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OdberNotifikaciPZS"
+            },
+            "nullable": true
+          },
+          "pouzivajiSeVychozi": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdberNotifikaci": {
+        "type": "object",
+        "properties": {
+          "zalozeneNotifikace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JednaNotifikace"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdberNotifikaciPZS": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "nullable": true
+          },
+          "kanalEndpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "kanalTyp": {
+            "type": "string",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedHromadneZtotozneni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/HromadneZtotozneni"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedOdberNotifikaci": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/OdberNotifikaci"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedPrirazeniDocasnehoRIDu": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedRozdeleniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedData": {
+            "$ref": "#/components/schemas/RozdelenyPacient"
+          },
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedSlouceniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedStazeniSouborHromadnehoZtotozneniInterni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "base64Data": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedStazeniSouboruHromadnehoZtotozneni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/StazeniSouboruHromadnehoZtotozneni"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVygenerovaniDocasnyRID": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVyhledaniHistoriePojisteni": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrubehPojisteni"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVyhledaniHistorieRegistrujicichLekaru": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegistrujiciLekar"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVyhledaniMapovaniRID": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/MapaRID"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVyhledaniOdberuNotifikaciPZS": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObalkaOdberuNotifikaci"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVyhledaniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pacient"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedZalozeniPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/Pacient"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedZalozeniReklamace": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedZmenaPacienta": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/Pacient"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedZruseniZaznamu": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Pacient": {
+        "required": [
+          "cisloPojistence",
+          "datumNarozeni",
+          "kontaktniEmail",
+          "kontaktniTelefon",
+          "omezeniSvepravnosti",
+          "opravneniZbraneMunice",
+          "preferovanyJazyk",
+          "prijmeni",
+          "rid",
+          "stavZaznamu",
+          "typZaznamu"
+        ],
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "stavZaznamu": {
+            "$ref": "#/components/schemas/StatusZaznamu"
+          },
+          "typZaznamu": {
+            "$ref": "#/components/schemas/TypZaznamuPacienta"
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/KZRAdresaDetail"
+          },
+          "datovaSchranka": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "datumNarozeni": {
+            "$ref": "#/components/schemas/KZRDate"
+          },
+          "datumUmrti": {
+            "$ref": "#/components/schemas/KZRDate"
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRDoklad"
+            },
+            "nullable": true
+          },
+          "jmeno": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "prijmeni": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "rodnePrijmeni": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniAdresa": {
+            "$ref": "#/components/schemas/KZRAdresaDetail"
+          },
+          "omezeniSvepravnosti": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "pohlavi": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "rodneCislo": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "zakonniZastupci": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRReferencniOsoba"
+            },
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "opravneniZbraneMunice": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniEmail": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniTelefon": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "preferovanyJazyk": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "mistoNarozeniRuianObecId": {
+            "$ref": "#/components/schemas/KZRLong"
+          },
+          "mistoNarozeniZemeKod": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "mistoNarozeniSvetNazev": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "registrujiciLekar": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRRegistrujiciLekar"
+            },
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRString"
+            },
+            "nullable": true
+          },
+          "zdravotniPojisteni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRPrubehPojisteni"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredmetNotifikace": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PriraditDocasnyRID": {
+        "type": "object",
+        "properties": {
+          "docasnyRID": {
+            "type": "string",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "PrubehPojisteni": {
+        "required": [
+          "platneOd",
+          "zdravotniPojistovnaKod"
+        ],
+        "type": "object",
+        "properties": {
+          "platneOd": {
+            "type": "string",
+            "format": "date"
+          },
+          "platneDo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "zdravotniPojistovnaKod": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegistrujiciLekar": {
+        "required": [
+          "datumZahajeni",
+          "ico",
+          "odbornost"
+        ],
+        "type": "object",
+        "properties": {
+          "datumZahajeni": {
+            "type": "string",
+            "format": "date"
+          },
+          "datumUkonceni": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "ico": {
+            "type": "string",
+            "nullable": true
+          },
+          "icp": {
+            "type": "string",
+            "nullable": true
+          },
+          "odbornost": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Reklamujici": {
+        "required": [
+          "idSubjektu",
+          "typSubjektu"
+        ],
+        "type": "object",
+        "properties": {
+          "idSubjektu": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "typSubjektu": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RozdeleniPacienta": {
+        "required": [
+          "novyPacient1",
+          "novyPacient2",
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "novyPacient1": {
+            "$ref": "#/components/schemas/NovyPacient"
+          },
+          "novyPacient2": {
+            "$ref": "#/components/schemas/NovyPacient"
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RozdelenyPacient": {
+        "required": [
+          "pacienti"
+        ],
+        "type": "object",
+        "properties": {
+          "pacienti": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pacient"
+            },
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SouborHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "nullable": true
+          },
+          "datumUmrti": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "subskripceID": {
+            "type": "string",
+            "nullable": true
+          },
+          "substavZtotozneni": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StatusZaznamu": {
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StazeniDatHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "idZadosti": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StazeniSouboruHromadnehoZtotozneni": {
+        "type": "object",
+        "properties": {
+          "dataVSouboru": {
+            "type": "boolean"
+          },
+          "hromadneZtotozneniDokonceno": {
+            "type": "boolean"
+          },
+          "souborHromadnehoZtotozneni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SouborHromadnehoZtotozneni"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubjektZalozeniNotifikace": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "jenomPull": {
+            "type": "boolean"
+          },
+          "pouzitDefaultniURL": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubskripceNotifikaceInterni": {
+        "required": [
+          "kanalTyp"
+        ],
+        "type": "object",
+        "properties": {
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "nullable": true
+          },
+          "prijemci": {
+            "$ref": "#/components/schemas/SubjektZalozeniNotifikace"
+          },
+          "kanalTyp": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypZaznamuPacienta": {
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UdajReklamace": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodnePrijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumUmrti": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "kontaktniAdresa": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "pohlavi": {
+            "type": "string",
+            "nullable": true
+          },
+          "doklady": {
+            "$ref": "#/components/schemas/Doklad"
+          },
+          "datovaSchranka": {
+            "type": "string",
+            "nullable": true
+          },
+          "omezeniSvepravnosti": {
+            "type": "string",
+            "nullable": true
+          },
+          "registrujiciLekar": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdravotniPojisteni": {
+            "type": "string",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "string",
+            "nullable": true
+          },
+          "opravneniZbraneMunice": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniCizincePodleCP": {
+        "type": "object",
+        "properties": {
+          "cisloPojistence": {
+            "type": "string",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniHistorieRegistrujicihLekaru": {
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniHistorieZdravotnihoPojisteni": {
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniMapovaniRID": {
+        "type": "object",
+        "properties": {
+          "jenAktualni": {
+            "type": "boolean"
+          },
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniOdberNotifikaciPZSInterni": {
+        "required": [
+          "kanalTyp"
+        ],
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "nullable": true
+          },
+          "vsechnySubskripce": {
+            "type": "boolean"
+          },
+          "kanalTyp": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniPacientaUniverzal": {
+        "type": "object",
+        "properties": {
+          "cisloPojistence": {
+            "type": "string",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "string",
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "nullable": true
+          },
+          "hledatPredchoziPrijmeni": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "mistoNarozeniRuianId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniPodleJmenoPrijmeniCP": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniPodleJmenoPrijmeniDatumNarozeni": {
+        "type": "object",
+        "properties": {
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniPodleJmenoPrijmeniRC": {
+        "type": "object",
+        "properties": {
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodneCislo": {
+            "type": "string",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniPodleRID": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostNavrhSlouceniPacientu": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NavrhSlouceniPacientu"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostNavrhZruseniZaznamu": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NavrhZruseniZaznamu"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostODocasnyRID": {
+        "type": "object",
+        "properties": {
+          "pocet": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOMapovaniRID": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniMapovaniRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOOdberNotifikaciInterni": {
+        "required": [
+          "zadostData"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/SubskripceNotifikaceInterni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOPrirazeniDocasnehoRIDu": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/PriraditDocasnyRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOStazeniDatHromadnehoZtotozneni": {
+        "required": [
+          "zadostData"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/StazeniDatHromadnehoZtotozneni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVygenerovaniDocasnehoRIDu": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZadostODocasnyRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniCizincePodleCP": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniCizincePodleCP"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniHistoriePojisteniPacienta": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniHistorieZdravotnihoPojisteni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniHistorieRegistrujicichLekaruPacienta": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniHistorieRegistrujicihLekaru"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniOdberuZmenPacientuProPZSInterni": {
+        "required": [
+          "zadostData"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniOdberNotifikaciPZSInterni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleAIFOUlozenky": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/AIFOUlozenka"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleDokladu": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/Doklad"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleJmenoPrijmeniCP": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleJmenoPrijmeniCP"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleJmenoPrijmeniDatumNarozeni": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleJmenoPrijmeniDatumNarozeni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleJmenoPrijmeniRC": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleJmenoPrijmeniRC"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleNIABSI": {
+        "type": "object",
+        "properties": {
+          "niabsi": {
+            "type": "string",
+            "nullable": true
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleRID": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPodleRID"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniUniverzal": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPacientaUniverzal"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOZalozeniPacienta": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NovyPacient"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOZmenuPacienta": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZmenaPacienta"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOZruseniOdberuNotifikaciInterni": {
+        "required": [
+          "zadostData"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZruseniOdberuNotifikaciInterni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostReklamaceUdaju": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/DataReklamace"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostRozdeleniPacientu": {
+        "required": [
+          "data",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RozdeleniPacienta"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZmenaPacienta": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "aifo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AIFO"
+            },
+            "nullable": true
+          },
+          "adresaPobytu": {
+            "$ref": "#/components/schemas/Adresa"
+          },
+          "cisloPojistence": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumUmrti": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "doklady": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Doklad"
+            },
+            "nullable": true
+          },
+          "omezeniSvepravnosti": {
+            "type": "string",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodnePrijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "pohlavi": {
+            "type": "string",
+            "nullable": true
+          },
+          "statniObcanstvi": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "mistoNarozeniRuianObecId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "mistoNarozeniZemeKod": {
+            "type": "string",
+            "nullable": true
+          },
+          "mistoNarozeniSvetNazev": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZruseniOdberuNotifikaciInterni": {
+        "type": "object",
+        "properties": {
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "nullable": true
+          },
+          "idSubskripce": {
+            "type": "string",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "string",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedVyhledaniCiselniku": {
+        "required": [
+          "odpovedData",
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZakladniCiselnik"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniCiselniku": {
+        "type": "object",
+        "properties": {
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZakladniCiselnik": {
+        "required": [
+          "kod",
+          "nazev",
+          "platnostOd"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "platnostOd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

@@ -1,0 +1,2686 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "KRPZS",
+    "description": "<details><summary><strong>Verze 2.0.2</strong></summary><p><strong>Změny:</strong></p><ul><li>Oprava zobrazení zdvojených headerů ve Swaggeru</li></ul></details><details><summary><strong>Verze 2.0.1</strong></summary><p><strong>Změny:</strong></p><ul><li>Přechod na nové verzovaní</li></ul></details>",
+    "contact": {
+      "name": "SLE01 - Kmenové registry - podpora veřejného testování",
+      "email": "csez@mzd.gov.cz"
+    },
+    "version": "v2.0.2"
+  },
+  "servers": [
+    {
+      "url": "/krpzs"
+    }
+  ],
+  "paths": {
+    "/api/v2/ciselnik/druh_pece": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku zvláštní odborné způsobilosti / certifikovaných kurzů",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "e9f3fab8-2926-4c16-8f08-f5e8904ade8a"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "3bcbaf9a-2e0e-44a3-bdb4-6a61220745a0"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/kategorie_pristrojove_techniky": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku komor",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "ae63e253-8b51-4460-982f-65e293ece839"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0512adde-cab1-46cc-a201-d1c78b1ed27b"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/spravni_organ": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku odborné způsobilosti / oborů",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "de8b5514-bf24-4c3d-8dc9-5f8ce294c2fe"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "fe6b79aa-a26b-4852-a9f6-2bcba221dcd5"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/typ_rozhodnuti": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku specializované způsobilosti / specializace",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "7981b228-24d7-466b-9190-58ffe3115bf9"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "ccf1da00-9d98-4624-9d27-5fa37b39e8a4"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/stat": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku států",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "7719008c-dc4e-4ccd-b18b-e0579b292c6d"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "29a95587-0307-43ae-b2bf-460ca34dc79d"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/forma_pece": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku forma péče",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "898ffdb8-4a36-479d-9b46-2b1fb8c1a6f7"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "2eafacdb-6f14-4333-b5a8-3c4aee74526c"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/obor_pece": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku obor pece",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5c1968ce-3891-4319-bb1e-7ae4ae76d253"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "ad5872d5-f7be-47a6-9114-9771f70e1211"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/ciselnik/zdravotni_pojistovna": {
+      "post": {
+        "tags": [
+          "Ciselnik"
+        ],
+        "summary": "Vyhledání číselníku zdravotních pojišťoven",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "a0262ce8-3d1b-4526-9f9e-0887d8b90455"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "e9cd5437-4182-4b67-af5d-135817401c47"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniCiselniku"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniCiselniku"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/notifikace/zalozit/odber": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Žádost o založení odběru notifikací",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "838cfa47-1ffd-4cf9-87b3-169ba940fdc5"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "f43af84d-5889-467c-9140-3a0e732f0a40"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o založení odběru notifikací",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOOdberNotifikaciInterni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/notifikace/zrusit/odber": {
+      "delete": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Žádost o zrušení odběru notifikací",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "8a30bc3d-29fa-44c4-b08a-7a4e553f4bb7"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "ed7a9a94-cf30-4528-b5b8-a5b636228b98"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o zrušení odběru notifikací",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOZruseniOdberuNotifikaciInterni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedOdberNotifikaci"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/notifikace/vyhledat/odber": {
+      "post": {
+        "tags": [
+          "Notifikace"
+        ],
+        "summary": "Žádost o vyhledání odběru notifikací",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "9ea3465b-7fd8-41ae-984b-d5a53ae0c6bc"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "d0c7abe8-4b23-40cf-82d4-a970e23d1451"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, žádosti o vyhledání odběru notifikací",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniOdberuZmenPacientuProPZSInterni"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniOdberuNotifikaciPZS"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Poskytovatel/hledat/ico": {
+      "post": {
+        "tags": [
+          "Poskytovatel"
+        ],
+        "summary": "Vyhledá poskytovatele, dle paramertů ze zadaného požadavku.",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "cf507176-91ae-48d3-824b-22efabf75810"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "6ef27d77-7790-41a4-8f90-02c8d79a5ec8"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, obsahují různé parametry pro vyhledávání.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleICO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniDetailPZS"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Poskytovatel/hledat/misto": {
+      "post": {
+        "tags": [
+          "Poskytovatel"
+        ],
+        "summary": "Vyhledá poskytovatele, dle paramertů ze zadaného požadavku.",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "66f645a0-6bf0-40e7-a633-a4d21c401017"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "15b0bbf2-d9ad-4f29-9735-849f75c5c7b4"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, obsahují různé parametry pro vyhledávání.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleMistaPoskytovani"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniVerejnychUdajuPZS"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Poskytovatel/hledat/nazev": {
+      "post": {
+        "tags": [
+          "Poskytovatel"
+        ],
+        "summary": "Vyhledá poskytovatele, dle paramertů ze zadaného požadavku.",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "345489dc-4a4c-448d-b7b3-2c4069ad6e4e"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "209f0071-f79d-47fe-9bb9-587f71d3b9cc"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data požadavku, obsahují různé parametry pro vyhledávání.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOVyhledaniPodleNazvu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedVyhledaniDetailPZS"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Poskytovatel/reklamuj/udaj": {
+      "post": {
+        "tags": [
+          "Poskytovatel"
+        ],
+        "summary": "Žádost o reklamaci údaje",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "d647ea7f-f5fe-452c-a701-cbc81e0e8a6b"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "43f5ee7c-e0a6-44d7-99d0-c98f7e74103d"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Objekt obsahující data definující požadavek na reklamaci. Co je reklamováno, kým, atp.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostOReklamaciUdajuPZS"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedZalozeniReklamace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Poskytovatel/nastavit/urlpronotifikace": {
+      "post": {
+        "tags": [
+          "Poskytovatel"
+        ],
+        "summary": "Nastaví URL pro notifikace poskytovatele zdravotních služeb.",
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "description": "TraceId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "47650446-fa75-4b95-9f9e-fe58e53d5553"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "CorrelationId - předá se do hlavičky",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "bb31e7dc-9742-410d-b75c-5af76218b0f4"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Žádost o nastavení URL pro notifikace PZS.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZadostONastaveniURLproNotifikacePZS"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdpovedNastaveniURLproNotifikace"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DataReklamacePZS": {
+        "type": "object",
+        "properties": {
+          "datumReklamace": {
+            "type": "string",
+            "description": "Datum reklamace",
+            "format": "date-time"
+          },
+          "ico": {
+            "type": "string",
+            "description": "IČO poskytovatele",
+            "nullable": true
+          },
+          "udajReklamace": {
+            "$ref": "#/components/schemas/UdajReklamace"
+          },
+          "popisReklamace": {
+            "type": "string",
+            "description": "Popis reklamace",
+            "nullable": true
+          },
+          "reklamujici": {
+            "$ref": "#/components/schemas/Reklamujici"
+          },
+          "zduvodneni": {
+            "type": "string",
+            "description": "Zdůvodnění (volitelné)",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO KRPZS – dotazy: Data reklamace PZS"
+      },
+      "ErrorModel": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Popis chyby",
+            "nullable": true
+          },
+          "fieldName": {
+            "type": "string",
+            "description": "Nazev vlastnosti, ke ktere se vaze chyba",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string",
+            "description": "Zavaznost chyby",
+            "nullable": true
+          },
+          "errorLevel": {
+            "type": "string",
+            "description": "Úroveň chyby",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Model pro předávání chyb"
+      },
+      "JednaNotifikace": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "Id subskripce",
+            "nullable": true
+          },
+          "poskytovatelId": {
+            "type": "string",
+            "description": "Id predmetu, pro který byla notifikace založena",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o jednom založeném odběru notifikací"
+      },
+      "KZRAdresaDetail": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "ruianId": {
+            "type": "integer",
+            "description": "Identifikátor v systému RUIAN",
+            "format": "int64",
+            "nullable": true
+          },
+          "stat": {
+            "type": "string",
+            "description": "Stát",
+            "nullable": true
+          },
+          "obec": {
+            "type": "string",
+            "description": "Obec / město",
+            "nullable": true
+          },
+          "psc": {
+            "type": "integer",
+            "description": "Poštovní směrovací číslo",
+            "format": "int32",
+            "nullable": true
+          },
+          "ulice": {
+            "type": "string",
+            "description": "Ulice",
+            "nullable": true
+          },
+          "cisloPopisne": {
+            "type": "integer",
+            "description": "Číslo popisné",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloEvidencni": {
+            "type": "integer",
+            "description": "Číslo evideční",
+            "format": "int32",
+            "nullable": true
+          },
+          "cisloOrientacni": {
+            "type": "string",
+            "description": "Číslo orientační",
+            "nullable": true
+          },
+          "cisloJine": {
+            "type": "string",
+            "description": "Jiné číslo v případě, že není známo číslo popisné ani číslo evidenční",
+            "nullable": true
+          },
+          "poBox": {
+            "type": "string",
+            "description": "Post office box",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Další popis adresy",
+            "nullable": true
+          },
+          "krajKod": {
+            "type": "string",
+            "description": "Identifikátor kraje zadaného jako ID, nebo NutsLau",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro adresu"
+      },
+      "KZRDate": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "description": "Datum hodnota",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s datumem a s dalšími informacemi"
+      },
+      "KZRDotaz": {
+        "required": [
+          "datum",
+          "ucel",
+          "zadostId"
+        ],
+        "type": "object",
+        "properties": {
+          "datum": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ucel": {
+            "type": "string"
+          },
+          "zadostId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KZRInt": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "integer",
+            "description": "int hodnota",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data s int hodnotou a s dalšími informacemi"
+      },
+      "KZROdpoved": {
+        "required": [
+          "odpovedId",
+          "stav",
+          "zadostId"
+        ],
+        "type": "object",
+        "properties": {
+          "chybyZpracovani": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorModel"
+            },
+            "description": "Chyby při zpracování požadavku",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav vyřízení požadavku",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis ke stavu požadavku",
+            "nullable": true
+          },
+          "subStav": {
+            "type": "string",
+            "description": "Pod-stav požadavku",
+            "nullable": true
+          },
+          "zadostId": {
+            "type": "string",
+            "description": "Identifikátor požadavku",
+            "format": "uuid"
+          },
+          "odpovedId": {
+            "type": "string",
+            "description": "Identifikátor odpovědi",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data odpovědi se základními informacemi - obsahuje každá odpověď"
+      },
+      "KZRString": {
+        "type": "object",
+        "properties": {
+          "referencni": {
+            "type": "boolean",
+            "description": "Příznak zda se jedná o refereční údaj",
+            "nullable": true
+          },
+          "stav": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "zdroj": {
+            "type": "string",
+            "description": "Zdroj",
+            "nullable": true
+          },
+          "hodnota": {
+            "type": "string",
+            "description": "String hodnota",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data se string hodnotou a s dalšími informacemi"
+      },
+      "Kontakt": {
+        "type": "object",
+        "properties": {
+          "datovaSchranka": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "email": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "telefon": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "www": {
+            "$ref": "#/components/schemas/KZRString"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MistoPoskytovani": {
+        "type": "object",
+        "properties": {
+          "zdravotnickeZarizeni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZdravotnickeZarizeni"
+            },
+            "description": "Zdravotnické zařízení (0..1)",
+            "nullable": true
+          },
+          "adresa": {
+            "$ref": "#/components/schemas/KZRAdresaDetail"
+          },
+          "sluzby": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sluzba"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NastaveniURLproNotifikacePZS": {
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "nullable": true
+          },
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ObalkaOdberuNotifikaci": {
+        "type": "object",
+        "properties": {
+          "defaultniURL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Defaultní URL notifikace",
+            "nullable": true
+          },
+          "odberNotifikaciPZS": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OdberNotifikaciPZS"
+            },
+            "description": "Odběr notifikací",
+            "nullable": true
+          },
+          "pouzivajiSeVychozi": {
+            "type": "boolean",
+            "description": "Zda-li se používají výchozí notifikace"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o vyhledané založené notifikaci"
+      },
+      "OdberNotifikaci": {
+        "type": "object",
+        "properties": {
+          "zalozeneNotifikace": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JednaNotifikace"
+            },
+            "description": "Založené notifikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o založeném odběru notifikací"
+      },
+      "OdberNotifikaciPZS": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "Id subskripce k odběru notifikací",
+            "nullable": true
+          },
+          "kanalEndpoint": {
+            "type": "string",
+            "description": "Endpoint kanálu notifikace",
+            "nullable": true
+          },
+          "kanalTyp": {
+            "type": "string",
+            "description": "Typ kanálu. Nyní pouze \"API\"",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "string",
+            "description": "ID předmětu nofifikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Informace o vyhledaném odběru notifikace pro PZS"
+      },
+      "Oddeleni": {
+        "type": "object",
+        "properties": {
+          "ordinacniDoba": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvozniOrdinacniDoba"
+            },
+            "description": "Ordinační doba (0..1)",
+            "nullable": true
+          },
+          "provozniDoba": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvozniOrdinacniDoba"
+            },
+            "description": "Provozní doba (0..1)",
+            "nullable": true
+          },
+          "pocetLuzek": {
+            "$ref": "#/components/schemas/KZRInt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OdpovedNastaveniURLproNotifikace": {
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď na nastavení URL pro notifikace"
+      },
+      "OdpovedOdberNotifikaci": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "$ref": "#/components/schemas/OdberNotifikaci"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď na přihlášení k odběru notifikací"
+      },
+      "OdpovedVyhledaniCiselniku": {
+        "required": [
+          "odpovedData",
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZakladniCiselnik"
+            },
+            "description": "Data základního číselníku",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď vyhledání číselníku"
+      },
+      "OdpovedVyhledaniDetailPZS": {
+        "type": "object",
+        "properties": {
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PZSDetail"
+            },
+            "description": "Data o poskytovateli zdravotních služeb",
+            "nullable": true
+          },
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO KRPZS – odpovědi: Vyhledání detailů PZS"
+      },
+      "OdpovedVyhledaniOdberuNotifikaciPZS": {
+        "required": [
+          "odpovedInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          },
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObalkaOdberuNotifikaci"
+            },
+            "description": "Data s informací ohledně vyhledaného odběru notifikací",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro odpověď na vyhledání informací ohledně odběru notifikací"
+      },
+      "OdpovedVyhledaniVerejnychUdajuPZS": {
+        "type": "object",
+        "properties": {
+          "odpovedData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VerejneUdajePZS"
+            },
+            "description": "Veřejné údaje PZS",
+            "nullable": true
+          },
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď vyhledání veřejných údajů PZS"
+      },
+      "OdpovedZalozeniReklamace": {
+        "type": "object",
+        "properties": {
+          "odpovedInfo": {
+            "$ref": "#/components/schemas/KZROdpoved"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Opravneni": {
+        "type": "object",
+        "properties": {
+          "mistaPoskytovani": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MistoPoskytovani"
+            },
+            "description": "Místa poskytování (0..*)",
+            "nullable": true
+          },
+          "rozhodnuti": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rozhodnuti"
+            },
+            "description": "",
+            "nullable": true
+          },
+          "spravniOrgan": {
+            "type": "string",
+            "description": "Seznam správních orgánů.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PZSDetail": {
+        "type": "object",
+        "properties": {
+          "stavZaznamu": {
+            "type": "string",
+            "description": "Stav",
+            "nullable": true
+          },
+          "ico": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "adresaSidla": {
+            "$ref": "#/components/schemas/KZRAdresaDetail"
+          },
+          "poskytovatelNazev": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "datovaSchranka": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniEmail": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniTelefon": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "kontaktniWeb": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "opravneni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Opravneni"
+            },
+            "nullable": true
+          },
+          "typPoskytovatele": {
+            "$ref": "#/components/schemas/KZRInt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PredmetNotifikace": {
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "description": "IČO předmětu notifikace",
+            "nullable": true
+          },
+          "predmetTyp": {
+            "type": "string",
+            "description": "Typ předmětu notifikace",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Předmět notifikace"
+      },
+      "PristrojovaTechnika": {
+        "type": "object",
+        "properties": {
+          "doplnkovyPopis": {
+            "type": "string",
+            "description": "Doplňkový popis přístrojové techniky.",
+            "nullable": true
+          },
+          "kategorieKod": {
+            "type": "string",
+            "description": "Kód kategorie přístrojové techniky.",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název přístrojové techniky.",
+            "nullable": true
+          },
+          "platnostOd": {
+            "type": "string",
+            "description": "Datum začátku platnosti záznamu.",
+            "format": "date",
+            "nullable": true
+          },
+          "platnostDo": {
+            "type": "string",
+            "description": "Datum konce platnosti záznamu.",
+            "format": "date",
+            "nullable": true
+          },
+          "poznamka": {
+            "type": "string",
+            "description": "Poznámka k přístrojové technice.",
+            "nullable": true
+          },
+          "porizovaciCena": {
+            "type": "number",
+            "description": "Pořizovací cena přístrojové techniky.",
+            "format": "double",
+            "nullable": true
+          },
+          "pristrojovaTechnikaKod": {
+            "type": "string",
+            "description": "Jedinečný kód přístrojové techniky.",
+            "nullable": true
+          },
+          "datumRokPorizeni": {
+            "type": "string",
+            "description": "Rok nebo datum pořízení přístrojové techniky (text).",
+            "nullable": true
+          },
+          "stav": {
+            "type": "integer",
+            "description": "Stav",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "ProvozniOrdinacniDoba": {
+        "type": "object",
+        "properties": {
+          "denVTydnuKod": {
+            "type": "integer",
+            "description": "Kód dne v týdnu (1=Po … 7=Ne)",
+            "format": "int32"
+          },
+          "dopoledne": {
+            "type": "string",
+            "description": "Dopoledne (0..1) – např. 08:00–12:00",
+            "nullable": true
+          },
+          "odpoledne": {
+            "type": "string",
+            "description": "Odpoledne (0..1) – např. 13:00–16:00",
+            "nullable": true
+          },
+          "poznamka": {
+            "type": "string",
+            "description": "Poznámka (0..1)",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Reklamujici": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail reklamujícího.",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "description": "Jméno reklamujícího.",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "description": "Příjmení reklamujícího.",
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "integer",
+            "description": "Identifikátor subjektu.",
+            "format": "int64",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "description": "Typ subjektu.\r\nEnumTypSubjektu",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Reklamující osoba."
+      },
+      "Rozhodnuti": {
+        "type": "object",
+        "properties": {
+          "platnostOd": {
+            "$ref": "#/components/schemas/KZRDate"
+          },
+          "platnostDo": {
+            "$ref": "#/components/schemas/KZRDate"
+          },
+          "typRozhodnuti": {
+            "$ref": "#/components/schemas/KZRString"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Sluzba": {
+        "type": "object",
+        "properties": {
+          "druhPece": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "formaPece": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "nazevSluzby": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "oborPece": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KZRString"
+            },
+            "description": "Obor péče (0..*) – může jít o více kódů/oborů",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubjektZalozeniNotifikace": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL, na něž bude notifikace odesílána",
+            "nullable": true
+          },
+          "jenomPull": {
+            "type": "boolean",
+            "description": "Zda-li budou notifikace realizovány pouze jako pull"
+          },
+          "pouzitDefaultniURL": {
+            "type": "boolean",
+            "description": "Zda-li použít defaultní URL"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Subjekt založení notifikace"
+      },
+      "SubskripceNotifikaceInterni": {
+        "required": [
+          "kanalTyp"
+        ],
+        "type": "object",
+        "properties": {
+          "predmet": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "description": "Předměty notifikací - o kom budeme notifikováni",
+            "nullable": true
+          },
+          "prijemci": {
+            "$ref": "#/components/schemas/SubjektZalozeniNotifikace"
+          },
+          "kanalTyp": {
+            "type": "string",
+            "description": "Typ komunikačního kanálu",
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "string",
+            "description": "Id subjektu, jemuž budou notifikace zasílány",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "description": "Typ subjektu, jemuž jsou notifikace zasílány",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k nastavení odběru notifikací. Pro účely interního přenosu operací"
+      },
+      "UdajReklamace": {
+        "type": "object",
+        "properties": {
+          "poskytovatelIco": {
+            "type": "string",
+            "nullable": true
+          },
+          "poskytovatelNazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "adresa": {
+            "type": "string",
+            "nullable": true
+          },
+          "typPoskytovatele": {
+            "type": "string",
+            "nullable": true
+          },
+          "kontaktniEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "kontaktniTelefon": {
+            "type": "string",
+            "nullable": true
+          },
+          "kontaktniWeb": {
+            "type": "string",
+            "nullable": true
+          },
+          "datovaSchranka": {
+            "type": "string",
+            "nullable": true
+          },
+          "rozhodnuti": {
+            "type": "string",
+            "nullable": true
+          },
+          "opravneni": {
+            "type": "string",
+            "nullable": true
+          },
+          "provozniOrdinacniDoba": {
+            "type": "string",
+            "nullable": true
+          },
+          "sluzby": {
+            "type": "string",
+            "nullable": true
+          },
+          "zdravotnickeZarizeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "pocetLuzek": {
+            "type": "string",
+            "nullable": true
+          },
+          "pristrojovatechnika": {
+            "type": "string",
+            "nullable": true
+          },
+          "vymennaSit": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Údaj reklamace"
+      },
+      "VerejneUdajePZS": {
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "description": "Ico",
+            "nullable": true
+          },
+          "opravneni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Opravneni"
+            },
+            "description": "Oprávnění (0..*)",
+            "nullable": true
+          },
+          "verejneKontakty": {
+            "$ref": "#/components/schemas/Kontakt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VyhledaniOdberNotifikaciPZSInterni": {
+        "required": [
+          "kanalTyp"
+        ],
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "ID subskripce",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "description": "Předmět notifikace",
+            "nullable": true
+          },
+          "vsechnySubskripce": {
+            "type": "boolean",
+            "description": "Zda-li vyhledat všechny subskripce. V případě, že je vyplněno nevyplňovat ID subskripce."
+          },
+          "kanalTyp": {
+            "type": "string",
+            "description": "Typ komunikačního kanálu",
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "string",
+            "description": "Id subjektu, o němž budou notifikace zasílány",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "description": "Typ subjektu, o němž jsou notifikace zasílány",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k zrušení odběru notifikací"
+      },
+      "VyhledaniPZSPodleICO": {
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "description": "IČO dle nějž hledáme PZS",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Údaje k vyhledání PZS dle IČO"
+      },
+      "VyhledaniPZSPodleMistaPoskytovani": {
+        "type": "object",
+        "properties": {
+          "krajKod": {
+            "type": "string",
+            "description": "Identifikátor kraje",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO KRPZS – dotazy: Vyhledání PZS podle místa poskytování"
+      },
+      "VyhledaniPZSPodleNazvu": {
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "description": "Název PZS"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO KRPZS – dotazy: Vyhledání PZS podle názvu"
+      },
+      "VymennaSit": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "$ref": "#/components/schemas/KZRString"
+          },
+          "pripojnyBod": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostONastaveniURLproNotifikacePZS": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/NastaveniURLproNotifikacePZS"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Žádost o nastavení URL pro notifikace PZS."
+      },
+      "ZadostOOdberNotifikaciInterni": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/SubskripceNotifikaceInterni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro přihlášení k odběru notifikací"
+      },
+      "ZadostOReklamaciUdajuPZS": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/DataReklamacePZS"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO KRPZS – dotazy: Žádost o reklamaci údajů PZS."
+      },
+      "ZadostOVyhledaniCiselniku": {
+        "required": [
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti pro vyhledání číselníku"
+      },
+      "ZadostOVyhledaniOdberuZmenPacientuProPZSInterni": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniOdberNotifikaciPZSInterni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o vyhledání odběru notifikací pro PZS a subjekty údajů"
+      },
+      "ZadostOVyhledaniPodleICO": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPZSPodleICO"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Žádost o vyhledání PZS podle IČO"
+      },
+      "ZadostOVyhledaniPodleMistaPoskytovani": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPZSPodleMistaPoskytovani"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadostOVyhledaniPodleNazvu": {
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/VyhledaniPZSPodleNazvu"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DTO KRPZS – dotazy: Žádost o vyhledání PZS podle názvu."
+      },
+      "ZadostOZruseniOdberuNotifikaciInterni": {
+        "required": [
+          "zadostData",
+          "zadostInfo"
+        ],
+        "type": "object",
+        "properties": {
+          "zadostData": {
+            "$ref": "#/components/schemas/ZruseniOdberuNotifikaciInterni"
+          },
+          "zadostInfo": {
+            "$ref": "#/components/schemas/KZRDotaz"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data žádosti o zrušení k odběru notifikací pro PZS a subjekty údajů. Pro interní komunikaci uvniř systému."
+      },
+      "ZakladniCiselnik": {
+        "required": [
+          "kod",
+          "nazev",
+          "platnostOd"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "description": "Kód číselníkové položky",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název číselníkové položky",
+            "nullable": true
+          },
+          "platnostOd": {
+            "type": "string",
+            "description": "Platnost od číselníkové položky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time"
+          },
+          "platnostDo": {
+            "type": "string",
+            "description": "Platnost do číselníkové položky v ISO 8601 formátu (yyyy-MM-dd)",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data pro základní číselník"
+      },
+      "ZdravotnickeZarizeni": {
+        "type": "object",
+        "properties": {
+          "oddeleni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Oddeleni"
+            },
+            "description": "Oddělení (0..*)",
+            "nullable": true
+          },
+          "pristrojovaTechnika": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PristrojovaTechnika"
+            },
+            "description": "Přístrojová technika (0..*)",
+            "nullable": true
+          },
+          "vymennaSit": {
+            "$ref": "#/components/schemas/VymennaSit"
+          },
+          "pcdp": {
+            "type": "integer",
+            "description": "PCDP – kód",
+            "format": "int32"
+          },
+          "pcz": {
+            "type": "integer",
+            "description": "PCZ – Pořadové číslo zařízení",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZruseniOdberuNotifikaciInterni": {
+        "type": "object",
+        "properties": {
+          "idSubskripce": {
+            "type": "string",
+            "description": "ID subskripce",
+            "nullable": true
+          },
+          "predmetId": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PredmetNotifikace"
+            },
+            "description": "Předmět notifikace",
+            "nullable": true
+          },
+          "subjektId": {
+            "type": "string",
+            "description": "Id subjektu, jemuž budou notifikace zasílány",
+            "nullable": true
+          },
+          "subjektTyp": {
+            "type": "string",
+            "description": "Typ subjektu, jemuž jsou notifikace zasílány",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsahuje informace potřebné k zrušení odběru notifikací pro interní komunikaci uvnitř systému"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

@@ -48,3 +48,8 @@ checkmk/
 
 # Subagent web fetch cache
 .firecrawl/
+
+# Analytická dokumentace + swaggery (verzovaná podsložka – přebíjí *.json výše)
+!docs/analytics/
+!docs/analytics/**
+docs/analytics/**/*.zip
