@@ -3,6 +3,9 @@
 *.pfx
 *.p12
 *.pem
+# Výjimka: veřejně stažitelný TESTOVACÍ cert (T2) Krajské zdravotní z NCEZ.
+# POZOR: produkční homolka.pfx zůstává ignorovaný (nikdy necommitovat).
+!krajska_zdravotni.pfx
 
 # Python
 __pycache__/
