@@ -249,7 +249,11 @@ Sekce **ÚZIS / NZIS** (skupina *ÚZIS / NZIS* v menu):
   dokumentace [apidoc.uzis.cz](https://apidoc.uzis.cz/Registr/NRPZS/index.html)):
   hlášení volných lůžek (`ObsazenostLuzek/VolnaLuzka`) + číselníky (formy/obory/vybavení/skupiny
   pacientů) dle Metodiky ÚZIS v1.2. Zápis vyžaduje certifikát ÚZIS/EREG → režim SIMULACE.
-- **Hlášení do NZIS** -- odeslání hlášení do registru (režim SIMULACE bez certifikátu ÚZIS/EREG)
+- **Hlášení do NZIS** -- odeslání hlášení do registru se **strukturovaným formulářem dle
+  registru** (NOR, NRHOSP, LPZ, NRVV, NRKI, NRLUD – pole dle DASTA) i volným JSON
+  (režim SIMULACE bez certifikátu ÚZIS/EREG)
+- **Import (GUI)** -- nahrání **DASTA dávky** (XML/ZIP, blok `*nr`) s přehledem bloků a
+  volitelným založením hlášení, a **číselníku (CSV)** `kód;název` s náhledem položek
 
 | Proměnná | Popis |
 |----------|-------|

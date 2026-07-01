@@ -185,3 +185,53 @@ def test_diagnose_obsahuje_ereg(client):
     d = client.get("/api/uzis/diagnose").json()["data"]
     assert "ereg_base" in d
     assert "apidoc" in d
+    assert "dasta_url" in d
+
+
+# --- Formuláře hlášení + číselníky ----------------------------------------
+
+def test_registr_formular_nor(client):
+    d = client.get("/api/uzis/registr/NOR/formular").json()["data"]
+    kody = {p["kod"] for p in d["pole"]}
+    assert "diagnozaMKN" in kody and "rodneCislo" in kody
+
+
+def test_registr_formular_neznamy(client):
+    d = client.get("/api/uzis/registr/XYZ/formular").json()["data"]
+    assert d["pole"] == []
+
+
+def test_ciselnik_pojistovny(client):
+    r = client.get("/api/uzis/ciselnik/pojistovny")
+    kody = {p["kod"] for p in r.json()["data"]["polozky"]}
+    assert "111" in kody  # VZP
+
+
+# --- Import přes GUI ------------------------------------------------------
+
+def test_import_dasta_xml(client):
+    client.post("/api/uzis/sim/reset")
+    xml = b"<dasta><nz><nor/><nor/><nrh/><nrz/></nz></dasta>"
+    r = client.post("/api/uzis/import/dasta",
+                    files={"file": ("davka.xml", xml, "text/xml")},
+                    data={"seed": "true"})
+    assert r.status_code == 200
+    d = r.json()["data"]
+    assert d["korenElement"] == "dasta"
+    assert d["nalezeneRegistry"].get("nor") == 2
+    assert d["seeded"] == 4
+
+
+def test_import_dasta_nevalidni(client):
+    r = client.post("/api/uzis/import/dasta",
+                    files={"file": ("x.xml", b"toto neni xml", "text/xml")})
+    assert r.json()["status"] == 400
+
+
+def test_import_ciselnik_csv(client):
+    csv_data = "kod;nazev\n111;VZP\n201;VoZP\n".encode("utf-8")
+    r = client.post("/api/uzis/import/ciselnik",
+                    files={"file": ("c.csv", csv_data, "text/csv")})
+    d = r.json()["data"]
+    assert d["pocet"] == 2
+    assert d["polozky"][0]["kod"] == "111"

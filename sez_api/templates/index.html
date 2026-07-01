@@ -6719,6 +6719,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
         <div class="sub-tab" data-panel="uzis-registry-panel">Registry (NZR)</div>
         <div class="sub-tab" data-panel="uzis-luzka-panel">Obsazenost lůžek (NDLP)</div>
         <div class="sub-tab" data-panel="uzis-hlaseni-panel">Hlášení do NZIS</div>
+        <div class="sub-tab" data-panel="uzis-import-panel">Import (GUI)</div>
         <div class="sub-tab" data-panel="uzis-sim-panel">Simulace</div>
       </div>
 
@@ -6823,14 +6824,20 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
             <div class="form-group"><label>Registr</label>
-              <select id="uzisHlRegistr"><option value="NOR">NOR – onkologický</option></select>
+              <select id="uzisHlRegistr" onchange="uzisHlRegistrChange()"><option value="NOR">NOR – onkologický</option></select>
             </div>
             <div class="form-group"><label>RID pacienta</label><input id="uzisHlRid" placeholder="např. 3740100325"></div>
             <div class="form-group"><label>IČO poskytovatele</label><input id="uzisHlIco" placeholder="25488627"></div>
           </div>
-          <div class="form-group" style="margin-top:8px"><label>Tělo hlášení (JSON)</label>
-            <textarea id="uzisHlTelo" rows="7" placeholder='{"diagnoza": "C50", "datumStanoveni": "2026-01-15", "stadium": "II"}'></textarea>
+          <div id="uzisHlPoleBox" style="display:none;margin-top:10px">
+            <div style="font-weight:600;font-size:12px;color:var(--fg3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)">Strukturovaná pole hlášení</div>
+            <div id="uzisHlPole" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
           </div>
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Volný JSON (pokročilé)</summary>
+            <p style="font-size:11px;color:var(--fg3);margin:6px 0">Pokud vyplníte JSON, sloučí se se strukturovanými poli (JSON má přednost).</p>
+            <div class="form-group"><textarea id="uzisHlTelo" rows="6" placeholder='{"diagnozaMKN": "C50", "datumStanoveniDg": "2026-01-15", "stadium": "II"}'></textarea></div>
+          </details>
           <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="uzisHlasit()">Odeslat hlášení</button>
             <button class="btn" onclick="uzisHlasitObalka()">Zobrazit obálku</button>
@@ -6839,6 +6846,38 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           </div>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="uzisHlResult">-</div></div>
+      </div>
+
+      <!-- Import (GUI) -->
+      <div class="sub-panel" id="uzis-import-panel">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Import DASTA dávky (XML / ZIP)</div>
+            <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+              Nahrajte dávkový soubor DASTA v4 (blok <code>*nr</code> národních registrů). Nástroj soubor
+              naparsuje, zobrazí přehled bloků a volitelně založí simulovaná hlášení.
+            </p>
+            <div class="form-group"><label>Soubor DASTA (.xml / .zip)</label>
+              <input type="file" id="uzisImpDastaFile" accept=".xml,.zip,text/xml,application/zip"></div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;color:var(--fg2)">
+              <input type="checkbox" id="uzisImpDastaSeed" style="width:auto"> Založit simulovaná hlášení z nalezených bloků
+            </label>
+            <button class="btn btn-primary" style="margin-top:10px" onclick="uzisImportDasta()">Nahrát a zpracovat</button>
+            <div id="uzisImpDastaSummary" style="display:none;margin-top:12px"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Import číselníku (CSV)</div>
+            <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+              Nahrajte CSV ve tvaru <code>kod;nazev</code> (oddělovač <code>;</code> nebo <code>,</code>,
+              kódování UTF-8 / Windows-1250). Zobrazí se náhled naparsovaných položek.
+            </p>
+            <div class="form-group"><label>Soubor CSV</label>
+              <input type="file" id="uzisImpCsvFile" accept=".csv,text/csv"></div>
+            <button class="btn btn-primary" style="margin-top:10px" onclick="uzisImportCsv()">Nahrát a zpracovat</button>
+            <div id="uzisImpCsvSummary" style="display:none;margin-top:12px"></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Surová odpověď</span></div><div class="json-box" id="uzisImportResult">-</div></div>
       </div>
 
       <!-- Simulace -->
@@ -16539,6 +16578,7 @@ async function uzisInit() {
     const [cls, label] = map[mode] || map.SIM;
     badge.className = 'badge ' + cls; badge.textContent = label;
   }
+  uzisHlRegistrChange();
 }
 function uzisSubTab(panelId) {
   const sec = document.getElementById('sec-uzis'); if (!sec) return;
@@ -16580,7 +16620,7 @@ async function uzisRegistry() {
   const box = document.getElementById('uzisRegistryTable');
   const rows = r?.data?.registry || [];
   const sel = document.getElementById('uzisHlRegistr');
-  if (sel) sel.innerHTML = rows.map(x => `<option value="${escHtml(x.kod)}">${escHtml(x.kod)} – ${escHtml(x.nazev)}</option>`).join('');
+  if (sel) { sel.innerHTML = rows.map(x => `<option value="${escHtml(x.kod)}">${escHtml(x.kod)} – ${escHtml(x.nazev)}</option>`).join(''); uzisHlRegistrChange(); }
   if (!rows.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   box.innerHTML = '<div class="card"><div class="card-title">Národní zdravotnické registry (' + rows.length + ')</div>' +
@@ -16599,10 +16639,17 @@ function uzisPrefillHlaseni(kod) {
   toast('Registr ' + kod + ' přednastaven pro hlášení');
 }
 function uzisHlaseniBody() {
-  let telo = {}; const raw = _val('uzisHlTelo');
-  if (raw) { try { telo = JSON.parse(raw); } catch (e) { toast('Neplatný JSON v těle', true); throw e; } }
+  let telo = {};
+  // strukturovaná pole
+  document.querySelectorAll('#uzisHlPole [data-pole]').forEach(el => {
+    const k = el.getAttribute('data-pole');
+    const v = el.type === 'checkbox' ? el.checked : el.value.trim();
+    if (v !== '' && v !== false) telo[k] = v;
+  });
   if (_val('uzisHlRid')) telo.rid = _val('uzisHlRid');
   if (_val('uzisHlIco')) telo.ico = _val('uzisHlIco');
+  const raw = _val('uzisHlTelo');
+  if (raw) { try { Object.assign(telo, JSON.parse(raw)); } catch (e) { toast('Neplatný JSON v těle', true); throw e; } }
   return { registr: _val('uzisHlRegistr') || 'NOR', telo };
 }
 async function uzisHlasit() {
@@ -16679,6 +16726,66 @@ async function uzisLuzkaPrehled() {
       `<td><strong>${x.pocetVolnychLuzek}</strong></td><td>${x.celkovyPocetLuzek}</td><td style="font-size:11px">${escHtml((x.datumHlaseni||'').slice(0,16))}</td></tr>`).join('') +
     '</tbody></table></div>';
 }
+// --- Strukturovaný formulář hlášení dle registru ---
+async function uzisHlRegistrChange() {
+  const kod = _val('uzisHlRegistr') || 'NOR';
+  const r = await api('GET', `/api/uzis/registr/${encodeURIComponent(kod)}/formular`);
+  const pole = r?.data?.pole || [];
+  const box = document.getElementById('uzisHlPoleBox'), cont = document.getElementById('uzisHlPole');
+  if (!box || !cont) return;
+  if (!pole.length) { box.style.display = 'none'; cont.innerHTML = ''; return; }
+  box.style.display = 'block';
+  cont.innerHTML = pole.map(p => {
+    const req = p.povinny ? ' *' : '';
+    if (p.typ === 'bool') return `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg2)"><input type="checkbox" data-pole="${p.kod}" style="width:auto"> ${escHtml(p.label)}${req}</label>`;
+    const t = p.typ === 'number' ? 'number' : 'text';
+    const ph = p.typ === 'date' ? 'd.m.rrrr / ISO' : '';
+    return `<div class="form-group"><label>${escHtml(p.label)}${req}</label><input type="${t}" data-pole="${p.kod}" placeholder="${ph}"></div>`;
+  }).join('');
+}
+
+// --- Import přes GUI ---
+async function _uzisUpload(url, formData, elId) {
+  const qi = _qAdd('POST', url);
+  try {
+    const resp = await fetch(url, { method: 'POST', body: formData });
+    const data = await resp.json();
+    _qDone(qi, data.status || resp.status, null, data);
+    if (elId) showResult(elId, data);
+    return data;
+  } catch (e) { _qDone(qi, 0, e.message); toast('Chyba: ' + e.message, true); return { status: 0, error: e.message }; }
+}
+async function uzisImportDasta() {
+  const f = document.getElementById('uzisImpDastaFile').files[0];
+  if (!f) return toast('Vyberte soubor DASTA (.xml/.zip)', true);
+  const fd = new FormData(); fd.append('file', f);
+  fd.append('seed', document.getElementById('uzisImpDastaSeed').checked ? 'true' : 'false');
+  const data = await _uzisUpload('/api/uzis/import/dasta', fd, 'uzisImportResult');
+  const d = data.data || {}; const box = document.getElementById('uzisImpDastaSummary');
+  if (data.status !== 200) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const regs = Object.entries(d.nalezeneRegistry || {});
+  box.innerHTML = `<div style="font-size:13px;line-height:1.8"><strong>${escHtml(d.soubor||'')}</strong> · kořen <code>${escHtml(d.korenElement||'')}</code> · ${d.pocetElementu||0} elementů<br>` +
+    `Nalezené registry (blok *nr): ${regs.length ? regs.map(([k,v])=>`<span class="badge badge-info">${escHtml(k)}: ${v}</span>`).join(' ') : '—'}<br>` +
+    `Založeno simulovaných hlášení: <strong>${d.seeded||0}</strong></div>`;
+  if (d.seeded) toast('Importováno – založeno ' + d.seeded + ' hlášení');
+}
+async function uzisImportCsv() {
+  const f = document.getElementById('uzisImpCsvFile').files[0];
+  if (!f) return toast('Vyberte CSV soubor', true);
+  const fd = new FormData(); fd.append('file', f);
+  const data = await _uzisUpload('/api/uzis/import/ciselnik', fd, 'uzisImportResult');
+  const d = data.data || {}; const box = document.getElementById('uzisImpCsvSummary');
+  if (data.status !== 200) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const items = d.polozky || [];
+  box.innerHTML = `<div style="font-size:12px;color:var(--fg3);margin-bottom:6px">${escHtml(d.soubor||'')} · oddělovač <code>${escHtml(d.oddelovac||';')}</code> · ${d.pocet||0} položek</div>` +
+    '<table><thead><tr><th>Kód</th><th>Název</th></tr></thead><tbody>' +
+    items.slice(0, 100).map(i => `<tr><td class="mono">${escHtml(i.kod)}</td><td>${escHtml(i.nazev)}</td></tr>`).join('') +
+    '</tbody></table>' + (items.length > 100 ? `<div style="font-size:11px;color:var(--fg3);margin-top:4px">… zobrazeno prvních 100 z ${d.pocet}</div>` : '');
+  toast('Načteno ' + (d.pocet || 0) + ' položek');
+}
+
 // Cross-nav: otevře poskytovatele v NRPZS podle IČO
 function goUZIS(ico) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
