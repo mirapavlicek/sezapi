@@ -47,6 +47,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--fg); displa
 .nav-item:hover { background: var(--bg3); color: var(--fg); }
 .nav-item.active { background: var(--bg3); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
 .nav-item .icon { width: 20px; margin-right: 10px; text-align: center; font-size: 14px; }
+.nav-group-label { padding: 12px 16px 4px; font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--fg3); user-select: none; }
+.nav-group-label:first-child { padding-top: 4px; }
+.nav-item .tag { margin-left: auto; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; background: rgba(45,159,111,.16); color: var(--green); letter-spacing: .3px; }
+.nav-item .tag.sim { background: rgba(212,138,6,.16); color: var(--orange); }
 
 /* Main */
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -301,21 +305,37 @@ td.mono { font-family: var(--mono); font-size: 12px; }
     </div>
   </div>
   <div class="nav" id="nav">
+    <div class="nav-group-label">Přehled</div>
     <div class="nav-item active" data-section="dashboard"><span class="icon">&#9632;</span> Dashboard</div>
+
+    <div class="nav-group-label">Registry</div>
     <div class="nav-item" data-section="krp"><span class="icon">&#9823;</span> KRP Pacienti</div>
     <div class="nav-item" data-section="krp3"><span class="icon">&#9826;</span> KRP v3 (nové)</div>
     <div class="nav-item" data-section="krzp"><span class="icon">&#9764;</span> KRZP Pracovníci</div>
     <div class="nav-item" data-section="krpzs"><span class="icon">&#127973;</span> KRPZS Poskytovatelé</div>
-    <div class="nav-item" data-section="ro"><span class="icon">&#9888;</span> Oprávnění</div>
+
+    <div class="nav-group-label">Oprávnění</div>
+    <div class="nav-item" data-section="ro"><span class="icon">&#9888;</span> Oprávnění (RO)</div>
     <div class="nav-item" data-section="ro-ncpeh"><span class="icon">&#127759;</span> RO NCPeH</div>
-    <div class="nav-item" data-section="du"><span class="icon">&#9993;</span> Dočasné úložiště</div>
+
+    <div class="nav-group-label">Klinická data</div>
     <div class="nav-item" data-section="szz"><span class="icon">&#10010;</span> SZZ Zdravotní záznam</div>
     <div class="nav-item" data-section="szz2"><span class="icon">&#9879;</span> SZZ v2 Prevence/Screen.</div>
+    <div class="nav-item" data-section="du"><span class="icon">&#9993;</span> Dočasné úložiště</div>
     <div class="nav-item" data-section="elp"><span class="icon">&#9997;</span> ELP Posudky</div>
     <div class="nav-item" data-section="ez"><span class="icon">&#10148;</span> eŽádanky</div>
+
+    <div class="nav-group-label">Preskripce / SÚKL</div>
+    <div class="nav-item" data-section="sukl"><span class="icon">&#128138;</span> SÚKL / eRecept <span class="tag sim" id="suklNavTag">SIM</span></div>
+
+    <div class="nav-group-label">Komunikace</div>
     <div class="nav-item" data-section="notif"><span class="icon">&#9881;</span> Notifikace</div>
+
+    <div class="nav-group-label">Důvěra &amp; podpis</div>
     <div class="nav-item" data-section="ezca"><span class="icon">&#128274;</span> EZCA Důvěra</div>
     <div class="nav-item" data-section="ezca-cert"><span class="icon">&#128273;</span> EZCA Správa cert.</div>
+
+    <div class="nav-group-label">Nástroje</div>
     <div class="nav-item" data-section="ds4"><span class="icon">&#9881;</span> DASTA4 &amp; FHIR</div>
     <div class="nav-item" data-section="docs"><span class="icon">&#9776;</span> JWT &amp; Endpointy</div>
     <div class="nav-item" data-section="tests"><span class="icon">&#10004;</span> Testy</div>
@@ -1954,6 +1974,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
           </div>
           <button class="btn btn-primary" onclick="szzLoad()">Načíst</button>
           <button class="btn btn-outline" onclick="szzLoadAll()" style="margin-left:8px">Načíst vše</button>
+          <button class="btn btn-outline" onclick="goSUKL(document.getElementById('szzRid').value)" style="margin-left:8px" title="Otevřít lékový záznam pacienta v SÚKL / eRecept">&#128138; Lékový záznam (SÚKL)</button>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-dasta" onclick="exportDasta('szzResult','szz')" title="Export do DASTA DS4 XML">DASTA</button><button class="btn-iris" onclick="irisGenerate('szzResult','szz')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="szzResult">-</div></div>
       </div>
@@ -5031,6 +5052,199 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       </div>
     </div>
 
+    <!-- SÚKL / eRecept & DLP -->
+    <div class="section" id="sec-sukl">
+      <div class="card" style="background:linear-gradient(135deg,#ecfdf5 0%,#f0fdfa 100%);border-color:#a7f3d0;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-weight:700;font-size:15px;color:#047857">&#128138; SÚKL – eRecept / CÚER &amp; Databáze léčivých přípravků (DLP)</div>
+          <span class="badge" id="suklModeBadge">…</span>
+          <span class="badge badge-info" id="suklVerzeBadge"></span>
+        </div>
+        <div style="font-size:13px;color:var(--fg2);line-height:1.7;margin-top:8px">
+          Napojení na <strong>SÚKL</strong>: systém <strong>eRecept / CÚER</strong> (lékový záznam pacienta,
+          předpis, výdej, doplatky a limit pojištěnce, ePoukaz, eOčkování) a <strong>veřejná databáze
+          léčivých přípravků (DLP)</strong>.
+          <div style="margin-top:6px;font-size:12px;color:var(--fg3)">
+            eRecept je samostatný systém SÚKL (SOAP, verze <span id="suklVerzeInline">202501A</span>,
+            <a href="https://epreskripce.gov.cz" target="_blank" style="color:var(--accent)">epreskripce.gov.cz</a>)
+            a vyžaduje registraci SW u SÚKL + certifikát. Bez těchto přístupů běží v <strong>režimu SIMULACE</strong>.
+            DLP jsou <strong>veřejná otevřená data</strong> a fungují reálně (offline fallback = vzorky).
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-tabs" id="suklTabs">
+        <div class="sub-tab active" data-panel="sukl-lzp-panel">Lékový záznam</div>
+        <div class="sub-tab" data-panel="sukl-predpis-panel">Předepsat</div>
+        <div class="sub-tab" data-panel="sukl-vydej-panel">Výdej</div>
+        <div class="sub-tab" data-panel="sukl-nahled-panel">Náhled</div>
+        <div class="sub-tab" data-panel="sukl-doplatky-panel">Doplatky &amp; limit</div>
+        <div class="sub-tab" data-panel="sukl-dlp-panel">DLP – léky</div>
+        <div class="sub-tab" data-panel="sukl-dalsi-panel">ePoukaz / eOčkování</div>
+        <div class="sub-tab" data-panel="sukl-sim-panel">Simulace</div>
+      </div>
+
+      <!-- LZP -->
+      <div class="sub-panel active" id="sukl-lzp-panel">
+        <div class="card">
+          <div class="card-title">Lékový záznam pacienta (LZP)</div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Zobrazí přehled eReceptů a aktuální medikace pacienta z CÚER. Zadejte RID (nebo vyberte pacienta).
+          </p>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="suklLzpRid" placeholder="např. 3740100325"></div>
+            <button class="btn btn-primary" onclick="suklLekovyZaznam()">Načíst lékový záznam</button>
+          </div>
+          <div id="suklLzpChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+        </div>
+        <div id="suklLzpTable" style="display:none;margin-bottom:16px"></div>
+        <div class="card"><div class="card-header"><span class="card-title">Surová odpověď</span></div><div class="json-box" id="suklLzpResult">-</div></div>
+      </div>
+
+      <!-- PŘEDPIS -->
+      <div class="sub-panel" id="sukl-predpis-panel">
+        <div class="card">
+          <div class="card-title">Založení eReceptu (předpis)</div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Předepíše léčivý přípravek pacientovi. Kód SÚKL najdete v záložce „DLP – léky" (tlačítko „Předepsat").
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="form-group"><label>RID pacienta *</label><input id="suklPredRid" placeholder="např. 3740100325"></div>
+            <div class="form-group"><label>KRZP ID předepisujícího</label><input id="suklPredKrzp" placeholder="např. 102129137"></div>
+          </div>
+          <div id="suklPredChips" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0"></div>
+          <div style="display:grid;grid-template-columns:1fr 2fr 1fr auto;gap:8px;align-items:flex-end;margin-top:6px">
+            <div class="form-group"><label>Kód SÚKL</label><input id="suklPredKod" placeholder="0031505" oninput="suklPredKodLookup()"></div>
+            <div class="form-group"><label>Název přípravku</label><input id="suklPredNazev" placeholder="(doplní se z DLP)"></div>
+            <div class="form-group"><label>Množství</label><input id="suklPredMnozstvi" type="number" value="1" min="1"></div>
+            <button class="btn btn-outline" onclick="suklPredPridat()">+ Přidat</button>
+          </div>
+          <div class="form-group" style="margin-top:6px"><label>Dávkování</label><input id="suklPredDavk" placeholder="např. 1-0-1 po jídle"></div>
+          <div id="suklPredPolozky" style="margin-top:10px"></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="suklPredepsat()">Předepsat eRecept</button>
+            <button class="btn" onclick="suklPredObalka()">Zobrazit obálku (builder)</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="suklPredResult">-</div></div>
+      </div>
+
+      <!-- VÝDEJ -->
+      <div class="sub-panel" id="sukl-vydej-panel">
+        <div class="card">
+          <div class="card-title">Založení výdeje</div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Vydá přípravky na existující eRecept. ID eReceptu získáte z lékového záznamu nebo předpisu.
+          </p>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:flex-end">
+            <div class="form-group"><label>ID eReceptu *</label><input id="suklVydejId" placeholder="např. 1234567890AB"></div>
+            <div class="form-group"><label>Rozsah</label>
+              <select id="suklVydejUplny"><option value="true">Úplný výdej</option><option value="false">Částečný výdej</option></select>
+            </div>
+            <div class="form-group"><label>IČO lékárny</label><input id="suklVydejIco" placeholder="volitelné"></div>
+            <button class="btn btn-primary" onclick="suklVydej()">Vydat</button>
+          </div>
+          <div id="suklVydejRecent" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="suklVydejResult">-</div></div>
+      </div>
+
+      <!-- NÁHLED -->
+      <div class="sub-panel" id="sukl-nahled-panel">
+        <div class="card">
+          <div class="card-title">Náhled na eRecept</div>
+          <div class="form-row">
+            <div class="form-group"><label>ID eReceptu</label><input id="suklNahledId" placeholder="např. 1234567890AB"></div>
+            <button class="btn btn-primary" onclick="suklNahled()">Zobrazit</button>
+          </div>
+          <div id="suklNahledChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="suklNahledResult">-</div></div>
+      </div>
+
+      <!-- DOPLATKY -->
+      <div class="sub-panel" id="sukl-doplatky-panel">
+        <div class="card">
+          <div class="card-title">Doplatky a limit pojištěnce</div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Načte doplatky za předepsané přípravky a stav ročního limitu pojištěnce (CÚER doplňkové služby).
+          </p>
+          <div class="form-row">
+            <div class="form-group"><label>RID pacienta</label><input id="suklDoplatkyRid" placeholder="např. 3740100325"></div>
+            <button class="btn btn-primary" onclick="suklDoplatky()">Načíst doplatky</button>
+          </div>
+          <div id="suklDoplatkyChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+        </div>
+        <div id="suklDoplatkyBox" style="display:none;margin-bottom:16px"></div>
+        <div class="card"><div class="card-header"><span class="card-title">Surová odpověď</span></div><div class="json-box" id="suklDoplatkyResult">-</div></div>
+      </div>
+
+      <!-- DLP -->
+      <div class="sub-panel" id="sukl-dlp-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Databáze léčivých přípravků (DLP)</span>
+            <span id="suklDlpSource" style="font-size:11px;color:var(--fg3)"></span>
+          </div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Veřejná otevřená data SÚKL. Hledejte podle názvu / účinné látky, kódu SÚKL nebo ATC skupiny.
+          </p>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:flex-end">
+            <div class="form-group"><label>Název / účinná látka</label><input id="suklDlpNazev" placeholder="např. paralen" onkeydown="if(event.key==='Enter')suklDlpHledat()"></div>
+            <div class="form-group"><label>Kód SÚKL</label><input id="suklDlpKod" placeholder="0031505"></div>
+            <div class="form-group"><label>ATC</label><input id="suklDlpAtc" placeholder="N02BE01"></div>
+            <button class="btn btn-primary" onclick="suklDlpHledat()">Hledat</button>
+          </div>
+        </div>
+        <div id="suklDlpTable" style="display:none;margin-bottom:16px"></div>
+        <div class="card"><div class="card-header"><span class="card-title">Surová odpověď</span></div><div class="json-box" id="suklDlpResult">-</div></div>
+      </div>
+
+      <!-- ePoukaz / eOčkování -->
+      <div class="sub-panel" id="sukl-dalsi-panel">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">ePoukaz</div>
+            <div class="form-group"><label>RID pacienta</label><input id="suklEpRid" placeholder="např. 3740100325"></div>
+            <div class="form-group" style="margin-top:6px"><label>Typ / popis prostředku</label><input id="suklEpTyp" placeholder="např. zdravotnický prostředek"></div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="suklEpoukazZaloz()">Založit ePoukaz</button>
+              <button class="btn" onclick="suklEpoukazNahled()">Náhled dle ID</button>
+            </div>
+            <div class="form-group" style="margin-top:8px"><label>ID ePoukazu (náhled)</label><input id="suklEpId" placeholder="9 znaků"></div>
+            <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="suklEpResult">-</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">eOčkování</div>
+            <div class="form-group"><label>RID pacienta</label><input id="suklOckRid" placeholder="např. 3740100325"></div>
+            <div class="form-group" style="margin-top:6px"><label>Vakcína</label><input id="suklOckVakcina" placeholder="např. Comirnaty"></div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="suklOckZaloz()">Zaznamenat očkování</button>
+              <button class="btn" onclick="suklOckNahled()">Náhled dle RID</button>
+            </div>
+            <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="suklOckResult">-</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULACE -->
+      <div class="sub-panel" id="sukl-sim-panel">
+        <div class="card">
+          <div class="card-title">Simulační engine eReceptu</div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Bez registrace u SÚKL a certifikátu běží eRecept v režimu <strong>SIMULACE</strong> – data jsou
+            uložena v paměti serveru. Naplňte ukázková data provázaná s testovacími pacienty a DLP.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="suklSimSeed()">Naplnit ukázková data</button>
+            <button class="btn btn-outline" onclick="suklSimStatus()">Zjistit stav</button>
+            <button class="btn btn-red" onclick="suklSimReset()">Vyprázdnit</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Stav simulace</span></div><div class="json-box" id="suklSimResult">-</div></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Log bar -->
@@ -5096,6 +5310,7 @@ function initNav() {
       currentSection = sec;
       if (sec === 'docs') loadDocs();
       if (sec === 'ro') roInitCatalogs(true);
+      if (sec === 'sukl') suklInit();
     });
   });
 }
@@ -5919,6 +6134,13 @@ async function loadStatus() {
   testWorkersPzs = data.test_workers_pzs || [];
   testPzs = data.test_pzs || [];
   renderDashboard(data);
+  const suklTag = document.getElementById('suklNavTag');
+  if (suklTag) {
+    const m = data.sukl_mode || 'SIM';
+    suklTag.textContent = m === 'LIVE' ? 'ŽIVÉ' : (m === 'OFF' ? 'OFF' : 'SIM');
+    suklTag.className = 'tag' + (m === 'LIVE' ? '' : ' sim');
+    suklTag.style.display = m === 'OFF' ? 'none' : '';
+  }
   renderPatientChips();
   renderWorkerTable();
   renderPzsTable();
@@ -5939,6 +6161,7 @@ function renderDashboard(data) {
     { name: 'eŽádanky', fn: checkEZ },
     { name: 'DÚ', fn: checkDU },
     { name: 'EZCA', fn: checkEZCA },
+    { name: 'SÚKL', fn: checkSUKL },
   ];
 
   const container = document.getElementById('dashCards');
@@ -5957,7 +6180,7 @@ function renderDashboard(data) {
   const pcnt = document.getElementById('patientCount');
   if (pcnt) pcnt.textContent = `(${testPatients.length})`;
   tbody.innerHTML = testPatients.length ? testPatients.map(p =>
-    `<tr><td class="mono" style="font-size:11px">${p.rid}</td><td>${p.name}</td><td><button class="btn btn-sm btn-outline" onclick="goKRP('${p.rid}')">KRP</button> <button class="btn btn-sm btn-outline" onclick="goSZZ('${p.rid}')">SZZ</button></td></tr>`
+    `<tr><td class="mono" style="font-size:11px">${p.rid}</td><td>${p.name}</td><td><button class="btn btn-sm btn-outline" onclick="goKRP('${p.rid}')">KRP</button> <button class="btn btn-sm btn-outline" onclick="goSZZ('${p.rid}')">SZZ</button> <button class="btn btn-sm btn-outline" onclick="goSUKL('${p.rid}')">Léky</button></td></tr>`
   ).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--fg2);padding:16px">Žádní pacienti</td></tr>';
 }
 
@@ -6084,6 +6307,13 @@ async function checkEZCA(name) {
   const r = await api('GET', '/api/ezca/ping');
   const ok = r.status === 200 && r.data?.status === 'pass';
   setDashCard(name, ok);
+}
+async function checkSUKL(name) {
+  const r = await api('GET', '/api/sukl/erecept/diagnose');
+  const mode = r?.data?.mode;
+  if (mode === 'LIVE') { setDashCard(name, true); return; }
+  if (mode === 'OFF') { setDashCard(name, null, 'Vypnuto'); return; }
+  setDashCard(name, null, 'Simulace');
 }
 async function checkDU(name) {
   if (isProd) {
@@ -12003,6 +12233,217 @@ async function ezcaProxyTimestamp(asyncMode) {
   const path = asyncMode ? '/api/ezca/stamp-proxy-timestamp-async' : '/api/ezca/stamp-proxy-timestamp';
   const r = await api('POST', path, body);
   _showJson('ezcaProxyTsResult', r);
+}
+
+// ===========================================================================
+// SÚKL – eRecept / CÚER & DLP
+// ===========================================================================
+let _suklPredPolozky = [];
+let _suklLastErecepty = [];
+
+function suklRememberErecept(id) {
+  if (!id) return;
+  if (!_suklLastErecepty.includes(id)) _suklLastErecepty.unshift(id);
+  if (_suklLastErecepty.length > 8) _suklLastErecepty.length = 8;
+  suklRenderRecent();
+}
+function suklRenderRecent() {
+  const html = _suklLastErecepty.map(id =>
+    `<div class="chip" onclick="_setVal('suklVydejId','${id}');_setVal('suklNahledId','${id}')">${id}</div>`).join('');
+  ['suklVydejRecent', 'suklNahledChips'].forEach(cid => {
+    const el = document.getElementById(cid); if (el) el.innerHTML = html;
+  });
+}
+function suklPatientChips() {
+  const ids = ['suklLzpRid', 'suklPredRid', 'suklDoplatkyRid'];
+  const chipBoxes = { suklLzpChips: 'suklLzpRid', suklPredChips: 'suklPredRid', suklDoplatkyChips: 'suklDoplatkyRid' };
+  const pts = (typeof testPatients !== 'undefined' ? testPatients : []).slice(0, 12);
+  Object.entries(chipBoxes).forEach(([box, inp]) => {
+    const el = document.getElementById(box);
+    if (el) el.innerHTML = pts.map(p =>
+      `<div class="chip" onclick="_setVal('${inp}','${p.rid}')">${p.rid} ${escHtml(p.name || '')}</div>`).join('');
+  });
+}
+async function suklInit() {
+  const st = await api('GET', '/api/status');
+  const badge = document.getElementById('suklModeBadge');
+  const mode = st.sukl_mode || 'SIM';
+  if (badge) {
+    const map = { LIVE: ['badge-ok', 'ŽIVÉ napojení'], SIM: ['badge-warn', 'SIMULACE'], OFF: ['badge-err', 'VYPNUTO'] };
+    const [cls, label] = map[mode] || map.SIM;
+    badge.className = 'badge ' + cls;
+    badge.textContent = label;
+  }
+  const ver = st.sukl_interface_version || '202501A';
+  const vb = document.getElementById('suklVerzeBadge'); if (vb) vb.textContent = 'rozhraní ' + ver;
+  const vi = document.getElementById('suklVerzeInline'); if (vi) vi.textContent = ver;
+  suklPatientChips();
+  suklRenderRecent();
+}
+
+// --- Lékový záznam ---
+async function suklLekovyZaznam() {
+  const rid = _val('suklLzpRid');
+  if (!rid) return toast('Zadejte RID pacienta', true);
+  const r = await api('GET', '/api/sukl/erecept/lekovy-zaznam?rid=' + encodeURIComponent(rid));
+  showResult('suklLzpResult', r);
+  const box = document.getElementById('suklLzpTable');
+  const leky = r?.data?.aktualniLekovyZaznam || [];
+  (r?.data?.erecepty || []).forEach(e => suklRememberErecept(e.idERecept));
+  if (!leky.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<div class="card"><div class="card-title">Aktuální medikace (' + leky.length + ')</div>' +
+    '<table><thead><tr><th>Kód SÚKL</th><th>Přípravek</th><th>Dávkování</th><th>Stav</th><th>eRecept</th></tr></thead><tbody>' +
+    leky.map(l => `<tr><td class="mono">${escHtml(l.sukl)}</td><td>${escHtml(l.nazev)}</td><td>${escHtml(l.davkovani)}</td>` +
+      `<td><span class="badge badge-info">${escHtml(l.stav)}</span></td>` +
+      `<td class="mono"><button class="btn btn-sm btn-outline" onclick="_setVal('suklNahledId','${l.idERecept}');suklSubTab('sukl-nahled-panel')">${l.idERecept}</button></td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+
+// --- DLP ---
+async function suklDlpHledat() {
+  const qs = new URLSearchParams({ nazev: _val('suklDlpNazev'), kod: _val('suklDlpKod'), atc: _val('suklDlpAtc'), limit: '50' });
+  const r = await api('GET', '/api/sukl/dlp/hledat?' + qs.toString());
+  showResult('suklDlpResult', r);
+  const src = document.getElementById('suklDlpSource');
+  if (src) src.textContent = 'zdroj: ' + (r?.data?.zdroj === 'opendata' ? 'opendata.sukl.cz' : 'vzorky (offline)') + ' · nalezeno ' + (r?.data?.pocet || 0);
+  const box = document.getElementById('suklDlpTable');
+  const rows = r?.data?.vysledky || [];
+  if (!rows.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<div class="card"><div class="card-title">Nalezené přípravky</div>' +
+    '<table><thead><tr><th>Kód SÚKL</th><th>Název</th><th>Síla</th><th>Forma</th><th>ATC</th><th>Účinná látka</th><th>Výdej</th><th></th></tr></thead><tbody>' +
+    rows.map(d => `<tr><td class="mono">${escHtml(d.kod)}</td><td>${escHtml(d.nazev)}</td><td>${escHtml(d.sila)}</td><td>${escHtml(d.forma)}</td>` +
+      `<td class="mono">${escHtml(d.atc)}</td><td style="font-size:12px">${escHtml(d.ucinna_latka)}</td><td style="font-size:12px">${escHtml(d.vydej)}</td>` +
+      `<td><button class="btn btn-sm btn-primary" onclick="suklDlpPredepsat('${escHtml(d.kod)}','${escHtml((d.nazev||'').replace(/'/g,''))}')">Předepsat</button></td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+function suklDlpPredepsat(kod, nazev) {
+  suklSubTab('sukl-predpis-panel');
+  _setVal('suklPredKod', kod);
+  _setVal('suklPredNazev', nazev);
+  toast('Přípravek přenesen do předpisu');
+}
+
+// --- Předpis ---
+async function suklPredKodLookup() {
+  const kod = _val('suklPredKod');
+  if (kod.length < 5) return;
+  const r = await api('GET', '/api/sukl/dlp/detail/' + encodeURIComponent(kod));
+  if (r?.data?.nalezeno) _setVal('suklPredNazev', r.data.pripravek.nazev || '');
+}
+function suklPredPridat() {
+  const kod = _val('suklPredKod');
+  if (!kod) return toast('Zadejte kód SÚKL', true);
+  _suklPredPolozky.push({ sukl: kod, nazev: _val('suklPredNazev'), mnozstvi: parseInt(_val('suklPredMnozstvi') || '1'), davkovani: _val('suklPredDavk') });
+  _setVal('suklPredKod', ''); _setVal('suklPredNazev', ''); _setVal('suklPredMnozstvi', '1'); _setVal('suklPredDavk', '');
+  suklRenderPolozky();
+}
+function suklRenderPolozky() {
+  const box = document.getElementById('suklPredPolozky');
+  if (!_suklPredPolozky.length) { box.innerHTML = '<div style="color:var(--fg3);font-size:12px">Zatím žádné položky – přidejte přípravek výše nebo z DLP.</div>'; return; }
+  box.innerHTML = '<table><thead><tr><th>Kód</th><th>Název</th><th>Množ.</th><th>Dávkování</th><th></th></tr></thead><tbody>' +
+    _suklPredPolozky.map((p, i) => `<tr><td class="mono">${escHtml(p.sukl)}</td><td>${escHtml(p.nazev)}</td><td>${p.mnozstvi}</td><td>${escHtml(p.davkovani)}</td>` +
+      `<td><button class="btn btn-sm btn-red" onclick="_suklPredPolozky.splice(${i},1);suklRenderPolozky()">×</button></td></tr>`).join('') +
+    '</tbody></table>';
+}
+function suklPredBody() {
+  const polozky = _suklPredPolozky.length ? _suklPredPolozky : (
+    _val('suklPredKod') ? [{ sukl: _val('suklPredKod'), nazev: _val('suklPredNazev'), mnozstvi: parseInt(_val('suklPredMnozstvi') || '1'), davkovani: _val('suklPredDavk') }] : []);
+  return { pacient: { rid: _val('suklPredRid') }, krzpId: _val('suklPredKrzp'), polozky };
+}
+async function suklPredepsat() {
+  const body = suklPredBody();
+  if (!body.pacient.rid) return toast('Zadejte RID pacienta', true);
+  if (!body.polozky.length) return toast('Přidejte alespoň jeden přípravek', true);
+  const r = await api('POST', '/api/sukl/erecept/predepsat', body);
+  showResult('suklPredResult', r);
+  if (r?.data?.idERecept) { suklRememberErecept(r.data.idERecept); toast('eRecept vytvořen: ' + r.data.idERecept); _suklPredPolozky = []; suklRenderPolozky(); }
+}
+async function suklPredObalka() {
+  const r = await api('POST', '/api/sukl/erecept/sestav-obalku', { operace: 'ZalozeniEReceptu', telo: suklPredBody() });
+  showResult('suklPredResult', r);
+}
+
+// --- Výdej / Náhled ---
+async function suklVydej() {
+  const id = _val('suklVydejId');
+  if (!id) return toast('Zadejte ID eReceptu', true);
+  const r = await api('POST', '/api/sukl/erecept/vydej', { idERecept: id, uplnyVydej: _val('suklVydejUplny') === 'true', ico: _val('suklVydejIco') });
+  showResult('suklVydejResult', r);
+}
+async function suklNahled() {
+  const id = _val('suklNahledId');
+  if (!id) return toast('Zadejte ID eReceptu', true);
+  const r = await api('GET', '/api/sukl/erecept/nahled/' + encodeURIComponent(id));
+  showResult('suklNahledResult', r);
+}
+
+// --- Doplatky ---
+async function suklDoplatky() {
+  const rid = _val('suklDoplatkyRid');
+  if (!rid) return toast('Zadejte RID pacienta', true);
+  const r = await api('POST', '/api/sukl/erecept/doplatky', { rid });
+  showResult('suklDoplatkyResult', r);
+  const box = document.getElementById('suklDoplatkyBox');
+  const lim = r?.data?.limitPojistence;
+  const dopl = r?.data?.doplatky || [];
+  if (!lim) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const pct = Math.min(100, Math.round((lim.vycerpano / lim.limit) * 100));
+  box.innerHTML = '<div class="card"><div class="card-title">Limit pojištěnce ' + (lim.obdobi || '') + '</div>' +
+    `<div style="font-size:13px;margin-bottom:8px">Vyčerpáno <strong>${lim.vycerpano} ${lim.mena}</strong> z ${lim.limit} ${lim.mena} (zbývá ${lim.zbyva} ${lim.mena})</div>` +
+    `<div style="background:var(--bg3);border-radius:6px;height:12px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${pct>90?'var(--red)':'var(--green)'}"></div></div>` +
+    '<table style="margin-top:12px"><thead><tr><th>Kód</th><th>Přípravek</th><th>Doplatek</th></tr></thead><tbody>' +
+    dopl.map(d => `<tr><td class="mono">${escHtml(d.sukl)}</td><td>${escHtml(d.nazev)}</td><td>${d.doplatek} ${escHtml(d.mena)}</td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+
+// --- ePoukaz / eOčkování ---
+async function suklEpoukazZaloz() {
+  const rid = _val('suklEpRid'); if (!rid) return toast('Zadejte RID', true);
+  const r = await api('POST', '/api/sukl/epoukaz/zaloz', { pacient: { rid }, typ: _val('suklEpTyp') });
+  showResult('suklEpResult', r);
+  if (r?.data?.idEPoukaz) _setVal('suklEpId', r.data.idEPoukaz);
+}
+async function suklEpoukazNahled() {
+  const id = _val('suklEpId'); if (!id) return toast('Zadejte ID ePoukazu', true);
+  const r = await api('GET', '/api/sukl/epoukaz/nahled/' + encodeURIComponent(id));
+  showResult('suklEpResult', r);
+}
+async function suklOckZaloz() {
+  const rid = _val('suklOckRid'); if (!rid) return toast('Zadejte RID', true);
+  const r = await api('POST', '/api/sukl/eockovani/zaloz', { pacient: { rid }, vakcina: { nazev: _val('suklOckVakcina') || 'Comirnaty' } });
+  showResult('suklOckResult', r);
+}
+async function suklOckNahled() {
+  const rid = _val('suklOckRid'); if (!rid) return toast('Zadejte RID', true);
+  const r = await api('GET', '/api/sukl/eockovani/nahled/' + encodeURIComponent(rid));
+  showResult('suklOckResult', r);
+}
+
+// --- Simulace ---
+async function suklSimSeed() { const r = await api('POST', '/api/sukl/sim/seed'); _showJson('suklSimResult', r); toast('Naplněno ' + (r?.data?.seeded || 0) + ' eReceptů'); }
+async function suklSimStatus() { const r = await api('GET', '/api/sukl/sim/status'); _showJson('suklSimResult', r); }
+async function suklSimReset() { const r = await api('POST', '/api/sukl/sim/reset'); _showJson('suklSimResult', r); _suklLastErecepty = []; suklRenderRecent(); toast('Simulace vyprázdněna'); }
+
+// Přepnutí sub-tabu v SÚKL sekci programově
+function suklSubTab(panelId) {
+  const sec = document.getElementById('sec-sukl'); if (!sec) return;
+  const tab = sec.querySelector(`.sub-tab[data-panel="${panelId}"]`);
+  if (tab) tab.click();
+}
+// Cross-nav helper: otevře lékový záznam pacienta v SÚKL sekci
+function goSUKL(rid) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const nav = document.querySelector('[data-section="sukl"]'); if (nav) nav.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-sukl').classList.add('active');
+  document.getElementById('pageTitle').textContent = 'SÚKL / eRecept';
+  suklInit();
+  suklSubTab('sukl-lzp-panel');
+  _setVal('suklLzpRid', rid);
+  suklLekovyZaznam();
 }
 
 </script>
