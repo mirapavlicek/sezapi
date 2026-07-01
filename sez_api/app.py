@@ -30,7 +30,7 @@ from sez_api import config as cfg
 from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, EZadanky, Notifikace, EZCA2,
-    EZCA2SpravaCertifikatu, KRPv3, SZZv2, RegistrOpravneniNcpeh,
+    EZCA2SpravaCertifikatu, KRPv3, SZZv2, RegistrOpravneniNcpeh, SUKLDLP, SUKLeRecept,
 )
 
 logger = logging.getLogger("sez_api")
@@ -151,6 +151,8 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["notif"] = Notifikace(_client)
     _modules["ezca"] = EZCA2(_client)
     _modules["ezca_cert"] = EZCA2SpravaCertifikatu(_client)
+    _modules["sukl_dlp"] = SUKLDLP(_client)
+    _modules["sukl_erecept"] = SUKLeRecept(_client)
     _connected = True
 
 
@@ -251,6 +253,11 @@ async def status():
         "test_workers_pzs": getattr(cfg, "TEST_WORKERS_PZS", []),
         "test_pzs": getattr(cfg, "TEST_PZS", []),
         "test_common_workers": getattr(cfg, "TEST_COMMON_WORKERS", []),
+        "sukl_enabled": getattr(cfg, "SUKL_ENABLED", False),
+        "sukl_mode": cfg.sukl_mode(SEZConfig.ENVIRONMENT) if getattr(cfg, "SUKL_ENABLED", False) else "OFF",
+        "sukl_interface_version": getattr(cfg, "SUKL_INTERFACE_VERSION", ""),
+        "sukl_test_erecepty": getattr(cfg, "SUKL_TEST_ERECEPTY", []),
+        "sukl_dlp_sample": getattr(cfg, "SUKL_DLP_SAMPLE", []),
     }
 
 
@@ -4147,3 +4154,415 @@ async def termx_pub_list():
         }
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=502)
+
+
+# ===========================================================================
+# SÚKL – eRecept / CÚER + DLP
+# ---------------------------------------------------------------------------
+# DLP: reálná veřejná data (opendata.sukl.cz) – přes SUKLDLP klienta.
+# eRecept: builder obálek + simulační engine (LIVE jen s registrací + endpointem).
+# ===========================================================================
+
+_sukl_sim_erecepty: dict = {}   # idERecept -> záznam
+_sukl_sim_epoukazy: dict = {}
+_sukl_sim_ockovani: dict = {}
+
+_SUKL_STAV_NAMES = {
+    "P": "Předepsán", "V": "Vydán", "C": "Částečně vydán",
+    "Z": "Zrušen", "E": "Expirován",
+}
+
+
+def _sukl_now():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _sukl_gen_id(n: int = 12) -> str:
+    import random
+    import string
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=n))
+
+
+def _sukl_get_module(name: str):
+    mod = _modules.get(name)
+    if mod is None:
+        # Moduly nevyžadují gateway spojení; vytvoř na požádání.
+        from sez_api.client import SUKLDLP, SUKLeRecept
+        mod = SUKLDLP(_client) if name == "sukl_dlp" else SUKLeRecept(_client)
+        _modules[name] = mod
+    return mod
+
+
+def _sukl_pacient_info(rid: str) -> dict:
+    for p in getattr(cfg, "TEST_PATIENTS", []):
+        if p.get("rid") == rid:
+            return {"rid": rid, "jmeno": p.get("name", ""),
+                    "datumNarozeni": p.get("born", ""), "rodneCislo": p.get("rc", "")}
+    return {"rid": rid or "", "jmeno": "Simulovaný pacient", "datumNarozeni": "1980-01-01"}
+
+
+def _sukl_norm_polozky(telo: dict) -> list:
+    """Normalizuje položky předpisu; doplní název z DLP dle kódu SÚKL."""
+    dlp = _sukl_get_module("sukl_dlp")
+    out = []
+    for it in (telo.get("polozky") or telo.get("lecivePripravky") or []):
+        kod = str(it.get("sukl") or it.get("kod") or it.get("kodSukl") or "").strip()
+        nazev = it.get("nazev", "")
+        if kod and not nazev:
+            d = dlp.detail(kod)
+            if d.get("nalezeno"):
+                nazev = d["pripravek"].get("nazev", "")
+        out.append({
+            "sukl": kod,
+            "nazev": nazev or "(neznámý přípravek)",
+            "mnozstvi": it.get("mnozstvi", 1),
+            "davkovani": it.get("davkovani", ""),
+            "poznamka": it.get("poznamka", ""),
+            "vydano": 0,
+        })
+    if not out:
+        out.append({"sukl": "", "nazev": "(prázdný předpis)", "mnozstvi": 0,
+                    "davkovani": "", "poznamka": "", "vydano": 0})
+    return out
+
+
+def _sukl_sim_predepsat(telo: dict) -> dict:
+    pac = telo.get("pacient", {})
+    rid = pac.get("rid") or telo.get("rid") or ""
+    eid = _sukl_gen_id()
+    rec = {
+        "idERecept": eid,
+        "stav": {"kod": "P", "nazev": _SUKL_STAV_NAMES["P"]},
+        "datumPredpisu": _sukl_now(),
+        "datumExpirace": None,
+        "pacient": _sukl_pacient_info(rid),
+        "predepisujici": telo.get("predepisujici", {
+            "krzpId": telo.get("krzpId", ""), "jmeno": "MUDr. Simuláček",
+            "ico": telo.get("ico", "25488627"),
+        }),
+        "polozky": _sukl_norm_polozky(telo),
+        "vydeje": [],
+    }
+    _sukl_sim_erecepty[eid] = rec
+    return rec
+
+
+def _sukl_sim_vydej(telo: dict) -> dict:
+    eid = telo.get("idERecept") or telo.get("id")
+    rec = _sukl_sim_erecepty.get(eid)
+    if not rec:
+        raise ValueError(f"eRecept {eid} nenalezen v simulaci")
+    if rec["stav"]["kod"] in ("Z", "E"):
+        raise ValueError(f"eRecept {eid} je ve stavu '{_SUKL_STAV_NAMES[rec['stav']['kod']]}' – výdej nelze provést")
+    uplny = telo.get("uplnyVydej", True)
+    for it in rec["polozky"]:
+        it["vydano"] = it["mnozstvi"] if uplny else min(it["mnozstvi"], it.get("vydano", 0) + 1)
+    vydej = {
+        "idVydej": _sukl_gen_id(),
+        "datumVydeje": _sukl_now(),
+        "lekarna": telo.get("lekarna", {"ico": telo.get("ico", ""), "nazev": "Simulovaná lékárna"}),
+        "vydavajici": telo.get("vydavajici", {"krzpId": telo.get("krzpId", "")}),
+        "uplnyVydej": uplny,
+    }
+    rec["vydeje"].append(vydej)
+    rec["stav"] = {"kod": "V" if uplny else "C",
+                   "nazev": _SUKL_STAV_NAMES["V" if uplny else "C"]}
+    return {"idERecept": eid, "vydej": vydej, "stav": rec["stav"]}
+
+
+def _sukl_sim_rlpo(telo: dict) -> dict:
+    eid = telo.get("idERecept") or telo.get("id")
+    rec = _sukl_sim_erecepty.get(eid)
+    if not rec:
+        raise ValueError(f"eRecept {eid} nenalezen v simulaci")
+    rec["stav"] = {"kod": "Z", "nazev": _SUKL_STAV_NAMES["Z"]}
+    rec["datumZruseni"] = _sukl_now()
+    rec["duvodZruseni"] = telo.get("duvod", "Zrušeno předepisujícím")
+    return {"idERecept": eid, "stav": rec["stav"], "duvod": rec["duvodZruseni"]}
+
+
+def _sukl_sim_lekovy_zaznam(rid: str = None, rc: str = None) -> dict:
+    items = [r for r in _sukl_sim_erecepty.values()
+             if (rid and r["pacient"].get("rid") == rid)
+             or (rc and r["pacient"].get("rodneCislo") == rc)]
+    leky = []
+    for r in items:
+        for p in r["polozky"]:
+            leky.append({
+                "sukl": p["sukl"], "nazev": p["nazev"], "davkovani": p["davkovani"],
+                "idERecept": r["idERecept"], "stav": r["stav"]["nazev"],
+                "datumPredpisu": r["datumPredpisu"],
+            })
+    pac = _sukl_pacient_info(rid) if rid else {"rodneCislo": rc}
+    return {
+        "pacient": pac,
+        "pocetEReceptu": len(items),
+        "erecepty": items,
+        "aktualniLekovyZaznam": leky,
+    }
+
+
+def _sukl_sim_doplatky(telo: dict) -> dict:
+    rid = telo.get("rid") or telo.get("pacient", {}).get("rid", "")
+    items = [r for r in _sukl_sim_erecepty.values() if r["pacient"].get("rid") == rid]
+    seznam = []
+    celkem = 0.0
+    for r in items:
+        for p in r["polozky"]:
+            dopl = round(15.0 + (len(p["nazev"]) % 7) * 12.5, 2)
+            celkem += dopl
+            seznam.append({"sukl": p["sukl"], "nazev": p["nazev"],
+                           "doplatek": dopl, "mena": "CZK", "idERecept": r["idERecept"]})
+    return {
+        "pacient": _sukl_pacient_info(rid),
+        "limitPojistence": {"limit": 5000.0, "vycerpano": round(celkem, 2),
+                            "zbyva": round(5000.0 - celkem, 2), "mena": "CZK",
+                            "obdobi": datetime.now().year},
+        "doplatky": seznam,
+    }
+
+
+def _sukl_sim_seed() -> int:
+    _sukl_sim_erecepty.clear()
+    dlp = _sukl_get_module("sukl_dlp")
+    vzorky = dlp.hledat(limit=6)["vysledky"]
+    patients = getattr(cfg, "TEST_PATIENTS", [])[:4] or [{"rid": "3740100325"}]
+    plans = [
+        {"pi": 0, "leky": [0, 1], "davk": "1-0-1 po jídle", "vydej": True},
+        {"pi": 1, "leky": [2], "davk": "1 tableta 3× denně 7 dní", "vydej": False},
+        {"pi": 2, "leky": [3, 4], "davk": "1-0-0 ráno", "vydej": True, "castecny": True},
+        {"pi": 3, "leky": [5], "davk": "dle potřeby", "vydej": False},
+    ]
+    for plan in plans:
+        if plan["pi"] >= len(patients):
+            continue
+        rid = patients[plan["pi"]].get("rid")
+        polozky = []
+        for li in plan["leky"]:
+            if li < len(vzorky):
+                d = vzorky[li]
+                polozky.append({"sukl": d.get("kod"), "nazev": d.get("nazev"),
+                                "mnozstvi": 1, "davkovani": plan["davk"]})
+        rec = _sukl_sim_predepsat({"pacient": {"rid": rid}, "polozky": polozky})
+        if plan.get("vydej"):
+            _sukl_sim_vydej({"idERecept": rec["idERecept"],
+                             "uplnyVydej": not plan.get("castecny", False)})
+    return len(_sukl_sim_erecepty)
+
+
+def _sukl_dispatch(result: dict, sim_producer, live_status_ok=200) -> JSONResponse:
+    """Sjednotí LIVE / SIM výstup do stejné obálky."""
+    if result.get("_simulace"):
+        try:
+            data = sim_producer()
+        except ValueError as ve:
+            return JSONResponse({"status": 404, "error": str(ve), "_sim": True,
+                                 "_request": result.get("request")})
+        except Exception as e:  # noqa: BLE001
+            return JSONResponse({"status": 0, "error": str(e), "_sim": True,
+                                 "_request": result.get("request")})
+        return JSONResponse({"status": 200, "data": data, "_sim": True,
+                             "operace": result.get("operace"),
+                             "_request": result.get("request")})
+    # LIVE
+    if "chyba" in result:
+        return JSONResponse({"status": 0, "error": result["chyba"], "_sim": False,
+                             "_request": result.get("request")})
+    return JSONResponse({"status": result.get("http_status", live_status_ok),
+                         "data": result.get("response"), "_sim": False,
+                         "operace": result.get("operace"),
+                         "_request": result.get("request")})
+
+
+# --- DLP (reálná veřejná data) --------------------------------------------
+
+@app.get("/api/sukl/dlp/hledat")
+async def sukl_dlp_hledat(nazev: str = "", kod: str = "", atc: str = "", limit: int = 50):
+    mod = _sukl_get_module("sukl_dlp")
+    t0 = time.monotonic()
+    data = mod.hledat(nazev=nazev or None, sukl_kod=kod or None, atc=atc or None, limit=limit)
+    return JSONResponse({"status": 200, "data": data,
+                         "elapsed_ms": round((time.monotonic() - t0) * 1000)})
+
+
+@app.get("/api/sukl/dlp/detail/{kod}")
+async def sukl_dlp_detail(kod: str):
+    mod = _sukl_get_module("sukl_dlp")
+    return JSONResponse({"status": 200, "data": mod.detail(kod)})
+
+
+@app.get("/api/sukl/dlp/status")
+async def sukl_dlp_status():
+    mod = _sukl_get_module("sukl_dlp")
+    return JSONResponse({"status": 200, "data": mod.status()})
+
+
+@app.post("/api/sukl/dlp/reload")
+async def sukl_dlp_reload():
+    mod = _sukl_get_module("sukl_dlp")
+    return JSONResponse({"status": 200, "data": mod.reload()})
+
+
+# --- eRecept / CÚER --------------------------------------------------------
+
+@app.get("/api/sukl/erecept/diagnose")
+async def sukl_erecept_diagnose():
+    mod = _sukl_get_module("sukl_erecept")
+    return JSONResponse({"status": 200, "data": mod.diagnose()})
+
+
+@app.post("/api/sukl/erecept/sestav-obalku")
+async def sukl_erecept_sestav(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    operace = body.get("operace", "ZalozeniEReceptu")
+    env = mod.build_envelope(operace, body.get("telo", {}), body.get("kontext"))
+    return JSONResponse({"status": 200, "data": env})
+
+
+@app.post("/api/sukl/erecept/predepsat")
+async def sukl_erecept_predepsat(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.predepsat(body, body.get("kontext"))
+    return _sukl_dispatch(result, lambda: _sukl_sim_predepsat(body))
+
+
+@app.post("/api/sukl/erecept/vydej")
+async def sukl_erecept_vydej(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.vydej(body, body.get("kontext"))
+    return _sukl_dispatch(result, lambda: _sukl_sim_vydej(body))
+
+
+@app.post("/api/sukl/erecept/rlpo")
+async def sukl_erecept_rlpo(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.rlpo(body, body.get("kontext"))
+    return _sukl_dispatch(result, lambda: _sukl_sim_rlpo(body))
+
+
+@app.get("/api/sukl/erecept/nahled/{id_erecept}")
+async def sukl_erecept_nahled(id_erecept: str):
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.nahled_erecept(id_erecept)
+
+    def _sim():
+        rec = _sukl_sim_erecepty.get(id_erecept)
+        if not rec:
+            raise ValueError(f"eRecept {id_erecept} nenalezen v simulaci")
+        return rec
+    return _sukl_dispatch(result, _sim)
+
+
+@app.get("/api/sukl/erecept/lekovy-zaznam")
+async def sukl_erecept_lekovy_zaznam(rid: str = "", rc: str = ""):
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.lekovy_zaznam(rid=rid or None, rc=rc or None)
+    return _sukl_dispatch(result, lambda: _sukl_sim_lekovy_zaznam(rid or None, rc or None))
+
+
+@app.post("/api/sukl/erecept/doplatky")
+async def sukl_erecept_doplatky(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.doplatky_limit_pojistence(body, body.get("kontext"))
+    return _sukl_dispatch(result, lambda: _sukl_sim_doplatky(body))
+
+
+# --- ePoukaz ---------------------------------------------------------------
+
+@app.post("/api/sukl/epoukaz/zaloz")
+async def sukl_epoukaz_zaloz(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.zaloz_epoukaz(body, body.get("kontext"))
+
+    def _sim():
+        rid = body.get("pacient", {}).get("rid") or body.get("rid", "")
+        pid = _sukl_gen_id(9)
+        rec = {"idEPoukaz": pid, "stav": {"kod": "P", "nazev": "Předepsán"},
+               "datumPredpisu": _sukl_now(), "pacient": _sukl_pacient_info(rid),
+               "typ": body.get("typ", "zdravotnický prostředek"),
+               "polozky": body.get("polozky", [])}
+        _sukl_sim_epoukazy[pid] = rec
+        return rec
+    return _sukl_dispatch(result, _sim)
+
+
+@app.get("/api/sukl/epoukaz/nahled/{id_epoukaz}")
+async def sukl_epoukaz_nahled(id_epoukaz: str):
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.nahled_epoukaz(id_epoukaz)
+
+    def _sim():
+        rec = _sukl_sim_epoukazy.get(id_epoukaz)
+        if not rec:
+            raise ValueError(f"ePoukaz {id_epoukaz} nenalezen v simulaci")
+        return rec
+    return _sukl_dispatch(result, _sim)
+
+
+# --- eOčkování -------------------------------------------------------------
+
+@app.post("/api/sukl/eockovani/zaloz")
+async def sukl_eockovani_zaloz(request: Request):
+    body = await request.json()
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.zaloz_ockovani(body, body.get("kontext"))
+
+    def _sim():
+        rid = body.get("pacient", {}).get("rid") or body.get("rid", "")
+        oid = _sukl_gen_id()
+        rec = {"idOckovani": oid, "datumOckovani": _sukl_now(),
+               "pacient": _sukl_pacient_info(rid),
+               "vakcina": body.get("vakcina", {"nazev": "Comirnaty", "sukl": ""}),
+               "davka": body.get("davka", 1), "sarze": body.get("sarze", "")}
+        _sukl_sim_ockovani.setdefault(rid, []).append(rec)
+        return rec
+    return _sukl_dispatch(result, _sim)
+
+
+@app.get("/api/sukl/eockovani/nahled/{rid}")
+async def sukl_eockovani_nahled(rid: str):
+    mod = _sukl_get_module("sukl_erecept")
+    result = mod.nahled_ockovani(rid)
+
+    def _sim():
+        return {"pacient": _sukl_pacient_info(rid),
+                "ockovani": _sukl_sim_ockovani.get(rid, [])}
+    return _sukl_dispatch(result, _sim)
+
+
+# --- Simulace: status / seed / reset --------------------------------------
+
+@app.get("/api/sukl/sim/status")
+async def sukl_sim_status():
+    states = {}
+    for r in _sukl_sim_erecepty.values():
+        name = r["stav"]["nazev"]
+        states[name] = states.get(name, 0) + 1
+    mod = _sukl_get_module("sukl_erecept")
+    return JSONResponse({
+        "mode": mod.mode(),
+        "count": len(_sukl_sim_erecepty),
+        "epoukazy": len(_sukl_sim_epoukazy),
+        "ockovani": sum(len(v) for v in _sukl_sim_ockovani.values()),
+        "states": states,
+    })
+
+
+@app.post("/api/sukl/sim/seed")
+async def sukl_sim_seed_ep():
+    count = _sukl_sim_seed()
+    return JSONResponse({"status": 200, "data": {"seeded": count}})
+
+
+@app.post("/api/sukl/sim/reset")
+async def sukl_sim_reset():
+    _sukl_sim_erecepty.clear()
+    _sukl_sim_epoukazy.clear()
+    _sukl_sim_ockovani.clear()
+    return JSONResponse({"status": 200, "data": {"cleared": True, "count": 0}})
