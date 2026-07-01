@@ -12,6 +12,8 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 | **ELP** | Elektronické posudky -- vyhledávání a správa lékařských posudků |
 | **eŽádanky** | Elektronické žádanky mezi poskytovateli |
 | **Notifikace** | Notifikační služba -- kanály, šablony, zdroje |
+| **SÚKL / eRecept** | eRecept / CÚER -- lékový záznam pacienta (LZP), předpis, výdej, doplatky a limit pojištěnce, ePoukaz, eOčkování (režim SIMULACE bez registrace u SÚKL) |
+| **SÚKL / DLP** | Databáze léčivých přípravků -- vyhledávání léků podle názvu, kódu SÚKL nebo ATC (veřejná otevřená data) |
 
 ## Požadavky
 
@@ -194,6 +196,38 @@ Volitelné proměnné:
 | `SEZ_GATEWAY` | `https://gwy-ext-sec-t2.csez.cz` | URL API Gateway |
 | `SEZ_HOST` | `0.0.0.0` | Adresa webového serveru |
 | `SEZ_PORT` | `8000` | Port webového serveru |
+
+### SÚKL -- eRecept / CÚER a DLP
+
+Rozhraní obsahuje sekci **SÚKL / eRecept** (skupina *Preskripce / SÚKL* v levém menu):
+
+- **Lékový záznam (LZP)** -- přehled eReceptů a aktuální medikace pacienta
+- **Předepsat / Výdej / Náhled** -- kompletní životní cyklus eReceptu
+- **Doplatky a limit pojištěnce** -- CÚER doplňkové služby
+- **ePoukaz / eOčkování**
+- **DLP -- léky** -- vyhledávání v databázi léčivých přípravků SÚKL (veřejná data)
+
+> **eRecept** je samostatný systém SÚKL (SOAP, verze rozhraní `202501A`,
+> [epreskripce.gov.cz](https://epreskripce.gov.cz)) a vyžaduje **registraci SW u SÚKL
+> a certifikát**. Bez těchto přístupů běží v **režimu SIMULACE** (in-memory engine +
+> builder request obálek). Po doplnění `SUKL_REG_ID` a `SUKL_ERECEPT_ENDPOINT(_TEST)`
+> (viz `.env.example`) se přepne na **živé volání**.
+>
+> **DLP** (databáze léčivých přípravků) jsou **veřejná otevřená data**
+> ([opendata.sukl.cz](https://opendata.sukl.cz)) a fungují reálně i bez certifikátu;
+> při nedostupnosti se použije vestavěný vzorek přípravků.
+
+Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
+
+| Proměnná | Popis |
+|----------|-------|
+| `SUKL_ENABLED` | Zapnutí sekce SÚKL (výchozí `true`) |
+| `SUKL_INTERFACE_VERSION` | Verze datového rozhraní eReceptu (výchozí `202501A`) |
+| `SUKL_REG_ID` | Registrační ID SW přidělené SÚKL (prázdné = simulace) |
+| `SUKL_ERECEPT_ENDPOINT_TEST` / `SUKL_ERECEPT_ENDPOINT` | Endpoint SOAP rozhraní eReceptu |
+| `SUKL_CERT_PATH` / `SUKL_CERT_PASSWORD` | Certifikát pro mTLS k eReceptu (volitelné) |
+| `SUKL_DLP_URL` | URL balíku otevřených dat DLP |
+| `SUKL_DLP_CACHE_DIR` | Lokální cache DLP (výchozí `/tmp/sukl_dlp`) |
 
 ## Použití
 
