@@ -201,6 +201,21 @@ def test_registr_formular_neznamy(client):
     assert d["pole"] == []
 
 
+def test_vsechny_registry_maji_formular(client):
+    """Každý registr v katalogu NZR má definovaný strukturovaný formulář."""
+    reg = client.get("/api/uzis/registry").json()["data"]["registry"]
+    for r in reg:
+        d = client.get(f"/api/uzis/registr/{r['kod']}/formular").json()["data"]
+        assert len(d["pole"]) > 0, f"Registr {r['kod']} nemá formulář"
+
+
+def test_formular_nkr_a_ocko(client):
+    nkr = {p["kod"] for p in client.get("/api/uzis/registr/NKR/formular").json()["data"]["pole"]}
+    assert "datumOperace" in nkr
+    ocko = {p["kod"] for p in client.get("/api/uzis/registr/OCKO/formular").json()["data"]["pole"]}
+    assert "vakcinaKod" in ocko
+
+
 def test_ciselnik_pojistovny(client):
     r = client.get("/api/uzis/ciselnik/pojistovny")
     kody = {p["kod"] for p in r.json()["data"]["polozky"]}

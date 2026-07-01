@@ -313,6 +313,62 @@ UZIS_NZR_FORMULARE = {
         {"kod": "zakladniDroga", "label": "Základní droga", "typ": "text", "povinny": True},
         {"kod": "zpusobAplikace", "label": "Způsob aplikace", "typ": "text", "povinny": False},
     ],
+    "NKR": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumOperace", "label": "Datum operace", "typ": "date", "povinny": True},
+        {"kod": "typVykonu", "label": "Typ kardiochirurgického výkonu", "typ": "text", "povinny": True},
+        {"kod": "diagnozaMKN", "label": "Diagnóza (MKN-10, I)", "typ": "text", "povinny": True},
+        {"kod": "euroScore", "label": "EuroSCORE II (%)", "typ": "number", "povinny": False},
+        {"kod": "mimotelniObeh", "label": "Mimotělní oběh", "typ": "bool", "povinny": False},
+    ],
+    "NRNOV": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumNarozeni", "label": "Datum narození", "typ": "date", "povinny": True},
+        {"kod": "porodniHmotnost", "label": "Porodní hmotnost (g)", "typ": "number", "povinny": True},
+        {"kod": "gestacniTyden", "label": "Gestační týden", "typ": "number", "povinny": True},
+        {"kod": "apgar5", "label": "Apgar skóre (5. min)", "typ": "number", "povinny": False},
+        {"kod": "vicecetne", "label": "Vícečetné těhotenství", "typ": "bool", "povinny": False},
+    ],
+    "NRROD": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumPorodu", "label": "Datum porodu", "typ": "date", "povinny": True},
+        {"kod": "zpusobPorodu", "label": "Způsob porodu", "typ": "text", "povinny": True},
+        {"kod": "poradiTehotenstvi", "label": "Pořadí těhotenství", "typ": "number", "povinny": False},
+        {"kod": "tydenPorodu", "label": "Týden porodu", "typ": "number", "povinny": False},
+    ],
+    "NRAR": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumCyklu", "label": "Datum zahájení cyklu", "typ": "date", "povinny": True},
+        {"kod": "typCyklu", "label": "Typ cyklu (IVF/ICSI/…)", "typ": "text", "povinny": True},
+        {"kod": "pocetEmbryi", "label": "Počet přenesených embryí", "typ": "number", "povinny": False},
+        {"kod": "kryokonzervace", "label": "Kryokonzervace", "typ": "bool", "povinny": False},
+    ],
+    "NRPATV": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumPitvy", "label": "Datum pitvy", "typ": "date", "povinny": True},
+        {"kod": "druhPitvy", "label": "Druh pitvy (zdravotní/soudní)", "typ": "text", "povinny": True},
+        {"kod": "zakladniDgMKN", "label": "Základní diagnóza (MKN-10)", "typ": "text", "povinny": True},
+        {"kod": "toxikologie", "label": "Provedeno toxikologické vyšetření", "typ": "bool", "povinny": False},
+    ],
+    "ISIN": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumHlaseni", "label": "Datum hlášení", "typ": "date", "povinny": True},
+        {"kod": "diagnozaMKN", "label": "Infekční diagnóza (MKN-10, A/B)", "typ": "text", "povinny": True},
+        {"kod": "agens", "label": "Původce (agens)", "typ": "text", "povinny": False},
+        {"kod": "hospitalizace", "label": "Hospitalizace", "typ": "bool", "povinny": False},
+    ],
+    "OCKO": _UZIS_POLE_SPOLECNA + [
+        {"kod": "datumOckovani", "label": "Datum očkování", "typ": "date", "povinny": True},
+        {"kod": "vakcinaKod", "label": "Kód vakcíny (SÚKL/DLP)", "typ": "text", "povinny": True},
+        {"kod": "davka", "label": "Pořadí dávky", "typ": "number", "povinny": True},
+        {"kod": "sarze", "label": "Šarže", "typ": "text", "povinny": False},
+    ],
+    "NRPZS": [
+        {"kod": "ico", "label": "IČO poskytovatele", "typ": "text", "povinny": True},
+        {"kod": "nazevZarizeni", "label": "Název zdravotnického zařízení", "typ": "text", "povinny": True},
+        {"kod": "oborPece", "label": "Obor péče", "typ": "text", "povinny": False},
+        {"kod": "formaPece", "label": "Forma péče", "typ": "text", "povinny": False},
+    ],
+    "NRZP": [
+        {"kod": "krzpId", "label": "KRZP ID pracovníka", "typ": "text", "povinny": True},
+        {"kod": "jmeno", "label": "Jméno", "typ": "text", "povinny": True},
+        {"kod": "prijmeni", "label": "Příjmení", "typ": "text", "povinny": True},
+        {"kod": "odbornost", "label": "Odbornost", "typ": "text", "povinny": False},
+    ],
 }
 
 # Vzoroví poskytovatelé (offline fallback pro NRPZS, když API není dostupné).
