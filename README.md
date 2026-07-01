@@ -14,6 +14,8 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 | **Notifikace** | Notifikační služba -- kanály, šablony, zdroje |
 | **SÚKL / eRecept** | eRecept / CÚER -- lékový záznam pacienta (LZP), předpis, výdej, doplatky a limit pojištěnce, ePoukaz, eOčkování (režim SIMULACE bez registrace u SÚKL) |
 | **SÚKL / DLP** | Databáze léčivých přípravků -- vyhledávání léků podle názvu, kódu SÚKL nebo ATC (veřejná otevřená data) |
+| **ÚZIS / NRPZS** | Národní registr poskytovatelů zdravotních služeb -- veřejné REST API ÚZIS (vyhledávání poskytovatelů, číselníky NZIS) |
+| **ÚZIS / NZR** | Národní zdravotnické registry (NOR, NRHOSP, ISIN…) a hlášení do NZIS (režim SIMULACE bez certifikátu ÚZIS/EREG) |
 
 ## Požadavky
 
@@ -228,6 +230,27 @@ Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
 | `SUKL_CERT_PATH` / `SUKL_CERT_PASSWORD` | Certifikát pro mTLS k eReceptu (volitelné) |
 | `SUKL_DLP_URL` | URL balíku otevřených dat DLP |
 | `SUKL_DLP_CACHE_DIR` | Lokální cache DLP (výchozí `/tmp/sukl_dlp`) |
+
+Živý režim SÚKL: pokud je prázdné `SUKL_CERT_PATH`, použije se pro mTLS certifikát
+aktivního CSEZ/EZCA klienta (např. `krajska_zdravotni.pfx`); lze nastavit i vlastní
+SÚKL cert. Živé volání se aktivuje po vyplnění `SUKL_REG_ID` + `SUKL_ERECEPT_ENDPOINT(_TEST)`.
+
+### ÚZIS -- NZIS (NRPZS a Národní zdravotnické registry)
+
+Sekce **ÚZIS / NZIS** (skupina *ÚZIS / NZIS* v menu):
+
+- **Poskytovatelé (NRPZS)** -- vyhledávání v Národním registru poskytovatelů zdravotních
+  služeb (veřejné REST API [nrpzs.uzis.cz](https://nrpzs.uzis.cz/api/doc); offline fallback = vzorky)
+- **Číselníky NZIS** -- kraje, obory/formy/druhy péče
+- **Registry (NZR)** -- katalog národních zdravotnických registrů (NOR, NRHOSP, ISIN…)
+- **Hlášení do NZIS** -- odeslání hlášení do registru (režim SIMULACE bez certifikátu ÚZIS/EREG)
+
+| Proměnná | Popis |
+|----------|-------|
+| `UZIS_ENABLED` | Zapnutí sekce ÚZIS (výchozí `true`) |
+| `UZIS_NRPZS_URL` | URL veřejného NRPZS API (výchozí `https://nrpzs.uzis.cz/api/v1`) |
+| `UZIS_NZR_ENDPOINT_TEST` / `UZIS_NZR_ENDPOINT` | Endpoint pro hlášení do NZR (prázdné = simulace) |
+| `UZIS_CERT_PATH` / `UZIS_CERT_PASSWORD` | Certifikát ÚZIS/EREG (prázdné = cert CSEZ/EZCA klienta) |
 
 ## Použití
 

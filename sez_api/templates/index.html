@@ -6908,11 +6908,14 @@ function initNavEnhancements() {
   });
 }
 
-// Filtr sekcí v postranním menu podle názvu.
+// Filtr sekcí v postranním menu podle názvu (bez ohledu na diakritiku).
+function _navNorm(s) {
+  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+}
 function navFilter(q) {
-  const query = (q || '').trim().toLowerCase();
+  const query = _navNorm(q);
   document.querySelectorAll('#nav .nav-item').forEach(item => {
-    const txt = item.textContent.trim().toLowerCase();
+    const txt = _navNorm(item.textContent);
     item.classList.toggle('nav-hidden', !!query && !txt.includes(query));
   });
   // Skryj skupinové hlavičky, které nemají žádnou viditelnou položku.
