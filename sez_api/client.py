@@ -3728,8 +3728,116 @@ class UZIS:
             "enabled": cfg.UZIS_ENABLED,
             "mode": self.mode(),
             "nrpzs_url": cfg.UZIS_NRPZS_URL,
+            "ereg_base": cfg.uzis_ereg_base(env),
+            "apidoc": cfg.UZIS_APIDOC,
             "nzr_endpoint": cfg.uzis_nzr_endpoint(env) or "(nenastaveno – simulace)",
             "certifikat": bool(cert),
             "pocet_registru": len(cfg.UZIS_NZR_KATALOG),
             "prostredi": env,
         }
+
+
+class UZISObsazenostLuzek:
+    """ÚZIS eReg REST API – NRPZS / ObsazenostLůžek (Národní dispečink lůžkové péče).
+
+    Rozhraní dle Metodiky hlášení obsazenosti lůžek v1.2 (ÚZIS).
+    Base: api.uzis.cz/registr/nrpzs/v1 (prod) / apitest.uzis.cz (test).
+    Dokumentace: apidoc.uzis.cz/Registr/NRPZS. Přístup vyžaduje systémový
+    certifikát ÚZIS/EREG → GET číselníky mají offline fallback z configu,
+    POST VolnaLuzka běží v simulaci, dokud není cert + endpoint.
+    """
+
+    PATH = "/registr/nrpzs/v1"
+
+    def __init__(self, client: SEZClient = None):
+        self.c = client
+
+    def _cfg(self):
+        from sez_api import config as _cfg
+        return _cfg
+
+    def _base(self) -> str:
+        return self._cfg().uzis_ereg_base(SEZConfig.ENVIRONMENT).rstrip("/") + self.PATH
+
+    def _live_cert(self):
+        cfg = self._cfg()
+        if cfg.UZIS_CERT_PATH:
+            try:
+                return _load_pfx_pem(cfg.UZIS_CERT_PATH, cfg.UZIS_CERT_PASSWORD)
+            except Exception as exc:
+                logger.warning("ÚZIS cert %s nelze načíst: %s", cfg.UZIS_CERT_PATH, exc)
+        if self.c is not None and getattr(self.c, "auth", None) is not None:
+            try:
+                return self.c.auth.tls_cert
+            except Exception:
+                pass
+        return None
+
+    def _get(self, path: str, fallback_key: str | None = None) -> dict:
+        """GET na eReg API (mTLS); při nedostupnosti fallback na číselník z configu."""
+        url = self._base() + path
+        try:
+            resp = requests.get(url, timeout=12, cert=self._live_cert(),
+                                headers={"Accept": "application/json"})
+            resp.raise_for_status()
+            return {"zdroj": "ereg", "polozky": resp.json()}
+        except Exception as exc:
+            data = self._cfg().UZIS_LUZKA_CISELNIKY.get(fallback_key, []) if fallback_key else []
+            logger.warning("ÚZIS eReg %s nedostupné (%s) – fallback", path, str(exc)[:120])
+            return {"zdroj": "sample", "polozky": data, "chyba": str(exc)[:160]}
+
+    def nacti_formy_pece(self):
+        return self._get("/ObsazenostLuzek/NactiFormyPece", "formy_pece")
+
+    def nacti_obory_pece(self):
+        return self._get("/ObsazenostLuzek/NactiOboryPece", "obory_pece")
+
+    def nacti_vybaveni(self):
+        return self._get("/ObsazenostLuzek/NactiVybaveni", "vybaveni")
+
+    def nacti_skupiny_pacientu(self):
+        return self._get("/ObsazenostLuzek/NactiSkupinyPacientu", "skupiny_pacientu")
+
+    def nacti_zdravotnicka_zarizeni(self):
+        return self._get("/ObsazenostLuzek/NactiZdravotnickeZarizeni", None)
+
+    def probe(self) -> dict:
+        url = self._base() + "/Status/Probe"
+        try:
+            resp = requests.get(url, timeout=8, cert=self._live_cert())
+            return {"ok": resp.status_code == 200, "http_status": resp.status_code}
+        except Exception as exc:
+            return {"ok": False, "chyba": str(exc)[:160]}
+
+    def hlas_volna_luzka(self, telo: dict) -> dict:
+        """POST /ObsazenostLuzek/VolnaLuzka. LIVE s cert+endpointem, jinak sim marker."""
+        cfg = self._cfg()
+        url = self._base() + "/ObsazenostLuzek/VolnaLuzka"
+        payload = {
+            "ico": telo.get("ico", ""),
+            "pcz": telo.get("pcz", ""),
+            "pcdp": telo.get("pcdp", ""),
+            "datumHlaseni": telo.get("datumHlaseni") or _iso_now(),
+            "kodOborPece": telo.get("kodOborPece"),
+            "kodFormaPece": telo.get("kodFormaPece"),
+            "kodVybaveni": telo.get("kodVybaveni"),
+            "kodSkupinaPacientu": telo.get("kodSkupinaPacientu"),
+            "pocetVolnychLuzek": int(telo.get("pocetVolnychLuzek", 0) or 0),
+            "celkovyPocetLuzek": int(telo.get("celkovyPocetLuzek", 0) or 0),
+        }
+        # Živě jen když je nakonfigurován reálný eReg endpoint (jiný než default veřejný apitest).
+        live = cfg.UZIS_ENABLED and (cfg.UZIS_NZR_ENDPOINT or cfg.UZIS_NZR_ENDPOINT_TEST or cfg.UZIS_CERT_PATH)
+        if live:
+            try:
+                resp = requests.post(url, json=payload, timeout=20,
+                                     cert=self._live_cert(),
+                                     headers={"Content-Type": "application/json"})
+                try:
+                    body = resp.json()
+                except Exception:
+                    body = {"raw": resp.text[:1000]}
+                return {"_simulace": False, "http_status": resp.status_code,
+                        "request": payload, "response": body}
+            except Exception as exc:
+                return {"_simulace": False, "chyba": str(exc)[:300], "request": payload}
+        return {"_simulace": True, "request": payload}

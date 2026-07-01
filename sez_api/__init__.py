@@ -82,6 +82,7 @@ from sez_api.client import (
     SUKLeRecept,
     UZISNrpzs,
     UZIS,
+    UZISObsazenostLuzek,
 )
 
 __version__ = "2.24.1"
@@ -115,4 +116,5 @@ __all__ = [
     "SUKLeRecept",
     "UZISNrpzs",
     "UZIS",
+    "UZISObsazenostLuzek",
 ]

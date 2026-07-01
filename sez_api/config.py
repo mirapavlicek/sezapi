@@ -156,6 +156,20 @@ UZIS_NZR_ENDPOINT = env("UZIS_NZR_ENDPOINT", "")
 UZIS_CERT_PATH = env("UZIS_CERT_PATH", "")
 UZIS_CERT_PASSWORD = env("UZIS_CERT_PASSWORD", "")
 
+# ÚZIS eReg REST API (api.uzis.cz) – produkční a testovací základ.
+# Dokumentace (bez certifikátu): https://apidoc.uzis.cz
+# Přístup k datům vyžaduje systémový certifikát ÚZIS/EREG (nebo eRecept).
+UZIS_EREG_BASE = env("UZIS_EREG_BASE", "https://api.uzis.cz")
+UZIS_EREG_BASE_TEST = env("UZIS_EREG_BASE_TEST", "https://apitest.uzis.cz")
+UZIS_APIDOC = "https://apidoc.uzis.cz/Registr/NRPZS/index.html"
+
+
+def uzis_ereg_base(env_key: str = "T2") -> str:
+    """eReg API base dle prostředí (PROD → api.uzis.cz, jinak apitest.uzis.cz)."""
+    if env_key == "PROD":
+        return UZIS_EREG_BASE
+    return UZIS_EREG_BASE_TEST
+
 
 def uzis_nzr_endpoint(env_key: str = "T2") -> str:
     if env_key == "PROD" and UZIS_NZR_ENDPOINT:
@@ -245,6 +259,63 @@ UZIS_NRPZS_SAMPLE = [
      "obor": "praktické lékařství pro děti a dorost", "forma": "ambulantní péče", "druh": "primární",
      "adresa": "Nádražní 254, Kutná Hora", "web": ""},
 ]
+
+# Autoritativní číselníky ÚZIS eReg – služba ObsazenostLůžek (Národní dispečink
+# lůžkové péče). Zdroj: Metodika hlášení obsazenosti lůžek do NRPZS v1.2 (ÚZIS,
+# 11.02.2026). Slouží jako offline fallback pro GET /ObsazenostLuzek/Nacti*.
+UZIS_LUZKA_CISELNIKY = {
+    "formy_pece": [
+        {"kod": "311", "nazev": "akutní lůžková péče intenzivní"},
+        {"kod": "312", "nazev": "akutní lůžková péče standardní"},
+        {"kod": "321", "nazev": "následná lůžková péče – standardní"},
+        {"kod": "322", "nazev": "následná lůžková intenzivní péče"},
+        {"kod": "323", "nazev": "následná lůžková léčebně rehabilitační péče"},
+        {"kod": "331", "nazev": "dlouhodobá lůžková péče vyjma intenzivní"},
+        {"kod": "332", "nazev": "dlouhodobá intenzivní ošetřovatelská péče (DIOP)"},
+        {"kod": "333", "nazev": "dlouhodobá lůžková paliativní péče"},
+    ],
+    "vybaveni": [
+        {"kod": "O", "nazev": "Lůžka vybavená zdrojem kyslíku"},
+        {"kod": "HFNO", "nazev": "Lůžka s HFNO (vysokoprůtoková aplikace kyslíku)"},
+        {"kod": "UPV", "nazev": "Lůžka s UPV (umělá plicní ventilace)"},
+        {"kod": "ECMO", "nazev": "ECMO (mimotělní membránová oxygenace)"},
+        {"kod": "CVVHD", "nazev": "Kontinuální venovenózní hemodialýza"},
+        {"kod": "VENT", "nazev": "Přenosné/transportní ventilátory"},
+        {"kod": "ANVENT", "nazev": "Anesteziologické přístroje s ventilátorem"},
+        {"kod": "RRT", "nazev": "Akutní dialýza"},
+    ],
+    "skupiny_pacientu": [
+        {"kod": "0", "nazev": "standardní"},
+        {"kod": "1", "nazev": "infekční (COVID) lůžka"},
+        {"kod": "10", "nazev": "trauma"},
+        {"kod": "20", "nazev": "cévní mozková příhoda"},
+        {"kod": "1000", "nazev": "muži"},
+        {"kod": "2000", "nazev": "ženy"},
+    ],
+    "obory_pece": [
+        {"kod": "L01", "nazev": "alergologie a klinická imunologie"},
+        {"kod": "L02", "nazev": "anesteziologie a intenzivní medicína"},
+        {"kod": "L08", "nazev": "dětské lékařství"},
+        {"kod": "L12", "nazev": "gynekologie a porodnictví"},
+        {"kod": "L15", "nazev": "chirurgie"},
+        {"kod": "L16", "nazev": "infekční lékařství"},
+        {"kod": "L18", "nazev": "kardiologie"},
+        {"kod": "L20", "nazev": "klinická onkologie"},
+        {"kod": "L24", "nazev": "neurochirurgie"},
+        {"kod": "L25", "nazev": "neurologie"},
+        {"kod": "L28", "nazev": "ortopedie a traumatologie pohybového ústrojí"},
+        {"kod": "L31", "nazev": "plastická chirurgie"},
+        {"kod": "L32", "nazev": "pneumologie a ftizeologie"},
+        {"kod": "L34", "nazev": "psychiatrie"},
+        {"kod": "L36", "nazev": "radiologie a zobrazovací metody"},
+        {"kod": "L37", "nazev": "rehabilitační a fyzikální medicína"},
+        {"kod": "L41", "nazev": "urgentní medicína"},
+        {"kod": "L43", "nazev": "vnitřní lékařství"},
+        {"kod": "N23", "nazev": "intenzívní medicína"},
+        {"kod": "N33", "nazev": "neonatologie"},
+        {"kod": "N39", "nazev": "paliativní medicína"},
+    ],
+}
 
 # CMS2 sdílí credentials s odpovídajícím Internet prostředím.
 ENV_CREDENTIALS = {

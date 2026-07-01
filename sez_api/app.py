@@ -34,7 +34,7 @@ from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, ELPv3, EZadanky, Notifikace, EZCA2,
     EZCA2SpravaCertifikatu, KRPv3, SZZv2, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
-    UZISNrpzs, UZIS,
+    UZISNrpzs, UZIS, UZISObsazenostLuzek,
 )
 from sez_api import fhir_imgorder as _fhir_img
 
@@ -174,6 +174,7 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["sukl_erecept"] = SUKLeRecept(_client)
     _modules["uzis_nrpzs"] = UZISNrpzs(_client)
     _modules["uzis"] = UZIS(_client)
+    _modules["uzis_luzka"] = UZISObsazenostLuzek(_client)
     _connected = True
     try:
         _termx_status_cache.clear()
@@ -3547,6 +3548,24 @@ async def debug_jwt():
                     {"method": "GET", "path": "/api/uzis/hlaseni/{registr}/{id}", "desc": "Stav hlášení"},
                     {"method": "POST", "path": "/api/uzis/sestav-obalku", "desc": "Sestavení obálky hlášení (builder)"},
                     {"method": "GET", "path": "/api/uzis/diagnose", "desc": "Stav konfigurace ÚZIS (LIVE/SIM)"},
+                ],
+            },
+            "ÚZIS / eReg – ObsazenostLůžek": {
+                "name": "ÚZIS eReg REST API – Obsazenost lůžek (Národní dispečink lůžkové péče)",
+                "base": "api.uzis.cz/registr/nrpzs/v1 (test: apitest.uzis.cz)",
+                "version": "dle Metodiky hlášení obsazenosti lůžek v1.2 (ÚZIS)",
+                "note": ("Strojové rozhraní NRPZS pro hlášení obsazenosti lůžek. Dokumentace bez "
+                         "certifikátu: apidoc.uzis.cz/Registr/NRPZS. Zápis vyžaduje systémový "
+                         "certifikát ÚZIS/EREG (per IČO) → v tomto nástroji SIMULACE, dokud není cert. "
+                         "GET číselníky mají offline fallback z autoritativní metodiky."),
+                "endpoints": [
+                    {"method": "POST", "path": "/api/uzis/luzka/hlasit", "desc": "VolnaLuzka – hlášení volných lůžek"},
+                    {"method": "GET", "path": "/api/uzis/luzka/ciselnik/formy_pece", "desc": "NactiFormyPece"},
+                    {"method": "GET", "path": "/api/uzis/luzka/ciselnik/obory_pece", "desc": "NactiOboryPece"},
+                    {"method": "GET", "path": "/api/uzis/luzka/ciselnik/vybaveni", "desc": "NactiVybaveni"},
+                    {"method": "GET", "path": "/api/uzis/luzka/ciselnik/skupiny_pacientu", "desc": "NactiSkupinyPacientu"},
+                    {"method": "GET", "path": "/api/uzis/luzka/ciselnik/zdravotnicka_zarizeni", "desc": "NactiZdravotnickeZarizeni (dle certifikátu)"},
+                    {"method": "GET", "path": "/api/uzis/luzka/probe", "desc": "Status/Probe – health"},
                 ],
             },
         },
@@ -7132,11 +7151,19 @@ async def sukl_sim_reset():
 _uzis_sim_hlaseni: dict = {}   # idHlaseni -> záznam
 
 
+_uzis_sim_luzka: list = []   # nahlášená volná lůžka (simulace)
+
+
 def _uzis_get_module(name: str):
     mod = _modules.get(name)
     if mod is None:
-        from sez_api.client import UZISNrpzs, UZIS
-        mod = UZISNrpzs(_client) if name == "uzis_nrpzs" else UZIS(_client)
+        from sez_api.client import UZISNrpzs, UZIS, UZISObsazenostLuzek
+        if name == "uzis_nrpzs":
+            mod = UZISNrpzs(_client)
+        elif name == "uzis_luzka":
+            mod = UZISObsazenostLuzek(_client)
+        else:
+            mod = UZIS(_client)
         _modules[name] = mod
     return mod
 
@@ -7276,7 +7303,54 @@ async def uzis_sim_status():
 @app.post("/api/uzis/sim/reset")
 async def uzis_sim_reset():
     _uzis_sim_hlaseni.clear()
+    _uzis_sim_luzka.clear()
     return JSONResponse({"status": 200, "data": {"cleared": True, "count": 0}})
+
+
+# --- ObsazenostLůžek (Národní dispečink lůžkové péče, eReg API) -------------
+
+@app.get("/api/uzis/luzka/ciselnik/{typ}")
+async def uzis_luzka_ciselnik(typ: str):
+    mod = _uzis_get_module("uzis_luzka")
+    fn = {
+        "formy_pece": mod.nacti_formy_pece,
+        "obory_pece": mod.nacti_obory_pece,
+        "vybaveni": mod.nacti_vybaveni,
+        "skupiny_pacientu": mod.nacti_skupiny_pacientu,
+        "zdravotnicka_zarizeni": mod.nacti_zdravotnicka_zarizeni,
+    }.get(typ)
+    if not fn:
+        return error_response(f"Neznámý číselník: {typ}", 404)
+    return JSONResponse({"status": 200, "data": fn()})
+
+
+@app.get("/api/uzis/luzka/probe")
+async def uzis_luzka_probe():
+    mod = _uzis_get_module("uzis_luzka")
+    return JSONResponse({"status": 200, "data": mod.probe()})
+
+
+@app.post("/api/uzis/luzka/hlasit")
+async def uzis_luzka_hlasit(request: Request):
+    body = await request.json()
+    mod = _uzis_get_module("uzis_luzka")
+    result = mod.hlas_volna_luzka(body)
+
+    def _sim():
+        rec = dict(result.get("request", {}))
+        rec["_id"] = _sukl_gen_id(8)
+        rec["_prijato"] = _sukl_now()
+        _uzis_sim_luzka.insert(0, rec)
+        del _uzis_sim_luzka[50:]
+        return {"ulozeno": True, "id": rec["_id"], "hlaseni": rec,
+                "pocetVSimulaci": len(_uzis_sim_luzka)}
+    return _uzis_dispatch(result, _sim)
+
+
+@app.get("/api/uzis/luzka/prehled")
+async def uzis_luzka_prehled():
+    return JSONResponse({"status": 200, "data": {"hlaseni": _uzis_sim_luzka,
+                                                 "pocet": len(_uzis_sim_luzka)}})
 
 
 # ---------------------------------------------------------------------------
