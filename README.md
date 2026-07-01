@@ -243,12 +243,17 @@ Sekce **ÚZIS / NZIS** (skupina *ÚZIS / NZIS* v menu):
   služeb (veřejné REST API [nrpzs.uzis.cz](https://nrpzs.uzis.cz/api/doc); offline fallback = vzorky)
 - **Číselníky NZIS** -- kraje, obory/formy/druhy péče
 - **Registry (NZR)** -- katalog národních zdravotnických registrů (NOR, NRHOSP, ISIN…)
+- **Obsazenost lůžek (NDLP)** -- ÚZIS eReg REST API (`api.uzis.cz/registr/nrpzs/v1`,
+  dokumentace [apidoc.uzis.cz](https://apidoc.uzis.cz/Registr/NRPZS/index.html)):
+  hlášení volných lůžek (`ObsazenostLuzek/VolnaLuzka`) + číselníky (formy/obory/vybavení/skupiny
+  pacientů) dle Metodiky ÚZIS v1.2. Zápis vyžaduje certifikát ÚZIS/EREG → režim SIMULACE.
 - **Hlášení do NZIS** -- odeslání hlášení do registru (režim SIMULACE bez certifikátu ÚZIS/EREG)
 
 | Proměnná | Popis |
 |----------|-------|
 | `UZIS_ENABLED` | Zapnutí sekce ÚZIS (výchozí `true`) |
 | `UZIS_NRPZS_URL` | URL veřejného NRPZS API (výchozí `https://nrpzs.uzis.cz/api/v1`) |
+| `UZIS_EREG_BASE` / `UZIS_EREG_BASE_TEST` | Základ ÚZIS eReg REST API (`api.uzis.cz` / `apitest.uzis.cz`) |
 | `UZIS_NZR_ENDPOINT_TEST` / `UZIS_NZR_ENDPOINT` | Endpoint pro hlášení do NZR (prázdné = simulace) |
 | `UZIS_CERT_PATH` / `UZIS_CERT_PASSWORD` | Certifikát ÚZIS/EREG (prázdné = cert CSEZ/EZCA klienta) |
 

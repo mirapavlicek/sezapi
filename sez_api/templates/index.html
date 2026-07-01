@@ -6717,6 +6717,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
         <div class="sub-tab active" data-panel="uzis-nrpzs-panel">Poskytovatelé (NRPZS)</div>
         <div class="sub-tab" data-panel="uzis-ciselniky-panel">Číselníky NZIS</div>
         <div class="sub-tab" data-panel="uzis-registry-panel">Registry (NZR)</div>
+        <div class="sub-tab" data-panel="uzis-luzka-panel">Obsazenost lůžek (NDLP)</div>
         <div class="sub-tab" data-panel="uzis-hlaseni-panel">Hlášení do NZIS</div>
         <div class="sub-tab" data-panel="uzis-sim-panel">Simulace</div>
       </div>
@@ -6771,6 +6772,45 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
         </div>
         <div id="uzisRegistryTable" style="display:none;margin-bottom:16px"></div>
         <div class="card"><div class="card-header"><span class="card-title">Surová odpověď</span></div><div class="json-box" id="uzisRegistryResult">-</div></div>
+      </div>
+
+      <!-- Obsazenost lůžek (NDLP) -->
+      <div class="sub-panel" id="uzis-luzka-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Obsazenost lůžek – Národní dispečink lůžkové péče (eReg API)</span>
+            <button class="btn btn-outline btn-sm" onclick="uzisLuzkaProbe()">Status/Probe</button>
+          </div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Strojové hlášení volných lůžek do NRPZS dle Metodiky ÚZIS v1.2
+            (<code>POST /ObsazenostLuzek/VolnaLuzka</code>, base <code>api.uzis.cz/registr/nrpzs/v1</code>,
+            <a href="https://apidoc.uzis.cz/Registr/NRPZS/index.html" target="_blank" style="color:var(--accent)">apidoc.uzis.cz</a>).
+            Zápis vyžaduje certifikát ÚZIS/EREG → zde běží v simulaci; číselníky mají offline fallback.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+            <div class="form-group"><label>IČO *</label><input id="uzisLuIco" placeholder="25488627"></div>
+            <div class="form-group"><label>PČZ *</label><input id="uzisLuPcz" placeholder="např. 01"></div>
+            <div class="form-group"><label>PČDP *</label><input id="uzisLuPcdp" placeholder="např. 001"></div>
+            <div class="form-group"><label>Datum hlášení</label><input type="text" class="date-cs" id="uzisLuDatum" placeholder="d.m.rrrr (dnes)"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">
+            <div class="form-group"><label>Forma péče *</label><select id="uzisLuForma"><option value="">– načíst –</option></select></div>
+            <div class="form-group"><label>Obor péče</label><select id="uzisLuObor"><option value="">– načíst –</option></select></div>
+            <div class="form-group"><label>Vybavení</label><select id="uzisLuVybaveni"><option value="">– načíst –</option></select></div>
+            <div class="form-group"><label>Skupina pacientů</label><select id="uzisLuSkupina"><option value="">– načíst –</option></select></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end;margin-top:8px">
+            <div class="form-group"><label>Volných lůžek *</label><input type="number" id="uzisLuVolna" value="0" min="0"></div>
+            <div class="form-group"><label>Celkem lůžek *</label><input type="number" id="uzisLuCelkem" value="0" min="0"></div>
+            <button class="btn btn-primary" onclick="uzisLuzkaHlasit()">Nahlásit volná lůžka</button>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="uzisLuzkaCiselniky()">Načíst číselníky</button>
+            <button class="btn btn-outline btn-sm" onclick="uzisLuzkaPrehled()">Přehled nahlášených (simulace)</button>
+          </div>
+        </div>
+        <div id="uzisLuzkaTable" style="display:none;margin-bottom:16px"></div>
+        <div class="card"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="uzisLuzkaResult">-</div></div>
       </div>
 
       <!-- Hlášení -->
@@ -16583,6 +16623,61 @@ async function uzisHlaseniStav() {
 }
 async function uzisSimStatus() { const r = await api('GET', '/api/uzis/sim/status'); _showJson('uzisSimResult', r); }
 async function uzisSimReset() { const r = await api('POST', '/api/uzis/sim/reset'); _showJson('uzisSimResult', r); toast('Simulace ÚZIS vyprázdněna'); }
+
+// --- ObsazenostLůžek (Národní dispečink lůžkové péče) ---
+function _uzisFillSelect(id, items, placeholder) {
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = `<option value="">${placeholder}</option>` +
+    (items || []).map(i => `<option value="${escHtml(i.kod)}">${escHtml(i.kod)} – ${escHtml(i.nazev)}</option>`).join('');
+}
+async function uzisLuzkaCiselniky() {
+  const [f, o, v, s] = await Promise.all([
+    api('GET', '/api/uzis/luzka/ciselnik/formy_pece'),
+    api('GET', '/api/uzis/luzka/ciselnik/obory_pece'),
+    api('GET', '/api/uzis/luzka/ciselnik/vybaveni'),
+    api('GET', '/api/uzis/luzka/ciselnik/skupiny_pacientu'),
+  ]);
+  _uzisFillSelect('uzisLuForma', f?.data?.polozky, '– vyberte formu –');
+  _uzisFillSelect('uzisLuObor', o?.data?.polozky, '– (nepovinné) –');
+  _uzisFillSelect('uzisLuVybaveni', v?.data?.polozky, '– (nepovinné) –');
+  _uzisFillSelect('uzisLuSkupina', s?.data?.polozky, '– (nepovinné) –');
+  toast('Číselníky načteny (zdroj: ' + (f?.data?.zdroj || '?') + ')');
+}
+async function uzisLuzkaProbe() {
+  const r = await api('GET', '/api/uzis/luzka/probe');
+  _showJson('uzisLuzkaResult', r);
+}
+async function uzisLuzkaHlasit() {
+  if (!document.getElementById('uzisLuForma').options.length || document.getElementById('uzisLuForma').options.length <= 1) {
+    await uzisLuzkaCiselniky();
+  }
+  const body = {
+    ico: _val('uzisLuIco'), pcz: _val('uzisLuPcz'), pcdp: _val('uzisLuPcdp'),
+    kodFormaPece: _val('uzisLuForma') || null, kodOborPece: _val('uzisLuObor') || null,
+    kodVybaveni: _val('uzisLuVybaveni') || null, kodSkupinaPacientu: _val('uzisLuSkupina') || null,
+    pocetVolnychLuzek: parseInt(_val('uzisLuVolna') || '0'),
+    celkovyPocetLuzek: parseInt(_val('uzisLuCelkem') || '0'),
+  };
+  const d = _val('uzisLuDatum'); if (d) body.datumHlaseni = d;
+  if (!body.ico || !body.pcz || !body.pcdp) return toast('Vyplňte IČO, PČZ a PČDP', true);
+  if (!body.kodFormaPece) return toast('Forma péče je povinná', true);
+  const r = await api('POST', '/api/uzis/luzka/hlasit', body);
+  showResult('uzisLuzkaResult', r);
+  if (r?.data?.ulozeno) { toast('Hlášení lůžek přijato (' + (r._sim ? 'simulace' : 'živě') + ')'); uzisLuzkaPrehled(); }
+}
+async function uzisLuzkaPrehled() {
+  const r = await api('GET', '/api/uzis/luzka/prehled');
+  const box = document.getElementById('uzisLuzkaTable');
+  const rows = r?.data?.hlaseni || [];
+  if (!rows.length) { box.style.display = 'none'; toast('Zatím žádná hlášení v simulaci'); return; }
+  box.style.display = 'block';
+  box.innerHTML = '<div class="card"><div class="card-title">Nahlášená volná lůžka (' + rows.length + ')</div>' +
+    '<table><thead><tr><th>IČO</th><th>PČZ/PČDP</th><th>Forma</th><th>Obor</th><th>Vybavení</th><th>Volná</th><th>Celkem</th><th>Datum</th></tr></thead><tbody>' +
+    rows.map(x => `<tr><td class="mono">${escHtml(x.ico)}</td><td class="mono">${escHtml(x.pcz)}/${escHtml(x.pcdp)}</td>` +
+      `<td>${escHtml(x.kodFormaPece||'')}</td><td>${escHtml(x.kodOborPece||'')}</td><td>${escHtml(x.kodVybaveni||'')}</td>` +
+      `<td><strong>${x.pocetVolnychLuzek}</strong></td><td>${x.celkovyPocetLuzek}</td><td style="font-size:11px">${escHtml((x.datumHlaseni||'').slice(0,16))}</td></tr>`).join('') +
+    '</tbody></table></div>';
+}
 // Cross-nav: otevře poskytovatele v NRPZS podle IČO
 function goUZIS(ico) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));

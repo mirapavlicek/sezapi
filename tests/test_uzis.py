@@ -129,3 +129,50 @@ def test_uzis_registry_endpoint(client):
     r = client.get("/api/uzis/registry")
     assert r.status_code == 200
     assert len(r.json()["data"]["registry"]) >= 5
+
+
+# --- eReg / ObsazenostLůžek (NDLP) ----------------------------------------
+
+@pytest.fixture(autouse=True)
+def _offline_ereg(monkeypatch):
+    # Vynutí fallback číselníků (bez sítě).
+    monkeypatch.setattr(cfg, "UZIS_EREG_BASE", "", raising=False)
+    monkeypatch.setattr(cfg, "UZIS_EREG_BASE_TEST", "", raising=False)
+    yield
+
+
+def test_luzka_ciselnik_formy(client):
+    r = client.get("/api/uzis/luzka/ciselnik/formy_pece")
+    assert r.status_code == 200
+    pol = r.json()["data"]["polozky"]
+    assert any(p["kod"] == "311" for p in pol)  # akutní lůžková péče intenzivní
+
+
+def test_luzka_ciselnik_vybaveni(client):
+    r = client.get("/api/uzis/luzka/ciselnik/vybaveni")
+    kody = {p["kod"] for p in r.json()["data"]["polozky"]}
+    assert {"O", "UPV", "ECMO"}.issubset(kody)
+
+
+def test_luzka_ciselnik_neznamy_404(client):
+    r = client.get("/api/uzis/luzka/ciselnik/xxx")
+    assert r.json()["status"] == 404
+
+
+def test_luzka_hlasit_sim_a_prehled(client):
+    client.post("/api/uzis/sim/reset")
+    r = client.post("/api/uzis/luzka/hlasit", json={
+        "ico": "25488627", "pcz": "01", "pcdp": "001",
+        "kodFormaPece": "311", "kodOborPece": "L02",
+        "pocetVolnychLuzek": 3, "celkovyPocetLuzek": 10})
+    assert r.status_code == 200
+    assert r.json()["data"]["ulozeno"] is True
+    r2 = client.get("/api/uzis/luzka/prehled")
+    assert r2.json()["data"]["pocet"] >= 1
+    assert r2.json()["data"]["hlaseni"][0]["pocetVolnychLuzek"] == 3
+
+
+def test_diagnose_obsahuje_ereg(client):
+    d = client.get("/api/uzis/diagnose").json()["data"]
+    assert "ereg_base" in d
+    assert "apidoc" in d
