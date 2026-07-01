@@ -3361,12 +3361,48 @@ class SUKLeRecept:
                         "chyba": str(exc)[:300], "request": env}
         return {"_simulace": True, "operace": operace, "request": env}
 
+    # Cache PFX→PEM (per cesta), aby se cert nerozbaloval při každém requestu.
+    _pem_cache: dict = {}
+
+    def _pfx_to_pem(self, path: str, password: str):
+        """Rozbalí PFX/P12 do dočasných PEM souborů (cert+klíč) pro requests mTLS."""
+        key = (path, bool(password))
+        if key in SUKLeRecept._pem_cache and all(os.path.exists(p) for p in SUKLeRecept._pem_cache[key]):
+            return SUKLeRecept._pem_cache[key]
+        pwd = password.encode() if isinstance(password, str) and password else None
+        with open(path, "rb") as f:
+            data = f.read()
+        try:
+            k, cert, cas = pkcs12.load_key_and_certificates(data, pwd)
+        except ValueError:
+            k, cert, cas = pkcs12.load_key_and_certificates(base64.b64decode(data), pwd)
+        tmp = tempfile.mkdtemp(prefix="sukl_")
+        cert_path = os.path.join(tmp, "sukl_cert.pem")
+        key_path = os.path.join(tmp, "sukl_key.pem")
+        with open(cert_path, "wb") as f:
+            f.write(cert.public_bytes(Encoding.PEM))
+            for ca in (cas or []):
+                f.write(ca.public_bytes(Encoding.PEM))
+        with open(key_path, "wb") as f:
+            f.write(k.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()))
+        SUKLeRecept._pem_cache[key] = (cert_path, key_path)
+        return cert_path, key_path
+
     def _live_cert(self):
+        """mTLS certifikát pro eRecept. Priorita: explicitní SUKL_CERT_PATH (PFX),
+        jinak certifikát aktivního CSEZ/EZCA klienta (krajska_zdravotni.pfx apod.)."""
         cfg = self._cfg()
         if cfg.SUKL_CERT_PATH:
-            # Pozn.: PFX by bylo nutné rozbalit na PEM; zde předpokládáme PEM pár
-            # nebo že se použije SEZ session cert. Detailní mTLS řešíme až s reálnými přístupy.
-            return None
+            try:
+                return self._pfx_to_pem(cfg.SUKL_CERT_PATH, cfg.SUKL_CERT_PASSWORD)
+            except Exception as exc:
+                logger.warning("SÚKL cert %s nelze načíst: %s", cfg.SUKL_CERT_PATH, exc)
+        # Fallback: použij mTLS certifikát již načteného klienta (SEZAuth.tls_cert)
+        if self.c is not None and getattr(self.c, "auth", None) is not None:
+            try:
+                return self.c.auth.tls_cert
+            except Exception:
+                pass
         return None
 
     # --- prioritní služby -------------------------------------------------
@@ -3423,12 +3459,17 @@ class SUKLeRecept:
     def diagnose(self) -> dict:
         cfg = self._cfg()
         env = SEZConfig.ENVIRONMENT
+        cert = self._live_cert()
+        cert_src = "SUKL_CERT_PATH" if cfg.SUKL_CERT_PATH else (
+            "CSEZ/EZCA klient" if cert else "(žádný)")
         return {
             "enabled": cfg.SUKL_ENABLED,
             "mode": self.mode(),
             "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
             "endpoint": cfg.sukl_erecept_endpoint(env) or "(nenastaveno – simulace)",
             "registracniId": bool(cfg.SUKL_REG_ID),
+            "certifikat": bool(cert),
+            "certifikatZdroj": cert_src,
             "vyrobce": cfg.SUKL_VYROBCE,
             "prostredi": env,
         }
@@ -3437,3 +3478,258 @@ class SUKLeRecept:
 def _iso_now() -> str:
     from datetime import datetime, timezone
     return datetime.now(timezone.utc).isoformat()
+
+
+_PFX_PEM_CACHE: dict = {}
+
+
+def _load_pfx_pem(path: str, password: str):
+    """Rozbalí PFX/P12 do dočasných PEM (cert+klíč) pro requests mTLS. Cachováno."""
+    key = (path, bool(password))
+    if key in _PFX_PEM_CACHE and all(os.path.exists(p) for p in _PFX_PEM_CACHE[key]):
+        return _PFX_PEM_CACHE[key]
+    pwd = password.encode() if isinstance(password, str) and password else None
+    with open(path, "rb") as f:
+        data = f.read()
+    try:
+        k, cert, cas = pkcs12.load_key_and_certificates(data, pwd)
+    except ValueError:
+        k, cert, cas = pkcs12.load_key_and_certificates(base64.b64decode(data), pwd)
+    tmp = tempfile.mkdtemp(prefix="uzis_")
+    cert_path = os.path.join(tmp, "cert.pem")
+    key_path = os.path.join(tmp, "key.pem")
+    with open(cert_path, "wb") as f:
+        f.write(cert.public_bytes(Encoding.PEM))
+        for ca in (cas or []):
+            f.write(ca.public_bytes(Encoding.PEM))
+    with open(key_path, "wb") as f:
+        f.write(k.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()))
+    _PFX_PEM_CACHE[key] = (cert_path, key_path)
+    return cert_path, key_path
+
+
+# ===========================================================================
+# ÚZIS ČR – NZIS (Národní zdravotnický informační systém)
+# ---------------------------------------------------------------------------
+# NRPZS = veřejné REST API (nrpzs.uzis.cz/api/v1) – reálně + offline fallback.
+# Národní zdravotnické registry (NZR) / hlášení do NZIS = cert-authenticated
+# (EREG/EZCA) → simulace, dokud není nakonfigurován endpoint + certifikát.
+# ===========================================================================
+
+UZIS_ENVIRONMENTS = {
+    "T2": {"name": "ÚZIS Test", "info": "NZIS testovací prostředí (přístup na základě certifikátu ÚZIS/EREG)"},
+    "PROD": {"name": "ÚZIS Produkce", "info": "NZIS produkční prostředí ÚZIS ČR"},
+}
+
+
+class UZISNrpzs:
+    """Národní registr poskytovatelů zdravotních služeb – veřejné REST API ÚZIS.
+
+    Volá nrpzs.uzis.cz/api/v1; při nedostupnosti použije vestavěné vzorky
+    (`status()['zdroj'] == 'sample'`). Filtrování probíhá i lokálně.
+    """
+
+    _cache: list | None = None
+    _source: str | None = None
+    _error: str | None = None
+
+    def __init__(self, client: SEZClient = None):
+        self.c = client
+
+    def _base(self) -> str:
+        from sez_api import config as _cfg
+        return getattr(_cfg, "UZIS_NRPZS_URL", "https://nrpzs.uzis.cz/api/v1").rstrip("/")
+
+    def _samples(self) -> list:
+        from sez_api import config as _cfg
+        return [dict(x) for x in getattr(_cfg, "UZIS_NRPZS_SAMPLE", [])]
+
+    def _fetch_all(self, force: bool = False) -> list:
+        if UZISNrpzs._cache is not None and not force:
+            return UZISNrpzs._cache
+        url = self._base() + "/mista-poskytovani"
+        try:
+            resp = requests.get(url, params={"limit": 5000}, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+            rows = data if isinstance(data, list) else data.get("data") or data.get("items") or []
+            rows = [self._norm(r) for r in rows if isinstance(r, dict)]
+            if not rows:
+                raise ValueError("prázdná odpověď NRPZS")
+            UZISNrpzs._cache = rows
+            UZISNrpzs._source = "nrpzs"
+            UZISNrpzs._error = None
+            logger.info("NRPZS načteno: %d míst poskytování", len(rows))
+        except Exception as exc:
+            logger.warning("NRPZS API nedostupné (%s) – fallback na vzorky", exc)
+            UZISNrpzs._cache = self._samples()
+            UZISNrpzs._source = "sample"
+            UZISNrpzs._error = str(exc)[:200]
+        return UZISNrpzs._cache
+
+    @staticmethod
+    def _norm(r: dict) -> dict:
+        """Best-effort mapování polí NRPZS (schéma se může lišit napříč verzemi)."""
+        def g(*keys):
+            for k in keys:
+                for variant in (k, k.upper(), k.lower(), k.capitalize()):
+                    if variant in r and r[variant] not in (None, ""):
+                        return r[variant]
+            return ""
+        return {
+            "icz": g("ZdravotnickeZarizeniId", "icz", "ZarizeniId", "id"),
+            "ico": g("Ico", "ico"),
+            "nazev": g("NazevZarizeni", "nazev", "Nazev", "PoskytovatelNazev"),
+            "obec": g("Obec", "obec", "Mesto"),
+            "kraj": g("Kraj", "kraj", "KrajNazev"),
+            "psc": g("Psc", "psc"),
+            "obor": g("OborPece", "obor", "Obor"),
+            "forma": g("FormaPece", "forma", "Forma"),
+            "druh": g("DruhPece", "druh", "Druh"),
+            "adresa": g("Adresa", "adresa", "Ulice"),
+            "web": g("Web", "web", "WebovaStranka"),
+            "_raw": r,
+        }
+
+    def hledat(self, nazev=None, ico=None, obec=None, kraj=None, obor=None, limit=50) -> dict:
+        rows = self._fetch_all()
+        q = {"nazev": (nazev or "").lower(), "ico": (ico or "").lower(),
+             "obec": (obec or "").lower(), "kraj": (kraj or "").lower(),
+             "obor": (obor or "").lower()}
+
+        def match(r):
+            if q["nazev"] and q["nazev"] not in str(r.get("nazev", "")).lower():
+                return False
+            if q["ico"] and q["ico"] not in str(r.get("ico", "")).lower():
+                return False
+            if q["obec"] and q["obec"] not in str(r.get("obec", "")).lower():
+                return False
+            if q["kraj"] and q["kraj"] not in str(r.get("kraj", "")).lower():
+                return False
+            if q["obor"] and q["obor"] not in str(r.get("obor", "")).lower():
+                return False
+            return True
+
+        any_q = any(q.values())
+        matches = [r for r in rows if match(r)] if any_q else list(rows)
+        return {"zdroj": UZISNrpzs._source, "pocet": len(matches),
+                "limit": limit, "vysledky": matches[:limit]}
+
+    def detail(self, ico_or_icz: str) -> dict:
+        rows = self._fetch_all()
+        key = (ico_or_icz or "").strip().lower()
+        for r in rows:
+            if key in (str(r.get("ico", "")).lower(), str(r.get("icz", "")).lower()):
+                return {"zdroj": UZISNrpzs._source, "nalezeno": True, "poskytovatel": r}
+        return {"zdroj": UZISNrpzs._source, "nalezeno": False, "poskytovatel": None}
+
+    def ciselnik(self, nazev: str) -> dict:
+        from sez_api import config as _cfg
+        # Zkus reálný číselník NRPZS, jinak vzorky.
+        try:
+            resp = requests.get(self._base() + f"/ciselniky/{nazev}", timeout=10)
+            resp.raise_for_status()
+            return {"zdroj": "nrpzs", "polozky": resp.json()}
+        except Exception:
+            data = getattr(_cfg, "UZIS_CISELNIKY_SAMPLE", {})
+            return {"zdroj": "sample", "polozky": data.get(nazev, [])}
+
+    def status(self) -> dict:
+        rows = self._fetch_all()
+        return {"zdroj": UZISNrpzs._source, "pocet": len(rows),
+                "chyba": UZISNrpzs._error, "url": self._base()}
+
+    def reload(self) -> dict:
+        self._fetch_all(force=True)
+        return self.status()
+
+
+class UZIS:
+    """ÚZIS NZIS – Národní zdravotnické registry (NZR) a hlášení.
+
+    Builder obálek + odeslání. LIVE (nakonfigurován endpoint + cert) posílá na
+    reálné restAPI EREG; jinak vrací marker `{"_simulace": True, ...}` pro sim engine.
+    """
+
+    def __init__(self, client: SEZClient = None):
+        self.c = client
+
+    def _cfg(self):
+        from sez_api import config as _cfg
+        return _cfg
+
+    def mode(self) -> str:
+        return self._cfg().uzis_mode(SEZConfig.ENVIRONMENT)
+
+    def katalog_registru(self) -> list:
+        return list(self._cfg().UZIS_NZR_KATALOG)
+
+    def _hlavicka(self, kontext: dict | None = None) -> dict:
+        h = {
+            "casVytvoreni": _iso_now(),
+            "idKorelace": str(uuid.uuid4()),
+            "system": "SEZ API Web (mirapavlicek/sezapi)",
+        }
+        if kontext:
+            h["kontext"] = kontext
+        return h
+
+    def build_envelope(self, registr: str, operace: str, telo: dict,
+                       kontext: dict | None = None) -> dict:
+        return {"registr": registr, "operace": operace,
+                "hlavicka": self._hlavicka(kontext), "telo": telo or {}}
+
+    def _live_cert(self):
+        cfg = self._cfg()
+        if cfg.UZIS_CERT_PATH:
+            try:
+                return _load_pfx_pem(cfg.UZIS_CERT_PATH, cfg.UZIS_CERT_PASSWORD)
+            except Exception as exc:
+                logger.warning("ÚZIS cert %s nelze načíst: %s", cfg.UZIS_CERT_PATH, exc)
+        if self.c is not None and getattr(self.c, "auth", None) is not None:
+            try:
+                return self.c.auth.tls_cert
+            except Exception:
+                pass
+        return None
+
+    def odeslat(self, registr: str, operace: str, telo: dict,
+                kontext: dict | None = None) -> dict:
+        env = self.build_envelope(registr, operace, telo, kontext)
+        cfg = self._cfg()
+        endpoint = cfg.uzis_nzr_endpoint(SEZConfig.ENVIRONMENT)
+        if self.mode() == "LIVE" and endpoint:
+            try:
+                resp = requests.post(endpoint, json=env, timeout=30,
+                                     cert=self._live_cert(),
+                                     headers={"Content-Type": "application/json"})
+                try:
+                    body = resp.json()
+                except Exception:
+                    body = {"raw": resp.text[:2000]}
+                return {"_simulace": False, "registr": registr, "operace": operace,
+                        "http_status": resp.status_code, "request": env, "response": body}
+            except Exception as exc:
+                return {"_simulace": False, "registr": registr, "operace": operace,
+                        "chyba": str(exc)[:300], "request": env}
+        return {"_simulace": True, "registr": registr, "operace": operace, "request": env}
+
+    def hlasit(self, registr: str, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat(registr, "Hlaseni", telo, kontext)
+
+    def stav_hlaseni(self, registr: str, id_hlaseni: str, kontext: dict | None = None) -> dict:
+        return self.odeslat(registr, "StavHlaseni", {"idHlaseni": id_hlaseni}, kontext)
+
+    def diagnose(self) -> dict:
+        cfg = self._cfg()
+        env = SEZConfig.ENVIRONMENT
+        cert = self._live_cert()
+        return {
+            "enabled": cfg.UZIS_ENABLED,
+            "mode": self.mode(),
+            "nrpzs_url": cfg.UZIS_NRPZS_URL,
+            "nzr_endpoint": cfg.uzis_nzr_endpoint(env) or "(nenastaveno – simulace)",
+            "certifikat": bool(cert),
+            "pocet_registru": len(cfg.UZIS_NZR_KATALOG),
+            "prostredi": env,
+        }

@@ -140,6 +140,112 @@ SUKL_TEST_ERECEPTY = [
     {"id": "ABCDEF123456", "pacient_rid": "5785446836", "popis": "NOSKOVÁ PETRA – ukázka"},
 ]
 
+# ---------------------------------------------------------------------------
+# ÚZIS ČR – NZIS (Národní zdravotnický informační systém)
+# ---------------------------------------------------------------------------
+# NRPZS (Národní registr poskytovatelů zdravotních služeb) má VEŘEJNÉ REST API
+# (nrpzs.uzis.cz/api/v1, OAS 2.0) – napojuje se reálně, s offline fallbackem.
+# Národní zdravotnické registry (NZR) a hlášení do NZIS jsou cert-authenticated
+# (EREG/EZCA) → běží v režimu SIMULACE, dokud není nakonfigurován endpoint + cert.
+UZIS_ENABLED = _env_bool("UZIS_ENABLED", True)
+UZIS_NRPZS_URL = env("UZIS_NRPZS_URL", "https://nrpzs.uzis.cz/api/v1")
+# Endpoint pro hlášení do Národních zdravotnických registrů (restAPI EREG/EZCA).
+UZIS_NZR_ENDPOINT_TEST = env("UZIS_NZR_ENDPOINT_TEST", "")
+UZIS_NZR_ENDPOINT = env("UZIS_NZR_ENDPOINT", "")
+# Certifikát pro NZIS (volitelné; prázdné = použije se cert CSEZ/EZCA klienta).
+UZIS_CERT_PATH = env("UZIS_CERT_PATH", "")
+UZIS_CERT_PASSWORD = env("UZIS_CERT_PASSWORD", "")
+
+
+def uzis_nzr_endpoint(env_key: str = "T2") -> str:
+    if env_key == "PROD" and UZIS_NZR_ENDPOINT:
+        return UZIS_NZR_ENDPOINT
+    return UZIS_NZR_ENDPOINT_TEST or UZIS_NZR_ENDPOINT
+
+
+def uzis_mode(env_key: str = "T2") -> str:
+    if not UZIS_ENABLED:
+        return "OFF"
+    if uzis_nzr_endpoint(env_key):
+        return "LIVE"
+    return "SIM"
+
+
+# Katalog Národních zdravotnických registrů (NZR) spravovaných ÚZIS ČR.
+UZIS_NZR_KATALOG = [
+    {"kod": "NRPZS", "nazev": "Národní registr poskytovatelů zdravotních služeb", "typ": "registr", "verejny": True},
+    {"kod": "NRZP", "nazev": "Národní registr zdravotnických pracovníků", "typ": "registr", "verejny": False},
+    {"kod": "NOR", "nazev": "Národní onkologický registr", "typ": "registr", "verejny": False},
+    {"kod": "NRHOSP", "nazev": "Národní registr hospitalizovaných", "typ": "registr", "verejny": False},
+    {"kod": "NRRZ", "nazev": "Národní registr reprodukčního zdraví", "typ": "registr", "verejny": False},
+    {"kod": "NRNAR", "nazev": "Národní registr novorozenců (rodiček)", "typ": "registr", "verejny": False},
+    {"kod": "NRVAR", "nazev": "Národní registr vrozených vad", "typ": "registr", "verejny": False},
+    {"kod": "NRKN", "nazev": "Národní registr kardiovaskulárních operací a intervencí", "typ": "registr", "verejny": False},
+    {"kod": "NRPCNP", "nazev": "Národní registr pitev a toxikologických vyšetření", "typ": "registr", "verejny": False},
+    {"kod": "NRLPZ", "nazev": "Národní registr léčby uživatelů drog", "typ": "registr", "verejny": False},
+    {"kod": "ISIN", "nazev": "Informační systém infekčních nemocí", "typ": "systém", "verejny": False},
+    {"kod": "OCKO", "nazev": "Registr očkování (ISIN – ocko.uzis.cz)", "typ": "systém", "verejny": False},
+    {"kod": "NRPZS_HLAS", "nazev": "Roční výkaz o činnosti poskytovatele (NZIS)", "typ": "hlášení", "verejny": False},
+]
+
+# Vzorové číselníky NZIS (offline fallback). Zdroj: resortní číselníky ÚZIS/NRPZS.
+UZIS_CISELNIKY_SAMPLE = {
+    "kraje": [
+        {"kod": "CZ010", "nazev": "Hlavní město Praha"},
+        {"kod": "CZ031", "nazev": "Jihočeský kraj"},
+        {"kod": "CZ042", "nazev": "Ústecký kraj"},
+        {"kod": "CZ080", "nazev": "Moravskoslezský kraj"},
+        {"kod": "CZ064", "nazev": "Jihomoravský kraj"},
+    ],
+    "obory_pece": [
+        {"kod": "001", "nazev": "všeobecné praktické lékařství"},
+        {"kod": "002", "nazev": "praktické lékařství pro děti a dorost"},
+        {"kod": "101", "nazev": "vnitřní lékařství"},
+        {"kod": "501", "nazev": "chirurgie"},
+        {"kod": "705", "nazev": "radiologie a zobrazovací metody"},
+        {"kod": "801", "nazev": "klinická biochemie"},
+    ],
+    "forma_pece": [
+        {"kod": "A", "nazev": "ambulantní péče"},
+        {"kod": "L", "nazev": "lůžková péče"},
+        {"kod": "1D", "nazev": "jednodenní péče"},
+        {"kod": "DP", "nazev": "domácí péče"},
+    ],
+    "druh_pece": [
+        {"kod": "P", "nazev": "primární"},
+        {"kod": "S", "nazev": "specializovaná"},
+        {"kod": "N", "nazev": "následná"},
+    ],
+}
+
+# Vzoroví poskytovatelé (offline fallback pro NRPZS, když API není dostupné).
+UZIS_NRPZS_SAMPLE = [
+    {"icz": "42100000", "ico": "25488627", "nazev": "Krajská zdravotní, a.s.",
+     "obec": "Ústí nad Labem", "kraj": "Ústecký kraj", "psc": "40113",
+     "obor": "vnitřní lékařství", "forma": "lůžková péče", "druh": "specializovaná",
+     "adresa": "Sociální péče 3316/12A, Ústí nad Labem", "web": "www.kzcr.eu"},
+    {"icz": "00064165", "ico": "00064165", "nazev": "Všeobecná fakultní nemocnice v Praze",
+     "obec": "Praha 2", "kraj": "Hlavní město Praha", "psc": "12808",
+     "obor": "vnitřní lékařství", "forma": "lůžková péče", "druh": "specializovaná",
+     "adresa": "U Nemocnice 499/2, Praha 2", "web": "www.vfn.cz"},
+    {"icz": "00179906", "ico": "00179906", "nazev": "Fakultní nemocnice Hradec Králové",
+     "obec": "Hradec Králové", "kraj": "Královéhradecký kraj", "psc": "50005",
+     "obor": "chirurgie", "forma": "lůžková péče", "druh": "specializovaná",
+     "adresa": "Sokolská 581, Hradec Králové", "web": "www.fnhk.cz"},
+    {"icz": "00669806", "ico": "00669806", "nazev": "Fakultní nemocnice Plzeň",
+     "obec": "Plzeň", "kraj": "Plzeňský kraj", "psc": "30460",
+     "obor": "radiologie a zobrazovací metody", "forma": "lůžková péče", "druh": "specializovaná",
+     "adresa": "Edvarda Beneše 1128/13, Plzeň", "web": "www.fnplzen.cz"},
+    {"icz": "28821599", "ico": "28821599", "nazev": "Gynekologie Jičín s.r.o.",
+     "obec": "Jičín", "kraj": "Královéhradecký kraj", "psc": "50601",
+     "obor": "gynekologie a porodnictví", "forma": "ambulantní péče", "druh": "specializovaná",
+     "adresa": "Fügnerova 39, Jičín", "web": ""},
+    {"icz": "28375556", "ico": "28375556", "nazev": "Praktický lékař pro děti a dorost s.r.o.",
+     "obec": "Kutná Hora", "kraj": "Středočeský kraj", "psc": "28401",
+     "obor": "praktické lékařství pro děti a dorost", "forma": "ambulantní péče", "druh": "primární",
+     "adresa": "Nádražní 254, Kutná Hora", "web": ""},
+]
+
 # CMS2 sdílí credentials s odpovídajícím Internet prostředím.
 ENV_CREDENTIALS = {
     "T2": {

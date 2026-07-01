@@ -34,6 +34,7 @@ from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, ELPv3, EZadanky, Notifikace, EZCA2,
     EZCA2SpravaCertifikatu, KRPv3, SZZv2, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
+    UZISNrpzs, UZIS,
 )
 from sez_api import fhir_imgorder as _fhir_img
 
@@ -171,6 +172,8 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["termx_pub"] = Terminologie(_client, public=True)
     _modules["sukl_dlp"] = SUKLDLP(_client)
     _modules["sukl_erecept"] = SUKLeRecept(_client)
+    _modules["uzis_nrpzs"] = UZISNrpzs(_client)
+    _modules["uzis"] = UZIS(_client)
     _connected = True
     try:
         _termx_status_cache.clear()
@@ -354,6 +357,9 @@ async def status():
         "sukl_interface_version": getattr(cfg, "SUKL_INTERFACE_VERSION", ""),
         "sukl_test_erecepty": getattr(cfg, "SUKL_TEST_ERECEPTY", []),
         "sukl_dlp_sample": getattr(cfg, "SUKL_DLP_SAMPLE", []),
+        "uzis_enabled": getattr(cfg, "UZIS_ENABLED", False),
+        "uzis_mode": cfg.uzis_mode(SEZConfig.ENVIRONMENT) if getattr(cfg, "UZIS_ENABLED", False) else "OFF",
+        "uzis_nzr_katalog": getattr(cfg, "UZIS_NZR_KATALOG", []),
     }
 
 
@@ -3513,6 +3519,34 @@ async def debug_jwt():
                     {"method": "GET", "path": "/api/sukl/dlp/detail/{kod}", "desc": "Detail přípravku podle kódu SÚKL"},
                     {"method": "GET", "path": "/api/sukl/dlp/status", "desc": "Stav zdroje dat (opendata/sample)"},
                     {"method": "POST", "path": "/api/sukl/dlp/reload", "desc": "Znovunačtení dat DLP"},
+                ],
+            },
+            "ÚZIS / NRPZS": {
+                "name": "ÚZIS – Národní registr poskytovatelů zdravotních služeb",
+                "base": "nrpzs.uzis.cz/api/v1",
+                "version": "OAS 2.0 (veřejná otevřená data)",
+                "note": ("Veřejné REST API ÚZIS ČR (bez certifikátu). Vyhledávání poskytovatelů "
+                         "a míst poskytování zdravotních služeb. Offline fallback = vestavěné vzorky."),
+                "endpoints": [
+                    {"method": "GET", "path": "/api/uzis/nrpzs/hledat?nazev=&ico=&obec=&kraj=&obor=", "desc": "Vyhledání poskytovatele / místa poskytování"},
+                    {"method": "GET", "path": "/api/uzis/nrpzs/detail/{ico|icz}", "desc": "Detail poskytovatele"},
+                    {"method": "GET", "path": "/api/uzis/ciselnik/{nazev}", "desc": "Číselník NZIS (kraje, obory, formy péče…)"},
+                    {"method": "GET", "path": "/api/uzis/nrpzs/status", "desc": "Stav zdroje dat (nrpzs/sample)"},
+                ],
+            },
+            "ÚZIS / NZR": {
+                "name": "ÚZIS – Národní zdravotnické registry a hlášení do NZIS",
+                "base": "(ÚZIS EREG/EZCA – cert-authenticated)",
+                "version": "restAPI / DASTA",
+                "note": ("Národní zdravotnické registry (NOR, NRHOSP, NRRZ, ISIN, očkování…) "
+                         "a hlášení do NZIS. Přístup na základě certifikátu ÚZIS/EREG (nebo EZCA). "
+                         "Bez konfigurace endpointu běží v režimu SIMULACE (builder + engine)."),
+                "endpoints": [
+                    {"method": "GET", "path": "/api/uzis/registry", "desc": "Katalog národních zdravotnických registrů"},
+                    {"method": "POST", "path": "/api/uzis/hlasit", "desc": "Odeslat hlášení do registru NZIS"},
+                    {"method": "GET", "path": "/api/uzis/hlaseni/{registr}/{id}", "desc": "Stav hlášení"},
+                    {"method": "POST", "path": "/api/uzis/sestav-obalku", "desc": "Sestavení obálky hlášení (builder)"},
+                    {"method": "GET", "path": "/api/uzis/diagnose", "desc": "Stav konfigurace ÚZIS (LIVE/SIM)"},
                 ],
             },
         },
@@ -7085,6 +7119,163 @@ async def sukl_sim_reset():
     _sukl_sim_erecepty.clear()
     _sukl_sim_epoukazy.clear()
     _sukl_sim_ockovani.clear()
+    return JSONResponse({"status": 200, "data": {"cleared": True, "count": 0}})
+
+
+# ===========================================================================
+# ÚZIS ČR – NZIS (NRPZS + Národní zdravotnické registry / hlášení)
+# ---------------------------------------------------------------------------
+# NRPZS: reálné veřejné API (nrpzs.uzis.cz) přes UZISNrpzs klienta + fallback.
+# NZR hlášení: builder + simulační engine (LIVE jen s endpointem + certifikátem).
+# ===========================================================================
+
+_uzis_sim_hlaseni: dict = {}   # idHlaseni -> záznam
+
+
+def _uzis_get_module(name: str):
+    mod = _modules.get(name)
+    if mod is None:
+        from sez_api.client import UZISNrpzs, UZIS
+        mod = UZISNrpzs(_client) if name == "uzis_nrpzs" else UZIS(_client)
+        _modules[name] = mod
+    return mod
+
+
+def _uzis_sim_hlasit(registr: str, telo: dict) -> dict:
+    hid = _sukl_gen_id(10)
+    rec = {
+        "idHlaseni": hid,
+        "registr": registr,
+        "stav": {"kod": "PRIJATO", "nazev": "Přijato ke zpracování"},
+        "datumPrijeti": _sukl_now(),
+        "poskytovatel": telo.get("ico") or telo.get("poskytovatel", "25488627"),
+        "pacient": telo.get("rid") or telo.get("pacient", ""),
+        "telo": telo,
+    }
+    _uzis_sim_hlaseni[hid] = rec
+    return rec
+
+
+def _uzis_sim_stav(registr: str, id_hlaseni: str) -> dict:
+    rec = _uzis_sim_hlaseni.get(id_hlaseni)
+    if not rec:
+        raise ValueError(f"Hlášení {id_hlaseni} nenalezeno v simulaci")
+    # V simulaci se hlášení po přijetí "zpracuje".
+    rec["stav"] = {"kod": "ZPRACOVANO", "nazev": "Zpracováno a uloženo do registru"}
+    rec["datumZpracovani"] = _sukl_now()
+    return rec
+
+
+def _uzis_dispatch(result: dict, sim_producer) -> JSONResponse:
+    if result.get("_simulace"):
+        try:
+            data = sim_producer()
+        except ValueError as ve:
+            return JSONResponse({"status": 404, "error": str(ve), "_sim": True,
+                                 "_request": result.get("request")})
+        return JSONResponse({"status": 200, "data": data, "_sim": True,
+                             "registr": result.get("registr"),
+                             "operace": result.get("operace"),
+                             "_request": result.get("request")})
+    if "chyba" in result:
+        return JSONResponse({"status": 0, "error": result["chyba"], "_sim": False,
+                             "_request": result.get("request")})
+    return JSONResponse({"status": result.get("http_status", 200),
+                         "data": result.get("response"), "_sim": False,
+                         "_request": result.get("request")})
+
+
+# --- NRPZS (veřejná data) --------------------------------------------------
+
+@app.get("/api/uzis/nrpzs/hledat")
+async def uzis_nrpzs_hledat(nazev: str = "", ico: str = "", obec: str = "",
+                            kraj: str = "", obor: str = "", limit: int = 50):
+    mod = _uzis_get_module("uzis_nrpzs")
+    t0 = time.monotonic()
+    data = mod.hledat(nazev=nazev or None, ico=ico or None, obec=obec or None,
+                      kraj=kraj or None, obor=obor or None, limit=limit)
+    return JSONResponse({"status": 200, "data": data,
+                         "elapsed_ms": round((time.monotonic() - t0) * 1000)})
+
+
+@app.get("/api/uzis/nrpzs/detail/{ident}")
+async def uzis_nrpzs_detail(ident: str):
+    mod = _uzis_get_module("uzis_nrpzs")
+    return JSONResponse({"status": 200, "data": mod.detail(ident)})
+
+
+@app.get("/api/uzis/nrpzs/status")
+async def uzis_nrpzs_status():
+    mod = _uzis_get_module("uzis_nrpzs")
+    return JSONResponse({"status": 200, "data": mod.status()})
+
+
+@app.post("/api/uzis/nrpzs/reload")
+async def uzis_nrpzs_reload():
+    mod = _uzis_get_module("uzis_nrpzs")
+    return JSONResponse({"status": 200, "data": mod.reload()})
+
+
+@app.get("/api/uzis/ciselnik/{nazev}")
+async def uzis_ciselnik(nazev: str):
+    mod = _uzis_get_module("uzis_nrpzs")
+    return JSONResponse({"status": 200, "data": mod.ciselnik(nazev)})
+
+
+# --- Národní zdravotnické registry (NZR) -----------------------------------
+
+@app.get("/api/uzis/diagnose")
+async def uzis_diagnose():
+    mod = _uzis_get_module("uzis")
+    return JSONResponse({"status": 200, "data": mod.diagnose()})
+
+
+@app.get("/api/uzis/registry")
+async def uzis_registry():
+    mod = _uzis_get_module("uzis")
+    return JSONResponse({"status": 200, "data": {"registry": mod.katalog_registru()}})
+
+
+@app.post("/api/uzis/hlasit")
+async def uzis_hlasit(request: Request):
+    body = await request.json()
+    registr = body.get("registr", "NOR")
+    telo = body.get("telo", body)
+    mod = _uzis_get_module("uzis")
+    result = mod.hlasit(registr, telo, body.get("kontext"))
+    return _uzis_dispatch(result, lambda: _uzis_sim_hlasit(registr, telo))
+
+
+@app.get("/api/uzis/hlaseni/{registr}/{id_hlaseni}")
+async def uzis_hlaseni_stav(registr: str, id_hlaseni: str):
+    mod = _uzis_get_module("uzis")
+    result = mod.stav_hlaseni(registr, id_hlaseni)
+    return _uzis_dispatch(result, lambda: _uzis_sim_stav(registr, id_hlaseni))
+
+
+@app.post("/api/uzis/sestav-obalku")
+async def uzis_sestav(request: Request):
+    body = await request.json()
+    mod = _uzis_get_module("uzis")
+    env = mod.build_envelope(body.get("registr", "NOR"),
+                             body.get("operace", "Hlaseni"),
+                             body.get("telo", {}), body.get("kontext"))
+    return JSONResponse({"status": 200, "data": env})
+
+
+@app.get("/api/uzis/sim/status")
+async def uzis_sim_status():
+    states = {}
+    for r in _uzis_sim_hlaseni.values():
+        n = r["stav"]["nazev"]
+        states[n] = states.get(n, 0) + 1
+    mod = _uzis_get_module("uzis")
+    return JSONResponse({"mode": mod.mode(), "count": len(_uzis_sim_hlaseni), "states": states})
+
+
+@app.post("/api/uzis/sim/reset")
+async def uzis_sim_reset():
+    _uzis_sim_hlaseni.clear()
     return JSONResponse({"status": 200, "data": {"cleared": True, "count": 0}})
 
 

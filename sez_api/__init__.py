@@ -56,6 +56,7 @@ EZCA II Správa certifikátů: kontrakt sladěn se swaggerem v1.0.4 –
 from sez_api.client import (
     SEZ_ENVIRONMENTS,
     SUKL_ENVIRONMENTS,
+    UZIS_ENVIRONMENTS,
     SEZConfig,
     SEZAuth,
     SEZClient,
@@ -79,6 +80,8 @@ from sez_api.client import (
     TermX,
     SUKLDLP,
     SUKLeRecept,
+    UZISNrpzs,
+    UZIS,
 )
 
 __version__ = "2.24.1"
@@ -86,6 +89,7 @@ __version__ = "2.24.1"
 __all__ = [
     "SEZ_ENVIRONMENTS",
     "SUKL_ENVIRONMENTS",
+    "UZIS_ENVIRONMENTS",
     "SEZConfig",
     "SEZAuth",
     "SEZClient",
@@ -109,4 +113,6 @@ __all__ = [
     "TermX",
     "SUKLDLP",
     "SUKLeRecept",
+    "UZISNrpzs",
+    "UZIS",
 ]
