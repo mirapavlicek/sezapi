@@ -242,7 +242,9 @@ Sekce **ÚZIS / NZIS** (skupina *ÚZIS / NZIS* v menu):
 - **Poskytovatelé (NRPZS)** -- vyhledávání v Národním registru poskytovatelů zdravotních
   služeb (veřejné REST API [nrpzs.uzis.cz](https://nrpzs.uzis.cz/api/doc); offline fallback = vzorky)
 - **Číselníky NZIS** -- kraje, obory/formy/druhy péče
-- **Registry (NZR)** -- katalog národních zdravotnických registrů (NOR, NRHOSP, ISIN…)
+- **Registry (NZR)** -- katalog národních zdravotnických registrů (NOR, NRHOSP, LPZ, NKR,
+  NRKI, NRVV…) vč. kódů bloku `*nr` datového rozhraní **DASTA v4**
+  ([dastacr.cz](https://dastacr.cz/dasta/hypertext/UZANR.htm))
 - **Obsazenost lůžek (NDLP)** -- ÚZIS eReg REST API (`api.uzis.cz/registr/nrpzs/v1`,
   dokumentace [apidoc.uzis.cz](https://apidoc.uzis.cz/Registr/NRPZS/index.html)):
   hlášení volných lůžek (`ObsazenostLuzek/VolnaLuzka`) + číselníky (formy/obory/vybavení/skupiny

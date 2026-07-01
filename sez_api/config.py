@@ -185,21 +185,28 @@ def uzis_mode(env_key: str = "T2") -> str:
     return "SIM"
 
 
+# Odkaz na autoritativní DASTA popis bloku národních registrů (*nr).
+UZIS_DASTA_URL = env("UZIS_DASTA_URL", "https://dastacr.cz/dasta/hypertext/UZANR.htm")
+
 # Katalog Národních zdravotnických registrů (NZR) spravovaných ÚZIS ČR.
+# Kódy "dasta" odpovídají elementům bloku *nr datového rozhraní DASTA v4
+# (zdroj: dastacr.cz/dasta/hypertext/UZANR.htm – blok národních registrů).
 UZIS_NZR_KATALOG = [
-    {"kod": "NRPZS", "nazev": "Národní registr poskytovatelů zdravotních služeb", "typ": "registr", "verejny": True},
-    {"kod": "NRZP", "nazev": "Národní registr zdravotnických pracovníků", "typ": "registr", "verejny": False},
-    {"kod": "NOR", "nazev": "Národní onkologický registr", "typ": "registr", "verejny": False},
-    {"kod": "NRHOSP", "nazev": "Národní registr hospitalizovaných", "typ": "registr", "verejny": False},
-    {"kod": "NRRZ", "nazev": "Národní registr reprodukčního zdraví", "typ": "registr", "verejny": False},
-    {"kod": "NRNAR", "nazev": "Národní registr novorozenců (rodiček)", "typ": "registr", "verejny": False},
-    {"kod": "NRVAR", "nazev": "Národní registr vrozených vad", "typ": "registr", "verejny": False},
-    {"kod": "NRKN", "nazev": "Národní registr kardiovaskulárních operací a intervencí", "typ": "registr", "verejny": False},
-    {"kod": "NRPCNP", "nazev": "Národní registr pitev a toxikologických vyšetření", "typ": "registr", "verejny": False},
-    {"kod": "NRLPZ", "nazev": "Národní registr léčby uživatelů drog", "typ": "registr", "verejny": False},
-    {"kod": "ISIN", "nazev": "Informační systém infekčních nemocí", "typ": "systém", "verejny": False},
-    {"kod": "OCKO", "nazev": "Registr očkování (ISIN – ocko.uzis.cz)", "typ": "systém", "verejny": False},
-    {"kod": "NRPZS_HLAS", "nazev": "Roční výkaz o činnosti poskytovatele (NZIS)", "typ": "hlášení", "verejny": False},
+    {"kod": "NRPZS", "dasta": "", "nazev": "Národní registr poskytovatelů zdravotních služeb", "typ": "registr", "verejny": True},
+    {"kod": "NRZP", "dasta": "", "nazev": "Národní registr zdravotnických pracovníků", "typ": "registr", "verejny": False},
+    {"kod": "NRHOSP", "dasta": "nrh", "nazev": "Národní registr hospitalizovaných", "typ": "registr", "verejny": False},
+    {"kod": "LPZ", "dasta": "nrz", "nazev": "List o prohlídce zemřelého", "typ": "registr", "verejny": False},
+    {"kod": "NOR", "dasta": "nor", "nazev": "Národní onkologický registr", "typ": "registr", "verejny": False},
+    {"kod": "NKR", "dasta": "nkr", "nazev": "Národní kardiochirurgický registr", "typ": "registr", "verejny": False},
+    {"kod": "NRKI", "dasta": "nrki", "nazev": "Národní registr kardiovaskulárních intervencí", "typ": "registr", "verejny": False},
+    {"kod": "NRNOV", "dasta": "nrn", "nazev": "Národní registr novorozenců", "typ": "registr", "verejny": False},
+    {"kod": "NRROD", "dasta": "nrr", "nazev": "Národní registr rodiček", "typ": "registr", "verejny": False},
+    {"kod": "NRVV", "dasta": "nrv", "nazev": "Národní registr vrozených vad", "typ": "registr", "verejny": False},
+    {"kod": "NRAR", "dasta": "", "nazev": "Národní registr asistované reprodukce", "typ": "registr", "verejny": False},
+    {"kod": "NRLUD", "dasta": "nrlud", "nazev": "Národní registr léčby uživatelů drog", "typ": "registr", "verejny": False},
+    {"kod": "NRPATV", "dasta": "nrpatv", "nazev": "Národní registr pitev a toxikologických vyšetření", "typ": "registr", "verejny": False},
+    {"kod": "ISIN", "dasta": "", "nazev": "Informační systém infekčních nemocí", "typ": "systém", "verejny": False},
+    {"kod": "OCKO", "dasta": "", "nazev": "Registr očkování (ISIN – ocko.uzis.cz)", "typ": "systém", "verejny": False},
 ]
 
 # Vzorové číselníky NZIS (offline fallback). Zdroj: resortní číselníky ÚZIS/NRPZS.

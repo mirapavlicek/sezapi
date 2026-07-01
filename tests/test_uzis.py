@@ -79,6 +79,15 @@ def test_uzis_katalog_registru():
     assert {"NRPZS", "NOR", "ISIN"}.issubset(kody)
 
 
+def test_uzis_katalog_dasta_kody():
+    """DASTA kódy bloku *nr dle dastacr.cz/UZANR.htm."""
+    reg = {r["kod"]: r.get("dasta", "") for r in UZIS().katalog_registru()}
+    assert reg.get("NRHOSP") == "nrh"
+    assert reg.get("NOR") == "nor"
+    assert reg.get("LPZ") == "nrz"
+    assert reg.get("NRVV") == "nrv"
+
+
 def test_uzis_envelope():
     env = UZIS().build_envelope("NOR", "Hlaseni", {"diagnoza": "C50"})
     assert env["registr"] == "NOR"

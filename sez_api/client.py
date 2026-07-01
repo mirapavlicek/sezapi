@@ -3730,6 +3730,7 @@ class UZIS:
             "nrpzs_url": cfg.UZIS_NRPZS_URL,
             "ereg_base": cfg.uzis_ereg_base(env),
             "apidoc": cfg.UZIS_APIDOC,
+            "dasta_url": getattr(cfg, "UZIS_DASTA_URL", ""),
             "nzr_endpoint": cfg.uzis_nzr_endpoint(env) or "(nenastaveno – simulace)",
             "certifikat": bool(cert),
             "pocet_registru": len(cfg.UZIS_NZR_KATALOG),

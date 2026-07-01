@@ -16584,8 +16584,9 @@ async function uzisRegistry() {
   if (!rows.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   box.innerHTML = '<div class="card"><div class="card-title">Národní zdravotnické registry (' + rows.length + ')</div>' +
-    '<table><thead><tr><th>Kód</th><th>Název</th><th>Typ</th><th>Veřejný</th><th></th></tr></thead><tbody>' +
-    rows.map(x => `<tr><td class="mono">${escHtml(x.kod)}</td><td>${escHtml(x.nazev)}</td><td style="font-size:12px">${escHtml(x.typ)}</td>` +
+    '<p style="font-size:11px;color:var(--fg3);margin-bottom:8px">Kódy DASTA odpovídají bloku <code>*nr</code> datového rozhraní DASTA v4 (dastacr.cz).</p>' +
+    '<table><thead><tr><th>Kód</th><th>DASTA</th><th>Název</th><th>Typ</th><th>Veřejný</th><th></th></tr></thead><tbody>' +
+    rows.map(x => `<tr><td class="mono">${escHtml(x.kod)}</td><td class="mono" style="color:var(--accent)">${escHtml(x.dasta||'—')}</td><td>${escHtml(x.nazev)}</td><td style="font-size:12px">${escHtml(x.typ)}</td>` +
       `<td>${x.verejny ? '<span class="badge badge-ok">ano</span>' : '<span class="badge badge-warn">ne</span>'}</td>` +
       `<td><button class="btn btn-sm btn-primary" onclick="uzisPrefillHlaseni('${escHtml(x.kod)}')">Hlásit</button></td></tr>`).join('') +
     '</tbody></table></div>';
