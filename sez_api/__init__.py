@@ -15,6 +15,7 @@ Podporované služby:
 
 from sez_api.client import (
     SEZ_ENVIRONMENTS,
+    SUKL_ENVIRONMENTS,
     SEZConfig,
     SEZAuth,
     SEZClient,
@@ -27,12 +28,15 @@ from sez_api.client import (
     EZadanky,
     Notifikace,
     EZCA2,
+    SUKLDLP,
+    SUKLeRecept,
 )
 
 __version__ = "2.1.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
+    "SUKL_ENVIRONMENTS",
     "SEZConfig",
     "SEZAuth",
     "SEZClient",
@@ -45,4 +49,6 @@ __all__ = [
     "EZadanky",
     "Notifikace",
     "EZCA2",
+    "SUKLDLP",
+    "SUKLeRecept",
 ]

@@ -39,6 +39,96 @@ PEER_URLS: list[str] = [
     u.strip() for u in env("SEZ_PEER_URLS", "").split(",") if u.strip()
 ]
 
+# ---------------------------------------------------------------------------
+# SÚKL – eRecept / CÚER a Databáze léčivých přípravků (DLP)
+# ---------------------------------------------------------------------------
+# eRecept (CÚER) je samostatný systém SÚKL (SOAP web services, verze rozhraní
+# 202501A, dokumentace na epreskripce.gov.cz). Vyžaduje registraci SW u SÚKL
+# (registrační ID) a certifikát. Bez těchto přístupů běží integrace v režimu
+# SIMULACE (in-memory engine + builder request obálek). Když jsou nakonfigurovány
+# SUKL_ERECEPT_ENDPOINT + SUKL_REG_ID (+ volitelně certifikát), přepne se na ŽIVÉ volání.
+#
+# DLP (Databáze léčivých přípravků) jsou VEŘEJNÁ otevřená data (opendata.sukl.cz),
+# napojují se reálně bez certifikátu.
+
+def _env_bool(key: str, default: bool = True) -> bool:
+    val = os.environ.get(key)
+    if val is None:
+        return default
+    return val.strip().lower() in ("1", "true", "yes", "ano", "on")
+
+
+SUKL_ENABLED = _env_bool("SUKL_ENABLED", True)
+SUKL_INTERFACE_VERSION = env("SUKL_INTERFACE_VERSION", "202501A")
+# Textová identifikace výrobce SW (posílá se v hlavičce eRecept requestu).
+SUKL_VYROBCE = env("SUKL_VYROBCE", "SEZ API Web (mirapavlicek/sezapi)")
+# Registrační ID přidělené SÚKL (12 znaků eRecept / 9 znaků ePoukaz). Prázdné = simulace.
+SUKL_REG_ID = env("SUKL_REG_ID", "")
+# Endpoint testovacího/produkčního eRecept rozhraní (SOAP). Prázdné = simulace.
+SUKL_ERECEPT_ENDPOINT_TEST = env("SUKL_ERECEPT_ENDPOINT_TEST", "")
+SUKL_ERECEPT_ENDPOINT = env("SUKL_ERECEPT_ENDPOINT", "")
+# Certifikát pro mTLS k eRecept (volitelné, když se liší od SEZ certifikátu).
+SUKL_CERT_PATH = env("SUKL_CERT_PATH", "")
+SUKL_CERT_PASSWORD = env("SUKL_CERT_PASSWORD", "")
+# DLP – URL aktuálního balíku otevřených dat a lokální cache.
+SUKL_DLP_URL = env(
+    "SUKL_DLP_URL",
+    "https://opendata.sukl.cz/soubory/SOD20260101/DLP_CADORE.zip",
+)
+SUKL_DLP_CACHE_DIR = env("SUKL_DLP_CACHE_DIR", "/tmp/sukl_dlp")
+
+
+def sukl_erecept_endpoint(env_key: str = "T2") -> str:
+    """Vrátí aktivní eRecept endpoint dle prostředí (PROD/T2)."""
+    if env_key == "PROD" and SUKL_ERECEPT_ENDPOINT:
+        return SUKL_ERECEPT_ENDPOINT
+    return SUKL_ERECEPT_ENDPOINT_TEST or SUKL_ERECEPT_ENDPOINT
+
+
+def sukl_mode(env_key: str = "T2") -> str:
+    """LIVE pokud je nakonfigurován endpoint i registrační ID, jinak SIM."""
+    if not SUKL_ENABLED:
+        return "OFF"
+    if sukl_erecept_endpoint(env_key) and SUKL_REG_ID:
+        return "LIVE"
+    return "SIM"
+
+
+# Vzorové léčivé přípravky (offline fallback pro DLP, když stažení dat selže).
+# Zdroj: veřejná Databáze léčivých přípravků SÚKL (ilustrativní výběr).
+SUKL_DLP_SAMPLE = [
+    {"kod": "0031505", "nazev": "PARALEN 500", "sila": "500MG", "forma": "TBL NOB",
+     "baleni": "24", "atc": "N02BE01", "ucinna_latka": "PARACETAMOLUM", "cesta": "POR",
+     "drzitel": "sanofi-aventis, s.r.o., Praha", "stav_registrace": "R", "vydej": "volný"},
+    {"kod": "0100000", "nazev": "IBALGIN 400", "sila": "400MG", "forma": "TBL FLM",
+     "baleni": "30", "atc": "M01AE01", "ucinna_latka": "IBUPROFENUM", "cesta": "POR",
+     "drzitel": "Zentiva, k.s., Praha", "stav_registrace": "R", "vydej": "volný"},
+    {"kod": "0184756", "nazev": "AUGMENTIN 1 G", "sila": "875MG/125MG", "forma": "TBL FLM",
+     "baleni": "14", "atc": "J01CR02", "ucinna_latka": "AMOXICILLINUM/ACIDUM CLAVULANICUM",
+     "cesta": "POR", "drzitel": "GlaxoSmithKline, Praha", "stav_registrace": "R", "vydej": "Rp."},
+    {"kod": "0207684", "nazev": "EUTHYROX 100 MICROGRAMU", "sila": "100MCG", "forma": "TBL NOB",
+     "baleni": "100", "atc": "H03AA01", "ucinna_latka": "LEVOTHYROXINUM NATRICUM", "cesta": "POR",
+     "drzitel": "Merck spol. s r.o., Praha", "stav_registrace": "R", "vydej": "Rp."},
+    {"kod": "0149671", "nazev": "WARFARIN ORION 5 MG", "sila": "5MG", "forma": "TBL NOB",
+     "baleni": "100", "atc": "B01AA03", "ucinna_latka": "WARFARINUM NATRICUM", "cesta": "POR",
+     "drzitel": "Orion Corporation, Espoo", "stav_registrace": "R", "vydej": "Rp."},
+    {"kod": "0056022", "nazev": "APO-OME 20", "sila": "20MG", "forma": "CPS ETD",
+     "baleni": "28", "atc": "A02BC01", "ucinna_latka": "OMEPRAZOLUM", "cesta": "POR",
+     "drzitel": "Apotex Europe B.V.", "stav_registrace": "R", "vydej": "volný"},
+    {"kod": "0242631", "nazev": "METFORMIN MYLAN 1000 MG", "sila": "1000MG", "forma": "TBL FLM",
+     "baleni": "60", "atc": "A10BA02", "ucinna_latka": "METFORMINI HYDROCHLORIDUM", "cesta": "POR",
+     "drzitel": "Viatris (Mylan), Praha", "stav_registrace": "R", "vydej": "Rp."},
+    {"kod": "0100742", "nazev": "PREDNISON 5 LÉČIVA", "sila": "5MG", "forma": "TBL NOB",
+     "baleni": "20", "atc": "H02AB07", "ucinna_latka": "PREDNISONUM", "cesta": "POR",
+     "drzitel": "Zentiva, k.s., Praha", "stav_registrace": "R", "vydej": "Rp."},
+]
+
+# Vzorové identifikátory eReceptu pro rychlé vyplnění v UI (simulace).
+SUKL_TEST_ERECEPTY = [
+    {"id": "1234567890AB", "pacient_rid": "3740100325", "popis": "MUSÍLEK METODĚJ – ukázka"},
+    {"id": "ABCDEF123456", "pacient_rid": "5785446836", "popis": "NOSKOVÁ PETRA – ukázka"},
+]
+
 ENV_CREDENTIALS = {
     "T2": {
         "client_id": CLIENT_ID,

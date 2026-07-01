@@ -2249,3 +2249,339 @@ class RegistrOpravneniNcpeh:
 
     def typ_dokumentace(self, id_):
         return self.c.get(f"{self.BASE}/api/v1/Ciselniky/TypyDokumentaci/{id_}")
+
+
+# ===========================================================================
+# SÚKL – eRecept / CÚER a Databáze léčivých přípravků (DLP)
+# ---------------------------------------------------------------------------
+# eRecept je samostatný systém SÚKL (SOAP web services, verze rozhraní 202501A,
+# dokumentace na epreskripce.gov.cz). Vyžaduje registraci SW u SÚKL + certifikát.
+# Bez těchto přístupů běží integrace v režimu SIMULACE (viz simulační engine
+# v sez_api/app.py). DLP jsou veřejná otevřená data (opendata.sukl.cz).
+# ===========================================================================
+
+SUKL_ENVIRONMENTS = {
+    "T2": {
+        "name": "SÚKL Test",
+        "info": "epreskripce.gov.cz – testovací prostředí (registrace SW u SÚKL nutná)",
+    },
+    "PROD": {
+        "name": "SÚKL Produkce",
+        "info": "epreskripce.gov.cz – produkční prostředí eRecept / CÚER",
+    },
+}
+
+
+class SUKLDLP:
+    """Databáze léčivých přípravků SÚKL – veřejná otevřená data (opendata.sukl.cz).
+
+    Líné stažení + rozbalení + cache CSV; fulltext lookup nad indexem v paměti.
+    Když stažení selže (offline), použije vestavěné vzorky z configu
+    (`self.status()['zdroj'] == 'sample'`).
+    """
+
+    # Sdílená cache napříč instancemi (index se stahuje jednou za proces).
+    _index: list | None = None
+    _source: str | None = None
+    _loaded_at: float = 0.0
+    _error: str | None = None
+
+    # Kandidátní názvy sloupců (schéma DLP se mezi verzemi liší) – zkusí se po řadě.
+    _COLS = {
+        "kod": ["KOD_SUKL", "KODSUKL", "KOD"],
+        "nazev": ["NAZEV", "NÁZEV", "NAZ"],
+        "sila": ["SILA", "SÍLA"],
+        "forma": ["FORMA", "LEKOVA_FORMA", "F"],
+        "baleni": ["BALENI", "DOPLNEK_NAZ", "VELIKOST_BALENI", "DOPLNEK"],
+        "atc": ["ATC_WHO", "ATC", "ATCWHO"],
+        "ucinna_latka": ["NAZEV_LATKY", "UCINNA_LATKA", "LATKA", "SLOZENI"],
+        "cesta": ["CESTA", "CESTA_PODANI"],
+        "drzitel": ["DRZITEL", "DRZITEL_ROZHODNUTI", "NAZEV_DRZITELE"],
+        "stav_registrace": ["STAV_REG", "STAV_REGISTRACE", "STAV"],
+        "vydej": ["VYDEJ", "ZPUSOB_VYDEJE"],
+    }
+
+    def __init__(self, client: SEZClient = None):
+        self.c = client
+
+    # --- načtení indexu ---------------------------------------------------
+    def _load_samples(self, error: str | None = None):
+        from sez_api import config as _cfg
+        SUKLDLP._index = [dict(x) for x in getattr(_cfg, "SUKL_DLP_SAMPLE", [])]
+        SUKLDLP._source = "sample"
+        SUKLDLP._loaded_at = time.time()
+        SUKLDLP._error = error
+        return SUKLDLP._index
+
+    def _norm_row(self, header: list, row: list) -> dict:
+        raw = {header[i].strip().upper(): (row[i].strip() if i < len(row) else "")
+               for i in range(len(header))}
+        out = {}
+        for field, candidates in self._COLS.items():
+            out[field] = ""
+            for cand in candidates:
+                if cand in raw and raw[cand]:
+                    out[field] = raw[cand]
+                    break
+        return out
+
+    def _ensure_index(self, force: bool = False):
+        if SUKLDLP._index is not None and not force:
+            return SUKLDLP._index
+
+        from sez_api import config as _cfg
+        import io
+        import csv
+        import zipfile
+
+        url = getattr(_cfg, "SUKL_DLP_URL", "")
+        if not url:
+            return self._load_samples("SUKL_DLP_URL není nastavena")
+
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            data = resp.content
+            records: list[dict] = []
+
+            def _parse_csv_bytes(b: bytes):
+                for enc in ("cp1250", "utf-8-sig", "utf-8"):
+                    try:
+                        text = b.decode(enc)
+                        break
+                    except UnicodeDecodeError:
+                        continue
+                else:
+                    text = b.decode("cp1250", errors="replace")
+                reader = csv.reader(io.StringIO(text), delimiter=";")
+                rows = list(reader)
+                if not rows:
+                    return
+                header = rows[0]
+                for r in rows[1:]:
+                    if r:
+                        records.append(self._norm_row(header, r))
+
+            if url.lower().endswith(".zip") or data[:2] == b"PK":
+                zf = zipfile.ZipFile(io.BytesIO(data))
+                # Preferuj soubor s "lecivepripravky" / "dlp" v názvu.
+                names = zf.namelist()
+                target = next(
+                    (n for n in names if "lecivepripravky" in n.lower()
+                     or "dlp_lecive" in n.lower() or n.lower().startswith("dlp")),
+                    names[0] if names else None,
+                )
+                if target:
+                    _parse_csv_bytes(zf.read(target))
+            else:
+                _parse_csv_bytes(data)
+
+            records = [r for r in records if r.get("kod") or r.get("nazev")]
+            if not records:
+                return self._load_samples("DLP dataset neobsahuje očekávaná data")
+
+            SUKLDLP._index = records
+            SUKLDLP._source = "opendata"
+            SUKLDLP._loaded_at = time.time()
+            SUKLDLP._error = None
+            logger.info("SÚKL DLP načteno: %d přípravků z %s", len(records), url)
+            return SUKLDLP._index
+        except Exception as exc:
+            logger.warning("SÚKL DLP stažení selhalo (%s) – fallback na vzorky", exc)
+            return self._load_samples(str(exc)[:200])
+
+    # --- veřejné API ------------------------------------------------------
+    def status(self) -> dict:
+        idx = self._ensure_index()
+        return {
+            "zdroj": SUKLDLP._source,
+            "pocet": len(idx or []),
+            "nacteno": SUKLDLP._loaded_at,
+            "chyba": SUKLDLP._error,
+            "url": getattr(__import__("sez_api.config", fromlist=["SUKL_DLP_URL"]),
+                           "SUKL_DLP_URL", ""),
+        }
+
+    def reload(self) -> dict:
+        self._ensure_index(force=True)
+        return self.status()
+
+    def hledat(self, nazev: str = None, sukl_kod: str = None,
+               atc: str = None, limit: int = 50) -> dict:
+        idx = self._ensure_index()
+        q_naz = (nazev or "").strip().lower()
+        q_kod = (sukl_kod or "").strip().lower()
+        q_atc = (atc or "").strip().lower()
+
+        def _match(r):
+            if q_kod and q_kod not in (r.get("kod", "").lower()):
+                return False
+            if q_atc and q_atc not in (r.get("atc", "").lower()):
+                return False
+            if q_naz:
+                hay = (r.get("nazev", "") + " " + r.get("ucinna_latka", "")).lower()
+                if q_naz not in hay:
+                    return False
+            return True
+
+        matches = [r for r in idx if _match(r)] if (q_naz or q_kod or q_atc) else list(idx)
+        total = len(matches)
+        return {
+            "zdroj": SUKLDLP._source,
+            "pocet": total,
+            "limit": limit,
+            "vysledky": matches[:limit],
+        }
+
+    def detail(self, sukl_kod: str) -> dict:
+        idx = self._ensure_index()
+        kod = (sukl_kod or "").strip().lower()
+        for r in idx:
+            if r.get("kod", "").lower() == kod:
+                return {"zdroj": SUKLDLP._source, "nalezeno": True, "pripravek": r}
+        return {"zdroj": SUKLDLP._source, "nalezeno": False, "pripravek": None}
+
+
+class SUKLeRecept:
+    """eRecept / CÚER (SÚKL) – builder request obálek a odesílání.
+
+    LIVE režim (nakonfigurován endpoint + registrační ID) posílá request na
+    reálné SOAP rozhraní; jinak vrací marker `{"_simulace": True, ...}`, který
+    zpracuje simulační engine ve vrstvě app.py.
+    """
+
+    def __init__(self, client: SEZClient = None):
+        self.c = client
+
+    # --- pomocné ----------------------------------------------------------
+    def _cfg(self):
+        from sez_api import config as _cfg
+        return _cfg
+
+    def mode(self) -> str:
+        return self._cfg().sukl_mode(SEZConfig.ENVIRONMENT)
+
+    def _hlavicka(self, kontext: dict | None = None) -> dict:
+        cfg = self._cfg()
+        h = {
+            "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
+            "identifikaceVyrobce": cfg.SUKL_VYROBCE,
+            "registracniId": cfg.SUKL_REG_ID or None,
+            "casVytvoreni": _iso_now(),
+            "idKorelace": str(uuid.uuid4()),
+        }
+        if kontext:
+            h["kontext"] = kontext
+        return h
+
+    def build_envelope(self, operace: str, telo: dict,
+                       kontext: dict | None = None) -> dict:
+        return {
+            "operace": operace,
+            "hlavicka": self._hlavicka(kontext),
+            "telo": telo or {},
+        }
+
+    def odeslat(self, operace: str, telo: dict, kontext: dict | None = None) -> dict:
+        """LIVE: POST na endpoint. SIM: vrátí marker pro app.py sim engine."""
+        env = self.build_envelope(operace, telo, kontext)
+        cfg = self._cfg()
+        endpoint = cfg.sukl_erecept_endpoint(SEZConfig.ENVIRONMENT)
+        if self.mode() == "LIVE" and endpoint:
+            try:
+                resp = requests.post(
+                    endpoint,
+                    json=env,
+                    timeout=30,
+                    cert=self._live_cert(),
+                    headers={"Content-Type": "application/json",
+                             "SOAPAction": operace},
+                )
+                try:
+                    body = resp.json()
+                except Exception:
+                    body = {"raw": resp.text[:2000]}
+                return {"_simulace": False, "operace": operace,
+                        "http_status": resp.status_code, "request": env,
+                        "response": body}
+            except Exception as exc:
+                return {"_simulace": False, "operace": operace,
+                        "chyba": str(exc)[:300], "request": env}
+        return {"_simulace": True, "operace": operace, "request": env}
+
+    def _live_cert(self):
+        cfg = self._cfg()
+        if cfg.SUKL_CERT_PATH:
+            # Pozn.: PFX by bylo nutné rozbalit na PEM; zde předpokládáme PEM pár
+            # nebo že se použije SEZ session cert. Detailní mTLS řešíme až s reálnými přístupy.
+            return None
+        return None
+
+    # --- prioritní služby -------------------------------------------------
+    def predepsat(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("ZalozeniEReceptu", telo, kontext)
+
+    def vydej(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("ZalozeniVydeje", telo, kontext)
+
+    def rlpo(self, telo: dict, kontext: dict | None = None) -> dict:
+        """Rušení/oprava předpisu nebo výdeje (RLPO)."""
+        return self.odeslat("RLPO", telo, kontext)
+
+    def nahled_erecept(self, id_erecept: str, kontext: dict | None = None) -> dict:
+        return self.odeslat("NahledNaERecept", {"idERecept": id_erecept}, kontext)
+
+    # --- neprioritní služby ----------------------------------------------
+    def lekovy_zaznam(self, rid: str = None, rc: str = None,
+                      kontext: dict | None = None) -> dict:
+        telo = {}
+        if rid:
+            telo["rid"] = rid
+        if rc:
+            telo["rodneCislo"] = rc
+        return self.odeslat("ZobrazeniLekovehoZaznamu", telo, kontext)
+
+    def zaloz_elektronicky_zaznam(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("ZalozeniElektronickehoZaznamu", telo, kontext)
+
+    # --- CÚER doplňkové ---------------------------------------------------
+    def doplatky_limit_pojistence(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("NacistDoplatkyLimitPojistence", telo, kontext)
+
+    def seznam_doplatku_pojistence(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("NacistSeznamDoplatkuPojistence", telo, kontext)
+
+    def zmen_poznamku_vydeje(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("ZmenitPoznamkuVydeje", telo, kontext)
+
+    # --- ePoukaz ----------------------------------------------------------
+    def zaloz_epoukaz(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("ZalozeniEPoukazu", telo, kontext)
+
+    def nahled_epoukaz(self, id_epoukaz: str, kontext: dict | None = None) -> dict:
+        return self.odeslat("NahledNaEPoukaz", {"idEPoukaz": id_epoukaz}, kontext)
+
+    # --- eOčkování --------------------------------------------------------
+    def zaloz_ockovani(self, telo: dict, kontext: dict | None = None) -> dict:
+        return self.odeslat("ZalozeniOckovani", telo, kontext)
+
+    def nahled_ockovani(self, rid: str, kontext: dict | None = None) -> dict:
+        return self.odeslat("NahledNaOckovani", {"rid": rid}, kontext)
+
+    def diagnose(self) -> dict:
+        cfg = self._cfg()
+        env = SEZConfig.ENVIRONMENT
+        return {
+            "enabled": cfg.SUKL_ENABLED,
+            "mode": self.mode(),
+            "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
+            "endpoint": cfg.sukl_erecept_endpoint(env) or "(nenastaveno – simulace)",
+            "registracniId": bool(cfg.SUKL_REG_ID),
+            "vyrobce": cfg.SUKL_VYROBCE,
+            "prostredi": env,
+        }
+
+
+def _iso_now() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat()
