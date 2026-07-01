@@ -12,7 +12,7 @@ import base64
 from datetime import datetime, timedelta, timezone
 
 try:
-    from sez_api import SEZAuth, SEZClient, KRP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace
+    from sez_api import SEZAuth, SEZClient, KRP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace, Terminologie
     from sez_api import config as cfg
     cfg.validate()
     CLIENT_ID = cfg.CLIENT_ID
@@ -21,6 +21,7 @@ try:
     CERT_UID = cfg.CERT_UID
 except ImportError:
     from sez_client import SEZAuth, SEZClient, KRP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace
+    Terminologie = None  # type: ignore
     CLIENT_ID = os.environ.get("SEZ_CLIENT_ID", "25488627_KrajskaZdravotniVerejnyTest")
     P12_PATH = os.environ.get("SEZ_P12_PATH", "/Users/mira/Downloads/krajska_zdravotni.pfx")
     P12_PASSWORD = os.environ.get("SEZ_P12_PASSWORD", "Tre-987set*krajzdra321/")
@@ -337,6 +338,78 @@ if du_ok:
 
 else:
     print("  ⚠ DÚ T2 nedostupné – přeskočeno")
+
+# === 7. TermX – Terminologický server (FHIR R4 v1.0.5) ===
+print("\n[7] TermX – Terminologický server")
+if Terminologie is None:
+    print("  ⚠ Terminologie není v aktuálním sez_api importu – přeskočeno")
+else:
+    termx = Terminologie(client)
+    vs_url = "https://ncez.mzcr.cz/terminology/ValueSet/medical-document-type"
+    cs_url = "https://ncez.mzcr.cz/terminology/CodeSystem/medical-document-type"
+
+    r = termx.metadata()
+    check("TermX metadata → 200", r.status_code == 200, f"status={r.status_code}")
+    if r.status_code == 200:
+        try:
+            md = r.json()
+            check("TermX metadata vrací CapabilityStatement",
+                  md.get("resourceType") == "CapabilityStatement",
+                  f"resourceType={md.get('resourceType')}")
+            ver = md.get("version") or md.get("fhirVersion") or ""
+            if ver:
+                check("TermX verze reportována", True, ver)
+        except Exception as e:
+            check("TermX metadata – JSON parsing", False, str(e))
+
+    r = termx.valueset_expand(url=vs_url)
+    check("TermX ValueSet/$expand medical-document-type → 200",
+          r.status_code == 200, f"status={r.status_code}")
+    if r.status_code == 200:
+        try:
+            data = r.json()
+            contains = (data.get("expansion") or {}).get("contains") or []
+            codes = {c.get("code") for c in contains if isinstance(c, dict)}
+            doc_codes = set(DOCUMENTED_CISELNIKY.get("medical-document-type", []))
+            missing = doc_codes - codes
+            check("TermX expand obsahuje dokumentované kódy",
+                  not missing, f"chybí: {sorted(missing)}" if missing else f"{len(doc_codes)}/{len(doc_codes)}")
+        except Exception as e:
+            check("TermX expand – JSON parsing", False, str(e))
+
+    def _result_bool(resp):
+        try:
+            d = resp.json()
+        except Exception:
+            return None
+        for p in d.get("parameter") or []:
+            if isinstance(p, dict) and p.get("name") == "result":
+                return bool(p.get("valueBoolean"))
+        return None
+
+    r = termx.valueset_validate_code(url=vs_url, code="11506-3")
+    res = _result_bool(r)
+    check("TermX $validate-code 11506-3 → result=true",
+          r.status_code == 200 and res is True, f"status={r.status_code} result={res}")
+
+    r = termx.valueset_validate_code(url=vs_url, code="XYZ-NEEXISTUJE")
+    res = _result_bool(r)
+    check("TermX $validate-code XYZ-NEEXISTUJE → result=false",
+          r.status_code == 200 and res is False, f"status={r.status_code} result={res}")
+
+    r = termx.codesystem_lookup(system=cs_url, code="11506-3")
+    display = None
+    if r.status_code == 200:
+        try:
+            for p in r.json().get("parameter") or []:
+                if isinstance(p, dict) and p.get("name") == "display":
+                    display = p.get("valueString")
+                    break
+        except Exception:
+            pass
+    check("TermX CodeSystem/$lookup 11506-3 vrací display",
+          r.status_code == 200 and bool(display),
+          f"status={r.status_code} display={display!r}")
 
 # === Shrnutí ===
 print("\n" + "=" * 70)

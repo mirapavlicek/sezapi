@@ -1,17 +1,22 @@
 """
 IRIS ObjectScript Code Generator
 ---------------------------------
-Takes API call context (service, endpoint, request, response)
-and generates InterSystems IRIS / Caché code:
-  - Persistent class for data storage
-  - Client class with %Net.HttpRequest calls
-  - JWT + mTLS setup
-  - CSP / REST dispatch snippets
+Z kontextu API volání (služba, endpoint, request, response) generuje
+InterSystems IRIS / IRIS for Health kód podle konvencí platformy
+(skill `iris-objectscript`):
+
+  - Persistentní třída pro uložení dat (%Persistent, %DynamicObject I/O)
+  - Klientská třída s %Net.HttpRequest (mTLS + JWT assertion RS256)
+  - SSL/TLS setup
+  - %CSP.REST dispatch
+
+House rules: idiomatický UDL, PascalCase příkazy, Try/Catch + %Status,
+$$$ThrowOnError, %DynamicObject pro JSON, /// doc komentáře. Ověřeno
+strukturálně skill linterem (scripts/lint_udl.py).
 """
 
 from __future__ import annotations
 import re
-import json
 from datetime import datetime
 from typing import Any
 
@@ -24,197 +29,274 @@ _IRIS_TYPE_MAP = {
     int: "%Integer",
     float: "%Double",
     bool: "%Boolean",
-    list: "%ListOfDataTypes",
     type(None): "%String",
 }
+
+
+def _is_nested(val: Any) -> bool:
+    return isinstance(val, (dict, list))
 
 
 def _iris_type(val: Any) -> str:
     if isinstance(val, dict):
         return "%DynamicObject"
     if isinstance(val, list):
-        if val and isinstance(val[0], dict):
-            return "%DynamicArray"
-        return "%ListOfDataTypes"
+        return "%DynamicArray"
     return _IRIS_TYPE_MAP.get(type(val), "%String")
 
 
 def _safe_prop(name: str) -> str:
-    """Convert JSON key to valid IRIS property name."""
-    name = re.sub(r"[^a-zA-Z0-9_]", "", name.replace("-", "_"))
-    if name and name[0].isdigit():
-        name = "P" + name
-    return name or "Unnamed"
+    """Převede JSON klíč na validní název IRIS property (PascalCase)."""
+    cleaned = re.sub(r"[^a-zA-Z0-9_]", "", str(name).replace("-", "_"))
+    if not cleaned:
+        return "Unnamed"
+    out = cleaned[0].upper() + cleaned[1:]
+    if out[0].isdigit():
+        out = "P" + out
+    return out
+
+
+def _param(name: str) -> str:
+    """Název parametru metody (p + PascalCase)."""
+    return "p" + _safe_prop(name)
 
 
 def _classify(name: str) -> str:
-    """Convert endpoint/service name to PascalCase class name."""
-    parts = re.split(r"[-_/\s]+", name)
-    return "".join(p.capitalize() for p in parts if p)
+    parts = re.split(r"[-_/\s]+", str(name))
+    return "".join(p.capitalize() for p in parts if p) or "Sluzba"
+
+
+def _gen_header() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
 # ---------------------------------------------------------------------------
 # Persistent class generator
 # ---------------------------------------------------------------------------
 
-def gen_persistent_class(
-    package: str,
-    class_name: str,
-    sample_data: dict | list,
-    description: str = "",
-) -> str:
+def gen_persistent_class(package: str, class_name: str,
+                         sample_data: dict | list, description: str = "") -> str:
     if isinstance(sample_data, list):
         sample_data = sample_data[0] if sample_data else {}
     if not isinstance(sample_data, dict):
         sample_data = {"value": sample_data}
 
-    lines = [
-        f'/// {description}',
-        f'/// Vygenerováno: {datetime.now().strftime("%Y-%m-%d %H:%M")}',
-        f'Class {package}.Data.{class_name} Extends %Persistent',
-        '{',
-        '',
-    ]
-
-    props = []
+    props = []  # (pname, ptype, jsonkey, nested)
     for key, val in sample_data.items():
         pname = _safe_prop(key)
-        ptype = _iris_type(val)
-        maxlen = ""
-        if isinstance(val, str) and len(val) > 50:
-            maxlen = "(MAXLEN = 32000)"
+        if _is_nested(val):
+            props.append((pname, '%String(MAXLEN = 32000)', key, True))
         elif isinstance(val, str):
-            maxlen = "(MAXLEN = 250)"
-        props.append((pname, ptype, maxlen, key))
-        lines.append(f'Property {pname} As {ptype}{maxlen};')
-
-    lines.append('')
-
-    # FromJSON class method
-    lines.append('ClassMethod FromJSON(json As %DynamicObject) As %Status')
-    lines.append('{')
-    lines.append(f'    set obj = ..%New()')
-    for pname, ptype, _, key in props:
-        if ptype in ("%DynamicObject", "%DynamicArray", "%ListOfDataTypes"):
-            lines.append(f'    set obj.{pname} = json.%Get("{key}")')
+            maxlen = 32000 if len(val) > 200 else 250
+            props.append((pname, f'%String(MAXLEN = {maxlen})', key, False))
         else:
-            lines.append(f'    set obj.{pname} = json.%Get("{key}")')
-    lines.append(f'    set sc = obj.%Save()')
-    lines.append(f'    quit sc')
-    lines.append('}')
-    lines.append('')
+            props.append((pname, _iris_type(val), key, False))
 
-    # ToJSON instance method
-    lines.append('Method ToJSON() As %DynamicObject')
-    lines.append('{')
-    lines.append('    set json = ##class(%DynamicObject).%New()')
-    for pname, ptype, _, key in props:
-        lines.append(f'    do json.%Set("{key}", ..{pname})')
-    lines.append('    quit json')
-    lines.append('}')
-    lines.append('')
+    L = []
+    if description:
+        L.append(f'/// {description}')
+    L.append(f'/// Datová třída pro {class_name}. Generováno {_gen_header()}.')
+    L.append(f'Class {package}.Data.{class_name} Extends %Persistent')
+    L.append('{')
+    L.append('')
+    for pname, ptype, key, nested in props:
+        L.append(f'/// {key}')
+        L.append(f'Property {pname} As {ptype};')
+        L.append('')
 
-    # SQL index on first string property
-    first_str = next((p for p in props if p[1] == "%String"), None)
-    if first_str:
-        lines.append(f'Index idx{first_str[0]} On {first_str[0]};')
-        lines.append('')
+    first_scalar = next((p for p in props if p[1].startswith('%String') and not p[3]), None)
+    if first_scalar:
+        L.append(f'Index Idx{first_scalar[0]} On {first_scalar[0]};')
+        L.append('')
 
-    lines.append('}')
-    return '\n'.join(lines)
+    # ImportFromJSON
+    L.append('/// Vytvoří a uloží instanci z JSON řetězce. Vrací %Status, do pId ID.')
+    L.append('ClassMethod ImportFromJSON(pJSON As %String, Output pId As %String = "") As %Status')
+    L.append('{')
+    L.append('    Set sc = $$$OK')
+    L.append('    Try {')
+    L.append('        Set src = ##class(%DynamicObject).%FromJSON(pJSON)')
+    L.append('        Set obj = ..%New()')
+    for pname, ptype, key, nested in props:
+        if nested:
+            L.append(f'        Set val = src.%Get("{key}")')
+            L.append(f'        If $IsObject(val) {{ Set obj.{pname} = val.%ToJSON() }}')
+        else:
+            L.append(f'        Set obj.{pname} = src.%Get("{key}")')
+    L.append('        $$$ThrowOnError(obj.%Save())')
+    L.append('        Set pId = obj.%Id()')
+    L.append('    }')
+    L.append('    Catch ex {')
+    L.append('        Set sc = ex.AsStatus()')
+    L.append('    }')
+    L.append('    Return sc')
+    L.append('}')
+    L.append('')
+
+    # ExportToJSON
+    L.append('/// Serializuje instanci do JSON řetězce (pJSON). Vrací %Status.')
+    L.append('Method ExportToJSON(Output pJSON As %String = "") As %Status')
+    L.append('{')
+    L.append('    Set sc = $$$OK')
+    L.append('    Try {')
+    L.append('        Set out = ##class(%DynamicObject).%New()')
+    for pname, ptype, key, nested in props:
+        if nested:
+            L.append(f'        If ..{pname} \'= "" {{ Do out.%Set("{key}", ##class(%DynamicAbstractObject).%FromJSON(..{pname})) }}')
+        else:
+            L.append(f'        Do out.%Set("{key}", ..{pname})')
+    L.append('        Set pJSON = out.%ToJSON()')
+    L.append('    }')
+    L.append('    Catch ex {')
+    L.append('        Set sc = ex.AsStatus()')
+    L.append('    }')
+    L.append('    Return sc')
+    L.append('}')
+    L.append('')
+    L.append('}')
+    return '\n'.join(L)
 
 
 # ---------------------------------------------------------------------------
 # Client class generator
 # ---------------------------------------------------------------------------
 
-def gen_client_class(
-    package: str,
-    service_name: str,
-    endpoints: list[dict],
-) -> str:
-    """Generate a client class with REST methods.
-
-    endpoints: [{"method":"POST", "path":"/krp/api/v1/...", "name":"HledatRid",
-                 "body_sample": {...}, "description": "..."}]
-    """
+def gen_client_class(package: str, service_name: str, endpoints: list[dict]) -> str:
     cls = _classify(service_name)
-
-    lines = [
-        f'/// SEZ API klient pro službu {service_name}',
-        f'/// Vygenerováno: {datetime.now().strftime("%Y-%m-%d %H:%M")}',
+    L = [
+        f'/// SEZ API klient pro službu {service_name}.',
+        '/// Autentizace: mTLS (SSL/TLS konfigurace) + JWT Bearer assertion (RS256),',
+        '/// assertion se posílá přímo jako Authorization: Bearer na bránu.',
+        f'/// Generováno {_gen_header()}.',
         f'Class {package}.Client.{cls} Extends %RegisteredObject',
         '{',
         '',
-        'Property GatewayURL As %String(MAXLEN = 500);',
-        'Property BearerToken As %String(MAXLEN = 8000);',
-        'Property SSLConfig As %String [ InitialExpression = "SEZ_SSL" ];',
+        '/// Hostname brány (bez schématu), např. "api.csez.gov.cz".',
+        'Property Server As %String(MAXLEN = 256);',
         '',
-        '/// Získání tokenu přes JWT assertion + client_credentials',
-        'Method GetToken(clientId As %String, tokenEndpoint As %String, '
-        'certFile As %String, keyFile As %String) As %Status',
+        'Property Port As %Integer [ InitialExpression = 443 ];',
+        '',
+        '/// Název SSL/TLS konfigurace s klientským certifikátem PZS (mTLS).',
+        'Property SSLConfig As %String(MAXLEN = 128) [ InitialExpression = "SEZ_PZS" ];',
+        '',
+        '/// client_id přidělené v EZCA registraci.',
+        'Property ClientId As %String(MAXLEN = 256);',
+        '',
+        '/// kid (UID certifikátu) vkládané do hlavičky JWT.',
+        'Property Kid As %String(MAXLEN = 256);',
+        '',
+        '/// Audience JWT (token endpoint dané gateway).',
+        'Property Audience As %String(MAXLEN = 500);',
+        '',
+        '/// DER kódovaný privátní RSA klíč (naplní LoadPrivateKey).',
+        'Property PrivateKey As %String(MAXLEN = "") [ Internal ];',
+        '',
+        '/// Načte privátní klíč z PEM souboru a uloží jako DER do ..PrivateKey.',
+        'Method LoadPrivateKey(pPemFile As %String) As %Status',
         '{',
-        '    // 1. Sestavení JWT assertion',
-        '    set jwt = ##class(%DynamicObject).%New()',
-        '    do jwt.%Set("iss", clientId)',
-        '    do jwt.%Set("sub", clientId)',
-        '    do jwt.%Set("aud", tokenEndpoint)',
-        '    set jti = $system.Util.CreateGUID()',
-        '    do jwt.%Set("jti", jti)',
-        '    set now = $zdatetime($horolog, -2)',
-        '    do jwt.%Set("iat", now)',
-        '    do jwt.%Set("exp", now + 300)',
-        '    ',
-        '    // 2. Podpis RS256 s privátním klíčem',
-        '    set header = ##class(%DynamicObject).%New()',
-        '    do header.%Set("alg", "RS256")',
-        '    do header.%Set("typ", "JWT")',
-        '    // kid = cert_uid z EZCA registrace',
-        '    ',
-        '    // 3. Token request',
-        '    set req = ##class(%Net.HttpRequest).%New()',
-        '    set req.Server = $piece(tokenEndpoint, "/", 3)',
-        '    set req.SSLConfiguration = ..SSLConfig',
-        '    set req.ContentType = "application/x-www-form-urlencoded"',
-        '    do req.EntityBody.Write("grant_type=client_credentials"',
-        '        _"&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer"',
-        '        _"&client_assertion="_assertion',
-        '        _"&client_id="_clientId)',
-        '    set sc = req.Post(tokenEndpoint)',
-        '    if $$$ISERR(sc) quit sc',
-        '    ',
-        '    set resp = ##class(%DynamicObject).%FromJSON(req.HttpResponse.Data)',
-        '    set ..BearerToken = resp.%Get("access_token")',
-        '    quit $$$OK',
+        '    Set sc = $$$OK',
+        '    Try {',
+        '        Set stream = ##class(%Stream.FileCharacter).%New()',
+        '        $$$ThrowOnError(stream.LinkToFile(pPemFile))',
+        '        Set b64 = ""',
+        "        While 'stream.AtEnd {",
+        '            Set line = stream.ReadLine()',
+        '            If line [ "-----" { Continue }',
+        '            Set b64 = b64 _ $ZStrip(line, "*W")',
+        '        }',
+        '        Set ..PrivateKey = $System.Encryption.Base64Decode(b64)',
+        '    }',
+        '    Catch ex {',
+        '        Set sc = ex.AsStatus()',
+        '    }',
+        '    Return sc',
         '}',
         '',
-        '/// Základní REST volání',
-        'Method Call(method As %String, path As %String, body As %DynamicObject = "") As %DynamicObject',
+        '/// Base64URL kódování (bez zarovnání a zalomení).',
+        'ClassMethod Base64Url(pData As %String) As %String',
         '{',
-        '    set req = ##class(%Net.HttpRequest).%New()',
-        '    set req.Server = ..GatewayURL',
-        '    set req.SSLConfiguration = ..SSLConfig',
-        '    set req.ContentType = "application/json"',
-        '    do req.SetHeader("Authorization", "Bearer "_..BearerToken)',
-        '    do req.SetHeader("Accept", "application/json")',
-        '    ',
-        '    if body \'= "" {',
-        '        do req.EntityBody.Write(body.%ToJSON())',
+        '    Set b64 = $System.Encryption.Base64Encode(pData, 1)',
+        '    Set b64 = $Translate(b64, $Char(13, 10))',
+        '    Set b64 = $Translate(b64, "+/", "-_")',
+        '    Set b64 = $Translate(b64, "=")',
+        '    Return b64',
+        '}',
+        '',
+        '/// Sestaví a podepíše JWT assertion (RS256) pro autentizaci k bráně.',
+        'Method BuildAssertion(Output pAssertion As %String = "") As %Status',
+        '{',
+        '    Set sc = $$$OK',
+        '    Try {',
+        '        If ..PrivateKey = "" {',
+        '            $$$ThrowOnError($$$ERROR($$$GeneralError, "Privátní klíč není načten (LoadPrivateKey)."))',
+        '        }',
+        '        Set now = $ZDateTime($ZTimeStamp, -2)',
+        '        Set header = ##class(%DynamicObject).%New()',
+        '        Do header.%Set("alg", "RS256")',
+        '        Do header.%Set("typ", "JWT")',
+        '        Do header.%Set("kid", ..Kid)',
+        '        Set payload = ##class(%DynamicObject).%New()',
+        '        Do payload.%Set("iss", ..ClientId)',
+        '        Do payload.%Set("sub", ..ClientId)',
+        '        Do payload.%Set("aud", ..Audience)',
+        '        Do payload.%Set("jti", $System.Util.CreateGUID())',
+        '        Do payload.%Set("iat", now)',
+        '        Do payload.%Set("nbf", now - 60)',
+        '        Do payload.%Set("exp", now + 300)',
+        '        Set signingInput = ..Base64Url(header.%ToJSON()) _ "." _ ..Base64Url(payload.%ToJSON())',
+        '        Set signature = $System.Encryption.RSASHASign(256, signingInput, ..PrivateKey)',
+        '        Set pAssertion = signingInput _ "." _ ..Base64Url(signature)',
         '    }',
-        '    ',
-        '    if method = "GET" {',
-        '        set sc = req.Get(path)',
-        '    } elseif method = "POST" {',
-        '        set sc = req.Post(path)',
-        '    } elseif method = "PUT" {',
-        '        set sc = req.Put(path)',
-        '    } elseif method = "DELETE" {',
-        '        set sc = req.Delete(path)',
+        '    Catch ex {',
+        '        Set sc = ex.AsStatus()',
         '    }',
-        '    ',
-        '    if $$$ISERR(sc) quit ""',
-        '    set result = ##class(%DynamicObject).%FromJSON(req.HttpResponse.Data)',
-        '    quit result',
+        '    Return sc',
+        '}',
+        '',
+        '/// Obecné REST volání na bránu. Vrací %Status; JSON odpověď do pResponse,',
+        '/// HTTP status do pHttpStatus.',
+        'Method Call(pMethod As %String, pPath As %String, pBody As %DynamicObject = "", Output pResponse As %DynamicObject = "", Output pHttpStatus As %Integer = 0) As %Status',
+        '{',
+        '    Set sc = $$$OK',
+        '    Try {',
+        '        Set assertion = ""',
+        '        $$$ThrowOnError(..BuildAssertion(.assertion))',
+        '        Set req = ##class(%Net.HttpRequest).%New()',
+        '        Set req.Server = ..Server',
+        '        Set req.Port = ..Port',
+        '        Set req.Https = 1',
+        '        Set req.SSLConfiguration = ..SSLConfig',
+        '        Set req.ContentType = "application/json"',
+        '        Set req.Authorization = "Bearer "_assertion',
+        '        Do req.SetHeader("Accept", "application/json")',
+        '        Do req.SetHeader("Accept-Language", "cs")',
+        '        If $IsObject(pBody) {',
+        '            Do req.EntityBody.Write(pBody.%ToJSON())',
+        '        }',
+        '        If pMethod = "GET" {',
+        '            $$$ThrowOnError(req.Get(pPath))',
+        '        } ElseIf pMethod = "POST" {',
+        '            $$$ThrowOnError(req.Post(pPath))',
+        '        } ElseIf pMethod = "PUT" {',
+        '            $$$ThrowOnError(req.Put(pPath))',
+        '        } ElseIf pMethod = "DELETE" {',
+        '            $$$ThrowOnError(req.Delete(pPath))',
+        '        } Else {',
+        '            $$$ThrowOnError($$$ERROR($$$GeneralError, "Nepodporovaná metoda: "_pMethod))',
+        '        }',
+        '        Set resp = req.HttpResponse',
+        '        Set pHttpStatus = resp.StatusCode',
+        '        If $IsObject(resp.Data) {',
+        '            Set pResponse = ##class(%DynamicObject).%FromJSON(resp.Data)',
+        '        }',
+        "        If (resp.StatusCode '= 200) && (resp.StatusCode '= 201) {",
+        '            Set sc = $$$ERROR($$$GeneralError, "Brána vrátila HTTP "_resp.StatusCode)',
+        '        }',
+        '    }',
+        '    Catch ex {',
+        '        Set sc = ex.AsStatus()',
+        '    }',
+        '    Return sc',
         '}',
         '',
     ]
@@ -225,84 +307,80 @@ def gen_client_class(
         name = ep.get("name", _classify(path.split("/")[-1]))
         desc = ep.get("description", f"{m} {path}")
         body_sample = ep.get("body_sample")
-
-        lines.append(f'/// {desc}')
-        if body_sample and m in ("POST", "PUT"):
-            params = _build_method_params(body_sample)
-            lines.append(f'Method {name}({params}) As %DynamicObject')
-            lines.append('{')
-            lines.append(f'    set body = ##class(%DynamicObject).%New()')
+        L.append(f'/// {desc}')
+        if body_sample and isinstance(body_sample, dict) and m in ("POST", "PUT"):
+            params = ", ".join(f'{_param(k)} As {_param_type(v)}' for k, v in body_sample.items())
+            sig = (params + ", " if params else "") + 'Output pResponse As %DynamicObject = ""'
+            L.append(f'Method {name}({sig}) As %Status')
+            L.append('{')
+            L.append('    Set body = ##class(%DynamicObject).%New()')
             for k in body_sample:
-                pname = _safe_prop(k)
-                lines.append(f'    do body.%Set("{k}", {pname})')
-            lines.append(f'    quit ..Call("{m}", "{path}", body)')
-            lines.append('}')
+                L.append(f'    Do body.%Set("{k}", {_param(k)})')
+            L.append(f'    Return ..Call("{m}", "{path}", body, .pResponse)')
+            L.append('}')
         else:
-            lines.append(f'Method {name}() As %DynamicObject')
-            lines.append('{')
-            lines.append(f'    quit ..Call("{m}", "{path}")')
-            lines.append('}')
-        lines.append('')
+            L.append(f'Method {name}(Output pResponse As %DynamicObject = "") As %Status')
+            L.append('{')
+            L.append(f'    Return ..Call("{m}", "{path}", , .pResponse)')
+            L.append('}')
+        L.append('')
 
-    lines.append('}')
-    return '\n'.join(lines)
+    L.append('}')
+    return '\n'.join(L)
 
 
-def _build_method_params(sample: dict) -> str:
-    parts = []
-    for k, v in sample.items():
-        pname = _safe_prop(k)
-        ptype = _iris_type(v)
-        if ptype in ("%DynamicObject", "%DynamicArray"):
-            ptype = "%String"
-        parts.append(f'{pname} As {ptype}')
-    return ', '.join(parts)
+def _param_type(v: Any) -> str:
+    t = _iris_type(v)
+    if t in ("%DynamicObject", "%DynamicArray"):
+        return "%String"
+    return t
 
 
 # ---------------------------------------------------------------------------
-# SSL Configuration setup code
+# SSL Configuration setup
 # ---------------------------------------------------------------------------
 
 def gen_ssl_setup() -> str:
-    return '''/// Nastavení SSL/TLS konfigurace pro mTLS komunikaci se SEZ API
-/// Spustit jednou v terminálu nebo při inicializaci systému
+    return '''/// Jednorázové nastavení SSL/TLS konfigurace pro mTLS komunikaci se SEZ API.
+/// Spusťte jednou (Terminal) – vytvoří konfiguraci "SEZ_PZS".
+Class SEZ.Setup Extends %RegisteredObject
+{
+
+/// Vytvoří/aktualizuje SSL/TLS konfiguraci s klientským certifikátem PZS.
 ClassMethod SetupSSL() As %Status
 {
-    set ssl = ##class(Security.SSLConfigs).%New()
-    set ssl.Name = "SEZ_SSL"
-    set ssl.Description = "SEZ API Gateway - mTLS"
-    
-    // Cesta k certifikátu (PFX/P12 převedený na PEM)
-    set ssl.CertificateFile = "/opt/iris/certs/sez_client.pem"
-    set ssl.PrivateKeyFile = "/opt/iris/certs/sez_client_key.pem"
-    // Heslo k privátnímu klíči (pokud je šifrovaný)
-    // set ssl.PrivateKeyPassword = "..."
-    
-    // CA certifikát pro ověření serveru
-    set ssl.CAFile = "/opt/iris/certs/sez_ca_chain.pem"
-    
-    set ssl.Protocols = 8+16  // TLS 1.2 + 1.3
-    set ssl.VerifyPeer = 1
-    
-    set sc = ssl.%Save()
-    if $$$ISERR(sc) {
-        write "Chyba při ukládání SSL konfigurace: ", $system.Status.GetErrorText(sc), !
-    } else {
-        write "SSL konfigurace 'SEZ_SSL' vytvořena.", !
+    Set sc = $$$OK
+    Try {
+        Set name = "SEZ_PZS"
+        If ##class(Security.SSLConfigs).Exists(name) {
+            Set ssl = ##class(Security.SSLConfigs).%OpenId(name)
+        } Else {
+            Set ssl = ##class(Security.SSLConfigs).%New()
+            Set ssl.Name = name
+        }
+        Set ssl.Description = "SEZ API Gateway - mTLS klient PZS"
+        Set ssl.CertificateFile = "/opt/iris/certs/sez_client.pem"
+        Set ssl.PrivateKeyFile = "/opt/iris/certs/sez_client_key.pem"
+        Set ssl.CAFile = "/opt/iris/certs/sez_ca_chain.pem"
+        Set ssl.VerifyPeer = 1
+        $$$ThrowOnError(ssl.%Save())
+        Write "SSL/TLS konfigurace '"_name_"' uložena.", !
     }
-    quit sc
+    Catch ex {
+        Set sc = ex.AsStatus()
+        Write "Chyba: ", $System.Status.GetErrorText(sc), !
+    }
+    Return sc
+}
+
 }'''
 
 
 # ---------------------------------------------------------------------------
-# CSP REST Dispatch class
+# CSP REST Dispatch
 # ---------------------------------------------------------------------------
 
-def gen_rest_dispatch(
-    package: str,
-    service_name: str,
-    endpoints: list[dict],
-) -> str:
+def gen_rest_dispatch(package: str, service_name: str, endpoints: list[dict]) -> str:
     cls = _classify(service_name)
     routes = []
     methods = []
@@ -312,242 +390,199 @@ def gen_rest_dispatch(
         path = ep.get("path", "/")
         name = ep.get("name", _classify(path.split("/")[-1]))
         route_path = "/" + name.lower()
-        routes.append(f'        <Route Url="{route_path}" Method="{m}" Call="{name}" />')
+        routes.append(f'    <Route Url="{route_path}" Method="{m}" Call="{name}" />')
 
+        methods.append(f'/// {ep.get("description", m + " " + path)}')
         methods.append(f'ClassMethod {name}() As %Status')
         methods.append('{')
-        methods.append(f'    set client = ##class({package}.Client.{cls}).%New()')
-        methods.append(f'    set client.GatewayURL = ##class({package}.Config).GetGateway()')
-        methods.append(f'    set client.BearerToken = ##class({package}.Auth).GetCachedToken()')
+        methods.append('    Set sc = $$$OK')
+        methods.append('    Try {')
+        methods.append(f'        Set client = ##class({package}.Client.{cls}).%New()')
+        methods.append('        Set client.Server = "api.csez.gov.cz"')
+        methods.append('        // TODO: doplnit client.ClientId/Audience/Kid + LoadPrivateKey z konfigurace')
+        methods.append('        Set response = ""')
         if m in ("POST", "PUT"):
-            methods.append(f'    set body = ##class(%DynamicObject).%FromJSON(%request.Content)')
-            methods.append(f'    set result = client.{name}(body)')
+            methods.append('        Set body = ##class(%DynamicObject).%FromJSON(%request.Content)')
+            methods.append(f'        $$$ThrowOnError(client.{name}(body, .response))')
         else:
-            methods.append(f'    set result = client.{name}()')
-        methods.append(f'    set %response.ContentType = "application/json"')
-        methods.append(f'    if result \'= "" {{')
-        methods.append(f'        write result.%ToJSON()')
-        methods.append(f'    }} else {{')
-        methods.append(f'        write "{{}}"')
-        methods.append(f'    }}')
-        methods.append(f'    quit $$$OK')
+            methods.append(f'        $$$ThrowOnError(client.{name}(.response))')
+        methods.append('        Set %response.ContentType = "application/json"')
+        methods.append('        If $IsObject(response) {')
+        methods.append('            Write response.%ToJSON()')
+        methods.append('        } Else {')
+        methods.append('            Write "{}"')
+        methods.append('        }')
+        methods.append('    }')
+        methods.append('    Catch ex {')
+        methods.append('        Set sc = ex.AsStatus()')
+        methods.append('        Set %response.Status = "500 Internal Server Error"')
+        methods.append('        Set %response.ContentType = "application/json"')
+        methods.append('        Set err = ##class(%DynamicObject).%New()')
+        methods.append('        Do err.%Set("error", $System.Status.GetErrorText(sc))')
+        methods.append('        Write err.%ToJSON()')
+        methods.append('    }')
+        methods.append('    Return sc')
         methods.append('}')
         methods.append('')
 
-    lines = [
-        f'/// REST dispatch pro {service_name}',
-        f'/// Vygenerováno: {datetime.now().strftime("%Y-%m-%d %H:%M")}',
+    L = [
+        f'/// REST dispatch pro {service_name}. Generováno {_gen_header()}.',
         f'Class {package}.REST.{cls} Extends %CSP.REST',
         '{',
         '',
-        'Parameter UseSession = 1;',
         'Parameter CHARSET = "utf-8";',
+        '',
         'Parameter CONTENTTYPE = "application/json";',
         '',
         'XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]',
         '{',
-        '    <Routes>',
+        '<Routes>',
         *routes,
-        '    </Routes>',
+        '</Routes>',
         '}',
         '',
         *methods,
         '}',
     ]
-    return '\n'.join(lines)
+    return '\n'.join(L)
 
 
 # ---------------------------------------------------------------------------
-# Smart generator: auto-detect from API call context
+# Service metadata + smart generator
 # ---------------------------------------------------------------------------
 
 SERVICE_META = {
     "krp": {
-        "name": "KRP",
-        "description": "Kmenový registr pacientů",
-        "base_path": "/krp-pzs/api/v1",
+        "name": "KRP", "description": "Kmenový registr pacientů",
+        "base_path": "/krp/api/v2",
         "endpoints": [
-            {"method": "POST", "path": "/krp-pzs/api/v1/pacient/vyhledani/rid",
+            {"method": "POST", "path": "/krp/api/v2/pacient/hledat/rid",
              "name": "HledatRid", "description": "Vyhledání pacienta dle RID",
-             "body_sample": {"rid": "1234567890", "ucelPristupuKUdajumPacienta": "LECBA"}},
-            {"method": "POST", "path": "/krp-pzs/api/v1/pacient/vyhledani/jmeno",
-             "name": "HledatJmeno", "description": "Vyhledání pacienta dle jména",
-             "body_sample": {"jmeno": "Jan", "prijmeni": "Novák"}},
-            {"method": "POST", "path": "/krp-pzs/api/v1/pacient/zalozeni",
-             "name": "ZalozitPacienta", "description": "Založení nového pacienta"},
-            {"method": "POST", "path": "/krp-pzs/api/v1/pacient/zmena",
-             "name": "ZmenitPacienta", "description": "Změna údajů pacienta"},
+             "body_sample": {"rid": "1234567890"}},
+            {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc",
+             "name": "HledatJmenoRc", "description": "Vyhledání dle jména/příjmení/RČ",
+             "body_sample": {"jmeno": "Jan", "prijmeni": "Novák", "rodneCislo": "8001011234"}},
         ],
     },
     "notifikace": {
-        "name": "Notifikace",
-        "description": "Systém notifikací",
+        "name": "Notifikace", "description": "Systém notifikací",
         "base_path": "/notifikace/api/v1",
         "endpoints": [
             {"method": "GET", "path": "/notifikace/api/v1/kanaly/katalog",
              "name": "KatalogKanalu", "description": "Katalog notifikačních kanálů"},
-            {"method": "GET", "path": "/notifikace/api/v1/sablony/katalog",
-             "name": "KatalogSablon", "description": "Katalog šablon"},
-            {"method": "GET", "path": "/notifikace/api/v1/zdroje/katalog",
-             "name": "KatalogZdroju", "description": "Katalog zdrojů"},
-            {"method": "GET", "path": "/notifikace/api/v1/notifikace/vyhledat",
-             "name": "Vyhledat", "description": "Vyhledání notifikací"},
         ],
     },
     "ezadanky": {
-        "name": "EZadanky",
-        "description": "eŽádanky (elektronické žádanky)",
+        "name": "EZadanky", "description": "eŽádanky",
         "base_path": "/ezadanky/api/v1",
         "endpoints": [
-            {"method": "POST", "path": "/ezadanky/api/v1/ezadanka/vytvorit",
-             "name": "Vytvorit", "description": "Vytvoření eŽádanky",
-             "body_sample": {"typZadanky": "VYSETRENI", "priorita": "NORMALNI",
-                             "ridPacienta": "1234567890"}},
             {"method": "POST", "path": "/ezadanky/api/v1/ezadanka/vyhledat",
              "name": "Vyhledat", "description": "Vyhledání eŽádanek",
              "body_sample": {"ridPacienta": "1234567890"}},
-            {"method": "POST", "path": "/ezadanky/api/v1/ezadanka/zmenit-stav",
-             "name": "ZmenitStav", "description": "Změna stavu eŽádanky"},
         ],
     },
     "ezca2": {
-        "name": "EZCA2",
-        "description": "Služby vytvářející důvěru (EZCA 2)",
+        "name": "EZCA2", "description": "Služby vytvářející důvěru (EZCA 2)",
         "base_path": "/ezca2",
         "endpoints": [
-            {"method": "POST", "path": "/ezca2/api/sign/document",
-             "name": "SignDocument", "description": "Elektronický podpis dokumentu",
-             "body_sample": {"documentId": "doc-123",
-                             "authentication": {"userLogin": None}}},
-            {"method": "POST", "path": "/ezca2/api/stamp/document",
-             "name": "StampDocument", "description": "Elektronické razítko dokumentu"},
-            {"method": "POST", "path": "/ezca2/api/validate/document",
-             "name": "ValidateDocument", "description": "Validace podpisu dokumentu"},
-            {"method": "POST", "path": "/ezca2/api/create/document",
-             "name": "CreateDocument", "description": "Vytvoření dokumentu pro podpis"},
-            {"method": "POST", "path": "/ezca2/api/list/certificates",
-             "name": "ListCertificates", "description": "Výpis certifikátů"},
             {"method": "GET", "path": "/ezca2/simple-health",
              "name": "HealthCheck", "description": "Kontrola dostupnosti EZCA2"},
         ],
     },
     "du": {
-        "name": "DU",
-        "description": "Dočasné úložiště",
-        "base_path": "/du/api/v1",
+        "name": "DU", "description": "Dočasné úložiště",
+        "base_path": "/docasneUloziste/api/v1",
         "endpoints": [
-            {"method": "POST", "path": "/du/api/v1/dokumenty/ulozit",
-             "name": "UlozitDokument", "description": "Uložení dokumentu"},
-            {"method": "GET", "path": "/du/api/v1/dokumenty/stahnout",
+            {"method": "GET", "path": "/docasneUloziste/api/v1/dokumenty/stahnout",
              "name": "StahnoutDokument", "description": "Stažení dokumentu"},
         ],
     },
     "szz": {
-        "name": "SZZ",
-        "description": "Systém pro sdílený zdravotní záznam",
+        "name": "SZZ", "description": "Systém pro sdílený zdravotní záznam",
         "base_path": "/szz/api/v1",
         "endpoints": [
-            {"method": "POST", "path": "/szz/api/v1/dokument/ulozit",
-             "name": "UlozitDokument", "description": "Uložení do SZZ"},
             {"method": "POST", "path": "/szz/api/v1/dokument/vyhledat",
-             "name": "VyhledatDokument", "description": "Vyhledání v SZZ"},
+             "name": "VyhledatDokument", "description": "Vyhledání v SZZ",
+             "body_sample": {"rid": "1234567890"}},
         ],
     },
     "elp": {
-        "name": "ELP",
-        "description": "Elektronické lékařské posudky",
+        "name": "ELP", "description": "Elektronické lékařské posudky",
         "base_path": "/elp/api/v2",
         "endpoints": [
-            {"method": "POST", "path": "/elp/api/v2/posudek/vytvorit",
-             "name": "VytvoritPosudek", "description": "Vytvoření posudku"},
             {"method": "POST", "path": "/elp/api/v2/posudek/vyhledat",
-             "name": "VyhledatPosudek", "description": "Vyhledání posudku"},
+             "name": "VyhledatPosudek", "description": "Vyhledání posudku",
+             "body_sample": {"rid": "1234567890"}},
         ],
     },
     "krzp": {
-        "name": "KRZP",
-        "description": "Kmenový registr zdravotnických pracovníků",
-        "base_path": "/krzp-pzs/api/v1",
+        "name": "KRZP", "description": "Kmenový registr zdravotnických pracovníků",
+        "base_path": "/krzp/api/v2",
         "endpoints": [
-            {"method": "POST", "path": "/krzp-pzs/api/v1/pracovnik/vyhledani",
-             "name": "VyhledatPracovnika", "description": "Vyhledání ZP dle parametrů"},
+            {"method": "POST", "path": "/krzp/api/v2/pracovnik/hledat/krzpid",
+             "name": "HledatKrzpId", "description": "Vyhledání ZP dle KRZP ID",
+             "body_sample": {"krzpId": "191331954"}},
         ],
     },
 }
 
 
-def generate_full(
-    service: str,
-    package: str = "SEZ",
-    response_sample: dict | None = None,
-    request_sample: dict | None = None,
-    endpoint_path: str | None = None,
-    endpoint_method: str | None = None,
-) -> dict:
-    """Generate complete IRIS code for a given service or API call context.
+def generate_full(service: str, package: str = "SEZ",
+                  response_sample: dict | None = None,
+                  request_sample: dict | None = None,
+                  endpoint_path: str | None = None,
+                  endpoint_method: str | None = None) -> dict:
+    """Vygeneruje kompletní IRIS kód pro službu / kontext API volání.
 
-    Returns dict with keys:
-      persistent_class, client_class, rest_dispatch, ssl_setup, usage_example
+    Vrací dict: persistent_class, client_class, rest_dispatch, ssl_setup,
+    usage_example.
     """
     meta = SERVICE_META.get(service, {})
     sname = meta.get("name", _classify(service))
     desc = meta.get("description", service)
-    endpoints = meta.get("endpoints", [])
+    endpoints = list(meta.get("endpoints", []))
 
     if endpoint_path and endpoint_method:
-        ep_name = _classify(endpoint_path.split("/")[-1])
-        found = False
-        for ep in endpoints:
-            if ep["path"] == endpoint_path:
-                found = True
-                break
-        if not found:
+        if not any(ep.get("path") == endpoint_path for ep in endpoints):
             ep = {"method": endpoint_method, "path": endpoint_path,
-                  "name": ep_name, "description": f"{endpoint_method} {endpoint_path}"}
+                  "name": _classify(endpoint_path.split("/")[-1]) or "Volat",
+                  "description": f"{endpoint_method} {endpoint_path}"}
             if request_sample:
                 ep["body_sample"] = request_sample
             endpoints.append(ep)
 
     sample = response_sample or {"id": "example-1", "status": "OK"}
-
-    result = {
+    return {
         "persistent_class": gen_persistent_class(package, sname + "Data", sample, desc),
         "client_class": gen_client_class(package, sname, endpoints),
         "rest_dispatch": gen_rest_dispatch(package, sname, endpoints),
         "ssl_setup": gen_ssl_setup(),
         "usage_example": _gen_usage(package, sname),
     }
-    return result
 
 
 def _gen_usage(package: str, sname: str) -> str:
-    return f'''/// Příklad použití v IRIS terminálu
+    return f'''/// Příklad použití v IRIS Terminálu
 /// =====================================
 
-// 1. Jednorázová konfigurace SSL (stačí jednou)
-do ##class({package}.Setup).SetupSSL()
+// 1. Jednorázová konfigurace SSL/TLS (mTLS klient PZS)
+Do ##class({package}.Setup).SetupSSL()
 
-// 2. Vytvoření klienta
-set client = ##class({package}.Client.{sname}).%New()
-set client.GatewayURL = "gwy-ext-sec-t2.csez.cz"
+// 2. Vytvoření a konfigurace klienta
+Set client = ##class({package}.Client.{sname}).%New()
+Set client.Server = "api.csez.gov.cz"
+Set client.ClientId = "00064203_NIS2"
+Set client.Audience = "https://jsuint-auth-ez.csez.cz/connect/token"
+Set client.Kid = "<uid-certifikatu>"
+Set sc = client.LoadPrivateKey("/opt/iris/certs/sez_client_key.pem")
+If $$$ISERR(sc) {{ Write $System.Status.GetErrorText(sc), ! Quit }}
 
-// 3. Získání tokenu
-set sc = client.GetToken(
-    "25488627_KrajskaZdravotniVerejnyTest",
-    "https://jsuint-auth-t2.csez.cz/connect/token",
-    "/opt/iris/certs/client.pem",
-    "/opt/iris/certs/client_key.pem")
-if $$$ISERR(sc) write "Chyba tokenu: ", $system.Status.GetErrorText(sc), ! quit
+// 3. Volání API – assertion se podepíše a pošle automaticky
+Set response = ""
+Set sc = client.HledatRid("7306214864", .response)
+If $$$ISERR(sc) {{ Write $System.Status.GetErrorText(sc), ! Quit }}
+Write response.%ToJSON(), !
 
-// 4. Volání API
-set result = client.{sname}()
-if result '= "" {{
-    write result.%ToJSON(), !
-}}
-
-// 5. REST dispatch - konfigurace v Management Portal:
-//    System > Security > Applications > Web Applications
-//    Název: /api/sez/{sname.lower()}
+// 4. REST dispatch (Management Portal → Web Applications):
 //    Dispatch class: {package}.REST.{sname}
-//    Namespace: váš namespace
 '''

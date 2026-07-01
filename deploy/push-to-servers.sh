@@ -12,8 +12,10 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_DIR"
 
 echo "=== Vytvářím balíček pro nasazení ==="
-tar czf /tmp/sez-api-deploy.tar.gz \
+# COPYFILE_DISABLE zabrání tvorbě macOS AppleDouble (._*) souborů v tarballu
+COPYFILE_DISABLE=1 tar czf /tmp/sez-api-deploy.tar.gz \
   --exclude='.venv' --exclude='__pycache__' --exclude='.git' \
+  --exclude='.DS_Store' --exclude='._*' \
   sez_api/ deploy/ requirements.txt pyproject.toml
 
 for host in $SERVERS; do
