@@ -2733,6 +2733,41 @@ async def debug_jwt():
                     {"method": "GET", "path": "/registrOpravneniNcpeh/api/v1/Ciselniky/TypyDokumentaci/{id}", "desc": "Detail typu dokumentace"},
                 ],
             },
+            "SÚKL / eRecept": {
+                "name": "SÚKL – eRecept / CÚER",
+                "base": "(SÚKL – mimo CSEZ gateway)",
+                "version": cfg.SUKL_INTERFACE_VERSION,
+                "note": ("Samostatný systém SÚKL (SOAP web services, epreskripce.gov.cz). "
+                         "Vyžaduje registraci SW u SÚKL + certifikát. Bez těchto přístupů běží "
+                         "v režimu SIMULACE (in-memory engine + builder obálek). Endpointy níže jsou "
+                         "REST fasáda tohoto nástroje (/api/sukl/...), nikoli přímé SÚKL URL."),
+                "endpoints": [
+                    {"method": "GET", "path": "/api/sukl/erecept/lekovy-zaznam?rid=", "desc": "Lékový záznam pacienta (LZP)"},
+                    {"method": "POST", "path": "/api/sukl/erecept/predepsat", "desc": "Založení eReceptu (předpis)"},
+                    {"method": "POST", "path": "/api/sukl/erecept/vydej", "desc": "Založení výdeje"},
+                    {"method": "POST", "path": "/api/sukl/erecept/rlpo", "desc": "Zrušení/oprava předpisu (RLPO)"},
+                    {"method": "GET", "path": "/api/sukl/erecept/nahled/{id}", "desc": "Náhled na eRecept"},
+                    {"method": "POST", "path": "/api/sukl/erecept/doplatky", "desc": "Doplatky a limit pojištěnce"},
+                    {"method": "POST", "path": "/api/sukl/erecept/sestav-obalku", "desc": "Sestavení request obálky (builder)"},
+                    {"method": "POST", "path": "/api/sukl/epoukaz/zaloz", "desc": "Založení ePoukazu"},
+                    {"method": "POST", "path": "/api/sukl/eockovani/zaloz", "desc": "Záznam eOčkování"},
+                    {"method": "GET", "path": "/api/sukl/erecept/diagnose", "desc": "Stav konfigurace (LIVE/SIM)"},
+                ],
+            },
+            "SÚKL / DLP": {
+                "name": "SÚKL – Databáze léčivých přípravků",
+                "base": "opendata.sukl.cz",
+                "version": "otevřená data (CSV, měsíčně)",
+                "note": ("Veřejná otevřená data SÚKL (bez certifikátu). Používá se pro vyhledávání "
+                         "léčivých přípravků podle názvu, kódu SÚKL nebo ATC a pro doplnění názvů "
+                         "v předpisu. Offline fallback = vestavěné vzorky."),
+                "endpoints": [
+                    {"method": "GET", "path": "/api/sukl/dlp/hledat?nazev=&kod=&atc=", "desc": "Vyhledání léčivého přípravku"},
+                    {"method": "GET", "path": "/api/sukl/dlp/detail/{kod}", "desc": "Detail přípravku podle kódu SÚKL"},
+                    {"method": "GET", "path": "/api/sukl/dlp/status", "desc": "Stav zdroje dat (opendata/sample)"},
+                    {"method": "POST", "path": "/api/sukl/dlp/reload", "desc": "Znovunačtení dat DLP"},
+                ],
+            },
         },
         "gateway_errors": {
             "note": "API Gateway error mapping (NPEZ+KSEZ – aktualizace 23. 4. 2026, viz Confluence Manuál EZ pro PZS)",
