@@ -68,7 +68,7 @@ def _ping():
 
     from sez_api.client import (
         SEZAuth, SEZClient,
-        KRP, KRZP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace, EZCA2,
+        KRP, KRZP, SZZ, ELP, EZadanky, Notifikace, EZCA2,
         Terminologie,
     )
 

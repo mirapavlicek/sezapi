@@ -9,7 +9,6 @@ import time
 import uuid
 import jwt as pyjwt
 import requests
-from datetime import datetime, timezone
 
 from sez_client import SEZAuth, SEZClient, DocasneUloziste
 

@@ -5,7 +5,6 @@ Test DejZasilku s pytloun.p12 pro mTLS + krajska_zdravotni.pfx pro JWT signing.
 
 import json
 import os
-from cryptography.hazmat.primitives.serialization import pkcs12, Encoding
 from cryptography.x509.oid import NameOID
 from sez_client import SEZAuth, SEZClient, DocasneUloziste, Notifikace
 

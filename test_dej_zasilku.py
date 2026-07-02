@@ -9,7 +9,6 @@ v Registru práv a mandátů. Systémový PZS uživatel nemusí projít.
 
 import logging
 import json
-import sys
 import os
 
 from sez_client import SEZAuth, SEZClient, DocasneUloziste
@@ -65,7 +64,7 @@ def main():
 
         if data:
             preview = json.dumps(data, ensure_ascii=False, indent=2)
-            print(f"  Response (prvních 800 znaků):")
+            print("  Response (prvních 800 znaků):")
             print(f"  {preview[:800]}")
 
         if resp.status_code < 300 and data:

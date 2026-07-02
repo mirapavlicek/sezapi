@@ -5,8 +5,6 @@ Testuje všechny služby a porovnává formát odpovědí s dokumentací.
 """
 
 import json
-import sys
-import os
 import hashlib
 import base64
 from datetime import datetime, timedelta, timezone
@@ -346,7 +344,7 @@ print(f"  Prošlo:       {passed}")
 print(f"  Selhalo:      {failed}")
 
 if failed > 0:
-    print(f"\n  SELHANÉ TESTY:")
+    print("\n  SELHANÉ TESTY:")
     for name, status, detail in results:
         if status == "FAIL":
             print(f"    ✗ {name}  –  {detail}")

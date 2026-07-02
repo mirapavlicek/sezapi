@@ -148,7 +148,7 @@ if resp.status_code < 300 and data:
             if resp2.status_code < 300:
                 with open(f"stazene_zasilky/stazena_zasilka_{zasilka_id}.json", "w", encoding="utf-8") as f:
                     json.dump(d2, f, ensure_ascii=False, indent=2)
-                print(f"  >>> ZÁSILKA STAŽENA A ULOŽENA!")
+                print("  >>> ZÁSILKA STAŽENA A ULOŽENA!")
         except Exception:
             print(f"  Body: {resp2.text[:800]}")
 
