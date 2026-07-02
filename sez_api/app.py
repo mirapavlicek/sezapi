@@ -255,7 +255,9 @@ def timed_call(fn, *args, **kwargs) -> JSONResponse:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    resp = templates.TemplateResponse("index.html", {"request": request})
+    # Nová signatura TemplateResponse(request, name) – stará (name, {"request"})
+    # na novějším Starlette padá (TypeError: unhashable type: 'dict').
+    resp = templates.TemplateResponse(request, "index.html")
     # UI je často aktualizováno – nutíme prohlížeč vždy načíst čerstvou verzi,
     # aby se po nasazení neservíroval starý cache (jinak „pořád nic").
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
