@@ -18,8 +18,12 @@ Podporované služby:
       • CodeSystem/$lookup proxy pro SNOMED, ICD-10, MKN-10, DICOM
   - Notifikace
   - EZCA2 (Služby vytvářející důvěru)
+  - EZCA Validace v1.0.0 (online/offline validace dokumentů – ELP;
+      swagger apio.csez.gov.cz/apidoc)
   - Terminologie / TermX (FHIR R4 terminologický server / NTS –
-      PROD apio.csez.gov.cz/terminologie, T2 public mirror, gateway)
+      PROD apio.csez.gov.cz/terminologie, T2 public mirror, gateway;
+      swagger v1.1.0 na apio: + GET /manifest, ConceptMap/$translate
+      se parametrizuje sourceCode/targetSystem)
 
 Verze rozhraní ověřeny živě proti T2 gateway (/apidoc/config.json) 2026-06-08
 (beze změny oproti 8. 6.): KRP v2.0.4+v3.0.3, KRZP v2.0.2, KRPZS v2.0.3,
@@ -51,6 +55,17 @@ EZCA II Správa certifikátů: kontrakt sladěn se swaggerem v1.0.4 –
   /crl-list o filtry (ExterniIdentifikator/Stat/DatumOd/SerioveCislo); UI rozšířeno
   o filtry a řazení. Stažený certifikát lze uložit jako soubor (PEM/DER/PKCS#7)
   s automatickou detekcí formátu z Base64 dat odpovědi.
+
+Revize proti veřejné dokumentaci 2. 7. 2026 (apio.csez.gov.cz/apidoc +
+Manuál EZ pro PZS):
+- NOVĚ EZCAValidace (v1.0.0) – POST /ezcaValidace/api/v1/dokumenty/validate.
+- Terminologie v1.1.0: přidán GET /manifest; ConceptMap/$translate opraven na
+  parametry dle swaggeru (sourceCode/targetSystem místo dřívějších code/target,
+  aliasy zachovány).
+- ELP v1: doplněny číselníky (GET /api/v1/ciselniky[/{kod}/polozky]).
+- SZZ v2: HPV screening děložního hrdla sladěn se swaggerem –
+  /screeningy/karcinomDDeloznihoHrdlaHpv (dvojité „D“ dle v2.0.1);
+  jednoduché „D“ je přijímáno jako alias.
 """
 
 from sez_api.client import (
@@ -76,6 +91,7 @@ from sez_api.client import (
     Notifikace,
     EZCA2,
     EZCA2SpravaCertifikatu,
+    EZCAValidace,
     Terminologie,
     TermX,
     SUKLDLP,
@@ -85,7 +101,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.24.1"
+__version__ = "2.25.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
@@ -110,6 +126,7 @@ __all__ = [
     "Notifikace",
     "EZCA2",
     "EZCA2SpravaCertifikatu",
+    "EZCAValidace",
     "Terminologie",
     "TermX",
     "SUKLDLP",

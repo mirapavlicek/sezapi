@@ -24,7 +24,6 @@ import httpx
 from fastapi import FastAPI, Request, UploadFile, File, Form, Header, HTTPException, Depends
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
@@ -33,7 +32,7 @@ from sez_api import __version__
 from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, ELPv3, EZadanky, Notifikace, EZCA2,
-    EZCA2SpravaCertifikatu, KRPv3, SZZv2, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
+    EZCA2SpravaCertifikatu, EZCAValidace, KRPv3, SZZv2, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
     UZISNrpzs, UZIS, UZISObsazenostLuzek,
 )
 from sez_api import fhir_imgorder as _fhir_img
@@ -168,6 +167,7 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["notif"] = Notifikace(_client)
     _modules["ezca"] = EZCA2(_client)
     _modules["ezca_cert"] = EZCA2SpravaCertifikatu(_client)
+    _modules["ezca_val"] = EZCAValidace(_client)
     _modules["termx"] = Terminologie(_client, public=False)
     _modules["termx_pub"] = Terminologie(_client, public=True)
     _modules["sukl_dlp"] = SUKLDLP(_client)
@@ -2108,7 +2108,7 @@ async def ez_neproveditelnost(request: Request):
 
 @app.post("/api/ezadanky/sestav-soubor")
 async def ez_sestav(request: Request):
-    body = await request.json()
+    await request.json()  # tělo se zatím nevyužívá (legacy endpoint)
     if _ez_sim_mode:
         return _ez_sim_resp({
             "soubor": base64.b64encode(b"%PDF-1.4 simulated").decode(),
@@ -2549,6 +2549,30 @@ async def ezca_cert_simple_health():
 async def ezca_cert_detail_health():
     """Detailní health check (dependencies + DB)."""
     return timed_call(_modules["ezca_cert"].detail_health)
+
+
+# ---------------------------------------------------------------------------
+# EZCA Validace v1.0.0 – online/offline validace dokumentů (ELP)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/ezca-validace/validate")
+async def ezca_validace_validate(request: Request):
+    """POST /ezcaValidace/api/v1/dokumenty/validate – tělo dle swaggeru
+    (typValidace online/offline, typDokumentu, dokumentId, …)."""
+    body = await request.json()
+    return timed_call(_modules["ezca_val"].validate, body)
+
+@app.get("/api/ezca-validace/health")
+async def ezca_validace_health():
+    return timed_call(_modules["ezca_val"].health)
+
+@app.get("/api/ezca-validace/simple-health")
+async def ezca_validace_simple_health():
+    return timed_call(_modules["ezca_val"].simple_health)
+
+@app.get("/api/ezca-validace/detail-health")
+async def ezca_validace_detail_health():
+    return timed_call(_modules["ezca_val"].detail_health)
 
 
 # ---------------------------------------------------------------------------
@@ -3157,7 +3181,7 @@ async def debug_jwt():
             "TermX": {
                 "name": "Terminologický server (FHIR)",
                 "base": "/terminologie",
-                "version": "v1.0.5",
+                "version": "v1.0.5 (T2) / v1.1.0 (apio)",
                 "note": "Gateway: /terminologie | Veřejný: termx-api-t2-pub.csez.cz/fhir (mTLS)",
                 "public_base": TERMX_PUB_BASE,
                 "endpoints": [
@@ -3167,7 +3191,8 @@ async def debug_jwt():
                     {"method": "GET", "path": "/terminologie/fhir/CodeSystem/{id}", "desc": "Načtení CodeSystemu"},
                     {"method": "GET", "path": "/terminologie/fhir/CodeSystem/$lookup", "desc": "Lookup kódu v CodeSystemu"},
                     {"method": "GET", "path": "/terminologie/fhir/ConceptMap/{id}", "desc": "Mapování konceptů"},
-                    {"method": "GET", "path": "/terminologie/fhir/ConceptMap/$translate", "desc": "Překlad konceptů"},
+                    {"method": "GET", "path": "/terminologie/fhir/ConceptMap/$translate", "desc": "Překlad konceptů (sourceCode/targetSystem)"},
+                    {"method": "GET", "path": "/terminologie/fhir/manifest", "desc": "Manifest obsahu serveru (v1.1.0)"},
                     {"method": "GET", "path": "/terminologie/fhir/metadata", "desc": "FHIR capability statement"},
                     {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/medical-document-type/$expand", "desc": "Typ zdravotního dokumentu (veřejný)"},
                     {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/stav-zasilky/$expand", "desc": "Stav zásilky (veřejný)"},
@@ -3385,6 +3410,21 @@ async def debug_jwt():
                     {"method": "GET",    "path": "/ezca2Certifikaty/health", "desc": "Health check"},
                 ],
             },
+            "EZCA_Validace": {
+                "name": "EZCA Validace (NOVÁ služba)",
+                "base": "/ezcaValidace",
+                "version": "v1.0.0",
+                "note": ("Online/offline validace dokumentů (zatím jen elektronické posudky, "
+                         "typDokumentu=elp). Online = dokumentId + dokumentHash (SHA-512 hex); "
+                         "offline = dokumentId + datumVystaveni + datumNarozeni + prijmeni. "
+                         "Swagger: apio.csez.gov.cz/apidoc → EZCAValidace_v1.0.0.json."),
+                "endpoints": [
+                    {"method": "POST", "path": "/ezcaValidace/api/v1/dokumenty/validate", "desc": "Online/offline validace dokumentu (ELP)"},
+                    {"method": "GET",  "path": "/ezcaValidace/health", "desc": "Health check"},
+                    {"method": "GET",  "path": "/ezcaValidace/simple-health", "desc": "Health check (simple)"},
+                    {"method": "GET",  "path": "/ezcaValidace/detail-health", "desc": "Health check (detail)"},
+                ],
+            },
             "KRP_v3": {
                 "name": "KRP v3.0.0 (NOVÁ MAJOR – paralelně s v2)",
                 "base": "/krp",
@@ -3448,7 +3488,7 @@ async def debug_jwt():
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyPsa", "desc": "SCREENING: karcinom prostaty – PSA"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyMri", "desc": "SCREENING: karcinom prostaty – MRI"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaCytologie", "desc": "SCREENING: karcinom děložního hrdla – cytologie"},
-                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV (cesta se dvěma D dle swaggeru)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaExpertniKolposkopie", "desc": "SCREENING: karcinom děložního hrdla – expertní kolposkopie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuMamografie", "desc": "SCREENING: karcinom prsu – mamografie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuBiopsie", "desc": "SCREENING: karcinom prsu – biopsie"},
@@ -3612,7 +3652,8 @@ async def debug_jwt():
             ],
         },
         "swagger_check": {
-            "note": "Statický snímek stavu rozhraní na T2 gateway; živé verze viz /api/services/discover",
+            "note": ("Statický snímek stavu rozhraní na T2 gateway; živé verze viz /api/services/discover. "
+                     "Dle aktualit Manuálu EZ (16. 6. 2026) byla na T2 nasazena SZZ v2.0.4 se Standardem SZZ 2.1."),
             "checked_at": "2026-06-08",
             "current_versions_on_t2": {
                 "DocasneUloziste": "v1.11.17",
@@ -3633,7 +3674,11 @@ async def debug_jwt():
                 "SdilenyZdravotniZaznam_v2": "v2.0.3",
                 "Terminologie": "v1.0.5",
             },
-            "swagger_source": "https://gwy-ext-sec-t2.csez.cz/apidoc/config.json",
+            "current_versions_on_apio": {
+                "EZCAValidace": "v1.0.0",
+                "Terminologie": "v1.1.0",
+            },
+            "swagger_source": "https://gwy-ext-sec-t2.csez.cz/apidoc/config.json | https://apio.csez.gov.cz/apidoc/config.json",
         },
     }
 
@@ -5397,30 +5442,39 @@ def _irop_obs2(params, modules, client):
     fhir_valid = True
     fhir_errors = []
     if fhir_bundle.get("resourceType") != "Bundle":
-        fhir_valid = False; fhir_errors.append("resourceType != Bundle")
+        fhir_valid = False
+        fhir_errors.append("resourceType != Bundle")
     if fhir_bundle.get("type") != "document":
-        fhir_valid = False; fhir_errors.append("type != document")
+        fhir_valid = False
+        fhir_errors.append("type != document")
     if not fhir_bundle.get("identifier"):
-        fhir_valid = False; fhir_errors.append("Bundle.identifier chybí")
+        fhir_valid = False
+        fhir_errors.append("Bundle.identifier chybí")
     entries = fhir_bundle.get("entry", [])
     entry_types = [e.get("resource", {}).get("resourceType") for e in entries]
     for required in ["Composition", "Patient"]:
         if required not in entry_types:
-            fhir_valid = False; fhir_errors.append(f"Chybí {required} v entries")
+            fhir_valid = False
+            fhir_errors.append(f"Chybí {required} v entries")
     has_fullurls = all(e.get("fullUrl") for e in entries)
     if not has_fullurls:
-        fhir_valid = False; fhir_errors.append("Chybí fullUrl v některých entries")
+        fhir_valid = False
+        fhir_errors.append("Chybí fullUrl v některých entries")
     comp = next((e["resource"] for e in entries
                  if e.get("resource", {}).get("resourceType") == "Composition"), None)
     if comp:
         if not comp.get("type", {}).get("coding"):
-            fhir_valid = False; fhir_errors.append("Composition.type.coding chybí")
+            fhir_valid = False
+            fhir_errors.append("Composition.type.coding chybí")
         if not comp.get("date"):
-            fhir_valid = False; fhir_errors.append("Composition.date chybí")
+            fhir_valid = False
+            fhir_errors.append("Composition.date chybí")
         if not comp.get("author"):
-            fhir_valid = False; fhir_errors.append("Composition.author chybí")
+            fhir_valid = False
+            fhir_errors.append("Composition.author chybí")
         if not comp.get("section"):
-            fhir_valid = False; fhir_errors.append("Composition.section chybí")
+            fhir_valid = False
+            fhir_errors.append("Composition.section chybí")
 
     steps.append({"name": "Generování FHIR Bundle", "passed": True, "status": 200,
                    "elapsed_ms": 0, "data": {"resourceType": "Bundle", "entries": len(fhir_bundle["entry"]),
@@ -5940,7 +5994,8 @@ def _irop_tech11(params, modules, client):
     if not krp3:
         return {"error": "KRP v3 modul není dostupný"}
     rid = params.get("rid", "8754287763")
-    import uuid as _uuid, datetime as _dt
+    import uuid as _uuid
+    import datetime as _dt
     def _info(ucel="LECBA"):
         return {"datum": _dt.date.today().isoformat(), "ucel": ucel, "zadostId": str(_uuid.uuid4())}
     def _env(data, ucel="LECBA", key="zadostData"):
@@ -6294,6 +6349,15 @@ async def termx_metadata(public: bool = False):
     return _termx_call(public, "metadata")
 
 
+@app.get("/api/termx/manifest")
+async def termx_manifest(public: bool = False,
+                          lastUpdate: Optional[str] = None,
+                          effectiveDate: Optional[str] = None):
+    """``GET /manifest`` – manifest obsahu serveru (Terminologie v1.1.0)."""
+    return _termx_call(public, "manifest",
+                       lastUpdate=lastUpdate, effectiveDate=effectiveDate)
+
+
 @app.get("/api/termx/valueset")
 async def termx_valueset_search(public: bool = False,
                                   _count: Optional[str] = None, _page: Optional[str] = None,
@@ -6537,10 +6601,13 @@ async def termx_conceptmap_search(public: bool = False,
 async def termx_conceptmap_translate_canonical(code: str, public: bool = False,
                                                   system: Optional[str] = None,
                                                   url: Optional[str] = None,
-                                                  source: Optional[str] = None,
+                                                  targetCode: Optional[str] = None,
+                                                  targetSystem: Optional[str] = None,
                                                   target: Optional[str] = None):
+    # `target` je legacy alias pro `targetSystem` (swagger zná jen targetSystem/targetCode)
     return _termx_call(public, "conceptmap_translate", code=code, system=system,
-                       url=url, source=source, target=target)
+                       url=url, targetCode=targetCode,
+                       targetSystem=targetSystem or target)
 
 
 @app.get("/api/termx/conceptmap/sync")
@@ -6552,10 +6619,12 @@ async def termx_conceptmap_sync_canonical(public: bool = False,
 @app.get("/api/termx/conceptmap/{conceptmap_id}/translate")
 async def termx_conceptmap_translate_id(conceptmap_id: str, code: str, public: bool = False,
                                           system: Optional[str] = None,
-                                          source: Optional[str] = None,
+                                          targetCode: Optional[str] = None,
+                                          targetSystem: Optional[str] = None,
                                           target: Optional[str] = None):
     return _termx_call(public, "conceptmap_translate", id=conceptmap_id, code=code,
-                       system=system, source=source, target=target)
+                       system=system, targetCode=targetCode,
+                       targetSystem=targetSystem or target)
 
 
 @app.get("/api/termx/conceptmap/{conceptmap_id}/sync")
@@ -6713,7 +6782,6 @@ async def termx_pub_list():
     """List known public TermX ValueSets."""
     if not _client:
         return JSONResponse({"error": "Klient není připojen"}, status_code=503)
-    url = f"{TERMX_PUB_BASE}/ValueSet/?_count=300&_summary=true"
     try:
         mod = _termx_module(public=True)
         resp = mod.valueset_search(_count="300", _summary="true")
@@ -7961,7 +8029,7 @@ async def img_order_fulfill(ncez_id: str, request: Request):
 #
 # Volitelná ochrana hlavičkou X-Api-Key (env SEZ_INTERNAL_API_KEY).
 # ===========================================================================
-import threading as _threading
+import threading as _threading  # noqa: E402 – záměrně až u interní sub-aplikace
 
 _internal_lock = _threading.Lock()
 _internal_state: dict = {"krp": None, "auth": None, "client": None, "cert": None}

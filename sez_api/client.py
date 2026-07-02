@@ -11,7 +11,6 @@ Flow:
      vede k 401 na DÚ a dalších službách.
 """
 
-import json
 import time
 import uuid
 import logging
@@ -411,7 +410,6 @@ class SEZClient:
             "body": kwargs.get("json"),
         }
 
-        last_exc = None
         attempts_log = []
         for attempt in range(max_attempts):
             hdrs = self._headers(extra_headers)
@@ -489,7 +487,6 @@ class SEZClient:
                 time.sleep(delay)
 
             except (requests.ConnectionError, requests.Timeout) as e:
-                last_exc = e
                 attempts_log.append({
                     "attempt": attempt + 1,
                     "error": f"{type(e).__name__}: {e}",
@@ -655,9 +652,12 @@ class KRP:
 
     def hledat_aifoulozenka(self, aifo=None, ulozka_id=None, ulozka_ref=None, ucel="LECBA"):
         data = {}
-        if aifo: data["aifo"] = aifo
-        if ulozka_id: data["ulozkaId"] = ulozka_id
-        if ulozka_ref is not None: data["ulozkaRef"] = ulozka_ref
+        if aifo:
+            data["aifo"] = aifo
+        if ulozka_id:
+            data["ulozkaId"] = ulozka_id
+        if ulozka_ref is not None:
+            data["ulozkaRef"] = ulozka_ref
         return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/aifoulozenka",
                            self._envelope(ucel, data))
 
@@ -672,13 +672,15 @@ class KRP:
 
     def historie_pojisteni(self, rid, datum=None, ucel="LECBA"):
         data = {"rid": rid}
-        if datum: data["datum"] = datum
+        if datum:
+            data["datum"] = datum
         return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/historie_pojisteni",
                            self._envelope(ucel, data))
 
     def historie_registrujicich_lekaru(self, rid, datum=None, ucel="LECBA"):
         data = {"rid": rid}
-        if datum: data["datum"] = datum
+        if datum:
+            data["datum"] = datum
         return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/historie_registrujicich_lekaru",
                            self._envelope(ucel, data))
 
@@ -707,8 +709,10 @@ class KRP:
 
     def zruseni_zadost(self, rid, ulozka_id=None, ulozka_ref=None, ucel="LECBA"):
         data = {"rid": rid}
-        if ulozka_id: data["ulozkaId"] = ulozka_id
-        if ulozka_ref is not None: data["ulozkaRef"] = ulozka_ref
+        if ulozka_id:
+            data["ulozkaId"] = ulozka_id
+        if ulozka_ref is not None:
+            data["ulozkaRef"] = ulozka_ref
         return self.c.post(f"{self.BASE}/api/v2/pacient/zruseni/zadost",
                            self._envelope(ucel, data))
 
@@ -1092,7 +1096,8 @@ class KRP:
     @staticmethod
     def csv_to_records(csv_text: str) -> list[dict]:
         """Parse a CSV (semicolon-separated) into patient records."""
-        import csv, io
+        import csv
+        import io
         reader = csv.DictReader(io.StringIO(csv_text), delimiter=";")
         records = []
         for row in reader:
@@ -1109,7 +1114,8 @@ class KRP:
     @staticmethod
     def records_to_csv(records: list[dict]) -> str:
         """Convert result records to CSV for download."""
-        import csv, io
+        import csv
+        import io
         if not records:
             return ""
         fields = ["sourceId", "jmeno", "prijmeni", "rodneCislo", "datumNarozeni",
@@ -1135,8 +1141,10 @@ class KRP:
 
     def notifikace_vyhledat(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="LECBA"):
         data = {"kanalTyp": kanal_typ}
-        if subjekt_id: data["subjektId"] = subjekt_id
-        if subjekt_typ: data["subjektTyp"] = subjekt_typ
+        if subjekt_id:
+            data["subjektId"] = subjekt_id
+        if subjekt_typ:
+            data["subjektTyp"] = subjekt_typ
         return self.c.post(f"{self.BASE}/api/v2/notifikace/vyhledat/odber",
                            self._envelope(ucel, data))
 
@@ -1146,8 +1154,10 @@ class KRP:
 
     def notifikace_zrusit(self, id_subskripce=None, subjekt_id=None, ucel="LECBA"):
         data = {}
-        if id_subskripce: data["idSubskripce"] = id_subskripce
-        if subjekt_id: data["subjektId"] = subjekt_id
+        if id_subskripce:
+            data["idSubskripce"] = id_subskripce
+        if subjekt_id:
+            data["subjektId"] = subjekt_id
         return self.c.delete(f"{self.BASE}/api/v2/notifikace/zrusit/odber",
                              self._envelope(ucel, data))
 
@@ -1573,8 +1583,10 @@ class KRZP:
 
     def notifikace_stav(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="OVERENI"):
         data = {"kanalTyp": kanal_typ}
-        if subjekt_id: data["subjektId"] = subjekt_id
-        if subjekt_typ: data["subjektTyp"] = subjekt_typ
+        if subjekt_id:
+            data["subjektId"] = subjekt_id
+        if subjekt_typ:
+            data["subjektTyp"] = subjekt_typ
         return self.c.post(f"{self.BASE}/api/v2/notifikace/stav",
                            self._envelope(ucel, data))
 
@@ -1880,49 +1892,58 @@ class SZZ:
 
     def update_alergii(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/emergentniZaznam/alergie/{id}", body, **kw)
 
     def update_krevni_skupinu(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/emergentniZaznam/krevniSkupina/{id}", body, **kw)
 
     def update_nezadouci_prihodu(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciPrihody/{id}", body, **kw)
 
     def update_nezadouci_reakci(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciReakce/{id}", body, **kw)
 
     def update_nezadouci_ucinek(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUcinky/{id}", body, **kw)
 
     def update_nezadouci_udalost(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/emergentniZaznam/nezadouciUdalosti/{id}", body, **kw)
 
     def update_lecivy_pripravek(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/lecivePripravky/{id}", body, **kw)
 
     def update_zdravotni_zaznam(self, id, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.put(f"{self.BASE}/api/v1/zdravotniZaznamy/{id}", body, **kw)
 
     # --- Lifecycle: Generic action (zneplatnit/obnovit/zpochybnit) ---
 
     def _lifecycle_action(self, entity_path, id, action, body, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.patch(f"{self.BASE}/api/v1/{entity_path}/{id}/{action}", body, **kw)
 
     def zneplatnit(self, entity_type, id, duvod, krzp_id, ico, etag=None):
@@ -1964,6 +1985,13 @@ class ELP:
     def __init__(self, client: SEZClient):
         self.c = client
 
+    # -- Číselníky (swagger v1.0.7) --
+    def ciselniky(self):
+        return self.c.get(f"{self.BASE}/api/v1/ciselniky")
+
+    def ciselnik_polozky(self, kod: str):
+        return self.c.get(f"{self.BASE}/api/v1/ciselniky/{kod}/polozky")
+
     def vytvor_posudek(self, posudek):
         return self.c.post(f"{self.BASE}/api/v1/posudky/ridicskeOpravneni", posudek)
 
@@ -1976,7 +2004,8 @@ class ELP:
     def list_posudky(self, **params):
         qs = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
         url = f"{self.BASE}/api/v1/posudky/ridicskeOpravneni"
-        if qs: url += f"?{qs}"
+        if qs:
+            url += f"?{qs}"
         return self.c.get(url)
 
     def historie(self, posudek_id):
@@ -1990,7 +2019,8 @@ class ELP:
 
     def zneplatnit(self, posudek_id, etag=None):
         kw = {}
-        if etag: kw["extra_headers"] = {"If-Match": etag}
+        if etag:
+            kw["extra_headers"] = {"If-Match": etag}
         return self.c.patch(f"{self.BASE}/api/v1/posudky/ridicskeOpravneni/{posudek_id}/zneplatnit", {}, **kw)
 
 
@@ -2324,8 +2354,20 @@ class Terminologie:
     # ------------------------------------------------------------------
 
     def metadata(self):
-        """``GET /metadata`` – CapabilityStatement serveru."""
+        """``GET /metadata`` – CapabilityStatement serveru.
+
+        Pozn.: ve swaggeru v1.1.0 už není uveden (zůstává funkční jako
+        standardní FHIR interakce)."""
         return self._request("GET", "/metadata")
+
+    def manifest(self, *, lastUpdate: str = None, effectiveDate: str = None):
+        """``GET /manifest`` – manifest obsahu terminologického serveru.
+
+        Přidáno ve swaggeru Terminologie v1.1.0 (apio.csez.gov.cz).
+        Volitelné filtry ``lastUpdate`` a ``effectiveDate`` (datum)."""
+        return self._request("GET", "/manifest",
+                             params={"lastUpdate": lastUpdate,
+                                     "effectiveDate": effectiveDate})
 
     # ------------------------------------------------------------------
     # ValueSet
@@ -2450,11 +2492,31 @@ class Terminologie:
     def conceptmap_update(self, id: str, body: dict):
         return self._request("PUT", f"/ConceptMap/{id}", body=body)
 
-    def conceptmap_translate(self, *, code: str, system: str = None,
-                               url: str = None, id: str = None,
-                               target: str = None, source: str = None, **extra):
-        params = {"code": code, "system": system, "url": url,
-                   "target": target, "source": source, **extra}
+    def conceptmap_translate(self, *, code: str = None, sourceCode: str = None,
+                               system: str = None, url: str = None, id: str = None,
+                               targetCode: str = None, targetSystem: str = None,
+                               sourceCoding: str = None,
+                               sourceCodeableConcept: str = None,
+                               targetCoding: str = None,
+                               targetCodeableConcept: str = None,
+                               target: str = None, **extra):
+        """``GET /ConceptMap[/{id}]/$translate``.
+
+        Dle swaggeru (v1.0.5 i v1.1.0) se zdrojový kód posílá jako
+        ``sourceCode`` (ne ``code``) a cílový systém jako ``targetSystem``.
+        Aliasy ``code`` → ``sourceCode`` a ``target`` → ``targetSystem``
+        jsou zachovány pro zpětnou kompatibilitu volajících.
+        """
+        params = {"url": url,
+                   "sourceCode": sourceCode or code,
+                   "system": system,
+                   "sourceCoding": sourceCoding,
+                   "sourceCodeableConcept": sourceCodeableConcept,
+                   "targetCode": targetCode,
+                   "targetSystem": targetSystem or target,
+                   "targetCoding": targetCoding,
+                   "targetCodeableConcept": targetCodeableConcept,
+                   **extra}
         if id:
             return self._request("GET", f"/ConceptMap/{id}/$translate", params=params)
         return self._request("GET", "/ConceptMap/$translate", params=params)
@@ -2806,6 +2868,63 @@ class EZCA2SpravaCertifikatu:
         return self._get(f"{self.BASE}/detail-health")
 
 
+class EZCAValidace:
+    """EZCA Validace v1.0.0 – online/offline validace dokumentů (ELP).
+
+    Swagger: ``apio.csez.gov.cz/apidoc`` → EZCAValidace_v1.0.0.json
+    (servers ``/ezcaValidace``). Jediná byznys operace je
+    ``POST /api/v1/dokumenty/validate``:
+
+    * online  – validace podle ``dokumentId`` + ``dokumentHash``
+    * offline – validace podle ``dokumentId`` + ``datumVystaveni`` +
+      ``datumNarozeni`` + ``prijmeni``
+
+    Odpověď: ``{platnyDokument, dokumentNalezen, detail}``.
+    """
+
+    BASE = "/ezcaValidace"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    def validate(self, body: dict):
+        """POST /api/v1/dokumenty/validate – obecná validace (tělo dle swaggeru)."""
+        return self.c.post(f"{self.BASE}/api/v1/dokumenty/validate", body)
+
+    def validate_online(self, dokument_id: str, dokument_hash: str,
+                        typ_dokumentu: str = "elp"):
+        """Online validace podle hashe dokumentu (SHA-512 hex)."""
+        return self.validate({
+            "typValidace": "online",
+            "typDokumentu": typ_dokumentu,
+            "dokumentId": dokument_id,
+            "dokumentHash": dokument_hash,
+        })
+
+    def validate_offline(self, dokument_id: str, datum_vystaveni: str,
+                         datum_narozeni: str, prijmeni: str,
+                         typ_dokumentu: str = "elp"):
+        """Offline validace podle data vystavení, data narození a příjmení."""
+        return self.validate({
+            "typValidace": "offline",
+            "typDokumentu": typ_dokumentu,
+            "dokumentId": dokument_id,
+            "datumVystaveni": datum_vystaveni,
+            "datumNarozeni": datum_narozeni,
+            "prijmeni": prijmeni,
+        })
+
+    # --- Health endpointy (mimo /api/v1) ---
+    def health(self):
+        return self.c.get(f"{self.BASE}/health")
+
+    def simple_health(self):
+        return self.c.get(f"{self.BASE}/simple-health")
+
+    def detail_health(self):
+        return self.c.get(f"{self.BASE}/detail-health")
+
+
 # ===========================================================================
 # KRP v3.0.0 – BREAKING: bez diakritiky v atributech, podtržítka v cestách,
 # DatumNarozeni změněno z date-time na date pro MatkaNovorozence.
@@ -2969,9 +3088,12 @@ class SZZv2:
     ]
 
     # Známé typy v modulu /screeningy
+    # Pozn.: HPV screening děložního hrdla je ve swaggeru v2.0.1 veden s dvojitým
+    # "D" – /screeningy/karcinomDDeloznihoHrdlaHpv (překlep v API, ale reálná
+    # cesta). Jednoduché "karcinomDeloznihoHrdlaHpv" přijímáme jako alias.
     SCREENINGY_TYPY = [
         "aneurysmaAbdominalniAortyUsg",
-        "karcinomDeloznihoHrdlaHpv",
+        "karcinomDDeloznihoHrdlaHpv",
         "karcinomDeloznihoHrdlaCytologie",
         "karcinomDeloznihoHrdlaExpertniKolposkopie",
         "karcinomPlicLdct",
@@ -2981,6 +3103,11 @@ class SZZv2:
         "karcinomPrsuMamografie",
         "kolorektalniKarcinomToks",
     ]
+
+    # Aliasy typů → cesta dle swaggeru
+    SCREENINGY_ALIASY = {
+        "karcinomDeloznihoHrdlaHpv": "karcinomDDeloznihoHrdlaHpv",
+    }
 
     # Emergentní záznam v2 – stejná podmnožina jako v1 (alergie bez CasZjisteni)
     EMERGENTNI_TYPY = [
@@ -3020,6 +3147,7 @@ class SZZv2:
         return self._crud("prevence", typ)
 
     def screening(self, typ: str):
+        typ = self.SCREENINGY_ALIASY.get(typ, typ)
         if typ not in self.SCREENINGY_TYPY:
             raise ValueError(f"Neznámý screening: {typ}. Povolené: {self.SCREENINGY_TYPY}")
         return self._crud("screeningy", typ)
