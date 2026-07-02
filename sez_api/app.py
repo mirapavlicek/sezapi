@@ -5140,6 +5140,11 @@ def _irop_tech4(params, modules, client):
         return {"scenario_id": "TS-TECH-4", "name": "Registr oprávnění",
                 "steps": steps, "passed": passed, "total": len(steps)}
 
+    # Metodika (Oblasti testování): „Registr oprávnění – ověření přístupu
+    # k dokumentaci pacienta" → opravňující je vždy Pacient. Kombinace
+    # PZS→ZP (zastupování) na T2 shazuje backend RO interní chybou (Abp 500
+    # „Během požadavku se vyskytla vnitřní chyba!") i s validními ID
+    # z číselníků – proto je jen volitelná (params: over_pzs_zp=true).
     steps.append(_irop_step_api(
         f"Over: Pacient(RID)→PZS – přístup k dokumentaci (služba {id_sluzby}, typ {id_typu})",
         ro.over,
@@ -5149,18 +5154,34 @@ def _irop_tech4(params, modules, client):
     ))
 
     steps.append(_irop_step_api(
-        f"Over: PZS→ZP – zastupování (služba {id_sluzby}, typ {id_typu})",
+        f"Over: Pacient(RID)→ZP – přístup k dokumentaci (služba {id_sluzby}, typ {id_typu})",
         ro.over,
         id_sluzby, id_typu,
-        "PoskytovatelZdravotnickychSluzeb", ico,
+        "Pacient", rid,
         "ZdravotnickyPracovnik", krzpid,
     ))
+
+    if params.get("over_pzs_zp"):
+        pzs_zp = _irop_step_api(
+            f"Over: PZS→ZP – zastupování (volitelné, služba {id_sluzby}, typ {id_typu})",
+            ro.over,
+            id_sluzby, id_typu,
+            "PoskytovatelZdravotnickychSluzeb", ico,
+            "ZdravotnickyPracovnik", krzpid,
+        )
+        if not pzs_zp["passed"] and pzs_zp.get("status") == 500:
+            pzs_zp["error"] = ((pzs_zp.get("error") or "") +
+                                 " – známá chyba T2: kombinace PZS→ZP shazuje "
+                                 "backend RO interní chybou; nahlaste na "
+                                 "Helpdesk JIRA pro PZS")
+        steps.append(pzs_zp)
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-4", "name": "Registr oprávnění",
             "steps": steps, "passed": passed, "total": len(steps),
             "params": {"id_sluzby": id_sluzby, "id_typu_dokumentace": id_typu,
-                        "rid": rid, "ico": ico, "krzpid": krzpid}}
+                        "rid": rid, "ico": ico, "krzpid": krzpid,
+                        "over_pzs_zp": bool(params.get("over_pzs_zp"))}}
 
 
 def _irop_tech5(params, modules, client):

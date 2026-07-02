@@ -160,16 +160,42 @@ class _FakeRO:
 
 
 def test_tech4_pouziva_id_z_ciselniku_ne_hardcoded():
-    """Regrese: Over se dřív volal s natvrdo ID 1/5 → HTTP 500 z backendu RO."""
+    """Regrese: Over se dřív volal s natvrdo ID 1/5 → HTTP 500 z backendu RO.
+    Regrese 2: kombinace PZS→ZP shazuje backend RO na T2 (Abp 500) →
+    výchozí kombinace mají opravňující vždy Pacienta; PZS→ZP jen opt-in."""
     ro = _FakeRO()
     r = _irop_tech4({}, {"ro": ro}, None)
     assert r["passed"] == r["total"] == 4
     assert _irop_hodnoceni_scenare(r) == "VYHOVUJE"
     # obě Over volání používají ID z číselníků (3=DÚ, 11=první typ)
+    # a opravňující je vždy Pacient (přístup k dokumentaci pacienta)
     assert ro.over_calls == [
         (3, 11, "Pacient", "PoskytovatelZdravotnickychSluzeb"),
-        (3, 11, "PoskytovatelZdravotnickychSluzeb", "ZdravotnickyPracovnik"),
+        (3, 11, "Pacient", "ZdravotnickyPracovnik"),
     ]
+
+
+def test_tech4_pzs_zp_jen_opt_in():
+    """PZS→ZP zastupování se volá jen s over_pzs_zp=true a 500 dostane
+    poznámku o známé chybě T2."""
+    ro = _FakeRO()
+    _irop_tech4({"over_pzs_zp": True}, {"ro": ro}, None)
+    assert (3, 11, "PoskytovatelZdravotnickychSluzeb", "ZdravotnickyPracovnik") \
+        in ro.over_calls
+
+    class _RO500ProPzsZp(_FakeRO):
+        def over(self, id_sluzby, id_typu, r1, h1, r2, h2):
+            if r1 == "PoskytovatelZdravotnickychSluzeb":
+                self.over_calls.append((id_sluzby, id_typu, r1, r2))
+                return _FakeResp({"error": {"message":
+                    "Během požadavku se vyskytla vnitřní chyba!"}}, 500)
+            return super().over(id_sluzby, id_typu, r1, h1, r2, h2)
+
+    ro2 = _RO500ProPzsZp()
+    r2 = _irop_tech4({"over_pzs_zp": True}, {"ro": ro2}, None)
+    pzs_zp = [s for s in r2["steps"] if "PZS→ZP" in s["name"]][0]
+    assert not pzs_zp["passed"]
+    assert "známá chyba T2" in pzs_zp["error"]
 
 
 def test_tech4_500_z_backendu_propise_abp_chybu():
