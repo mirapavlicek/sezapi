@@ -185,6 +185,21 @@ def uzis_mode(env_key: str = "T2") -> str:
     return "SIM"
 
 
+# ---------------------------------------------------------------------------
+# NCPeH – Národní kontaktní místo pro elektronické zdravotnictví
+# (přeshraniční pacientský souhrn, MyHealth@EU / eHDSI; provozuje Kraj Vysočina)
+# ---------------------------------------------------------------------------
+# Připojení vyžaduje žádost přes datovou schránku MZČR (x2de458) + dotazník
+# www.nixzd.cz/dotaznik a registraci IP adres u týmu NCPeH. PPT (test) běží
+# přes veřejný internet, PROD výhradně přes CMS2 / síť AKČR.
+# Bez nakonfigurovaného endpointu běží integrace v režimu SIMULACE.
+NCPEH_ENABLED = _env_bool("NCPEH_ENABLED", True)
+# Endpoint ClientConnectorProxy na PPT prostředí (přidělí tým NCPeH).
+NCPEH_PPT_URL = env("NCPEH_PPT_URL", "")
+# Endpoint na PROD (dostupný jen z CMS2 / sítě AKČR).
+NCPEH_PROD_URL = env("NCPEH_PROD_URL", "")
+
+
 # Odkaz na autoritativní DASTA popis bloku národních registrů (*nr).
 UZIS_DASTA_URL = env("UZIS_DASTA_URL", "https://dastacr.cz/dasta/hypertext/UZANR.htm")
 
