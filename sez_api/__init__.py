@@ -25,11 +25,15 @@ Podporované služby:
       swagger v1.1.0 na apio: + GET /manifest, ConceptMap/$translate
       se parametrizuje sourceCode/targetSystem)
 
-Verze rozhraní ověřeny živě proti T2 gateway (/apidoc/config.json) 2026-06-08
-(beze změny oproti 8. 6.): KRP v2.0.4+v3.0.3, KRZP v2.0.2, KRPZS v2.0.3,
-RO/RO-NCPeH v1.0.7, DÚ a eŽádanky v1.11.17, ELP v1.0.7/v2.0.11/v3.0.2,
-SZZ v1.0.9+v2.0.3, Notifikace v1.0.6, EZCA2 v1.0.7 + Správa v1.0.4,
-TermX v1.0.5; img-order IG 0.1.0-ballot.
+Verze rozhraní: poslední živá kontrola T2 gateway (/apidoc/config.json,
+mTLS – dostupná jen z ČR/SK) proběhla 2026-06-08: KRP v2.0.4+v3.0.3,
+KRZP v2.0.2, KRPZS v2.0.3, RO/RO-NCPeH v1.0.7, DÚ a eŽádanky v1.11.17,
+ELP v1.0.7/v2.0.11/v3.0.2, SZZ v1.0.9+v2.0.3, Notifikace v1.0.6,
+EZCA2 v1.0.7 + Správa v1.0.4, TermX v1.0.5; img-order IG 0.1.0-ballot.
+Revize veřejné dokumentace 2026-07-02: PROD katalog apio.csez.gov.cz/apidoc
+ověřen živě (EZCA Validace v1.0.0 NOVÁ, Terminologie v1.1.0); dle aktualit
+Manuálu EZ pro PZS (k 16. 6. 2026) dále SZZ v2.0.4 na T2 (Standard SZZ 2.1)
+a Popis API DÚ v1.2 (ZpochybniZasilku). Živé T2 verze: /api/services/discover.
 
 UI: sekce „eHealth NIS" – pacientocentrický klinický kokpit, který kolem
 jednoho RID agreguje 360° přehled napříč službami (emergentní dataset SZZ,
