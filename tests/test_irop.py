@@ -15,7 +15,21 @@ from sez_api.app import (
     IROP_POVINNE_SCENARE,
     _irop_hodnoceni_scenare,
     _irop_hodnoceni_celkove,
+    _irop_tech4,
+    _irop_tech5,
 )
+
+
+class _FakeResp:
+    def __init__(self, data, status=200):
+        self._d = data
+        self.status_code = status
+        self.headers = {"content-type": "application/json"}
+        self.url = "https://example/api"
+        self.text = str(data)
+
+    def json(self):
+        return self._d
 
 
 def _client():
@@ -113,3 +127,95 @@ def test_api_povinne_scenare():
 def test_api_protokol_bez_pripojeni_503():
     r = _client().post("/api/irop/protokol", json={})
     assert r.status_code == 503
+
+
+# --- TS-TECH-4: Over s ID z číselníků (regrese HTTP 500) ----------------------
+
+class _FakeRO:
+    def __init__(self, over_status=200):
+        self.over_calls = []
+        self.over_status = over_status
+
+    def sluzby_ez(self):
+        return _FakeResp({"page": [
+            {"id": 3, "kod": "DU", "nazev": "Dočasné úložiště"},
+            {"id": 7, "kod": "SZZ", "nazev": "Sdílený zdravotní záznam"}],
+            "totalCount": 2})
+
+    def typy_dokumentaci(self):
+        return _FakeResp({"page": [
+            {"id": 11, "kod": "PZ", "nazev": "Propouštěcí zpráva"}],
+            "totalCount": 1})
+
+    def over(self, id_sluzby, id_typu, r1, h1, r2, h2):
+        self.over_calls.append((id_sluzby, id_typu, r1, r2))
+        if self.over_status != 200:
+            return _FakeResp({"error": {"message": "Interní chyba backendu RO"}},
+                             self.over_status)
+        return _FakeResp({"stav": "Povoleno"})
+
+
+def test_tech4_pouziva_id_z_ciselniku_ne_hardcoded():
+    """Regrese: Over se dřív volal s natvrdo ID 1/5 → HTTP 500 z backendu RO."""
+    ro = _FakeRO()
+    r = _irop_tech4({}, {"ro": ro}, None)
+    assert r["passed"] == r["total"] == 4
+    assert _irop_hodnoceni_scenare(r) == "VYHOVUJE"
+    # obě Over volání používají ID z číselníků (3=DÚ, 11=první typ)
+    assert ro.over_calls == [
+        (3, 11, "Pacient", "PoskytovatelZdravotnickychSluzeb"),
+        (3, 11, "PoskytovatelZdravotnickychSluzeb", "ZdravotnickyPracovnik"),
+    ]
+
+
+def test_tech4_500_z_backendu_propise_abp_chybu():
+    ro = _FakeRO(over_status=500)
+    r = _irop_tech4({}, {"ro": ro}, None)
+    over_steps = [s for s in r["steps"] if s["name"].startswith("Over")]
+    assert all(not s["passed"] for s in over_steps)
+    assert all(s["error"] == "Interní chyba backendu RO" for s in over_steps)
+    assert _irop_hodnoceni_scenare(r) == "NEVYHOVUJE"
+
+
+# --- TS-TECH-5: metadata/Provenance jen informativní --------------------------
+
+class _FakeTermX:
+    """Simuluje server dle swaggeru v1.1.0: /metadata a /Provenance 404."""
+
+    def metadata(self):
+        return _FakeResp({"resourceType": "OperationOutcome"}, 404)
+
+    def valueset_search(self, **kw):
+        return _FakeResp({"resourceType": "Bundle", "entry": [{}]})
+
+    def valueset_expand(self, **kw):
+        return _FakeResp({"resourceType": "ValueSet",
+                          "expansion": {"contains": [{"code": "11506-3"},
+                                                       {"code": "67781-5"}]}})
+
+    def valueset_validate_code(self, **kw):
+        return _FakeResp({"resourceType": "Parameters",
+                          "parameter": [{"name": "result", "valueBoolean": True}]})
+
+    def codesystem_lookup(self, **kw):
+        return _FakeResp({"resourceType": "Parameters",
+                          "parameter": [{"name": "display",
+                                          "valueString": "Progress note"}]})
+
+    def provenance_search(self, **kw):
+        return _FakeResp({"resourceType": "OperationOutcome"}, 404)
+
+
+def test_tech5_informativni_kroky_nesrazi_scenar():
+    """metadata a Provenance nejsou v metodice; na Terminologii v1.1.0
+    (odstraněné endpointy) nesmí jejich 404 scénář shodit."""
+    mod = _FakeTermX()
+    r = _irop_tech5({}, {"termx": mod, "termx_pub": mod}, object())
+    assert r["passed"] == r["total"], "informativní kroky nesmí scénář shodit"
+    assert _irop_hodnoceni_scenare(r) == "VYHOVUJE S VÝHRADAMI"
+    noted = [s for s in r["steps"] if s.get("note")]
+    assert len(noted) == 2, "výhrada právě u metadata a Provenance"
+    # povinné kroky metodiky prošly bez výhrad
+    povinne = [s for s in r["steps"] if "metodika krok" in s["name"]]
+    assert len(povinne) == 2 and all(s["passed"] and not s.get("note")
+                                       for s in povinne)
