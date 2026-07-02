@@ -67,6 +67,72 @@ class _FakeClient:
 
 # --- Terminologie ----------------------------------------------------------
 
+class _PrefixResp(_FakeResp):
+    def __init__(self, status, text=""):
+        self.status_code = status
+        self.text = text
+
+    def json(self):
+        return {}
+
+
+class _PrefixClient(_FakeClient):
+    """Simuluje TermX, který na daných prefixech vrací 406 not-supported."""
+
+    def __init__(self, spatne_prefixy):
+        super().__init__()
+        self.spatne = spatne_prefixy
+
+    def _request(self, method, path, **kw):
+        self.calls.append({"method": method, "path": path, **kw})
+        for p in self.spatne:
+            if path.startswith(p + "/"):
+                return _PrefixResp(
+                    406, '{"resourceType":"OperationOutcome","issue":[{"details":'
+                          '{"text":"could not find matching enabled interaction '
+                          'for: GET /fhir/ValueSet"}}]}')
+        return _PrefixResp(200)
+
+
+def test_termx_gateway_prefix_bez_fhir_dle_swaggeru():
+    """Nový TermX (v1.1.0): operace jsou přímo pod /terminologie – klient
+    musí primárně volat BEZ /fhir a prefix si zapamatovat."""
+    c = _PrefixClient(spatne_prefixy=["/terminologie/fhir"])
+    t = Terminologie(c)
+    r = t.valueset_expand(url="http://example/vs")
+    assert r.status_code == 200
+    assert c.calls[0]["path"] == "/terminologie/ValueSet/$expand"
+    assert t._gateway_prefix == "/terminologie"
+    # další volání už jde rovnou na zapamatovaný prefix (1 request)
+    n = len(c.calls)
+    t.valueset_expand(url="http://example/vs")
+    assert len(c.calls) == n + 1
+
+
+def test_termx_gateway_fallback_na_legacy_fhir():
+    """Regrese: starší nasazení TermX routuje jen /terminologie/fhir –
+    při 406 na novém prefixu klient automaticky přejde na legacy."""
+    c = _PrefixClient(spatne_prefixy=["/terminologie"])
+    # pozor: /terminologie/fhir/... začíná také na /terminologie/ –
+    # simulace musí odmítat jen cesty bez /fhir
+    c.spatne = []
+
+    def _req(method, path, **kw):
+        c.calls.append({"method": method, "path": path, **kw})
+        if path.startswith("/terminologie/fhir/"):
+            return _PrefixResp(200)
+        return _PrefixResp(406, "could not find matching enabled interaction")
+
+    c._request = _req
+    t = Terminologie(c)
+    r = t.codesystem_lookup(code="11506-3", system="http://loinc.org")
+    assert r.status_code == 200
+    assert [x["path"] for x in c.calls] == [
+        "/terminologie/CodeSystem/$lookup",
+        "/terminologie/fhir/CodeSystem/$lookup",
+    ]
+    assert t._gateway_prefix == "/terminologie/fhir"
+
 def test_translate_posila_source_code_dle_swaggeru():
     c = _FakeClient()
     t = Terminologie(c)
