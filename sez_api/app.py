@@ -3652,9 +3652,11 @@ async def debug_jwt():
             ],
         },
         "swagger_check": {
-            "note": ("Statický snímek stavu rozhraní na T2 gateway; živé verze viz /api/services/discover. "
+            "note": ("Statický snímek stavu rozhraní na T2 gateway; živé verze viz /api/services/discover "
+                     "(T2 gateway je dostupná jen z ČR/SK). "
                      "Dle aktualit Manuálu EZ (16. 6. 2026) byla na T2 nasazena SZZ v2.0.4 se Standardem SZZ 2.1."),
             "checked_at": "2026-06-08",
+            "public_docs_checked_at": "2026-07-02",
             "current_versions_on_t2": {
                 "DocasneUloziste": "v1.11.17",
                 "ElektronickePosudky_v1": "v1.0.7",
