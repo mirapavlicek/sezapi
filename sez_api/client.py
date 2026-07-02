@@ -1697,7 +1697,14 @@ class KRPZS:
     def hledat_misto(self, mesto: str = None, ulice: str = None,
                       psc: str = None, kraj: str = None, kraj_kod: str = None,
                       ucel="OVERENI"):
-        """v2.0.2: vyhledání poskytovatele podle místa působení."""
+        """Vyhledání poskytovatele podle místa poskytování.
+
+        Dle kontraktu (VyhledaniPZSPodleMistaPoskytovani, v2.0.2+) má
+        zadostData JEDINÝ parametr ``krajKod`` (identifikátor kraje jako
+        ID nebo NUTS/LAU, např. CZ042) – na T2 v2.0.3 je POVINNÝ (jinak
+        HTTP 400 'The krajKod field is required'). Parametry mesto/ulice/
+        psc/kraj v kontraktu nejsou (ponechány jen pro zpětnou
+        kompatibilitu volajících, služba je ignoruje)."""
         data = {}
         if mesto:
             data["mesto"] = mesto

@@ -210,6 +210,72 @@ class _FakeTermX:
         return _FakeResp({"resourceType": "OperationOutcome"}, 404)
 
 
+# --- TS-TECH-2A: název a krajKod z registru (regrese 404/400) ------------------
+
+def test_tech2a_pouziva_nazev_a_krajkod_z_registru():
+    """Regrese: hledání dle názvu s 'Krajská zdravotní' vracelo 404 (vyžaduje
+    přesný název z registru) a hledání dle místa 400 (chyběl povinný krajKod).
+    Scénář teď obojí přebírá z odpovědi na hledání dle IČO (PZSDetail)."""
+    from sez_api.app import _irop_tech2
+
+    class _FakeKRPZS:
+        def __init__(self):
+            self.calls = []
+
+        def hledat_ico(self, ico):
+            self.calls.append(("ico", ico))
+            return _FakeResp({"odpovedData": [{
+                "ico": ico,
+                "poskytovatelNazev": "Krajská zdravotní, a.s.",
+                "adresaSidla": {"obec": "Ústí nad Labem", "krajKod": "CZ042"},
+            }], "odpovedInfo": {}})
+
+        def hledat_nazev(self, nazev):
+            self.calls.append(("nazev", nazev))
+            return _FakeResp({"odpovedData": [{}], "odpovedInfo": {}})
+
+        def hledat_misto(self, mesto=None, ulice=None, psc=None, kraj=None,
+                          kraj_kod=None):
+            self.calls.append(("misto", mesto, kraj_kod))
+            assert kraj_kod, "krajKod je dle kontraktu povinný"
+            return _FakeResp({"odpovedData": [{}], "odpovedInfo": {}})
+
+    krpzs = _FakeKRPZS()
+    r = _irop_tech2({}, {"krpzs": krpzs}, None)
+    assert r["passed"] == r["total"] == 3
+    # název převzat z registru, ne hardcoded "Krajská zdravotní"
+    assert ("nazev", "Krajská zdravotní, a.s.") in krpzs.calls
+    # misto: jen krajKod (z adresy sídla), žádné město
+    assert ("misto", None, "CZ042") in krpzs.calls
+    assert r["params"]["kraj_kod"] == "CZ042"
+
+
+def test_tech2a_explicitni_parametry_maji_prednost():
+    from sez_api.app import _irop_tech2
+
+    class _FakeKRPZS:
+        def __init__(self):
+            self.calls = []
+
+        def hledat_ico(self, ico):
+            return _FakeResp({"odpovedData": [], "odpovedInfo": {}})
+
+        def hledat_nazev(self, nazev):
+            self.calls.append(("nazev", nazev))
+            return _FakeResp({})
+
+        def hledat_misto(self, mesto=None, ulice=None, psc=None, kraj=None,
+                          kraj_kod=None):
+            self.calls.append(("misto", kraj_kod))
+            return _FakeResp({})
+
+    krpzs = _FakeKRPZS()
+    _irop_tech2({"pzs_nazev": "Nemocnice X", "kraj_kod": "CZ010"},
+                {"krpzs": krpzs}, None)
+    assert ("nazev", "Nemocnice X") in krpzs.calls
+    assert ("misto", "CZ010") in krpzs.calls
+
+
 # --- TS-TECH-6 / TS-OBS-2: adresát ≠ tvůrce (regrese DÚ E01001) ---------------
 
 class _FakeDU:

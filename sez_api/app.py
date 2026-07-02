@@ -4954,22 +4954,53 @@ def _irop_tech1(params, modules, client):
 def _irop_tech2(params, modules, client):
     """TS-TECH-2A: Připojení ke KRPZS – vyhledání poskytovatele.
 
-    Dle metodiky (scénář TS-TECH-2A) vyhledání dle IČO, místa a názvu.
+    Dle metodiky (scénář TS-TECH-2A) vyhledání dle IČO, názvu a místa.
+
+    Název i kraj se přebírají z odpovědi na vyhledání dle IČO (PZSDetail:
+    poskytovatelNazev + adresaSidla.krajKod), aby hledání běželo nad
+    reálnými daty registru – hledání dle názvu vyžaduje přesný název
+    (jinak 404 „Poskytovatel nebyl nalezen") a hledání dle místa má dle
+    kontraktu jediný parametr krajKod (povinný; ID nebo NUTS/LAU),
+    město se neposílá.
     """
     krpzs = modules.get("krpzs")
     if not krpzs:
         return {"error": "KRPZS modul není dostupný"}
     ico = params.get("ico", "25488627")
-    steps = [_irop_step_api("Vyhledání dle IČO", krpzs.hledat_ico, ico)]
+    ico_step = _irop_step_api("Vyhledání dle IČO", krpzs.hledat_ico, ico)
+    steps = [ico_step]
 
-    nazev = params.get("pzs_nazev", "Krajská zdravotní")
-    steps.append(_irop_step_api("Vyhledání dle názvu", krpzs.hledat_nazev, nazev))
-    steps.append(_irop_step_api("Vyhledání dle místa",
-                                krpzs.hledat_misto, params.get("mesto", "Ústí nad Labem")))
+    # PZSDetail z odpovědi → oficiální název + krajKod sídla
+    detail = None
+    if ico_step["passed"] and isinstance(ico_step.get("data"), dict):
+        od = ico_step["data"].get("odpovedData")
+        if isinstance(od, list) and od:
+            detail = od[0]
+        elif isinstance(od, dict):
+            detail = od
+    nazev = (params.get("pzs_nazev")
+              or (detail or {}).get("poskytovatelNazev")
+              or "Krajská zdravotní, a.s.")
+    kraj_kod = (params.get("kraj_kod")
+                 or ((detail or {}).get("adresaSidla") or {}).get("krajKod")
+                 or "CZ042")  # NUTS3 Ústecký kraj
+
+    nazev_step = _irop_step_api(f"Vyhledání dle názvu ({nazev})",
+                                 krpzs.hledat_nazev, nazev)
+    if not nazev_step["passed"] and nazev_step.get("status") == 404 and detail:
+        nazev_step["error"] = ((nazev_step.get("error") or "") +
+                                 " – název převzatý z registru nebyl dohledán "
+                                 "(hledání vyžaduje přesnou shodu)")
+    steps.append(nazev_step)
+
+    steps.append(_irop_step_api(
+        f"Vyhledání dle místa (krajKod={kraj_kod})",
+        krpzs.hledat_misto, None, None, None, None, kraj_kod))
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-2A", "name": "Připojení ke KRPZS",
-            "steps": steps, "passed": passed, "total": len(steps)}
+            "steps": steps, "passed": passed, "total": len(steps),
+            "params": {"ico": ico, "nazev": nazev, "kraj_kod": kraj_kod}}
 
 
 def _irop_tech2b(params, modules, client):
