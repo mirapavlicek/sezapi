@@ -67,7 +67,7 @@ for cid in CLIENT_IDS:
                 if r2.status_code < 300:
                     with open(f"stazene_zasilky/zasilka_{zid}.json", "w", encoding="utf-8") as f:
                         json.dump(d2, f, ensure_ascii=False, indent=2)
-                    print(f"    >>> ULOŽENO!")
+                    print("    >>> ULOŽENO!")
             except Exception:
                 print(f"    {r2.text[:300]}")
 

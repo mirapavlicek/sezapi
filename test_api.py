@@ -46,8 +46,10 @@ def main():
     payload_part = assertion.split(".")[1]
 
     import base64
-    pad = lambda s: s + "=" * (4 - len(s) % 4)
-    print(f"\n[2] JWT assertion vytvořena:")
+
+    def pad(s):
+        return s + "=" * (4 - len(s) % 4)
+    print("\n[2] JWT assertion vytvořena:")
     print(f"  Header:  {json.loads(base64.urlsafe_b64decode(pad(header_part)))}")
     print(f"  Payload: {json.loads(base64.urlsafe_b64decode(pad(payload_part)))}")
     print(f"  Token:   {assertion[:60]}...")

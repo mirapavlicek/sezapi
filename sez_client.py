@@ -11,7 +11,6 @@ Flow:
      vede k 401 na DÚ a dalších službách.
 """
 
-import json
 import time
 import uuid
 import logging
