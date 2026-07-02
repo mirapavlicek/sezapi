@@ -1294,13 +1294,24 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           <div style="font-weight:700;font-size:14px;color:var(--accent);margin-bottom:8px">Jak funguje hromadné ztotožnění?</div>
           <div style="font-size:13px;color:var(--fg2);line-height:1.7">
             <strong>1.</strong> Připravíte data pacientů jako <strong>CSV</strong>, <strong>JSON</strong> nebo rovnou <strong>XML</strong> (vč. vlastního <code>sourceId</code>, jméno, příjmení, rodné číslo / datum narození).<br>
-            <strong>2.</strong> Nahrajete soubor (nebo vložíte text) — systém ho automaticky převede na XML dávku (<code>PZS_Import_pacienti_v1.xsd</code>) a vrátí <strong>ID žádosti</strong>.<br>
-            <strong>3.</strong> Spustíte zpracování (vykonání) — systém asynchronně ztotožní každého pacienta proti registru.<br>
-            <strong>4.</strong> Zkontrolujete stav a stáhnete výsledky (CSV/JSON) — u každého pacienta uvidíte přidělený <strong>RID</strong>, <strong>stav ztotožnění</strong> a váš <code>sourceId</code> pro spárování.<br>
+            <strong>2.</strong> Nahrajete soubor (nebo vložíte text) — systém ho automaticky převede na XML dávku (<code>PZS_Import_pacienti_v1.xsd</code>) a vrátí <strong>ID žádosti</strong>. Tím pro PZS podání končí – KRP dávku zpracovává sám.<br>
+            <strong>3.</strong> UI automaticky každých 10 s kontroluje stav (<code>hromadneZtotozneniDokonceno</code>) a upozorní na dokončení; ručně lze stav zjistit tlačítkem „Zjistit stav".<br>
+            <strong>4.</strong> Stáhnete výsledky (CSV/JSON) — u každého pacienta uvidíte přidělený <strong>RID</strong>, <strong>stav ztotožnění</strong> a váš <code>sourceId</code> pro spárování.<br>
             <span style="color:var(--fg3);font-size:12px;margin-top:4px;display:inline-block">
               Brána KRP přijímá dávku ve formátu XML; CSV se převádí automaticky (můžete nahrát i hotové XML).
               Volitelně lze při podání žádosti registrovat odběr změn dat u ztotožněných pacientů.
             </span>
+          </div>
+        </div>
+        <div class="card" style="background:#fffbeb;border-color:#fcd34d">
+          <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:6px">Proč „to dlouho nic nevrací" – asynchronní rozhraní a nedokumentované části</div>
+          <div style="font-size:12px;color:#78350f;line-height:1.7">
+            <strong>Dávka je asynchronní</strong> (dokumentace API KRP: „Metoda pro <em>asynchronní</em> hromadné (dávkové) ztotožnění"). <code>POST …/ztotoznihromadne/zadost</code> vrátí <em>okamžitě</em> jen <code>hromadneZtotozneniID</code> – žádné výsledky. KRP nic „nepošle zpět"; stav je nutné <strong>opakovaně dotazovat</strong> přes <code>POST …/ztotoznihromadne/vysledky</code> a čekat na <code>hromadneZtotozneniDokonceno=true</code>. U větších dávek to na T2 trvá jednotky až desítky minut.<br>
+            <strong>Nedokumentované / jen ve swaggeru:</strong>
+            (1)&nbsp;<code>…/vykonani</code> na wiki v metodách pro PZS vůbec není (odpověď má ve swaggeru schéma „…Interní") – pro PZS flow ho není potřeba volat, zpracování startuje samo po podání žádosti;
+            (2)&nbsp;pokud odpověď <code>/vysledky</code> má <code>dataVSouboru=true</code>, výsledky <em>nejsou</em> v JSON poli <code>souborHromadnehoZtotozneni</code> a je nutné je stáhnout přes <code>…/vysledky/soubor</code>;
+            (3)&nbsp;<code>base64Data</code> z <code>/vysledky/soubor</code> je ve skutečnosti <strong>ZIP archiv</strong> s <code>KRP_ZTOTOZNENI_&lt;id&gt;.JSON</code> uvnitř (UI ho umí rozbalit);
+            (4)&nbsp;formát XML dávky je popsán jen ve <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55902489" target="_blank" style="color:#92400e">Standardu EZ KZR 1.2 + vzorovém XSD</a> (29. 5. 2026), ne ve swaggeru (tam je jen <code>file: binary</code>).
           </div>
         </div>
 
@@ -1364,13 +1375,15 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           </div>
         </div>
 
-        <!-- Krok 3: Vykonání a výsledky -->
+        <!-- Krok 3: Stav asynchronního zpracování -->
         <div class="card">
-          <div class="card-title">3. Zpracování a výsledky</div>
+          <div class="card-title">3. Stav zpracování (asynchronní)</div>
+          <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Po podání žádosti se stav kontroluje automaticky každých 10 s. „Vykonat ztotožnění" (<code>/vykonani</code>) je interní endpoint mimo dokumentaci pro PZS – zpracování startuje samo, tlačítko slouží jen pro experimenty.</p>
           <div class="form-row" style="align-items:flex-end">
             <div class="form-group" style="flex:1"><label>ID žádosti</label><input id="krpHromZadostId" placeholder="Vyplní se automaticky po podání"></div>
-            <button class="btn btn-primary" onclick="krpHromVykonat()">Vykonat ztotožnění</button>
-            <button class="btn" onclick="krpHromVysledky()">Zjistit stav</button>
+            <button class="btn btn-primary" onclick="krpHromVysledky()">Zjistit stav</button>
+            <button class="btn" onclick="krpHromStopPoll();_showHromStatus('Automatická kontrola stavu zastavena', 'orange')">Zastavit auto-kontrolu</button>
+            <button class="btn" onclick="krpHromVykonat()" title="Interní endpoint /vykonani – pro PZS flow není potřeba">Vykonat (interní)</button>
           </div>
           <div id="krpHromStatusBar" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px"></div>
         </div>
@@ -9526,6 +9539,8 @@ async function krpHromNahrat() {
     if (hzId) {
       document.getElementById('krpHromZadostId').value = hzId;
       toast(`Žádost podána, ID: ${hzId}`);
+      // asynchronní dávka – spustit automatické zjišťování stavu
+      krpHromAutoPoll(hzId);
     } else {
       toast('Žádost odeslána, zkontrolujte odpověď');
     }
@@ -9561,16 +9576,65 @@ async function krpHromVysledky() {
   showResult('krpHromadneResult', data);
   const od = data?.data?.odpovedData || {};
   const done = od.hromadneZtotozneniDokonceno;
+  const dataVSouboru = od.dataVSouboru;
   const records = od.souborHromadnehoZtotozneni || [];
   if (records.length) {
     _recordsTable(document.getElementById('krpHromVysledkyTbl'), records);
     document.getElementById('krpHromVysledkyPreview').style.display = 'block';
   }
-  if (done === true) {
+  if (done === true && dataVSouboru === true && !records.length) {
+    _showHromStatus('Dokončeno – výsledky jsou v souboru (dataVSouboru=true), použijte „Stáhnout soubor (base64)"', 'green');
+  } else if (done === true) {
     _showHromStatus(`Dokončeno – ${records.length} záznamů`, 'green');
   } else if (done === false) {
-    _showHromStatus(`Zpracovává se – zatím ${records.length} záznamů`, 'orange');
+    _showHromStatus(`Zpracovává se – zatím ${records.length} záznamů (asynchronní dávka, stav se dotazuje opakovaně)`, 'orange');
   }
+}
+
+// Automatický polling stavu asynchronní dávky. KRP po podání žádosti nic
+// „nevrací samo" – hromadné ztotožnění běží na pozadí a stav je nutné
+// opakovaně zjišťovat přes /vysledky (hromadneZtotozneniDokonceno).
+let _hromPollTimer = null;
+let _hromPollStart = 0;
+const HROM_POLL_INTERVAL_MS = 10000;
+const HROM_POLL_MAX_MS = 10 * 60 * 1000;
+
+function krpHromStopPoll() {
+  if (_hromPollTimer) { clearTimeout(_hromPollTimer); _hromPollTimer = null; }
+}
+
+async function krpHromAutoPoll(id) {
+  krpHromStopPoll();
+  _hromPollStart = Date.now();
+  const tick = async () => {
+    const elapsedS = Math.round((Date.now() - _hromPollStart) / 1000);
+    let stav = null;
+    try { stav = await api('POST', '/api/krp/ztotozneni-stav', { idZadosti: id }); } catch (e) { stav = { error: String(e) }; }
+    if (stav && stav.dokonceno === true) {
+      krpHromStopPoll();
+      if (stav.data_v_souboru === true && !stav.pocet_zaznamu) {
+        _showHromStatus(`Dokončeno po ${elapsedS}s – výsledky v souboru, použijte „Stáhnout soubor (base64)"`, 'green');
+      } else {
+        _showHromStatus(`Dokončeno po ${elapsedS}s – ${stav.pocet_zaznamu || 0} záznamů, stáhněte výsledky`, 'green');
+      }
+      toast('Hromadné ztotožnění dokončeno');
+      return;
+    }
+    if (stav && stav.error) {
+      _showHromStatus(`Kontrola stavu selhala (${esc(String(stav.error).substring(0, 120))}) – zkusím znovu za ${HROM_POLL_INTERVAL_MS / 1000}s`, 'orange');
+    } else {
+      const zatim = stav && stav.pocet_zaznamu ? `, zatím ${stav.pocet_zaznamu} záznamů` : '';
+      _showHromStatus(`Asynchronní zpracování běží (${elapsedS}s${zatim}) – kontroluji každých ${HROM_POLL_INTERVAL_MS / 1000}s…`, 'orange');
+    }
+    if (Date.now() - _hromPollStart > HROM_POLL_MAX_MS) {
+      krpHromStopPoll();
+      _showHromStatus(`Zpracování stále běží po ${Math.round(HROM_POLL_MAX_MS / 60000)} min – dávka může být velká, zkuste „Zjistit stav" později`, 'orange');
+      return;
+    }
+    _hromPollTimer = setTimeout(tick, HROM_POLL_INTERVAL_MS);
+  };
+  _showHromStatus('Žádost podána, čekám na asynchronní zpracování…', 'orange');
+  _hromPollTimer = setTimeout(tick, 3000);
 }
 
 async function krpHromStahniVysledky() {

@@ -338,6 +338,89 @@ def test_iris_irop_endpoint_vraci_tridy():
         assert m in runner, f"chybí metoda {m}"
 
 
+# --- hromadné ztotožnění: normalizace asynchronního stavu ---------------------
+
+def test_ztotozneni_stav_normalizuje_odpoved():
+    from sez_api.client import KRP
+
+    class _FakeKrpClient:
+        def __init__(self, od):
+            self._od = od
+
+        def post(self, path, body=None, timeout=None):
+            assert path.endswith("/ztotoznihromadne/vysledky")
+            assert body["zadostData"] == {"idZadosti": "hz-1"}
+            return _FakeResp({"odpovedInfo": {}, "odpovedData": self._od})
+
+    krp = KRP.__new__(KRP)
+    # probíhající dávka
+    krp.c = _FakeKrpClient({"hromadneZtotozneniDokonceno": False,
+                              "dataVSouboru": False,
+                              "souborHromadnehoZtotozneni": []})
+    stav = krp.ztotozneni_stav("hz-1")
+    assert stav["dokonceno"] is False
+    assert stav["pocet_zaznamu"] == 0
+
+    # dokončeno s výsledky v souboru (nedokumentovaná větev dataVSouboru)
+    krp.c = _FakeKrpClient({"hromadneZtotozneniDokonceno": True,
+                              "dataVSouboru": True,
+                              "souborHromadnehoZtotozneni": None})
+    stav2 = krp.ztotozneni_stav("hz-1")
+    assert stav2["dokonceno"] is True
+    assert stav2["data_v_souboru"] is True
+    assert stav2["zaznamy"] == []
+
+    # dokončeno s daty v JSON
+    krp.c = _FakeKrpClient({"hromadneZtotozneniDokonceno": True,
+                              "dataVSouboru": False,
+                              "souborHromadnehoZtotozneni": [{"rid": "1"}, {"rid": "2"}]})
+    stav3 = krp.ztotozneni_stav("hz-1")
+    assert stav3["dokonceno"] is True
+    assert stav3["pocet_zaznamu"] == 2
+
+
+def test_ztotozneni_cekat_polluje_do_dokonceni():
+    from sez_api.client import KRP
+
+    class _FakeKrpClient:
+        def __init__(self):
+            self.calls = 0
+
+        def post(self, path, body=None, timeout=None):
+            self.calls += 1
+            done = self.calls >= 3
+            return _FakeResp({"odpovedInfo": {},
+                               "odpovedData": {
+                                   "hromadneZtotozneniDokonceno": done,
+                                   "dataVSouboru": False,
+                                   "souborHromadnehoZtotozneni":
+                                       [{"rid": "1"}] if done else []}})
+
+    krp = KRP.__new__(KRP)
+    krp.c = _FakeKrpClient()
+    stav = krp.ztotozneni_cekat_na_vysledky("hz-1", max_wait_s=60, interval_s=0.01)
+    assert stav["dokonceno"] is True
+    assert stav["pokusu"] == 3
+    assert stav["pocet_zaznamu"] == 1
+    assert "timeout" not in stav
+
+
+def test_ztotozneni_cekat_timeout():
+    from sez_api.client import KRP
+
+    class _NeverDone:
+        def post(self, path, body=None, timeout=None):
+            return _FakeResp({"odpovedInfo": {},
+                               "odpovedData": {"hromadneZtotozneniDokonceno": False,
+                                                "souborHromadnehoZtotozneni": []}})
+
+    krp = KRP.__new__(KRP)
+    krp.c = _NeverDone()
+    stav = krp.ztotozneni_cekat_na_vysledky("hz-1", max_wait_s=0.05, interval_s=0.02)
+    assert stav["dokonceno"] is False
+    assert stav.get("timeout") is True
+
+
 def test_tech5_informativni_kroky_nesrazi_scenar():
     """metadata a Provenance nejsou v metodice; na Terminologii v1.1.0
     (odstraněné endpointy) nesmí jejich 404 scénář shodit."""
