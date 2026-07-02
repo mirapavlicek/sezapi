@@ -362,10 +362,19 @@ sez-api-python/
 │   └── templates/
 │       └── index.html      # SPA frontend (dark theme)
 ├── tests/
-│   └── test_dokumentace.py # Ověření API proti dokumentaci
-├── app.py                  # Zpětná kompatibilita (python app.py)
-└── sez_client.py           # Zpětná kompatibilita (import sez_client)
+│   ├── test_dokumentace.py # Ověření API proti dokumentaci (živý)
+│   ├── test_kontrakty.py   # Offline kontrakty vs. swagger
+│   ├── test_sukl.py        # SÚKL (offline)
+│   ├── test_termx.py       # TermX (živý)
+│   └── test_uzis.py        # ÚZIS (offline)
+├── app.py                  # Zpětná kompatibilita (python app.py) → sez_api.app
+└── sez_client.py           # Zpětná kompatibilita (import sez_client) → sez_api.client
 ```
+
+> Historicky existovaly dvě paralelní implementace („sezapi“ – ploché soubory
+> v kořeni, a „sez_api“ – balíček). Byly sloučeny do jediného zdroje pravdy
+> `sez_api/`; kořenové `app.py` a `sez_client.py` jsou jen tenké shim vrstvy
+> pro zpětnou kompatibilitu starších skriptů.
 
 ## Autentizace
 
