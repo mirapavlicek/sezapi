@@ -4742,6 +4742,21 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
 
       <!-- PŘEHLED -->
       <div class="sub-panel active" id="irop-overview-panel">
+        <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);border-color:#bfdbfe">
+          <div class="card-title" style="color:#1e3a8a">Závazné standardy eZD (HL7 CZ Implementation Guides)</div>
+          <p style="font-size:11px;color:var(--fg3);margin:0 0 8px">
+            Dle metodiky (Postup testování – validace obsahu dokumentů eZD) musí být dokument ve formátu <strong>FHIR JSON</strong>, hlavička dle IG v rozsahu <strong>úrovně L1</strong>, vizuální podoba <strong>PDF/A</strong> (presentedForm). Plná validace: <a href="https://validator.fhir.org/" target="_blank" style="color:#1e40af">validator.fhir.org</a>. TS-OBS-2 generuje dokumenty dle těchto profilů; TS-OBS-1 je při příjmu validuje.
+          </p>
+          <table style="font-size:12px">
+            <thead><tr><th>Prioritní kategorie eZD</th><th>Legislativní rámec</th><th>Technický standard (IG)</th><th>Profil Composition</th></tr></thead>
+            <tbody>
+              <tr><td>Pacientský souhrn</td><td>vyhl. č. 444/2024 Sb., příloha č. 2</td><td><a href="https://build.fhir.org/ig/HL7-cz/ps/" target="_blank">HL7-cz/ps</a> (0.0.1)</td><td><code>cz-composition-ps</code> (LOINC 60591-5)</td></tr>
+              <tr><td>Propouštěcí zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 4</td><td><a href="https://build.fhir.org/ig/HL7-cz/hdr/" target="_blank">HL7-cz/hdr</a> (0.1.0)</td><td><code>cz-composition-hdr</code> (LOINC 34105-7, encounter + sekce Průběh hospitalizace povinné)</td></tr>
+              <tr><td>Zpráva z obrazového vyšetření</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3C</td><td><a href="https://build.fhir.org/ig/HL7-cz/img/" target="_blank">HL7-cz/img</a> (0.1.0-ballot)</td><td><code>cz-composition-imaging</code> (3 kategorie, 4 povinné sekce, DiagnosticReport v Bundle)</td></tr>
+              <tr><td>Zpráva o výjezdu ZZS</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 6B</td><td><a href="https://build.fhir.org/ig/HL7-cz/cz-ems/" target="_blank">HL7-cz/cz-ems</a> (0.0.2)</td><td><code>cz-composition-ems</code> (LOINC 67796-3)</td></tr>
+            </tbody>
+          </table>
+        </div>
         <div class="card">
           <div class="card-title">Kategorie PZS a povinné testy</div>
           <table>
@@ -4758,9 +4773,10 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           <table>
             <thead><tr><th>ID</th><th>Název</th><th>Popis</th><th>Typ</th></tr></thead>
             <tbody>
-              <tr><td><code>TS-TECH-1</code></td><td>Připojení ke KRP</td><td>Vyhledání pacienta 4 metodami</td><td>Technický</td></tr>
-              <tr><td><code>TS-TECH-2</code></td><td>Připojení ke KRPZS</td><td>Vyhledání poskytovatele dle IČO, názvu a pracoviště</td><td>Technický</td></tr>
-              <tr><td><code>TS-TECH-3</code></td><td>Notifikace</td><td>Ověření notifikačního systému</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-1</code></td><td>Připojení ke KRP</td><td>Vyhledání pacienta všemi metodami dle metodiky (RID, jméno+RC, jméno+DN, jméno+ČP, cizinec ČP, doklady)</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-2A</code></td><td>Připojení ke KRPZS</td><td>Vyhledání poskytovatele dle IČO, názvu a místa</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-2B</code></td><td>Připojení ke KRZP</td><td>Vyhledání zdravotnického pracovníka dle KRZPID + vazba na PZS</td><td>Technický</td></tr>
+              <tr><td><code>TS-TECH-3</code></td><td>Notifikace</td><td>Nastavení URL pro push notifikace + ověření notifikačního systému</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-4</code></td><td>Registr oprávnění</td><td>Ověření přístupu ZP přes Registr oprávnění</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-5</code></td><td>TermX číselníky</td><td>Získání ValueSet z terminologického serveru</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-6</code></td><td>Uložení do DÚ</td><td>UlozZasilku s dokumentem</td><td>Technický</td></tr>
@@ -4812,8 +4828,9 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <!-- TECHNICKÉ TESTY -->
       <div class="sub-panel" id="irop-tech-panel">
         <div class="card" id="iropTech1"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-1</span><span class="card-title">Připojení ke KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání pacienta dle RID, jméno+RC, jméno+datum narození, jméno+číslo pojištěnce.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-1')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-1" style="margin-top:10px;min-height:30px">-</div></div>
-        <div class="card" id="iropTech2"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-2</span><span class="card-title">Připojení ke KRPZS</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání poskytovatele dle IČO, názvu a pracoviště.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-2')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-2" style="margin-top:10px;min-height:30px">-</div></div>
-        <div class="card" id="iropTech3"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-3</span><span class="card-title">Notifikace ze SEZ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření odběrů notifikací v KRP a stavu kanálů v KRZP.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-3')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-3" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech2"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-2A</span><span class="card-title">Připojení ke KRPZS</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání poskytovatele dle IČO, názvu a místa (dle metodiky TS-TECH-2A).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-2')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-2" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech2b"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-2B</span><span class="card-title">Připojení ke KRZP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání zdravotnického pracovníka dle KRZPID a vazby na zaměstnavatele (KRZP↔KRPZS).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-2B')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-2B" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech3"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-3</span><span class="card-title">Notifikace ze SEZ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Nastavení URL pro push notifikace (KRPZS <code>urlpronotifikace</code>, po zadání notif_url) + ověření odběrů v KRP a stavu kanálů v KRZP.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-3')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-3" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech4"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-4</span><span class="card-title">Registr oprávnění</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Ověření přístupových oprávnění zdravotnického pracovníka (PZS→ZP, přístup k DÚ, služby EZ).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-4')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-4" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech5"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-5</span><span class="card-title">TermX číselníky</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Získání definice a rozbalení ValueSet z Terminologického serveru.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-5')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-5" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="termxPubCard">
@@ -5009,8 +5026,9 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
       <div class="sub-panel" id="irop-all-panel">
         <div class="card">
           <div class="card-title">Spustit všechny scénáře</div>
-          <p style="font-size:12px;color:var(--fg3);margin:4px 0 12px">Sekvenčně spustí všech 19 testovacích scénářů (15 technických + 4 obsahové) s aktuálně nastavenými parametry. Trvá obvykle 60–180 sekund.</p>
+          <p style="font-size:12px;color:var(--fg3);margin:4px 0 12px">Sekvenčně spustí všechny testovací scénáře (technické + obsahové) s aktuálně nastavenými parametry. Trvá obvykle 60–180 sekund. Výsledek obsahuje hodnocení dle metodiky: <strong>VYHOVUJE / VYHOVUJE S VÝHRADAMI / NEVYHOVUJE</strong>.</p>
           <button class="btn btn-green" onclick="iropRunAll()" id="iropBtnAll" style="min-width:200px">Spustit kompletní testování</button>
+          <button class="btn btn-primary" onclick="iropProtokol()" id="iropBtnProtokol" style="min-width:200px;margin-left:8px">Vygenerovat protokol o testu</button>
           <div id="iropAllProgress" style="margin-top:12px"></div>
           <div id="iropAllSummary" style="margin-top:12px"></div>
         </div>
@@ -13244,7 +13262,7 @@ async function iropRunAll() {
   const summary = document.getElementById('iropAllSummary');
   btn.disabled = true;
   btn.textContent = 'Probíhá testování...';
-  progress.innerHTML = '<span class="spinner"></span> Spouštím všech 19 scénářů...';
+  progress.innerHTML = '<span class="spinner"></span> Spouštím všechny testovací scénáře...';
   summary.innerHTML = '';
 
   const params = iropGetParams();
@@ -13259,16 +13277,21 @@ async function iropRunAll() {
   }
 
   const allOk = data.scenarios_ok === data.total_scenarios;
-  summary.innerHTML = '<span class="badge ' + (allOk ? 'badge-ok' : 'badge-err') +
-    '" style="font-size:14px;padding:6px 16px">' + (allOk ? 'PASS' : 'FAIL') +
+  const hodnoceni = data.hodnoceni_celkove || (allOk ? 'VYHOVUJE' : 'NEVYHOVUJE');
+  const hodnoceniCls = hodnoceni === 'VYHOVUJE' ? 'badge-ok'
+    : (hodnoceni === 'VYHOVUJE S VÝHRADAMI' ? 'badge-warn' : 'badge-err');
+  summary.innerHTML = '<span class="badge ' + hodnoceniCls +
+    '" style="font-size:14px;padding:6px 16px">' + esc(hodnoceni) +
     ' ' + data.total_passed + '/' + data.total_steps + ' kroků · ' +
     data.scenarios_ok + '/' + data.total_scenarios + ' scénářů</span>';
 
   const tbody = document.getElementById('iropAllTableBody');
   tbody.innerHTML = (data.scenarios || []).map(s => {
     const ok = s.passed === s.total;
+    const h = s.hodnoceni || (ok ? 'VYHOVUJE' : 'NEVYHOVUJE');
+    const hCls = h === 'VYHOVUJE' ? 'badge-ok' : (h === 'VYHOVUJE S VÝHRADAMI' ? 'badge-warn' : 'badge-err');
     return '<tr>' +
-      '<td><span class="badge ' + (ok ? 'badge-ok' : 'badge-err') + '">' + (ok ? 'PASS' : 'FAIL') + '</span></td>' +
+      '<td><span class="badge ' + hCls + '" title="' + esc(h) + '">' + esc(h) + '</span></td>' +
       '<td><strong>' + esc(s.scenario_id) + '</strong> ' + esc(s.name || '') + '</td>' +
       '<td>' + (s.passed || 0) + '/' + (s.total || 0) + '</td>' +
       '<td style="font-size:11px;color:var(--fg3)">' +
@@ -13285,6 +13308,48 @@ async function iropRunAll() {
   const detail = document.getElementById('iropAllDetail');
   detail.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
   document.getElementById('iropAllDetailCard').style.display = '';
+}
+
+async function iropProtokol() {
+  const btn = document.getElementById('iropBtnProtokol');
+  const progress = document.getElementById('iropAllProgress');
+  btn.disabled = true;
+  btn.textContent = 'Generuji protokol...';
+  progress.innerHTML = '<span class="spinner"></span> Spouštím scénáře a sestavuji protokol o provedení testu...';
+
+  const params = iropGetParams();
+  const data = await api('POST', '/api/irop/protokol', params);
+  btn.disabled = false;
+  btn.textContent = 'Vygenerovat protokol o testu';
+  progress.innerHTML = '';
+
+  if (data.error) {
+    document.getElementById('iropAllSummary').innerHTML =
+      '<span class="badge badge-err">CHYBA</span> ' + esc(data.error);
+    return;
+  }
+
+  const h = data.hodnoceni_celkove || '?';
+  const hCls = h === 'VYHOVUJE' ? 'badge-ok' : (h === 'VYHOVUJE S VÝHRADAMI' ? 'badge-warn' : 'badge-err');
+  document.getElementById('iropAllSummary').innerHTML =
+    '<span class="badge ' + hCls + '" style="font-size:14px;padding:6px 16px">Protokol: ' + esc(h) + '</span>' +
+    ' <button class="btn" onclick="iropProtokolDownload()" style="margin-left:8px">Stáhnout protokol (JSON)</button>';
+
+  window._iropProtokol = data;
+  const detail = document.getElementById('iropAllDetail');
+  detail.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+  document.getElementById('iropAllDetailCard').style.display = '';
+}
+
+function iropProtokolDownload() {
+  if (!window._iropProtokol) return;
+  const blob = new Blob([JSON.stringify(window._iropProtokol, null, 2)],
+                        { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'protokol-o-provedeni-testu-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ---------------------------------------------------------------------------

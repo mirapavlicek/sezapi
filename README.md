@@ -342,8 +342,31 @@ sez-api serve
 Nebo přímo:
 
 ```bash
-python tests/test_dokumentace.py
+python tests/test_dokumentace.py   # živý test proti T2
+python3 -m pytest tests/           # offline testy (kontrakty, FHIR eZD, IROP)
 ```
+
+### Testování IROP/NPO (Testovací rámec MZČR/NCEZ)
+
+Sekce **IROP/NPO Testy** ve webovém rozhraní implementuje testovací scénáře
+dle [Metodiky testování EHR fáze I](https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/159219724)
+(Testovací rámec – informace k testování splnění IROP/NPO):
+
+- **Technické scénáře** TS-TECH-1 (KRP, všech 6 metod hledání), TS-TECH-2A
+  (KRPZS), TS-TECH-2B (KRZP), TS-TECH-3 (notifikace vč. nastavení URL),
+  TS-TECH-5 (terminologický server), TS-TECH-6/8/9 (DÚ: uložení, změna,
+  zneplatnění) a další rozšiřující.
+- **Obsahové scénáře** TS-OBS-1 (příjem, uložení a zobrazení eZD vč. L1
+  validace) a TS-OBS-2 (vytvoření eZD a zpřístupnění v DÚ). Dokumenty se
+  generují dle závazných standardů **HL7 CZ Implementation Guides** pro
+  prioritní kategorie (pacientský souhrn `HL7-cz/ps`, propouštěcí zpráva
+  `HL7-cz/hdr`, zpráva z obrazového vyšetření `HL7-cz/img`, zpráva
+  o výjezdu ZZS `HL7-cz/cz-ems`) – modul `sez_api.fhir_ezd`.
+- **Hodnocení dle metodiky**: VYHOVUJE / VYHOVUJE S VÝHRADAMI / NEVYHOVUJE
+  za scénář i celkově; matice povinných scénářů dle kategorie žadatele
+  (A / B / ZZS) na `/api/irop/povinne-scenare`.
+- **Protokol o provedení testu** (povinný výstup testů) lze vygenerovat
+  tlačítkem v záložce „Spustit vše" nebo přes `POST /api/irop/protokol`.
 
 ## Struktura projektu
 
