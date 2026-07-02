@@ -14,7 +14,6 @@ from datetime import datetime, timedelta, timezone
 try:
     from sez_api import SEZAuth, SEZClient, KRP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace, Terminologie
     from sez_api import config as cfg
-    cfg.validate()
     CLIENT_ID = cfg.CLIENT_ID
     P12_PATH = cfg.P12_PATH
     P12_PASSWORD = cfg.P12_PASSWORD
@@ -26,6 +25,22 @@ except ImportError:
     P12_PATH = os.environ.get("SEZ_P12_PATH", "/Users/mira/Downloads/krajska_zdravotni.pfx")
     P12_PASSWORD = os.environ.get("SEZ_P12_PASSWORD", "Tre-987set*krajzdra321/")
     CERT_UID = os.environ.get("SEZ_CERT_UID", "85cf28c4-c190-406f-bc96-f92ad25b3202")
+
+
+def _require_config():
+    """Živý integrační skript – bez konfigurace se pod pytestem přeskočí
+    (dříve cfg.validate() shodilo celou kolekci přes SystemExit)."""
+    if CLIENT_ID and P12_PATH and P12_PASSWORD and os.path.exists(P12_PATH):
+        return
+    msg = ("Chybí konfigurace SEZ_CLIENT_ID / SEZ_P12_PATH / SEZ_P12_PASSWORD "
+           "(viz .env.example) – živý test proti T2 se přeskakuje.")
+    if "pytest" in sys.modules:
+        import pytest
+        pytest.skip(msg, allow_module_level=True)
+    raise SystemExit(msg)
+
+
+_require_config()
 
 DOCUMENTED_CISELNIKY = {
     "stav-zasilky": ["0"],
@@ -425,7 +440,7 @@ print(f"  Prošlo:       {passed}")
 print(f"  Selhalo:      {failed}")
 
 if failed > 0:
-    print(f"\n  SELHANÉ TESTY:")
+    print("\n  SELHANÉ TESTY:")
     for name, status, detail in results:
         if status == "FAIL":
             print(f"    ✗ {name}  –  {detail}")
