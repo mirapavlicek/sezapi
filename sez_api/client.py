@@ -2340,16 +2340,21 @@ class Notifikace:
 
 
 class Terminologie:
-    """Terminologický server (TermX) – FHIR R4 v1.0.5.
+    """Terminologický server (TermX) – FHIR R4.
 
-    Swagger: ``/apidoc/Terminologie_v1.0.5.json`` (servers ``/terminologie``).
+    Swagger (v1.0.5 i v1.1.0): servers ``/terminologie`` – operace jsou
+    PŘÍMO pod ním (``/terminologie/ValueSet/$expand``), BEZ mezisegmentu
+    ``/fhir``. Starší nasazení TermX na T2 přijímalo i cesty
+    ``/terminologie/fhir/...``; po upgrade (v1.1.0) na ně backend vrací
+    HTTP 406 „could not find matching enabled interaction". Prefix se
+    proto AUTODETEKUJE: primárně ``/terminologie`` dle swaggeru, při
+    404/406 fallback na legacy ``/terminologie/fhir`` – funkční varianta
+    se zapamatuje pro další volání.
 
-    Třída pokrývá kompletní swagger v1.0.5 (Whole System, ValueSet,
-    CodeSystem, ConceptMap, StructureMap, Provenance) ve dvou režimech:
+    Režimy:
 
-    * ``public=False`` (default) – přes SEZ API Gateway na cestě
-      ``/terminologie/fhir/...`` s mTLS + JWT assertion (stejný flow
-      jako ostatní SEZ služby).
+    * ``public=False`` (default) – přes SEZ API Gateway s mTLS + JWT
+      assertion (stejný flow jako ostatní SEZ služby).
     * ``public=True`` – přímý mirror ``https://termx-api-t2-pub.csez.cz/fhir/...``
       (jen mTLS, bez JWT, bez gateway).
 
@@ -2357,7 +2362,9 @@ class Terminologie:
     """
 
     BASE = "/terminologie"
-    GATEWAY_PREFIX = "/terminologie/fhir"
+    # Pořadí pokusů: dle swaggeru (bez /fhir), pak legacy s /fhir.
+    GATEWAY_PREFIXES = ("/terminologie", "/terminologie/fhir")
+    GATEWAY_PREFIX = "/terminologie"  # zpětná kompatibilita (výchozí prefix)
     PUBLIC_BASE_DEFAULT = "https://termx-api-t2-pub.csez.cz/fhir"
 
     FHIR_GET_HEADERS = {
@@ -2373,12 +2380,27 @@ class Terminologie:
         self.c = client
         self.public = public
         self.public_base = (public_base or self.PUBLIC_BASE_DEFAULT).rstrip("/")
+        # Autodetekovaný funkční gateway prefix (None = zatím neověřeno)
+        self._gateway_prefix = None
 
     @property
     def base_url(self) -> str:
         if self.public:
             return self.public_base
-        return f"{self.c.config.GATEWAY}{self.GATEWAY_PREFIX}"
+        return f"{self.c.config.GATEWAY}{self._gateway_prefix or self.GATEWAY_PREFIXES[0]}"
+
+    @staticmethod
+    def _je_spatny_prefix(resp) -> bool:
+        """406/404 s OperationOutcome „could not find matching enabled
+        interaction" = špatný base path (změna /fhir mezi verzemi TermX)."""
+        if resp is None or resp.status_code not in (404, 406):
+            return False
+        try:
+            text = resp.text or ""
+        except Exception:
+            return True
+        return ("could not find matching enabled interaction" in text
+                 or resp.status_code == 404)
 
     def _clean(self, params):
         if not params:
@@ -2396,8 +2418,10 @@ class Terminologie:
 
     def _request(self, method: str, op_path: str, *,
                   params: dict = None, body: dict = None, timeout: int = 30):
-        """Provede FHIR request. ``op_path`` je vždy bez prefixu
-        ``/terminologie/fhir`` (např. ``/metadata`` či ``/ValueSet/$expand``)."""
+        """Provede FHIR request. ``op_path`` je vždy bez gateway prefixu
+        (např. ``/metadata`` či ``/ValueSet/$expand``). Gateway prefix se
+        autodetekuje mezi ``/terminologie`` (swagger) a legacy
+        ``/terminologie/fhir``."""
         params = self._clean(params)
         write = method.upper() in ("POST", "PUT", "PATCH")
         hdrs = self.FHIR_WRITE_HEADERS if write else self.FHIR_GET_HEADERS
@@ -2409,12 +2433,28 @@ class Terminologie:
                 params=params, headers=hdrs, json_body=body,
             )
 
-        full_path = self.GATEWAY_PREFIX + op_path
-        return self.c._request(
-            method, full_path,
-            params=params, json=body,
-            extra_headers=hdrs, timeout=timeout,
-        )
+        prefixes = ([self._gateway_prefix] if self._gateway_prefix
+                     else list(self.GATEWAY_PREFIXES))
+        resp = None
+        for i, prefix in enumerate(prefixes):
+            # 406/404 (špatný prefix) není v RETRY_CODES, fallback je okamžitý;
+            # standardní retry na token chyby zůstává zachováno.
+            resp = self.c._request(
+                method, prefix + op_path,
+                params=params, json=body,
+                extra_headers=hdrs, timeout=timeout,
+            )
+            posledni = i == len(prefixes) - 1
+            if not posledni and self._je_spatny_prefix(resp):
+                logger.info("TermX: prefix %s vrací %s – zkouším %s",
+                             prefix, resp.status_code, prefixes[i + 1])
+                continue
+            if resp.status_code < 400 and self._gateway_prefix is None:
+                self._gateway_prefix = prefix
+                if prefix != self.GATEWAY_PREFIXES[0]:
+                    logger.info("TermX: autodetekován legacy prefix %s", prefix)
+            return resp
+        return resp
 
     # ------------------------------------------------------------------
     # Whole System Interactions

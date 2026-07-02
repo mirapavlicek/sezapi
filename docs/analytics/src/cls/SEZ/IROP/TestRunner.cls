@@ -260,6 +260,10 @@ Method RunTech4() As %Status
 
 /// TS-TECH-5: Terminologický server – povinné kroky metodiky:
 /// ValueSet/?url= (definice) a ValueSet/$expand (položky).
+/// POZOR: cesty jsou dle swaggeru (v1.0.5 i v1.1.0) přímo pod
+/// /terminologie BEZ mezisegmentu /fhir – legacy /terminologie/fhir
+/// po upgrade TermX na T2 vrací HTTP 406 „could not find matching
+/// enabled interaction".
 Method RunTech5(pValueSetUrl As %String = "https://ncez.mzcr.cz/terminology/ValueSet/medical-document-type") As %Status
 {
     Set sc = $$$OK
@@ -269,11 +273,11 @@ Method RunTech5(pValueSetUrl As %String = "https://ncez.mzcr.cz/terminology/Valu
         Set query("url") = pValueSetUrl
         Set query("_count") = 5
         Do ..Krok("TS-TECH-5", "ValueSet search dle url (metodika krok 1)", "GET",
-            "/terminologie/fhir/ValueSet/", , .query, .resp)
+            "/terminologie/ValueSet", , .query, .resp)
         Kill query
         Set query("url") = pValueSetUrl
         Do ..Krok("TS-TECH-5", "ValueSet/$expand (metodika krok 2)", "GET",
-            "/terminologie/fhir/ValueSet/$expand", , .query, .resp)
+            "/terminologie/ValueSet/$expand", , .query, .resp)
     } Catch ex {
         Set sc = ex.AsStatus()
     }
