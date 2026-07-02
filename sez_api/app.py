@@ -767,6 +767,26 @@ async def krp_ztotozneni_vysledky(request: Request):
     return timed_call(_modules["krp"].ztotozneni_vysledky,
                       body.get("idZadosti",""), body.get("ucel","LECBA"))
 
+@app.post("/api/krp/ztotozneni-stav")
+async def krp_ztotozneni_stav(request: Request):
+    """Normalizovaný stav asynchronního hromadného ztotožnění (jeden dotaz).
+
+    Hromadné ztotožnění je asynchronní: /zadost vrátí jen hromadneZtotozneniID
+    a KRP zpracovává dávku na pozadí – výsledky je nutné POLLOVAT přes
+    /vysledky (hromadneZtotozneniDokonceno). Pokud dataVSouboru=true,
+    výsledky nejsou v JSON a stahují se přes /vysledky/soubor
+    (base64 ZIP s KRP_ZTOTOZNENI_<id>.JSON uvnitř – nedokumentováno na wiki).
+    """
+    body = await request.json()
+    t0 = time.monotonic()
+    try:
+        stav = _modules["krp"].ztotozneni_stav(
+            body.get("idZadosti", ""), body.get("ucel", "LECBA"))
+        stav["elapsed_ms"] = round((time.monotonic() - t0) * 1000)
+        return JSONResponse(stav)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=502)
+
 @app.post("/api/krp/ztotozneni-vysledky-soubor")
 async def krp_ztotozneni_vysledky_soubor(request: Request):
     body = await request.json()

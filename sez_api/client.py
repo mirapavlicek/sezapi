@@ -757,6 +757,10 @@ class KRP:
         return resp
 
     def ztotozneni_vykonani(self, id_zadosti, ucel="LECBA"):
+        """POZOR: endpoint /ztotoznihromadne/vykonani NENÍ v dokumentaci API KRP
+        pro PZS (wiki uvádí jen HromadneZtotozni + VyhledejVysledekHromadnehoZtotozneni);
+        ve swaggeru má odpověď schéma s příponou „Interní". Pro PZS flow není
+        potřeba – zpracování dávky spouští KRP automaticky po podání žádosti."""
         return self.c.post(f"{self.BASE}/api/v2/pacient/ztotoznihromadne/vykonani",
                            self._envelope(ucel, {"idZadosti": id_zadosti}))
 
@@ -765,8 +769,64 @@ class KRP:
                            self._envelope(ucel, {"idZadosti": id_zadosti}))
 
     def ztotozneni_vysledky_soubor(self, id_zadosti, ucel="LECBA"):
+        """Stažení výsledků jako souboru (base64Data). Nedokumentované chování:
+        base64Data je ZIP archiv obsahující KRP_ZTOTOZNENI_<id>.JSON."""
         return self.c.post(f"{self.BASE}/api/v2/pacient/ztotoznihromadne/vysledky/soubor",
                            self._envelope(ucel, {"idZadosti": id_zadosti}))
+
+    def ztotozneni_stav(self, id_zadosti, ucel="LECBA") -> dict:
+        """Jeden dotaz na stav asynchronního hromadného ztotožnění.
+
+        Hromadné ztotožnění je dle dokumentace ASYNCHRONNÍ: žádost vrátí jen
+        hromadneZtotozneniID a KRP dávku zpracovává na pozadí – nic se
+        „nevrací samo", stav je nutné opakovaně zjišťovat přes /vysledky.
+
+        Vrací normalizovaný slovník:
+          dokonceno       – hromadneZtotozneniDokonceno (None = neznámo)
+          data_v_souboru  – True → výsledky nejsou v JSON, stáhnout přes
+                            /vysledky/soubor (base64 ZIP s JSON uvnitř)
+          pocet_zaznamu   – počet záznamů v souborHromadnehoZtotozneni
+          zaznamy         – samotné záznamy (pokud jsou v odpovědi)
+          http_status, raw
+        """
+        resp = self.ztotozneni_vysledky(id_zadosti, ucel=ucel)
+        out = {"dokonceno": None, "data_v_souboru": None, "pocet_zaznamu": 0,
+               "zaznamy": [], "http_status": getattr(resp, "status_code", 0),
+               "raw": None}
+        try:
+            data = resp.json()
+        except Exception:
+            out["raw"] = getattr(resp, "text", "")[:500]
+            return out
+        out["raw"] = data
+        od = data.get("odpovedData") or {}
+        if isinstance(od, dict):
+            out["dokonceno"] = od.get("hromadneZtotozneniDokonceno")
+            out["data_v_souboru"] = od.get("dataVSouboru")
+            zaznamy = od.get("souborHromadnehoZtotozneni") or []
+            out["zaznamy"] = zaznamy
+            out["pocet_zaznamu"] = len(zaznamy)
+        return out
+
+    def ztotozneni_cekat_na_vysledky(self, id_zadosti, ucel="LECBA",
+                                      max_wait_s: float = 300,
+                                      interval_s: float = 10) -> dict:
+        """Polluje /vysledky, dokud hromadneZtotozneniDokonceno != True
+        (nebo do vypršení max_wait_s). Vrací poslední stav ze
+        :meth:`ztotozneni_stav` doplněný o počet pokusů a celkový čas."""
+        t0 = time.monotonic()
+        pokusy = 0
+        while True:
+            pokusy += 1
+            stav = self.ztotozneni_stav(id_zadosti, ucel=ucel)
+            stav["pokusu"] = pokusy
+            stav["cekano_s"] = round(time.monotonic() - t0, 1)
+            if stav["dokonceno"] is True:
+                return stav
+            if time.monotonic() - t0 + interval_s > max_wait_s:
+                stav["timeout"] = True
+                return stav
+            time.sleep(interval_s)
 
     @staticmethod
     def csv_sablona() -> str:
