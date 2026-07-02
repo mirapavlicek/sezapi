@@ -13,10 +13,13 @@ from sez_api.app import (
     app,
     IROP_SCENARIOS,
     IROP_POVINNE_SCENARE,
+    _irop_adresat,
     _irop_hodnoceni_scenare,
     _irop_hodnoceni_celkove,
+    _irop_obs2,
     _irop_tech4,
     _irop_tech5,
+    _irop_tech6,
 )
 
 
@@ -204,6 +207,61 @@ class _FakeTermX:
 
     def provenance_search(self, **kw):
         return _FakeResp({"resourceType": "OperationOutcome"}, 404)
+
+
+# --- TS-TECH-6 / TS-OBS-2: adresát ≠ tvůrce (regrese DÚ E01001) ---------------
+
+class _FakeDU:
+    last_request_debug = None
+
+    def __init__(self):
+        self.zasilky = []
+
+    def uloz_zasilku(self, z):
+        self.zasilky.append(z)
+        return _FakeResp({"id": f"z-{len(self.zasilky)}"})
+
+    def vyhledej_zasilku(self, od, do, rid=None, **kw):
+        return _FakeResp({"zasilka": [{"id": f"z-{len(self.zasilky)}"}]})
+
+    def dej_zasilku(self, zid):
+        return _FakeResp({"id": zid, "dokument": []})
+
+
+def test_irop_adresat_nikdy_neshodny_s_tvurcem():
+    """DÚ E01001: Zasilka.poskytovatel a Zasilka.adresat nesmí mít stejné IČO."""
+    # výchozí: jiné testovací PZS
+    assert _irop_adresat({}, "25488627") == "00064165"
+    # tvůrce = výchozí adresát → přepne na dalšího kandidáta
+    assert _irop_adresat({}, "00064165") == "00064203"
+    # explicitní adresát se respektuje
+    assert _irop_adresat({"ico_adresat": "00179906"}, "25488627") == "00179906"
+    # explicitní adresát shodný s tvůrcem se ignoruje (jinak by DÚ vrátilo E01001)
+    assert _irop_adresat({"ico_adresat": "25488627"}, "25488627") != "25488627"
+
+
+def test_tech6_zasilka_ma_adresata_jineho_pzs():
+    du = _FakeDU()
+    r = _irop_tech6({"ico": "25488627"}, {"du": du}, None)
+    assert r["passed"] == r["total"]
+    z = du.zasilky[0]
+    assert z["poskytovatel"] == "25488627"
+    assert z["adresat"] == "00064165"
+    assert z["adresat"] != z["poskytovatel"]
+
+
+def test_obs2_zasilka_ma_adresata_jineho_pzs():
+    du = _FakeDU()
+    r = _irop_obs2({"ico": "25488627", "doc_type": "propousteci-zprava"},
+                    {"du": du}, None)
+    assert r["passed"] == r["total"]
+    z = du.zasilky[0]
+    assert z["adresat"] != z["poskytovatel"]
+    # explicitní adresát z parametrů
+    du2 = _FakeDU()
+    _irop_obs2({"ico": "25488627", "ico_adresat": "00179906",
+                "doc_type": "pacientsky-souhrn"}, {"du": du2}, None)
+    assert du2.zasilky[0]["adresat"] == "00179906"
 
 
 def test_tech5_informativni_kroky_nesrazi_scenar():

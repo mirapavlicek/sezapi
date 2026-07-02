@@ -4711,7 +4711,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
 
       <div class="card" style="margin-bottom:16px;padding:10px 16px;background:var(--bg2);border-color:var(--border)">
         <div style="font-weight:600;font-size:12px;margin-bottom:8px;color:var(--fg1)">Sdílené parametry testů</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
           <div class="form-group"><label>Pacient (RID)</label>
             <select id="iropRid" style="width:100%"></select>
           </div>
@@ -4720,6 +4720,9 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
           </div>
           <div class="form-group"><label>Poskytovatel (IČO)</label>
             <input id="iropIco" value="25488627">
+          </div>
+          <div class="form-group"><label>Adresát zásilky (IČO)</label>
+            <input id="iropIcoAdresat" value="00064165" title="DÚ validace E01001: adresát musí být jiné PZS než tvůrce zásilky (výchozí: VFN Praha)">
           </div>
           <div class="form-group"><label>Typ eZD</label>
             <select id="iropDocType">
@@ -4925,7 +4928,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
 
           <div class="json-box" id="termxPubResult" style="min-height:30px">-</div>
         </div>
-        <div class="card" id="iropTech6"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-6</span><span class="card-title">Uložení dokumentace do DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vytvoření a uložení zásilky s dokumentem do Dočasného úložiště (UlozZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-6')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-6" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropTech6"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-6</span><span class="card-title">Uložení dokumentace do DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vytvoření a uložení zásilky s dokumentem do Dočasného úložiště (UlozZasilku). Adresát = IČO z parametru „Adresát zásilky" – DÚ validace <code>E01001</code> nedovolí shodné IČO tvůrce a adresáta (komunikace mezi různými PZS).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-6')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-6" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech7"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-7</span><span class="card-title">Vyhledání a stažení z DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a stažení dokumentu (VyhledejZasilku + DejZasilku + ověření obsahu).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-7')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-7" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech8"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-8</span><span class="card-title">Změna dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a provedení změny (VyhledejZasilku + ZmenZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-8')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-8" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropTech9"><div class="card-header"><span class="badge badge-ok" style="font-size:11px;margin-right:8px">TS-TECH-9</span><span class="card-title">Zneplatnění dokumentace v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Vyhledání existující zásilky a její zneplatnění (VyhledejZasilku + ZneplatniZasilku).</p><button class="btn btn-primary" onclick="iropRunScenario('TS-TECH-9')">Spustit</button><div class="json-box" id="iropRes-TS-TECH-9" style="margin-top:10px;min-height:30px">-</div></div>
@@ -13097,6 +13100,8 @@ function iropGetParams() {
     rid: (document.getElementById('iropRid') || {}).value || '2667873559',
     autor: (document.getElementById('iropKrzp') || {}).value || '102129137',
     ico: (document.getElementById('iropIco') || {}).value || '25488627',
+    // DÚ E01001: adresát musí být jiné PZS než tvůrce zásilky
+    ico_adresat: (document.getElementById('iropIcoAdresat') || {}).value || '00064165',
     doc_type: (document.getElementById('iropDocType') || {}).value || 'propousteci-zprava',
   };
 }
