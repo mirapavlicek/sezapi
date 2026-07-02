@@ -37,6 +37,8 @@ from sez_api.client import (
 )
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_ezd as _fhir_ezd
+from sez_api import ncpeh as _ncpeh_mod
+from sez_api.ncpeh import NCPeH
 
 logger = logging.getLogger("sez_api")
 
@@ -176,6 +178,7 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["uzis_nrpzs"] = UZISNrpzs(_client)
     _modules["uzis"] = UZIS(_client)
     _modules["uzis_luzka"] = UZISObsazenostLuzek(_client)
+    _modules["ncpeh"] = NCPeH(_client)
     _connected = True
     try:
         _termx_status_cache.clear()
@@ -8473,6 +8476,97 @@ async def img_order_fulfill(ncez_id: str, request: Request):
         if body.get(k) is not None:
             payload[k] = body[k]
     return timed_call(_modules["ez"].vyrid, payload)
+
+
+# ===========================================================================
+# NCPeH – přeshraniční pacientský souhrn (MyHealth@EU / eHDSI)
+# ---------------------------------------------------------------------------
+# Role A: PZS jako poskytovatel dat – endpoint pro národní konektor NCPNC
+#         (getpsexists/getps → PS CDA L1/L3 Friendly).
+# Role B: PZS jako konzument – vyhledání zahraničního pacienta, seznam
+#         dokumentů a stažení/zobrazení PS přes ClientConnectorProxy.
+# Bez NCPEH_PPT_URL/NCPEH_PROD_URL běží v režimu SIMULACE.
+# ===========================================================================
+
+def _ncpeh():
+    mod = _modules.get("ncpeh")
+    if mod is None:
+        mod = NCPeH(_client)
+        _modules["ncpeh"] = mod
+    return mod
+
+
+@app.get("/api/ncpeh/status")
+async def ncpeh_status():
+    if not getattr(cfg, "NCPEH_ENABLED", True):
+        return JSONResponse({"error": "NCPeH sekce je vypnutá (NCPEH_ENABLED=false)"},
+                             status_code=503)
+    return JSONResponse(_ncpeh().status())
+
+
+@app.get("/api/ncpeh/konfigurace-statu")
+async def ncpeh_konfigurace_statu():
+    """Role B: konfigurační služba – struktura vyhledávacích identifikátorů
+    dle země (v SIMULACI orientační snapshot)."""
+    return JSONResponse(_ncpeh().konfigurace_statu())
+
+
+@app.post("/api/ncpeh/b/vyhledat-pacienta")
+async def ncpeh_b_vyhledat_pacienta(request: Request):
+    """Role B krok 1: vyhledání zahraničního pacienta (queryPatient)."""
+    body = await request.json()
+    return JSONResponse(_ncpeh().query_patient(
+        body.get("stat", ""), body.get("identifikator", ""), body.get("oid")))
+
+
+@app.post("/api/ncpeh/b/dokumenty")
+async def ncpeh_b_dokumenty(request: Request):
+    """Role B krok 2: seznam dostupných dokumentů PS (queryDocuments)."""
+    body = await request.json()
+    return JSONResponse(_ncpeh().query_documents(
+        body.get("stat", ""), body.get("identifikator", "")))
+
+
+@app.post("/api/ncpeh/b/stahnout")
+async def ncpeh_b_stahnout(request: Request):
+    """Role B krok 3: stažení PS (retrieveDocument) – CDA + parsované
+    zobrazení + lokální kontroly dle testovacího rámce."""
+    body = await request.json()
+    return JSONResponse(_ncpeh().retrieve_document(
+        body.get("stat", ""), body.get("identifikator", ""),
+        body.get("dokumentId"), body.get("uroven", "L3")))
+
+
+@app.post("/api/ncpeh/a/get-ps-exists")
+async def ncpeh_a_get_ps_exists(request: Request):
+    """Role A: existence PS pro pacienta (getpsexists). Identifikátor
+    dokumentu je STABILNÍ – opakované volání nesmí generovat nový
+    (kontrola testovacího rámce NCPeH)."""
+    body = await request.json()
+    return JSONResponse(_ncpeh().get_ps_exists(body.get("rid", "")))
+
+
+@app.post("/api/ncpeh/a/get-ps")
+async def ncpeh_a_get_ps(request: Request):
+    """Role A: vydání PS CDA L1/L3 (Friendly) pro národní konektor."""
+    body = await request.json()
+    return JSONResponse(_ncpeh().get_ps(
+        body.get("rid", ""), body.get("uroven", "L3")))
+
+
+@app.post("/api/ncpeh/validace-cda")
+async def ncpeh_validace_cda(request: Request):
+    """Lokální kontroly PS CDA dle testovacího rámce (case-sensitive tagy,
+    OIDy, effectiveTime, povinné sekce). Plná strukturální validace:
+    eHDSI Gazelle."""
+    try:
+        body = await request.json()
+        xml_text = body.get("cda", "")
+    except Exception:
+        xml_text = (await request.body()).decode("utf-8", errors="replace")
+    vysledek = _ncpeh_mod.zkontroluj_ps_cda(xml_text)
+    vysledek["parsed"] = _ncpeh_mod.parse_ps_cda(xml_text)
+    return JSONResponse(vysledek)
 
 
 # ===========================================================================

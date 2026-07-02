@@ -475,6 +475,7 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
     <div class="nav-group-label">Oprávnění</div>
     <div class="nav-item" data-section="ro"><span class="icon">&#9888;</span> Oprávnění (RO)</div>
     <div class="nav-item" data-section="ro-ncpeh"><span class="icon">&#127759;</span> RO NCPeH</div>
+    <div class="nav-item" data-section="ncpeh"><span class="icon">&#127758;</span> NCPeH Pacientský souhrn <span style="font-size:9px;background:#059669;color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px">EU</span></div>
 
     <div class="nav-group-label">Klinická data</div>
     <div class="nav-item" data-section="zzs"><span class="icon">&#128657;</span> Záchranná služba (ZZS)</div>
@@ -5712,6 +5713,110 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
     </div>
 
     <!-- ====================================================================
+         NCPeH – přeshraniční pacientský souhrn (MyHealth@EU / eHDSI)
+         ==================================================================== -->
+    <div class="section" id="sec-ncpeh">
+      <div class="section-header">
+        <h3>NCPeH – Pacientský souhrn (přeshraniční)</h3>
+        <p>Národní kontaktní místo pro elektronické zdravotnictví (provozuje Kraj Vysočina) – výměna pacientského souhrnu v rámci EU infrastruktury <strong>MyHealth@EU / eHDSI</strong>. Role A = PZS jako zdroj dat, role B = PZS jako konzument. <span id="ncpehModeBadge"></span></p>
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg,#ecfdf5 0%,#f0fdfa 100%);border-color:#6ee7b7;margin-bottom:16px">
+        <div style="font-weight:700;font-size:14px;color:#065f46;margin-bottom:8px">Jak funguje integrace na NCPeH (dle testovacího rámce v1.1, Kraj Vysočina)</div>
+        <div style="font-size:12px;color:#064e3b;line-height:1.7">
+          <strong>Role A (Country A – zdroj dat):</strong> PZS implementuje na SVÉ straně endpoint dle <a href="https://www.nixzd.cz/standard" target="_blank" style="color:#065f46">nixzd.cz/standard</a>, který volá národní konektor (NCPNC): <code>getpsexists</code> (existence PS + stabilní <code>cdaLxOid</code>/<code>cdaLxId</code> – opakované volání NESMÍ generovat nový identifikátor!) a vydání <strong>PS CDA L3</strong> (strukturovaný) + <strong>L1</strong> (PDF v CDA) ve Friendly (národní) variantě. Pivot (mezinárodní) generuje NCPeH.<br>
+          <strong>Role B (Country B – konzument):</strong> PZS přes <code>ClientConnectorProxy</code> + konfigurační službu vyhledá zahraničního pacienta (identifikátory dle země), získá seznam dokumentů a stáhne/zobrazí PS.<br>
+          <strong>Připojení:</strong> žádost datovou schránkou MZČR (<code>x2de458</code>) + <a href="https://www.nixzd.cz/dotaznik" target="_blank" style="color:#065f46">dotazník</a>; PPT přes veřejný internet po registraci IP adres (<code>cz-ehealth-dsi-support@nixzd.cz</code>), PROD výhradně přes CMS2/síť AKČR. Validace: strukturální <strong>eHDSI Gazelle</strong> + sémantický tým NCPeH; obě role dle výzev IROP/NPO povinné.
+        </div>
+      </div>
+
+      <div class="sub-tabs">
+        <div class="sub-tab active" data-panel="ncpeh-b-panel">Role B – získat zahraniční PS</div>
+        <div class="sub-tab" data-panel="ncpeh-a-panel">Role A – zdroj dat (getps)</div>
+        <div class="sub-tab" data-panel="ncpeh-val-panel">Validace CDA</div>
+        <div class="sub-tab" data-panel="ncpeh-info-panel">Připojení &amp; dokumentace</div>
+      </div>
+
+      <!-- Role B -->
+      <div class="sub-panel active" id="ncpeh-b-panel">
+        <div class="card">
+          <div class="card-title">1. Vyhledání zahraničního pacienta (queryPatient)</div>
+          <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Struktura identifikátorů dle země pochází z konfigurační služby NCPeH. V simulaci jsou k dispozici vzoroví pacienti – např. <code>AT : 1111241261</code> (kritický pacient s plně vyplněným souhrnem), <code>DE : X110403565</code>, <code>SK : 8501011234</code>.</p>
+          <div class="form-row" style="align-items:flex-end">
+            <div class="form-group"><label>Stát</label><select id="ncpehStat" style="min-width:160px"></select></div>
+            <div class="form-group" style="flex:1"><label>Identifikátor pacienta</label><input id="ncpehIdent" placeholder="např. 1111241261"></div>
+            <button class="btn btn-primary" onclick="ncpehVyhledat()">Vyhledat pacienta</button>
+          </div>
+          <div id="ncpehPacientInfo" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.3);font-size:13px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Dokumenty a stažení souhrnu</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="btn" onclick="ncpehDokumenty()">Seznam dokumentů (queryDocuments)</button>
+            <button class="btn btn-primary" onclick="ncpehStahnout('L3')">Stáhnout PS L3 (strukturovaný)</button>
+            <button class="btn" onclick="ncpehStahnout('L1')">Stáhnout PS L1 (PDF v CDA)</button>
+            <button class="btn" onclick="ncpehStahnoutCdaSoubor()">Uložit CDA (.xml)</button>
+          </div>
+          <div id="ncpehPsView" style="display:none;margin-bottom:10px"></div>
+          <div class="json-box" id="ncpehBResult" style="max-height:420px">-</div>
+        </div>
+      </div>
+
+      <!-- Role A -->
+      <div class="sub-panel" id="ncpeh-a-panel">
+        <div class="card">
+          <div class="card-title">Role A – PZS jako zdroj dat pro NCPNC</div>
+          <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Simulace endpointu, který na straně PZS volá národní konektor. <code>get-ps-exists</code> vrací stabilní identifikátor dokumentu (kontrola testovacího rámce: opakované volání nesmí generovat nový), <code>get-ps</code> vydá PS CDA L1/L3 ve Friendly variantě vygenerovaný z lokálních dat pacienta. Testovací pacienti: <code>2667873559</code> (Mračena Mrakomorová), <code>7651669233</code> (Letní Žalud).</p>
+          <div class="form-row" style="align-items:flex-end">
+            <div class="form-group" style="flex:1"><label>RID pacienta</label><input id="ncpehArid" value="2667873559"></div>
+            <button class="btn" onclick="ncpehGetPsExists()">get-ps-exists</button>
+            <button class="btn btn-primary" onclick="ncpehGetPs('L3')">get-ps L3</button>
+            <button class="btn" onclick="ncpehGetPs('L1')">get-ps L1</button>
+          </div>
+          <div id="ncpehAView" style="display:none;margin:10px 0"></div>
+          <div class="json-box" id="ncpehAResult" style="max-height:420px">-</div>
+        </div>
+      </div>
+
+      <!-- Validace -->
+      <div class="sub-panel" id="ncpeh-val-panel">
+        <div class="card">
+          <div class="card-title">Lokální kontroly PS CDA (dle testovacího rámce NCPeH)</div>
+          <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Kontroluje case-sensitive tagy, OIDy v <code>id</code> (cdaLxOid/cdaLxId), <code>effectiveTime</code>, kód dokumentu 60591-5, povinné sekce (alergie/medikace/problémy) a tělo L1/L3. Plnou strukturální validaci provádí <strong>eHDSI Gazelle</strong>, sémantickou tým NCPeH.</p>
+          <textarea id="ncpehCdaInput" style="width:100%;min-height:180px;font-family:var(--mono);font-size:11px" placeholder="Vložte PS CDA XML…"></textarea>
+          <div style="margin-top:8px"><button class="btn btn-primary" onclick="ncpehValidovat()">Zkontrolovat CDA</button></div>
+          <div class="json-box" id="ncpehValResult" style="margin-top:10px">-</div>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="sub-panel" id="ncpeh-info-panel">
+        <div class="card">
+          <div class="card-title">Proces připojení a testování (testovací rámec v1.1)</div>
+          <table style="font-size:12px">
+            <thead><tr><th>Krok</th><th>Popis</th><th>Odpovídá</th></tr></thead>
+            <tbody>
+              <tr><td>1. Žádost</td><td>Datová schránka MZČR <code>x2de458</code> + dotazník nixzd.cz/dotaznik (vstupní/výstupní IP adresy PPT)</td><td>PZS</td></tr>
+              <tr><td>2. Příprava endpointu A</td><td>Implementace endpointu dle nixzd.cz/standard; kontroly: case-sensitive tagy, OIDy cdaLxOid/cdaLxId, stabilní ID při opakovaném getpsexists, effectiveTime</td><td>PZS + tým NCPeH</td></tr>
+              <tr><td>3. Příprava endpointu B</td><td>Přístupy na ClientConnectorProxy + konfigurační službu, registrace na portále NCPeH</td><td>tým NCPeH + PZS</td></tr>
+              <tr><td>4. Strukturní test A</td><td>Generování Friendly (L1+L3 na NCPNC) a Pivot (L1+L3 na NCPeH) verzí + test změn; validace Gazelle na aktuální i budoucí vlnu</td><td>tým NCPeH</td></tr>
+              <tr><td>5. Sémantický test A</td><td>Obsahová správnost výstupů (národní i mezinárodní formát)</td><td>sémantický tým NCPeH</td></tr>
+              <tr><td>6. Strukturní test B</td><td>Načtení konfigurace, dotaz na konektor, zobrazení výstupů vč. kritického pacienta (plně vyplněný PS), autentizace dle logů</td><td>PZS + tým NCPeH</td></tr>
+              <tr><td>7. PROD</td><td>Síťová konfigurace (CMS2/AKČR), testy na PROD, akceptace + protokol; poté průběžný roční test přes Portál občana</td><td>všichni</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;padding:8px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;font-size:11px;color:#1e40af">
+            <strong>Míra interoperability</strong> (škála protokolů NCPeH): Úplná 100 % (PROD + PPT + Portál občana) · Vyhovující 80–60 % · Nedostatečná 40–0 %. Časový rámec od žádosti (T): strukturální testy T+5 týdnů, sémantické T+7, testy změn T+9, PROD T+11, akceptace T+12 týdnů.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Dokumentace</div>
+          <div id="ncpehDokumentace" style="font-size:13px;line-height:1.9">Načítám…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
          SZZ v2.0.1 – Prevence + Screeningy
          ==================================================================== -->
     <div class="section" id="sec-szz2">
@@ -7010,6 +7115,7 @@ function initNav() {
       if (sec === 'ro') roInitCatalogs(true);
       if (sec === 'sukl') suklInit();
       if (sec === 'uzis') uzisInit();
+      if (sec === 'ncpeh') ncpehInit();
     });
   });
   initNavEnhancements();
@@ -15542,6 +15648,130 @@ async function roNcpehTypDetail() {
   if (!id) { toast('Zadejte ID typu dokumentace', true); return; }
   const r = await api('GET', '/api/ro-ncpeh/typy-dokumentaci/' + encodeURIComponent(id));
   _showJson('roNcpehTypyResult', r);
+}
+
+// ===========================================================================
+// NCPeH – přeshraniční pacientský souhrn (MyHealth@EU / eHDSI)
+// ===========================================================================
+let _ncpehLastCda = null;
+
+async function ncpehInit() {
+  const st = await api('GET', '/api/ncpeh/status');
+  const badge = document.getElementById('ncpehModeBadge');
+  if (badge && st && st.mode) {
+    badge.innerHTML = st.mode === 'LIVE'
+      ? '<span class="badge badge-ok">LIVE (' + esc(st.endpoint || '') + ')</span>'
+      : '<span class="badge badge-warn">SIMULACE – bez NCPEH_PPT_URL (připojení vyžaduje registraci u týmu NCPeH)</span>';
+  }
+  const dok = document.getElementById('ncpehDokumentace');
+  if (dok && st && st.dokumentace) {
+    dok.innerHTML = st.dokumentace.map(d =>
+      '<a href="' + esc(d.url) + '" target="_blank">' + esc(d.nazev) + '</a>').join('<br>');
+  }
+  const sel = document.getElementById('ncpehStat');
+  if (sel && !sel.options.length) {
+    const cfg = await api('GET', '/api/ncpeh/konfigurace-statu');
+    (cfg.staty || []).forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.stat;
+      o.textContent = s.stat + ' – ' + s.nazev + ' (' + (s.identifikatory[0] || {}).nazev + ')';
+      sel.appendChild(o);
+    });
+  }
+}
+
+async function ncpehVyhledat() {
+  const stat = _val('ncpehStat'), ident = _val('ncpehIdent');
+  if (!ident) { toast('Zadejte identifikátor pacienta', true); return; }
+  const r = await api('POST', '/api/ncpeh/b/vyhledat-pacienta', { stat, identifikator: ident });
+  _showJson('ncpehBResult', r);
+  const info = document.getElementById('ncpehPacientInfo');
+  if (r && r.nalezen && r.pacient) {
+    const p = r.pacient;
+    info.style.display = 'block';
+    info.innerHTML = '<strong>' + esc(p.prijmeni) + ' ' + esc(p.jmeno) + '</strong> · nar. ' +
+      esc(p.datum_narozeni || '?') + ' · ' + esc(p.stat) + ':' + esc(p.id) +
+      (p.kriticky_pacient ? ' · <span class="badge badge-warn">kritický pacient (plný PS)</span>' : '');
+    toast('Pacient nalezen');
+  } else {
+    info.style.display = 'none';
+    toast('Pacient nenalezen' + (r && r.hint ? ' – ' + r.hint : ''), true);
+  }
+}
+
+async function ncpehDokumenty() {
+  const stat = _val('ncpehStat'), ident = _val('ncpehIdent');
+  if (!ident) { toast('Zadejte identifikátor pacienta', true); return; }
+  const r = await api('POST', '/api/ncpeh/b/dokumenty', { stat, identifikator: ident });
+  _showJson('ncpehBResult', r);
+}
+
+function _ncpehRenderPs(parsed, targetId) {
+  const el = document.getElementById(targetId);
+  if (!el || !parsed) return;
+  const pac = parsed.pacient || {};
+  let h = '<div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px">';
+  h += '<div style="font-weight:700;margin-bottom:6px">' + esc(parsed.dokument && parsed.dokument.titulek || 'Pacientský souhrn') + '</div>';
+  h += '<div style="font-size:12px;color:var(--fg2);margin-bottom:8px">Pacient: <strong>' +
+    esc(pac.prijmeni || '?') + ' ' + esc(pac.jmeno || '') + '</strong> · nar. ' + esc(pac.datum_narozeni || '?') +
+    ' · ID ' + esc(pac.id || '?') + ' · dokument ' + esc((parsed.dokument || {}).id || '?') + '</div>';
+  (parsed.sekce || []).forEach(s => {
+    h += '<div style="margin:6px 0"><span style="font-weight:600;font-size:12px">' + esc(s.nazev || s.kod || '?') +
+      '</span> <span style="font-size:10px;color:var(--fg3)">(LOINC ' + esc(s.kod || '') + ')</span>' +
+      '<ul style="margin:2px 0 0 18px;font-size:12px">' +
+      (s.polozky || []).map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>';
+  });
+  h += '</div>';
+  el.style.display = 'block';
+  el.innerHTML = h;
+}
+
+async function ncpehStahnout(uroven) {
+  const stat = _val('ncpehStat'), ident = _val('ncpehIdent');
+  if (!ident) { toast('Zadejte identifikátor pacienta', true); return; }
+  const r = await api('POST', '/api/ncpeh/b/stahnout', { stat, identifikator: ident, uroven });
+  _showJson('ncpehBResult', r);
+  if (r && r.cda) {
+    _ncpehLastCda = r.cda;
+    _ncpehRenderPs(r.parsed, 'ncpehPsView');
+    const v = r.validace || {};
+    toast('PS ' + uroven + ' stažen – validace: ' + (v.valid ? 'OK' : 'CHYBY (' + (v.chyby || []).length + ')'), !v.valid);
+  }
+}
+
+function ncpehStahnoutCdaSoubor() {
+  if (!_ncpehLastCda) { toast('Nejdřív stáhněte PS (L3/L1)', true); return; }
+  _downloadText(_ncpehLastCda, 'patient-summary-' + new Date().toISOString().slice(0, 10) + '.xml', 'application/xml');
+}
+
+async function ncpehGetPsExists() {
+  const rid = _val('ncpehArid');
+  if (!rid) { toast('Zadejte RID', true); return; }
+  const r = await api('POST', '/api/ncpeh/a/get-ps-exists', { rid });
+  _showJson('ncpehAResult', r);
+  toast(r && r.exists ? 'PS existuje, cdaL3Id: ' + r.cdaL3Id : 'PS pro RID neexistuje', !(r && r.exists));
+}
+
+async function ncpehGetPs(uroven) {
+  const rid = _val('ncpehArid');
+  if (!rid) { toast('Zadejte RID', true); return; }
+  const r = await api('POST', '/api/ncpeh/a/get-ps', { rid, uroven });
+  _showJson('ncpehAResult', r);
+  if (r && r.cda) {
+    _ncpehLastCda = r.cda;
+    const v = r.validace || {};
+    const parsed = await api('POST', '/api/ncpeh/validace-cda', { cda: r.cda });
+    _ncpehRenderPs(parsed.parsed, 'ncpehAView');
+    toast('PS ' + uroven + ' vygenerován – validace: ' + (v.valid ? 'OK' : 'CHYBY'), !v.valid);
+  }
+}
+
+async function ncpehValidovat() {
+  const cda = _val('ncpehCdaInput');
+  if (!cda) { toast('Vložte CDA XML', true); return; }
+  const r = await api('POST', '/api/ncpeh/validace-cda', { cda });
+  _showJson('ncpehValResult', r);
+  toast(r && r.valid ? 'CDA prošlo lokálními kontrolami' : 'CDA má chyby', !(r && r.valid));
 }
 
 // ===========================================================================

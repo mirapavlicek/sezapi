@@ -20,6 +20,12 @@ Podporované služby:
   - EZCA2 (Služby vytvářející důvěru)
   - EZCA Validace v1.0.0 (online/offline validace dokumentů – ELP;
       swagger apio.csez.gov.cz/apidoc)
+  - NCPeH – přeshraniční pacientský souhrn (MyHealth@EU/eHDSI; role A
+      zdroj dat: getpsexists/getps + PS CDA L1/L3 Friendly se stabilním
+      cdaLxId; role B konzument: vyhledání pacienta dle konfigurace země,
+      dokumenty, stažení a zobrazení PS; lokální kontroly CDA dle
+      testovacího rámce NCPeH v1.1 Kraje Vysočina; bez NCPEH_PPT_URL
+      SIMULACE vč. kritického pacienta)
   - Terminologie / TermX (FHIR R4 terminologický server / NTS –
       PROD apio.csez.gov.cz/terminologie, T2 public mirror, gateway;
       swagger v1.1.0 na apio: + GET /manifest, ConceptMap/$translate
@@ -124,7 +130,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.26.0"
+__version__ = "2.27.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
