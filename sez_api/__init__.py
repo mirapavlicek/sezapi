@@ -70,6 +70,25 @@ Manuál EZ pro PZS):
 - SZZ v2: HPV screening děložního hrdla sladěn se swaggerem –
   /screeningy/karcinomDDeloznihoHrdlaHpv (dvojité „D“ dle v2.0.1);
   jednoduché „D“ je přijímáno jako alias.
+
+Testovací rámec IROP/NPO (revize 2. 7. 2026 dle Manuálu EZ pro PZS –
+„Testovací rámec - informace k testování splnění IROP/NPO" a Metodiky
+testování EHR fáze I):
+- NOVÝ modul sez_api.fhir_ezd – buildery a L1 validátory dokumentů eZD
+  dle HL7 CZ Implementation Guides pro prioritní kategorie:
+  pacientský souhrn (HL7-cz/ps 0.0.1, LOINC 60591-5), propouštěcí zpráva
+  (HL7-cz/hdr 0.1.0, LOINC 34105-7, povinný encounter + presentedForm +
+  sekce Průběh hospitalizace), zpráva z obrazového vyšetření (HL7-cz/img
+  0.1.0-ballot, 3 kategorie + 4 povinné sekce + DiagnosticReport) a
+  zpráva o výjezdu ZZS (HL7-cz/cz-ems 0.0.2, LOINC 67796-3).
+- IROP scénáře sladěny s metodikou: TS-TECH-1 všech 6 metod hledání
+  v KRP, TS-TECH-2A (KRPZS: IČO+název+místo) a NOVÝ TS-TECH-2B (KRZP),
+  TS-TECH-3 s nastavením URL pro push notifikace; TS-OBS-2 generuje
+  IG-konformní dokumenty, TS-OBS-1/TS-OBS-4 je při příjmu validují.
+- Hodnocení dle metodiky (VYHOVUJE / VYHOVUJE S VÝHRADAMI / NEVYHOVUJE)
+  vč. agregace + endpointy /api/irop/povinne-scenare (matice povinných
+  scénářů dle kategorie žadatele A/B/ZZS) a /api/irop/protokol
+  (Protokol o provedení testu ke stažení).
 """
 
 from sez_api.client import (
@@ -105,7 +124,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.25.0"
+__version__ = "2.26.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

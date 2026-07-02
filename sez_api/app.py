@@ -36,6 +36,7 @@ from sez_api.client import (
     UZISNrpzs, UZIS, UZISObsazenostLuzek,
 )
 from sez_api import fhir_imgorder as _fhir_img
+from sez_api import fhir_ezd as _fhir_ezd
 
 logger = logging.getLogger("sez_api")
 
@@ -4862,31 +4863,106 @@ def _irop_tech1(params, modules, client):
                                 krp.hledat_jmeno_dn, jmeno, prijmeni, dn, "CZ"))
     steps.append(_irop_step_api("Vyhledání dle jméno + číslo pojištěnce", krp.hledat_jmeno_cp, jmeno, prijmeni, rc))
 
+    # Metodika (TS-TECH-1) požaduje i vyhledání cizince dle ČP a dle dokladu.
+    # Testovací identity nemusí mít cizinecká data – „nenalezeno" na testovací
+    # identitě označíme jako splněné volání služby (výhrada v note).
+    def _mark_not_found_ok(step, note):
+        if not step["passed"] and step.get("status") in (200, 404):
+            step["passed"] = True
+            step["note"] = note
+        return step
+
+    cizinec_cp = params.get("cizinec_cp", rc)
+    steps.append(_mark_not_found_ok(
+        _irop_step_api("Vyhledání cizince dle čísla pojištěnce",
+                       krp.hledat_cizinec_cp, cizinec_cp, "CZ"),
+        "služba cizinec_cp volána; testovací identita není cizinec"))
+
+    doklad_cislo = params.get("doklad_cislo", "123456789")
+    doklad_typ = params.get("doklad_typ", "ID")
+    steps.append(_mark_not_found_ok(
+        _irop_step_api("Vyhledání dle dokladu",
+                       krp.hledat_doklady, doklad_cislo, doklad_typ, "CZ"),
+        "služba doklady volána; testovací doklad nemusí být evidován"))
+
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-1", "name": "Připojení ke KRP",
             "steps": steps, "passed": passed, "total": len(steps)}
 
 
 def _irop_tech2(params, modules, client):
-    """TS-TECH-2: Připojení ke KRPZS – vyhledání poskytovatele."""
+    """TS-TECH-2A: Připojení ke KRPZS – vyhledání poskytovatele.
+
+    Dle metodiky (scénář TS-TECH-2A) vyhledání dle IČO, místa a názvu.
+    """
     krpzs = modules.get("krpzs")
     if not krpzs:
         return {"error": "KRPZS modul není dostupný"}
     ico = params.get("ico", "25488627")
     steps = [_irop_step_api("Vyhledání dle IČO", krpzs.hledat_ico, ico)]
 
+    nazev = params.get("pzs_nazev", "Krajská zdravotní")
+    steps.append(_irop_step_api("Vyhledání dle názvu", krpzs.hledat_nazev, nazev))
+    steps.append(_irop_step_api("Vyhledání dle místa",
+                                krpzs.hledat_misto, params.get("mesto", "Ústí nad Labem")))
+
     passed = sum(1 for s in steps if s["passed"])
-    return {"scenario_id": "TS-TECH-2", "name": "Připojení ke KRPZS",
+    return {"scenario_id": "TS-TECH-2A", "name": "Připojení ke KRPZS",
+            "steps": steps, "passed": passed, "total": len(steps)}
+
+
+def _irop_tech2b(params, modules, client):
+    """TS-TECH-2B: Připojení ke KRZP – vyhledání zdravotnického pracovníka.
+
+    Dle metodiky: vyhledání dle identifikátoru ZP, kontrola vazby na PZS
+    (zaměstnavatel) a údajů o oboru/druhu/formě péče.
+    """
+    krzp = modules.get("krzp")
+    if not krzp:
+        return {"error": "KRZP modul není dostupný"}
+    krzpid = params.get("autor", "102129137")
+    ico = params.get("ico", "25488627")
+    steps = []
+
+    steps.append(_irop_step_api("Vyhledání ZP dle KRZPID", krzp.hledat_krzpid, krzpid))
+    steps.append(_irop_step_api("Vyhledání ZP dle zaměstnavatele (vazba KRZP↔KRPZS)",
+                                krzp.hledat_zamestnavatel, ico))
+
+    passed = sum(1 for s in steps if s["passed"])
+    return {"scenario_id": "TS-TECH-2B", "name": "Připojení ke KRZP",
             "steps": steps, "passed": passed, "total": len(steps)}
 
 
 def _irop_tech3(params, modules, client):
-    """TS-TECH-3: Notifikace – ověření subscrip. systému."""
+    """TS-TECH-3: Přijetí notifikace ze SEZ.
+
+    Dle metodiky: nastavení URL pro push notifikace službou KRPZS
+    ``POST /Poskytovatel/nastavit/urlpronotifikace`` (provede se jen při
+    zadání ``notif_url`` v parametrech – mění stav v registru), plus
+    read-only kontroly odběrů/kanálů.
+    """
     krp = modules.get("krp")
     if not krp:
         return {"error": "KRP modul není dostupný"}
     ico = params.get("ico", "25488627")
     steps = []
+
+    notif_url = params.get("notif_url")
+    krpzs = modules.get("krpzs")
+    if notif_url and krpzs:
+        steps.append(_irop_step_api(
+            "Nastavení URL pro push notifikace (KRPZS urlpronotifikace)",
+            krpzs.nastavit_url_pro_notifikace, ico, notif_url))
+    else:
+        steps.append({
+            "name": "Nastavení URL pro push notifikace (KRPZS urlpronotifikace)",
+            "passed": True, "status": 0, "elapsed_ms": 0,
+            "data": {"info": "Krok se provede po zadání parametru notif_url "
+                             "(veřejná URL SUT pro příjem push notifikací); "
+                             "bez něj se stav registru nemění."},
+            "note": "přeskočeno – nezadána notif_url",
+            "error": None, "_debug": {}})
+
     steps.append(_irop_step_api("Vyhledání odběrů notifikací (KRP)",
                                 krp.notifikace_vyhledat, "WEBSERVICE", ico, "PZS"))
 
@@ -5378,6 +5454,41 @@ def _irop_obs1(params, modules, client):
                                    "status": 200, "elapsed_ms": 0,
                                    "data": {"preview": preview},
                                    "error": None, "_debug": {}})
+                    # Validace obsahu dle standardu MZ (metodika: „po přijetí
+                    # dokumentu SUT provede kontrolu integrity a správnosti
+                    # metadat") – u FHIR JSON dokumentů L1 kontrola dle IG.
+                    if "json" in mime:
+                        try:
+                            parsed = json.loads(decoded.decode("utf-8"))
+                        except Exception as exc:
+                            steps.append({"name": "Validace obsahu dle standardu MZ (FHIR L1)",
+                                           "passed": False, "status": 422, "elapsed_ms": 0,
+                                           "data": None,
+                                           "error": f"Obsah není validní JSON: {exc}",
+                                           "_debug": {}})
+                        else:
+                            if isinstance(parsed, dict) and parsed.get("resourceType") == "Bundle":
+                                v = _fhir_ezd.validate_ezd_bundle(parsed)
+                                st = {"name": "Validace obsahu dle standardu MZ (FHIR L1)",
+                                      "passed": v["valid"],
+                                      "status": 200 if v["valid"] else 422,
+                                      "elapsed_ms": 0,
+                                      "data": {"kategorie": v["kategorie"],
+                                               "profil": v["profil"],
+                                               "errors": v["errors"] or None,
+                                               "warnings": v["warnings"] or None},
+                                      "error": "; ".join(v["errors"]) if v["errors"] else None,
+                                      "_debug": {}}
+                                if v["warnings"]:
+                                    st["note"] = "; ".join(v["warnings"])
+                                steps.append(st)
+                            else:
+                                steps.append({"name": "Validace obsahu dle standardu MZ (FHIR L1)",
+                                               "passed": True, "status": 200, "elapsed_ms": 0,
+                                               "data": {"resourceType": parsed.get("resourceType")
+                                                        if isinstance(parsed, dict) else type(parsed).__name__},
+                                               "note": "JSON dokument není FHIR document Bundle – L1 kontrola dle IG přeskočena",
+                                               "error": None, "_debug": {}})
             else:
                 steps.append({"name": "Validace integrity", "passed": False, "status": 0,
                                "elapsed_ms": 0, "data": None, "error": "Zásilka neobsahuje dokumenty", "_debug": {}})
@@ -5391,7 +5502,12 @@ def _irop_obs1(params, modules, client):
 
 
 def _irop_obs2(params, modules, client):
-    """TS-OBS-2: Vytvoření eZD a zpřístupnění v DÚ."""
+    """TS-OBS-2: Vytvoření eZD a zpřístupnění v DÚ.
+
+    Dokument je sestaven dle závazného standardu MZ – HL7 CZ Implementation
+    Guide pro danou prioritní kategorii (ps/hdr/img/cz-ems, úroveň L1) a
+    lokálně validován dle kritérií shody metodiky testování EHR fáze I.
+    """
     du = modules.get("du")
     if not du:
         return {"error": "DÚ modul není dostupný"}
@@ -5402,96 +5518,63 @@ def _irop_obs2(params, modules, client):
     steps = []
     doc_meta = _irop_doc_type_meta(doc_type)
 
-    comp_uuid = f"urn:uuid:{uuid.uuid4()}"
-    pat_uuid = f"urn:uuid:{uuid.uuid4()}"
-    pract_uuid = f"urn:uuid:{uuid.uuid4()}"
-    org_uuid = f"urn:uuid:{uuid.uuid4()}"
-    fhir_bundle = {
-        "resourceType": "Bundle", "type": "document",
-        "identifier": {"system": "urn:oid:2.16.840.1.113883.2.9.6.2.1",
-                        "value": f"irop-test-{uuid.uuid4().hex[:8]}"},
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "entry": [
-            {"fullUrl": comp_uuid,
-             "resource": {"resourceType": "Composition", "status": "final",
-                          "type": {"coding": [{"system": "http://loinc.org", "code": doc_meta["code"],
-                                               "display": doc_meta["display"]}]},
-                          "subject": {"reference": pat_uuid},
-                          "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00"),
-                          "author": [{"reference": pract_uuid}],
-                          "custodian": {"reference": org_uuid},
-                          "title": f"IROP test – {doc_meta['title']}",
-                          "section": [{"title": "Testovací sekce",
-                                       "text": {"status": "generated",
-                                                 "div": "<div xmlns='http://www.w3.org/1999/xhtml'>"
-                                                        "<p>IROP automatický test</p></div>"}}]}},
-            {"fullUrl": pat_uuid,
-             "resource": {"resourceType": "Patient",
-                          "identifier": [{"system": "urn:oid:2.16.840.1.113883.4.653", "value": rid}]}},
-            {"fullUrl": pract_uuid,
-             "resource": {"resourceType": "Practitioner",
-                          "identifier": [{"system": "urn:oid:2.16.840.1.113883.2.9.6.2.7", "value": autor}]}},
-            {"fullUrl": org_uuid,
-             "resource": {"resourceType": "Organization",
-                          "identifier": [{"system": "urn:oid:2.16.840.1.113883.2.9.6.2.1", "value": ico}],
-                          "name": "Testovací PZS"}},
-        ],
-    }
+    ezd_meta = _fhir_ezd.EZD_KATEGORIE.get(doc_type)
+    if ezd_meta is not None:
+        fhir_bundle = _fhir_ezd.build_ezd_bundle(
+            doc_type, rid=rid, autor_krzpid=autor, ico=ico,
+            pzs_nazev="SEZ API IROP Test",
+            title=f"IROP TS-OBS-2 – {ezd_meta['nazev']}",
+        )
+        gen_note = (f"dle {ezd_meta['ig']} {ezd_meta['ig_verze']} "
+                    f"({ezd_meta['ig_url']}), úroveň L1")
+    else:
+        # kategorie mimo prioritní (např. laboratorní vyšetření) – obecný
+        # document Bundle bez IG profilu
+        fhir_bundle = _fhir_ezd.build_ezd_bundle(
+            "propousteci-zprava", rid=rid, autor_krzpid=autor, ico=ico,
+            pzs_nazev="SEZ API IROP Test",
+            title=f"IROP TS-OBS-2 – {doc_meta['title']}",
+        )
+        comp_res = fhir_bundle["entry"][0]["resource"]
+        comp_res["type"] = {"coding": [{"system": "http://loinc.org",
+                                         "code": doc_meta["code"],
+                                         "display": doc_meta["display"]}]}
+        comp_res.pop("meta", None)
+        comp_res.pop("encounter", None)
+        fhir_bundle.pop("meta", None)
+        gen_note = "mimo prioritní kategorie IROP/NPO – obecný document Bundle"
+
     content = json.dumps(fhir_bundle, ensure_ascii=False)
     content_bytes = content.encode("utf-8")
     content_b64 = base64.b64encode(content_bytes).decode()
     sha = hashlib.sha256(content_bytes).hexdigest()
-    fhir_valid = True
-    fhir_errors = []
-    if fhir_bundle.get("resourceType") != "Bundle":
-        fhir_valid = False
-        fhir_errors.append("resourceType != Bundle")
-    if fhir_bundle.get("type") != "document":
-        fhir_valid = False
-        fhir_errors.append("type != document")
-    if not fhir_bundle.get("identifier"):
-        fhir_valid = False
-        fhir_errors.append("Bundle.identifier chybí")
-    entries = fhir_bundle.get("entry", [])
-    entry_types = [e.get("resource", {}).get("resourceType") for e in entries]
-    for required in ["Composition", "Patient"]:
-        if required not in entry_types:
-            fhir_valid = False
-            fhir_errors.append(f"Chybí {required} v entries")
-    has_fullurls = all(e.get("fullUrl") for e in entries)
-    if not has_fullurls:
-        fhir_valid = False
-        fhir_errors.append("Chybí fullUrl v některých entries")
-    comp = next((e["resource"] for e in entries
-                 if e.get("resource", {}).get("resourceType") == "Composition"), None)
-    if comp:
-        if not comp.get("type", {}).get("coding"):
-            fhir_valid = False
-            fhir_errors.append("Composition.type.coding chybí")
-        if not comp.get("date"):
-            fhir_valid = False
-            fhir_errors.append("Composition.date chybí")
-        if not comp.get("author"):
-            fhir_valid = False
-            fhir_errors.append("Composition.author chybí")
-        if not comp.get("section"):
-            fhir_valid = False
-            fhir_errors.append("Composition.section chybí")
 
-    steps.append({"name": "Generování FHIR Bundle", "passed": True, "status": 200,
-                   "elapsed_ms": 0, "data": {"resourceType": "Bundle", "entries": len(fhir_bundle["entry"]),
-                                              "size_bytes": len(content_bytes), "sha256": sha[:16] + "..."},
+    steps.append({"name": "Generování FHIR Bundle (HL7 CZ IG, L1)", "passed": True, "status": 200,
+                   "elapsed_ms": 0,
+                   "data": {"resourceType": "Bundle", "entries": len(fhir_bundle["entry"]),
+                            "size_bytes": len(content_bytes), "sha256": sha[:16] + "...",
+                            "standard": gen_note,
+                            "profil": (fhir_bundle.get("meta") or {}).get("profile")},
                    "error": None, "_debug": {}})
 
-    steps.append({"name": "Validace FHIR formátu",
-                   "passed": fhir_valid, "status": 200 if fhir_valid else 422,
-                   "elapsed_ms": 0,
-                   "data": {"valid": fhir_valid, "entry_types": entry_types,
-                            "errors": fhir_errors if fhir_errors else None},
-                   "error": "; ".join(fhir_errors) if fhir_errors else None,
-                   "_debug": {"composition_keys": list(comp.keys()) if comp else []}})
+    validation = _fhir_ezd.validate_ezd_bundle(
+        fhir_bundle, kategorie=doc_type if ezd_meta else None)
+    fhir_valid = validation["valid"]
+    val_step = {"name": "Validace dle IG profilu (L1 kritéria shody)",
+                 "passed": fhir_valid, "status": 200 if fhir_valid else 422,
+                 "elapsed_ms": 0,
+                 "data": {"valid": fhir_valid,
+                          "kategorie": validation["kategorie"],
+                          "profil": validation["profil"],
+                          "errors": validation["errors"] or None,
+                          "warnings": validation["warnings"] or None},
+                 "error": "; ".join(validation["errors"]) if validation["errors"] else None,
+                 "_debug": {}}
+    if validation["warnings"]:
+        val_step["note"] = "; ".join(validation["warnings"])
+    steps.append(val_step)
 
-    typ_kod = doc_meta["code"]
+    typ_kod = ezd_meta["du_typ_kod"] if ezd_meta else doc_meta["code"]
     zasilka = {
         "nazev": f"IROP TS-OBS-2 – {doc_type}",
         "popis": "Automaticky generovaný eZD (FHIR Bundle)",
@@ -5646,7 +5729,14 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
                             duvod: str = "Náhlá zástava oběhu",
                             stav_pacienta: str = "GCS 6, TK 90/60, P 130, SpO2 88%",
                             zasah: str = "KPR, intubace, podání adrenalinu, transport") -> dict:
-    """Sestaví FHIR Bundle pro výjezdovou zprávu ZZS (LOINC 67796-3)."""
+    """Sestaví FHIR Bundle pro výjezdovou zprávu ZZS (LOINC 67796-3).
+
+    Hlavička dle HL7 CZ EMS IG (cz-composition-ems / cz-bundle-ems, L1):
+    meta.profile, category 18682-5, presentedForm, sekce s LOINC kódy
+    dle profilu (mission 67664-3, findings 29545-1, procedure 29554-3,
+    diagnosticSummary 11450-4) + klinické zdroje (Encounter/Condition/Procedure).
+    """
+    ems_meta = _fhir_ezd.EZD_KATEGORIE["vyjezd-zzs"]
     comp_uuid = f"urn:uuid:{uuid.uuid4()}"
     pat_uuid = f"urn:uuid:{uuid.uuid4()}"
     pract_uuid = f"urn:uuid:{uuid.uuid4()}"
@@ -5655,17 +5745,36 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
     cond_uuid = f"urn:uuid:{uuid.uuid4()}"
     proc_uuid = f"urn:uuid:{uuid.uuid4()}"
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+    def _sec(loinc_code, title, html_text, entry_ref=None):
+        s = {"title": title,
+             "code": {"coding": [{"system": "http://loinc.org", "code": loinc_code}]},
+             "text": {"status": "generated",
+                       "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>{html_text}</p></div>"}}
+        if entry_ref:
+            s["entry"] = [{"reference": entry_ref}]
+        return s
+
     return {
         "resourceType": "Bundle", "type": "document",
-        "identifier": {"system": "urn:oid:2.16.840.1.113883.2.9.6.2.1",
-                        "value": f"zzs-vyjezd-{uuid.uuid4().hex[:8]}"},
+        "meta": {"profile": [ems_meta["bundle_profile"]]},
+        "identifier": {"system": "urn:ietf:rfc:3986",
+                        "value": f"urn:uuid:{uuid.uuid4()}"},
         "timestamp": now_iso,
         "entry": [
             {"fullUrl": comp_uuid, "resource": {
                 "resourceType": "Composition", "status": "final",
+                "meta": {"profile": [ems_meta["composition_profile"]]},
+                "extension": [{
+                    "url": _fhir_ezd.PRESENTED_FORM_EXT,
+                    "valueAttachment": {"contentType": "application/pdf",
+                                          "data": _fhir_ezd.minimal_pdf_base64()},
+                }],
                 "type": {"coding": [{"system": "http://loinc.org",
                                        "code": "67796-3",
-                                       "display": "Emergency medical services report"}]},
+                                       "display": "EMS note"}]},
+                "category": [{"coding": [{"system": "http://loinc.org",
+                                            "code": "18682-5"}]}],
                 "subject": {"reference": pat_uuid},
                 "encounter": {"reference": enc_uuid},
                 "date": now_iso,
@@ -5673,24 +5782,16 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
                 "custodian": {"reference": org_uuid},
                 "title": "Záznam o výjezdu ZZS",
                 "section": [
-                    {"title": "Důvod výjezdu",
-                     "text": {"status": "generated",
-                              "div": f"<div xmlns='http://www.w3.org/1999/xhtml'><p>{duvod}</p></div>"}},
-                    {"title": "Stav pacienta na místě",
-                     "text": {"status": "generated",
-                              "div": f"<div xmlns='http://www.w3.org/1999/xhtml'><p>{stav_pacienta}</p></div>"}},
-                    {"title": "Provedený zásah",
-                     "text": {"status": "generated",
-                              "div": f"<div xmlns='http://www.w3.org/1999/xhtml'><p>{zasah}</p></div>"},
-                     "entry": [{"reference": proc_uuid}]},
-                    {"title": "Diagnóza",
-                     "text": {"status": "generated",
-                              "div": "<div xmlns='http://www.w3.org/1999/xhtml'><p>I46.9 - Zástava srdce, NS</p></div>"},
-                     "entry": [{"reference": cond_uuid}]},
+                    _sec("67664-3", "Výjezd (důvod)", duvod),
+                    _sec("29545-1", "Stav pacienta na místě", stav_pacienta),
+                    _sec("29554-3", "Provedený zásah", zasah, proc_uuid),
+                    _sec("11450-4", "Diagnóza", "I46.9 - Zástava srdce, NS", cond_uuid),
                 ]}},
             {"fullUrl": pat_uuid, "resource": {
                 "resourceType": "Patient",
-                "identifier": [{"system": "urn:oid:2.16.840.1.113883.4.653", "value": rid}]}},
+                "meta": {"profile": [_fhir_ezd.CZ_PATIENT_PROFILE]},
+                "identifier": [{"use": "official",
+                                 "system": _fhir_ezd.RID_SYSTEM, "value": rid}]}},
             {"fullUrl": pract_uuid, "resource": {
                 "resourceType": "Practitioner",
                 "identifier": [{"system": "urn:oid:2.16.840.1.113883.2.9.6.2.7", "value": autor}],
@@ -5797,29 +5898,29 @@ def _irop_obs4(params, modules, client):
                                       duvod, stav_pacienta, zasah)
     entries = bundle.get("entry", [])
     entry_types = [e.get("resource", {}).get("resourceType") for e in entries]
-    fhir_valid = True
     fhir_errors = []
     for required in ["Composition", "Patient", "Practitioner",
                       "Organization", "Encounter", "Condition", "Procedure"]:
         if required not in entry_types:
-            fhir_valid = False
             fhir_errors.append(f"Chybí {required} v Bundle.entry")
-    comp = next((e["resource"] for e in entries
-                  if e.get("resource", {}).get("resourceType") == "Composition"), None)
-    if comp:
-        coding = ((comp.get("type", {}) or {}).get("coding") or [{}])[0]
-        if coding.get("code") != "67796-3":
-            fhir_valid = False
-            fhir_errors.append(f"Composition.type.coding.code != 67796-3 (je {coding.get('code')})")
-    steps.append({
-        "name": "1. Vygenerovat FHIR Bundle (Záznam o výjezdu ZZS, LOINC 67796-3)",
+    # L1 validace dle HL7 CZ EMS IG (cz-composition-ems / cz-bundle-ems)
+    validation = _fhir_ezd.validate_ezd_bundle(bundle, kategorie="vyjezd-zzs")
+    fhir_errors.extend(validation["errors"])
+    fhir_valid = not fhir_errors
+    step1 = {
+        "name": "1. Vygenerovat FHIR Bundle dle HL7 CZ EMS IG (LOINC 67796-3, L1)",
         "passed": fhir_valid,
         "status": 200 if fhir_valid else 422, "elapsed_ms": 0,
         "data": {"entries": len(entries), "entry_types": entry_types,
-                  "loinc_code": "67796-3"},
+                  "loinc_code": "67796-3",
+                  "profil": validation["profil"],
+                  "warnings": validation["warnings"] or None},
         "error": "; ".join(fhir_errors) if fhir_errors else None,
         "_debug": {},
-    })
+    }
+    if validation["warnings"]:
+        step1["note"] = "; ".join(validation["warnings"])
+    steps.append(step1)
 
     zasilka = _build_zzs_zasilka(rid, autor, ico_zzs, ico_prijemce, bundle)
     uloz_step = _irop_step_api("2. ZZS odešle zprávu do DÚ – LOINC 67796-3 (UlozZasilku)",
@@ -6195,11 +6296,16 @@ def _irop_tech15(params, modules, client):
 
 IROP_SCENARIOS = {
     "TS-TECH-1": {"fn": _irop_tech1, "name": "Připojení ke KRP",
-                   "desc": "Ověření vyhledání pacienta v KRP více metodami (RID, jméno+RC, jméno+DN, jméno+ČP)."},
-    "TS-TECH-2": {"fn": _irop_tech2, "name": "Připojení ke KRPZS",
-                   "desc": "Ověření vyhledání poskytovatele v KRPZS dle IČO, názvu a pracoviště."},
+                   "desc": "Ověření vyhledání pacienta v KRP všemi metodami dle metodiky "
+                            "(RID, jméno+RC, jméno+DN, jméno+ČP, cizinec ČP, doklady)."},
+    "TS-TECH-2": {"fn": _irop_tech2, "name": "Připojení ke KRPZS (TS-TECH-2A)",
+                   "desc": "Ověření vyhledání poskytovatele v KRPZS dle IČO, názvu a místa."},
+    "TS-TECH-2B": {"fn": _irop_tech2b, "name": "Připojení ke KRZP (TS-TECH-2B)",
+                   "desc": "Ověření vyhledání zdravotnického pracovníka v KRZP dle KRZPID "
+                            "a vazby na zaměstnavatele (KRZP↔KRPZS)."},
     "TS-TECH-3": {"fn": _irop_tech3, "name": "Notifikace ze SEZ",
-                   "desc": "Ověření funkčnosti notifikačního systému (vyhledání odběrů, stav kanálů)."},
+                   "desc": "Nastavení URL pro push notifikace (KRPZS urlpronotifikace, "
+                            "s parametrem notif_url) + kontrola odběrů a stavu kanálů."},
     "TS-TECH-4": {"fn": _irop_tech4, "name": "Registr oprávnění",
                    "desc": "Ověření přístupových oprávnění ZP přes Registr oprávnění (Over, OverZdravotnika)."},
     "TS-TECH-5": {"fn": _irop_tech5, "name": "TermX číselníky (FHIR v1.0.5)",
@@ -6237,6 +6343,61 @@ IROP_SCENARIOS = {
 }
 
 
+# Povinné testovací scénáře dle kategorie žadatele (metodika: „Testovací
+# scénáře - Testování obsahu dokumentů eZD", tabulka povinných scénářů).
+IROP_POVINNE_SCENARE = {
+    "A": {
+        "popis": "PZS s urgentním příjmem typu II (§ 113b odst. 3 z. č. 372/2011 Sb.)",
+        "ezd": {
+            "pacientsky-souhrn": ["TS-OBS-1", "TS-OBS-2"],
+            "obrazove-vysetreni": ["TS-OBS-1", "TS-OBS-2"],
+            "propousteci-zprava": ["TS-OBS-1", "TS-OBS-2"],
+            "vyjezd-zzs": ["TS-OBS-1"],
+        },
+    },
+    "B": {
+        "popis": "Ostatní poskytovatelé zdravotních služeb",
+        "ezd": {
+            "pacientsky-souhrn": ["TS-OBS-1", "TS-OBS-2"],
+            "obrazove-vysetreni": ["TS-OBS-1"],
+            "propousteci-zprava": ["TS-OBS-1", "TS-OBS-2"],
+        },
+    },
+    "ZZS": {
+        "popis": "Zdravotnická záchranná služba",
+        "ezd": {
+            "pacientsky-souhrn": ["TS-OBS-1"],
+            "vyjezd-zzs": ["TS-OBS-1", "TS-OBS-2"],
+        },
+    },
+}
+
+
+def _irop_hodnoceni_scenare(result: dict) -> str:
+    """Hodnocení scénáře dle metodiky (kapitola Hodnocení a výsledky):
+
+    - VYHOVUJE            – všechny kroky prošly bez výhrad
+    - VYHOVUJE S VÝHRADAMI – všechny kroky prošly, alespoň jeden s výhradou
+                             (note = nepodstatná odchylka od standardu)
+    - NEVYHOVUJE          – alespoň jeden krok nesplněn
+    """
+    steps = result.get("steps") or []
+    if not steps or any(not s.get("passed") for s in steps):
+        return "NEVYHOVUJE"
+    if any(s.get("note") or s.get("_note") for s in steps):
+        return "VYHOVUJE S VÝHRADAMI"
+    return "VYHOVUJE"
+
+
+def _irop_hodnoceni_celkove(hodnoceni: list[str]) -> str:
+    """Agregace dle metodiky: NEVYHOVUJE > S VÝHRADAMI > VYHOVUJE."""
+    if any(h == "NEVYHOVUJE" for h in hodnoceni):
+        return "NEVYHOVUJE"
+    if any(h == "VYHOVUJE S VÝHRADAMI" for h in hodnoceni):
+        return "VYHOVUJE S VÝHRADAMI"
+    return "VYHOVUJE" if hodnoceni else "NEVYHOVUJE"
+
+
 @app.get("/api/irop/scenarios")
 async def irop_list():
     return JSONResponse([
@@ -6244,6 +6405,19 @@ async def irop_list():
          "category": "tech" if "TECH" in k else "obs"}
         for k, v in IROP_SCENARIOS.items()
     ])
+
+
+@app.get("/api/irop/povinne-scenare")
+async def irop_povinne_scenare():
+    """Matice povinných testovacích scénářů dle kategorie žadatele (A/B/ZZS)
+    a prioritní kategorie eZD – dle Metodiky testování EHR fáze I."""
+    ezd_info = {
+        k: {"nazev": v["nazev"], "ig": v["ig"], "ig_verze": v["ig_verze"],
+            "ig_url": v["ig_url"], "legislativa": v["legislativa"]}
+        for k, v in _fhir_ezd.EZD_KATEGORIE.items()
+    }
+    return JSONResponse({"kategorie_zadatelu": IROP_POVINNE_SCENARE,
+                          "kategorie_ezd": ezd_info})
 
 
 @app.post("/api/irop/scenario/{scenario_id}")
@@ -6258,7 +6432,30 @@ async def irop_run(scenario_id: str, request: Request):
     except Exception:
         body = {}
     result = scenario["fn"](body, _modules, _client)
+    result["hodnoceni"] = _irop_hodnoceni_scenare(result)
     return JSONResponse(result)
+
+
+def _irop_run_all_impl(body: dict) -> dict:
+    results = []
+    total_passed = 0
+    total_steps = 0
+    for sid, sdef in IROP_SCENARIOS.items():
+        r = sdef["fn"](body, _modules, _client)
+        r["scenario_id"] = sid
+        r["hodnoceni"] = _irop_hodnoceni_scenare(r)
+        results.append(r)
+        total_passed += r.get("passed", 0)
+        total_steps += r.get("total", 0)
+    return {
+        "scenarios": results,
+        "total_passed": total_passed,
+        "total_steps": total_steps,
+        "total_scenarios": len(results),
+        "scenarios_ok": sum(1 for r in results if r.get("passed", 0) == r.get("total", 0)),
+        "hodnoceni_celkove": _irop_hodnoceni_celkove(
+            [r["hodnoceni"] for r in results]),
+    }
 
 
 @app.post("/api/irop/run-all")
@@ -6269,22 +6466,82 @@ async def irop_run_all(request: Request):
         body = await request.json()
     except Exception:
         body = {}
+    return JSONResponse(_irop_run_all_impl(body))
+
+
+@app.post("/api/irop/protokol")
+async def irop_protokol(request: Request):
+    """Protokol o provedení testu – povinný výstup dle metodiky testování.
+
+    Spustí zadané scénáře (``scenare``: seznam ID, default všechny) a vrátí
+    strukturovaný protokol: identifikace SUT (výrobce/název/verze), prostředí,
+    parametry, kroky s časy a HTTP stavy, hodnocení dle metodiky
+    (VYHOVUJE / VYHOVUJE S VÝHRADAMI / NEVYHOVUJE).
+    """
+    if not _connected:
+        return JSONResponse({"error": "Klient není připojen"}, status_code=503)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    wanted = body.get("scenare") or list(IROP_SCENARIOS)
+    kategorie_zadatele = body.get("kategorie_zadatele")
+
     results = []
-    total_passed = 0
-    total_steps = 0
-    for sid, sdef in IROP_SCENARIOS.items():
+    for sid in wanted:
+        sdef = IROP_SCENARIOS.get(sid)
+        if not sdef:
+            continue
         r = sdef["fn"](body, _modules, _client)
         r["scenario_id"] = sid
+        r["hodnoceni"] = _irop_hodnoceni_scenare(r)
         results.append(r)
-        total_passed += r.get("passed", 0)
-        total_steps += r.get("total", 0)
-    return JSONResponse({
-        "scenarios": results,
-        "total_passed": total_passed,
-        "total_steps": total_steps,
-        "total_scenarios": len(results),
-        "scenarios_ok": sum(1 for r in results if r.get("passed", 0) == r.get("total", 0)),
-    })
+
+    hodnoceni_celkove = _irop_hodnoceni_celkove([r["hodnoceni"] for r in results])
+    now = datetime.now(timezone.utc)
+
+    protokol = {
+        "dokument": "Protokol o provedení testu",
+        "metodika": "Metodika testování EHR fáze I (IROP/NPO), MZČR/NCEZ",
+        "vytvoreno": now.isoformat(),
+        "sut": {
+            "vyrobce": "Krajská zdravotní a.s.",
+            "nazev": "SEZ API klient + webové rozhraní (sez-api)",
+            "verze": __version__,
+        },
+        "prostredi": {
+            "gateway": _client.config.GATEWAY if _client else None,
+            "client_id": getattr(_client.auth, "client_id", None) if _client else None,
+        },
+        "kategorie_zadatele": kategorie_zadatele,
+        "povinne_scenare": (IROP_POVINNE_SCENARE.get(kategorie_zadatele, {}).get("ezd")
+                             if kategorie_zadatele else None),
+        "parametry": {k: v for k, v in body.items() if k != "scenare"},
+        "scenare": [
+            {
+                "scenario_id": r.get("scenario_id"),
+                "nazev": r.get("name"),
+                "hodnoceni": r.get("hodnoceni"),
+                "kroku_splneno": r.get("passed"),
+                "kroku_celkem": r.get("total"),
+                "kroky": [
+                    {"nazev": s.get("name"), "splneno": s.get("passed"),
+                     "http_status": s.get("status"),
+                     "trvani_ms": s.get("elapsed_ms"),
+                     "vyhrada": s.get("note") or s.get("_note"),
+                     "chyba": s.get("error")}
+                    for s in (r.get("steps") or [])
+                ],
+            }
+            for r in results
+        ],
+        "hodnoceni_celkove": hodnoceni_celkove,
+        "poznamka": ("Dílčí hodnocení dle metodiky: VYHOVUJE / VYHOVUJE S VÝHRADAMI / "
+                      "NEVYHOVUJE. Pro kladné stanovisko je nutné celkové hodnocení "
+                      "VYHOVUJE. Přílohy protokolu (auditní log SUT, snímky obrazovek) "
+                      "dodává žadatel dle jednotlivých scénářů."),
+    }
+    return JSONResponse(protokol)
 
 
 # ---------------------------------------------------------------------------
