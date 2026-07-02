@@ -4760,6 +4760,18 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
             </tbody>
           </table>
         </div>
+        <div class="card" style="background:linear-gradient(135deg,#f5f3ff 0%,#f8fafc 100%);border-color:#ddd6fe">
+          <div class="card-title" style="color:#5b21b6">InterSystems IRIS – třídy pro testovací volání</div>
+          <p style="font-size:11px;color:var(--fg3);margin:0 0 8px">
+            Pro každý krok testu je v detailu k dispozici <strong>ObjectScript ukázka volání</strong> (rozbalovací sekce „InterSystems IRIS"). Kompletní připravené třídy: <code>SEZ.IROP.TestRunner</code> (spouští scénáře stejnými voláními jako toto UI) a <code>SEZ.IROP.VolaniLog</code> (persistentní debug log – u každého volání ukládá metodu, URL, query, tělo požadavku, HTTP status a tělo odpovědi; <code>SELECT * FROM SEZ_IROP.VolaniLog</code>).
+            Zdroj: <code>docs/analytics/src/cls/SEZ/IROP/</code> | Stažení: <a href="/api/codegen/iris/irop" target="_blank" style="color:#5b21b6">/api/codegen/iris/irop</a>. Závisí na referenčních třídách <code>SEZ.API.*</code> (Config, HttpClient, …).
+          </p>
+          <pre class="json-box" style="font-size:10px;max-height:120px">Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest")
+Set config.P12CertFile = "/opt/certs/krajska_zdravotni.pfx"
+Set runner = ##class(SEZ.IROP.TestRunner).%New(config)
+Do runner.RunAll()                                  ; spustí scénáře
+Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
+        </div>
         <div class="card">
           <div class="card-title">Kategorie PZS a povinné testy</div>
           <table>
@@ -13198,6 +13210,41 @@ function _iropRenderDebug(dbg, passed) {
   return h;
 }
 
+function iropIrisSnippet(req) {
+  // Vygeneruje ObjectScript ukázku volání kroku přes SEZ.API.HttpClient
+  // (referenční třídy v docs/analytics/src/cls/SEZ/API + SEZ/IROP).
+  let path = req.url || '';
+  try { path = new URL(path).pathname; } catch (e) { /* už je to cesta */ }
+  const method = (req.method || 'GET').toUpperCase();
+  let s = '// InterSystems IRIS – volání přes SEZ.API.HttpClient (mTLS + JWT)\n';
+  s += '// Kompletní runner scénářů: SEZ.IROP.TestRunner, log: SEZ.IROP.VolaniLog\n';
+  s += 'Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest")\n';
+  s += 'Set client = ##class(SEZ.API.HttpClient).%New(config)\n';
+  if (req.params && Object.keys(req.params).length) {
+    Object.entries(req.params).forEach(([k, v]) => {
+      if (v == null) return;
+      s += 'Set query("' + k + '") = "' + String(v).replace(/"/g, '""') + '"\n';
+    });
+  }
+  if (method === 'GET') {
+    s += 'Set sc = client.Get("' + path + '", .query, .resp)\n';
+  } else if (req.body != null) {
+    const bodyJson = (typeof req.body === 'string' ? req.body : JSON.stringify(req.body))
+      .replace(/"/g, '""');
+    s += 'Set body = ##class(%DynamicObject).%FromJSON("' +
+      (bodyJson.length > 600 ? bodyJson.substring(0, 600) + '…' : bodyJson) + '")\n';
+    s += 'Set sc = client.' + (method === 'POST' ? 'Post' : method === 'PUT' ? 'Put' : 'Patch') +
+      '("' + path + '", body, ' + (method === 'PATCH' ? '.query, ' : '') + '.resp)\n';
+  } else {
+    s += 'Set sc = client.' + (method === 'POST' ? 'Post' : method === 'PUT' ? 'Put' : 'Patch') +
+      '("' + path + '", "", ' + (method === 'PATCH' ? '.query, ' : '') + '.resp)\n';
+  }
+  s += 'If $$$ISERR(sc) { Do $System.Status.DisplayError(sc) Quit }\n';
+  s += 'Write "HTTP ", client.LastStatusCode, !\n';
+  s += 'Do resp.%ToJSON()';
+  return s;
+}
+
 function iropRenderSteps(elId, data) {
   const el = document.getElementById(elId);
   if (!el) return;
@@ -13235,16 +13282,49 @@ function iropRenderSteps(elId, data) {
     if (step.error) {
       html += '<div style="padding:6px 10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:4px;font-size:11px;color:#991b1b;margin-bottom:6px">' + esc(step.error) + '</div>';
     }
+    if (step.note) {
+      html += '<div style="padding:6px 10px;background:#fefce8;border:1px solid #fde68a;border-radius:4px;font-size:11px;color:#92400e;margin-bottom:6px">Výhrada: ' + esc(step.note) + '</div>';
+    }
     if (step._api_error && step._api_error !== step.error) {
       html += '<div style="padding:6px 10px;background:#fefce8;border:1px solid #fde68a;border-radius:4px;font-size:11px;color:#92400e;margin-bottom:6px">API: ' + esc(step._api_error) + '</div>';
+    }
+    // → Volání (request) – vždy viditelné pro debug: metoda, URL, query, tělo
+    if (step.request) {
+      const req = step.request;
+      html += '<div style="font-size:10px;font-weight:600;color:#1e40af;margin-bottom:2px">→ Volání (request)</div>';
+      html += '<div style="font-family:var(--mono);font-size:10px;background:rgba(91,141,239,.07);border:1px solid rgba(91,141,239,.25);border-radius:4px;padding:5px 8px;margin-bottom:4px;word-break:break-all">' +
+        '<strong>' + esc(req.method || '?') + '</strong> ' + esc(req.url || '') + '</div>';
+      if (req.params && Object.keys(req.params).length) {
+        html += '<div style="font-size:9px;font-weight:600;color:var(--fg3)">Query parametry</div>';
+        html += '<pre class="json-box" style="max-height:140px;font-size:10px;margin-bottom:4px">' + syntaxHighlight(JSON.stringify(req.params, null, 2)) + '</pre>';
+      }
+      if (req.body != null) {
+        const btxt = typeof req.body === 'string' ? req.body : JSON.stringify(req.body, null, 2);
+        html += '<div style="font-size:9px;font-weight:600;color:var(--fg3)">Tělo požadavku</div>';
+        html += '<pre class="json-box" style="max-height:260px;font-size:10px;margin-bottom:4px">' + syntaxHighlight(btxt) + '</pre>';
+      }
+      if (req.headers && Object.keys(req.headers).length) {
+        html += '<details style="margin-bottom:6px"><summary style="font-size:9px;font-weight:600;color:var(--fg3);cursor:pointer">Hlavičky (' + Object.keys(req.headers).length + ')</summary>' +
+          '<pre class="json-box" style="max-height:140px;font-size:9px;margin-top:2px">' + syntaxHighlight(JSON.stringify(req.headers, null, 2)) + '</pre></details>';
+      }
+    } else if (step.request === null) {
+      html += '<div style="font-size:10px;color:var(--fg3);margin-bottom:4px">→ Lokální krok bez HTTP volání (generování / validace)</div>';
+    }
+    // ← Odpověď (response)
+    const respBody = step.response ? step.response.body : step.data;
+    const respStatus = step.response ? step.response.status : step.status;
+    if (respBody != null || respStatus) {
+      html += '<div style="font-size:10px;font-weight:600;color:#166534;margin-bottom:2px">← Odpověď (response' + (respStatus ? ' · HTTP ' + respStatus : '') + ')</div>';
+      const rtxt = typeof respBody === 'string' ? respBody : JSON.stringify(respBody, null, 2);
+      html += '<pre class="json-box" style="max-height:300px;font-size:10px">' + syntaxHighlight(rtxt == null ? '(prázdné tělo)' : rtxt) + '</pre>';
     }
     if (step._debug && Object.keys(step._debug).length) {
       html += _iropRenderDebug(step._debug, step.passed);
     }
-    if (step.data != null) {
-      html += '<div style="font-size:10px;font-weight:600;color:var(--fg3);margin-bottom:2px">Response</div>';
-      const txt = typeof step.data === 'string' ? step.data : JSON.stringify(step.data, null, 2);
-      html += '<pre class="json-box" style="max-height:300px;font-size:10px">' + syntaxHighlight(txt) + '</pre>';
+    // IRIS ObjectScript ukázka volání pro tento krok
+    if (step.request && step.request.url) {
+      html += '<details style="margin-top:6px"><summary style="font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer">InterSystems IRIS – ObjectScript volání</summary>' +
+        '<pre class="json-box" style="max-height:260px;font-size:10px;margin-top:4px">' + esc(iropIrisSnippet(step.request)) + '</pre></details>';
     }
     html += '</div></div>';
   });
