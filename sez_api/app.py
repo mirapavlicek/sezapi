@@ -5271,6 +5271,25 @@ def _irop_tech5(params, modules, client):
     }
 
 
+# Výchozí adresáti zásilek DÚ – testovací PZS z T2 (Podklady pro testování
+# napojení na CSEZ). DÚ validace E01001: tvůrce (Zasilka.poskytovatel)
+# a adresát (Zasilka.adresat) NESMÍ mít shodné IČO – systém je určen
+# pro komunikaci mezi různými PZS.
+_IROP_ADRESAT_DEFAULTS = ["00064165",  # Všeobecná fakultní nemocnice v Praze
+                            "00064203"]  # Nemocnice Na Homolce
+
+
+def _irop_adresat(params, ico: str) -> str:
+    """Vrátí IČO adresáta zásilky ≠ IČO tvůrce (jinak DÚ vrací E01001)."""
+    adresat = str(params.get("ico_adresat") or "").strip()
+    if adresat and adresat != ico:
+        return adresat
+    for candidate in _IROP_ADRESAT_DEFAULTS:
+        if candidate != ico:
+            return candidate
+    return _IROP_ADRESAT_DEFAULTS[0]
+
+
 def _irop_tech6(params, modules, client):
     """TS-TECH-6: Uložení dokumentace do DÚ."""
     du = modules.get("du")
@@ -5279,6 +5298,7 @@ def _irop_tech6(params, modules, client):
     rid = params.get("rid", "2667873559")
     autor = params.get("autor", "102129137")
     ico = params.get("ico", "25488627")
+    adresat = _irop_adresat(params, ico)
     steps = []
 
     content = f"IROP test document generated at {datetime.now(timezone.utc).isoformat()}"
@@ -5293,7 +5313,7 @@ def _irop_tech6(params, modules, client):
         "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": ""},
         "autor": autor, "zdravotnickyPracovnik": autor,
         "poskytovatel": ico, "pacient": rid,
-        "ispzs": "SEZ API IROP Test", "adresat": ico,
+        "ispzs": "SEZ API IROP Test", "adresat": adresat,
         "adresatTyp": {"ciselnikKod": "typ-adresata", "kod": "PZS", "verze": "1.0.0"},
         "dostupnost": True,
         "dokument": [{
@@ -5671,7 +5691,7 @@ def _irop_obs2(params, modules, client):
         "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": ""},
         "autor": autor, "zdravotnickyPracovnik": autor,
         "poskytovatel": ico, "pacient": rid,
-        "ispzs": "SEZ API IROP Test", "adresat": ico,
+        "ispzs": "SEZ API IROP Test", "adresat": _irop_adresat(params, ico),
         "adresatTyp": {"ciselnikKod": "typ-adresata", "kod": "PZS", "verze": "1.0.0"},
         "dostupnost": True,
         "dokument": [{
