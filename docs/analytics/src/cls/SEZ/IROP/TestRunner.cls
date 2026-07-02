@@ -147,6 +147,9 @@ Method RunTech1() As %Status
 }
 
 /// TS-TECH-2A: Připojení ke KRPZS – IČO, název, místo.
+/// Název a krajKod se přebírají z odpovědi na hledání dle IČO (PZSDetail),
+/// protože hledání dle názvu vyžaduje přesný název (jinak 404) a hledání
+/// dle místa má dle kontraktu jediný POVINNÝ parametr krajKod (jinak 400).
 Method RunTech2A() As %Status
 {
     Set sc = $$$OK
@@ -154,13 +157,28 @@ Method RunTech2A() As %Status
         Write !!, "=== TS-TECH-2A: Připojení ke KRPZS ==="
         Do ..Krok("TS-TECH-2A", "Vyhledání dle IČO", "POST",
             "/krpzs/api/v2/Poskytovatel/hledat/ico",
-            ..KrpZadost({"ico": (..ICO)}, "OVERENI"), , .resp)
-        Do ..Krok("TS-TECH-2A", "Vyhledání dle názvu", "POST",
+            ..KrpZadost({"ico": (..ICO)}, "OVERENI"), , .icoResp)
+
+        // Oficiální název + krajKod sídla z PZSDetail
+        Set nazev = "Krajská zdravotní, a.s.", krajKod = "CZ042"
+        If $IsObject(icoResp) && $IsObject(icoResp.%Get("odpovedData"))
+            && (icoResp.%Get("odpovedData").%Size() > 0) {
+            Set detail = icoResp.%Get("odpovedData").%Get(0)
+            If detail.%Get("poskytovatelNazev") '= "" {
+                Set nazev = detail.%Get("poskytovatelNazev")
+            }
+            If $IsObject(detail.%Get("adresaSidla"))
+                && (detail.%Get("adresaSidla").%Get("krajKod") '= "") {
+                Set krajKod = detail.%Get("adresaSidla").%Get("krajKod")
+            }
+        }
+
+        Do ..Krok("TS-TECH-2A", "Vyhledání dle názvu (" _ nazev _ ")", "POST",
             "/krpzs/api/v2/Poskytovatel/hledat/nazev",
-            ..KrpZadost({"nazev": "Krajská zdravotní"}, "OVERENI"), , .resp)
-        Do ..Krok("TS-TECH-2A", "Vyhledání dle místa", "POST",
+            ..KrpZadost({"nazev": (nazev)}, "OVERENI"), , .resp)
+        Do ..Krok("TS-TECH-2A", "Vyhledání dle místa (krajKod=" _ krajKod _ ")", "POST",
             "/krpzs/api/v2/Poskytovatel/hledat/misto",
-            ..KrpZadost({"mesto": "Ústí nad Labem"}, "OVERENI"), , .resp)
+            ..KrpZadost({"krajKod": (krajKod)}, "OVERENI"), , .resp)
     } Catch ex {
         Set sc = ex.AsStatus()
     }
