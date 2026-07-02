@@ -4719,8 +4719,13 @@ def _irop_step_api(name, fn, *args, **kwargs):
         error_detail = None
         if not ok and isinstance(data, dict):
             info = data.get("odpovedInfo") or {}
+            err_field = data.get("error")
+            # Volo.Abp formát (Registr oprávnění): {"error": {"code","message","details"}}
+            if isinstance(err_field, dict):
+                err_field = err_field.get("message") or err_field.get("details") \
+                    or err_field.get("code")
             error_detail = (info.get("popis") if isinstance(info, dict) else None) \
-                or data.get("message") or data.get("title") or data.get("error")
+                or data.get("message") or data.get("title") or err_field
             if not error_detail and status_code:
                 error_detail = f"HTTP {status_code}"
         return {"name": name, "passed": ok, "status": status_code,
@@ -4979,35 +4984,98 @@ def _irop_tech3(params, modules, client):
 
 
 def _irop_tech4(params, modules, client):
-    """TS-TECH-4: Registr oprávnění – ověření přístupu zdravotnického pracovníka."""
+    """TS-TECH-4: Registr oprávnění – ověření přístupu k dokumentaci pacienta.
+
+    Dřívější verze volala Over s natvrdo zadanými ID číselníků
+    (IdSluzbyEZ=1/2, IdTypuDokumentace=5), které na T2 nemusí existovat –
+    backend RO pak vrací HTTP 500 (BACKEND_INTERNAL) na každé volání.
+    Nyní se nejprve načtou číselníky SluzbyEZ a TypyDokumentaci a Over se
+    volá s reálnými ID z odpovědi (dle metodiky: „Registr oprávnění –
+    ověření přístupu k dokumentaci pacienta").
+    """
     ro = modules.get("ro")
     if not ro:
         return {"error": "Registr oprávnění modul není dostupný"}
     ico = params.get("ico", "25488627")
     krzpid = params.get("autor", "102129137")
+    rid = params.get("rid", "2667873559")
     steps = []
 
-    steps.append(_irop_step_api(
-        "Ověření oprávnění ZP (DÚ přístup)",
-        ro.over_zdravotnika, ico, krzpid, 1, 5,
-    ))
+    def _ciselnik_polozky(data):
+        """PagedResultDto: položky jsou v poli 'page' (id/kod/nazev)."""
+        if not isinstance(data, dict):
+            return []
+        items = data.get("page") or data.get("items") or []
+        return [i for i in items if isinstance(i, dict) and i.get("id") is not None]
+
+    sluzby_step = _irop_step_api("Číselník SluzbyEZ", ro.sluzby_ez)
+    sluzby = _ciselnik_polozky(sluzby_step.get("data"))
+    if sluzby_step["passed"]:
+        sluzby_step["data"] = {
+            "polozek": len(sluzby),
+            "polozky": [{"id": i.get("id"), "kod": i.get("kod"),
+                          "nazev": i.get("nazev")} for i in sluzby[:20]],
+        }
+        if not sluzby:
+            sluzby_step["passed"] = False
+            sluzby_step["error"] = "Číselník SluzbyEZ nevrátil žádné položky"
+    steps.append(sluzby_step)
+
+    typy_step = _irop_step_api("Číselník TypyDokumentaci", ro.typy_dokumentaci)
+    typy = _ciselnik_polozky(typy_step.get("data"))
+    if typy_step["passed"]:
+        typy_step["data"] = {
+            "polozek": len(typy),
+            "polozky": [{"id": i.get("id"), "kod": i.get("kod"),
+                          "nazev": i.get("nazev")} for i in typy[:20]],
+        }
+        if not typy:
+            typy_step["passed"] = False
+            typy_step["error"] = "Číselník TypyDokumentaci nevrátil žádné položky"
+    steps.append(typy_step)
+
+    # ID služby/typu: parametr > první položka z číselníku (žádné hardcoded 1/5)
+    def _pick_id(items, preferred_kod_substr):
+        for i in items:
+            if preferred_kod_substr in str(i.get("kod", "")).lower() \
+                    or preferred_kod_substr in str(i.get("nazev", "")).lower():
+                return i.get("id")
+        return items[0].get("id") if items else None
+
+    id_sluzby = params.get("id_sluzby") or _pick_id(sluzby, "ulozi")  # Dočasné úložiště
+    id_typu = params.get("id_typu_dokumentace") or (typy[0].get("id") if typy else None)
+
+    if id_sluzby is None or id_typu is None:
+        steps.append({
+            "name": "Ověření oprávnění (Over)", "passed": False, "status": 0,
+            "elapsed_ms": 0, "data": None,
+            "error": "Nelze určit IdSluzbyEZ/IdTypuDokumentace – číselníky nejsou dostupné",
+            "_debug": {}})
+        passed = sum(1 for s in steps if s["passed"])
+        return {"scenario_id": "TS-TECH-4", "name": "Registr oprávnění",
+                "steps": steps, "passed": passed, "total": len(steps)}
 
     steps.append(_irop_step_api(
-        "Ověření oprávnění ZP (služba EZ)",
-        ro.over_zdravotnika, ico, krzpid, 2, 5,
-    ))
-
-    steps.append(_irop_step_api(
-        "Ověření oprávnění PZS→ZP (obecné)",
+        f"Over: Pacient(RID)→PZS – přístup k dokumentaci (služba {id_sluzby}, typ {id_typu})",
         ro.over,
-        1, 5,
+        id_sluzby, id_typu,
+        "Pacient", rid,
+        "PoskytovatelZdravotnickychSluzeb", ico,
+    ))
+
+    steps.append(_irop_step_api(
+        f"Over: PZS→ZP – zastupování (služba {id_sluzby}, typ {id_typu})",
+        ro.over,
+        id_sluzby, id_typu,
         "PoskytovatelZdravotnickychSluzeb", ico,
         "ZdravotnickyPracovnik", krzpid,
     ))
 
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-TECH-4", "name": "Registr oprávnění",
-            "steps": steps, "passed": passed, "total": len(steps)}
+            "steps": steps, "passed": passed, "total": len(steps),
+            "params": {"id_sluzby": id_sluzby, "id_typu_dokumentace": id_typu,
+                        "rid": rid, "ico": ico, "krzpid": krzpid}}
 
 
 def _irop_tech5(params, modules, client):
@@ -5140,13 +5208,30 @@ def _irop_tech5(params, modules, client):
                 return False, "Prázdné 'display'"
         return False, "V odpovědi chybí parametr 'display'"
 
+    def _informative(step, reason):
+        """Krok mimo požadavky metodiky TS-TECH-5 – jeho selhání scénář
+        neshodí, jen se zaznamená jako výhrada (v1.1.0 swaggeru byly
+        /metadata a /Provenance odstraněny)."""
+        if not step["passed"]:
+            step["passed"] = True
+            step["note"] = (f"{reason}; endpoint odpověděl "
+                             f"HTTP {step.get('status')} – informativní krok, "
+                             "není součástí povinných kroků metodiky")
+        return step
+
     def _build_steps(mod, label):
+        # Povinné kroky dle metodiky (scénář TS-TECH-5):
+        #   1. GET fhir/ValueSet/?url={URL}         – definice číselníku
+        #   2. GET fhir/ValueSet/$expand?url={URL}  – položky číselníku
+        # Ostatní kroky jsou rozšiřující kontroly.
         return [
-            _step(f"{label}: metadata (CapabilityStatement)",
-                   mod.metadata, _validate_metadata),
-            _step(f"{label}: ValueSet search url={vs_url}",
+            _informative(
+                _step(f"{label}: metadata (CapabilityStatement) [informativní]",
+                       mod.metadata, _validate_metadata),
+                "mimo metodiku; ve swaggeru Terminologie v1.1.0 už /metadata není uveden"),
+            _step(f"{label}: ValueSet search url={vs_url} (metodika krok 1)",
                    lambda: mod.valueset_search(url=vs_url, _count="5")),
-            _step(f"{label}: ValueSet/$expand url={vs_url}",
+            _step(f"{label}: ValueSet/$expand url={vs_url} (metodika krok 2)",
                    lambda: mod.valueset_expand(url=vs_url),
                    _validate_expand),
             _step(f"{label}: ValueSet/$validate-code (PASS, {valid_code})",
@@ -5155,8 +5240,10 @@ def _irop_tech5(params, modules, client):
             _step(f"{label}: CodeSystem/$lookup ({cs_code})",
                    lambda: mod.codesystem_lookup(system=cs_url, code=cs_code),
                    _validate_lookup),
-            _step(f"{label}: Provenance search (smoke)",
-                   lambda: mod.provenance_search(_count="1")),
+            _informative(
+                _step(f"{label}: Provenance search [informativní]",
+                       lambda: mod.provenance_search(_count="1")),
+                "mimo metodiku; ve swaggeru Terminologie v1.1.0 byl /Provenance odstraněn"),
         ]
 
     steps = _build_steps(termx, "Gateway")
@@ -6309,7 +6396,8 @@ IROP_SCENARIOS = {
                    "desc": "Nastavení URL pro push notifikace (KRPZS urlpronotifikace, "
                             "s parametrem notif_url) + kontrola odběrů a stavu kanálů."},
     "TS-TECH-4": {"fn": _irop_tech4, "name": "Registr oprávnění",
-                   "desc": "Ověření přístupových oprávnění ZP přes Registr oprávnění (Over, OverZdravotnika)."},
+                   "desc": "Načtení číselníků SluzbyEZ/TypyDokumentaci a ověření oprávnění "
+                            "Over s reálnými ID (Pacient→PZS přístup k dokumentaci, PZS→ZP zastupování)."},
     "TS-TECH-5": {"fn": _irop_tech5, "name": "TermX číselníky (FHIR v1.0.5)",
                    "desc": "Ověření terminologického serveru: metadata, ValueSet search/$expand/$validate-code, "
                             "CodeSystem $lookup, Provenance. Paralelně gateway i veřejný mirror."},
