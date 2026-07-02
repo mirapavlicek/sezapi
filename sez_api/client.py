@@ -1323,7 +1323,11 @@ class DocasneUloziste:
             last_headers = headers
             last_kid_name = kid_name
 
-            resp, err = self._try_request(method, url, headers, body, timeout)
+            # params se MUSÍ předat i při kid fallbacku – jinak se ztratí
+            # query parametry (např. ZmenZasilku ?Id=&VerzeRadku=) a DÚ
+            # vrací E01002 „Parametr 'Identifikace zásilky' musí být zadán".
+            resp, err = self._try_request(method, url, headers, body, timeout,
+                                           params=params)
             if err:
                 tried_variants.append({"kid": kid_name, "error": str(err)})
                 self.c._reset_session()

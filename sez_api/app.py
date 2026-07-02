@@ -1114,6 +1114,35 @@ _DU_ZMEN_REQUIRED_FIELDS = (
     "poskytovatel", "pacient", "ispzs",
 )
 
+# Read-only pole dokumentu, která DÚ při ZmenZasilku odmítá (E01002
+# „nesmí být špecifikován"): id, verzeRadku, soubor.id + obohacené *Data.
+_DU_DOKUMENT_READONLY = ("id", "verzeRadku", "autorData", "poskytovatelData",
+                           "pacientData")
+
+
+def _du_sanitize_dokument(dok):
+    """Připraví dokument z odpovědi DÚ pro tělo ZmenZasilku.
+
+    Odstraní read-only pole (id/verzeRadku/soubor.id/…Data). Pokud dokument
+    nenese obsah souboru (VyhledejZasilku vrací jen soubor.id), vrací None –
+    DÚ by hash nemohlo ověřit a vrací E01001 „Kontrolní hash … se neshoduje";
+    novou verzi dokumentu je nutné dodat s obsahem (base64) a správným hash.
+    """
+    if not isinstance(dok, dict):
+        return None
+    out = {k: v for k, v in dok.items()
+            if k not in _DU_DOKUMENT_READONLY and v is not None}
+    soubor = out.get("soubor")
+    if isinstance(soubor, dict):
+        soubor = {k: v for k, v in soubor.items()
+                   if k != "id" and v is not None}
+        out["soubor"] = soubor or None
+    if not isinstance(out.get("soubor"), dict) \
+            or not (out["soubor"].get("soubor") or out["soubor"].get("cesta")):
+        return None
+    return out
+
+
 def _du_prepare_update_body(payload):
     if not isinstance(payload, dict):
         return None
@@ -1122,6 +1151,15 @@ def _du_prepare_update_body(payload):
         for key in _DU_ZMEN_ALLOWED_FIELDS
         if key in payload and payload[key] is not None
     }
+    # Dokumenty: jen sanitizované s obsahem souboru; bez obsahu se
+    # vynechávají (dokument je v kontraktu ZmenZasilku nullable).
+    if "dokument" in prepared:
+        docs = [_du_sanitize_dokument(d) for d in (prepared["dokument"] or [])]
+        docs = [d for d in docs if d]
+        if docs:
+            prepared["dokument"] = docs
+        else:
+            prepared.pop("dokument")
     for key in _DU_ZMEN_REQUIRED_FIELDS:
         value = prepared.get(key)
         if value in (None, "", [], {}):
@@ -5513,7 +5551,15 @@ def _irop_tech7(params, modules, client):
 
 
 def _irop_tech8(params, modules, client):
-    """TS-TECH-8: Změna dokumentace v DÚ."""
+    """TS-TECH-8: Změna dokumentace v DÚ.
+
+    Dle metodiky: „V SUT je připravena NOVÁ VERZE dokumentu … PZS uloží
+    novou verzi dokumentu pomoci služby PUT zasilka/ZmenZasilku". Tělo
+    změny proto nese novou verzi dokumentu s obsahem (base64) a správným
+    hashem – dokumenty vrácené z Vyhledej/DejZasilku obsahují read-only
+    id/verzeRadku/soubor.id (DÚ je odmítá, E01002) a nenesou obsah
+    souboru (hash by neprošel, E01001), takže se nedají poslat zpět.
+    """
     du = modules.get("du")
     if not du:
         return {"error": "DÚ modul není dostupný"}
@@ -5528,24 +5574,58 @@ def _irop_tech8(params, modules, client):
     zasilka_id = None
     verze = None
     zmena = None
+    puvodni = None
     if steps[0]["passed"] and isinstance(steps[0].get("data"), dict):
         zasilky = steps[0]["data"].get("zasilka", [])
         if zasilky:
-            zasilka_id = zasilky[0].get("id")
-            verze = zasilky[0].get("verzeRadku")
-            zmena = _du_prepare_update_body(zasilky[0])
+            puvodni = zasilky[0]
+            zasilka_id = puvodni.get("id")
+            verze = puvodni.get("verzeRadku")
+            zmena = _du_prepare_update_body(puvodni)
 
     if zasilka_id and not zmena:
         try:
             detail_resp = du.dej_zasilku(zasilka_id)
             if detail_resp is not None:
-                zmena = _du_prepare_update_body(detail_resp.json())
+                puvodni = detail_resp.json()
+                zmena = _du_prepare_update_body(puvodni)
         except Exception:
             zmena = None
 
     if zasilka_id and verze and zmena:
         zmena["nazev"] = f"IROP TS-TECH-8 změna {now.isoformat()}"
-        steps.append(_irop_step_api("ZmenZasilku", du.zmen_zasilku, zasilka_id, verze, zmena))
+        # Nová verze dokumentu (metodika) – čerstvý obsah + korektní hash,
+        # metadata převzatá z původního dokumentu (bez read-only polí).
+        content = (f"IROP TS-TECH-8 – nová verze dokumentu {now.isoformat()}"
+                    ).encode("utf-8")
+        puvodni_dok = ((puvodni or {}).get("dokument") or [{}])[0]
+        novy_dok = {
+            "nazev": "IROP testovací dokument – nová verze",
+            "jazyk": puvodni_dok.get("jazyk")
+                      or {"ciselnikKod": "languages", "kod": "cs", "verze": "5.0.0"},
+            "typ": puvodni_dok.get("typ") or zmena.get("typ"),
+            "klasifikace": puvodni_dok.get("klasifikace") or zmena.get("klasifikace"),
+            "autor": zmena.get("autor"),
+            "poskytovatel": zmena.get("poskytovatel"),
+            "pacient": zmena.get("pacient"),
+            "dostupnost": True,
+            "duvernost": puvodni_dok.get("duvernost")
+                          or {"ciselnikKod": "v3-Confidentiality", "kod": "N", "verze": "2.0.0"},
+            "format": puvodni_dok.get("format")
+                       or {"ciselnikKod": "format-code",
+                            "kod": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                            "verze": "1.0.0"},
+            "mime": puvodni_dok.get("mime")
+                     or {"ciselnikKod": "media-type", "kod": "text/plain", "verze": "1.0.0"},
+            "hash": hashlib.sha256(content).hexdigest(),
+            "velikost": len(content),
+            "soubor": {"soubor": base64.b64encode(content).decode()},
+        }
+        # read-only pole z převzatých číselníkových objektů nevadí,
+        # ale id/verzeRadku/soubor.id nový dokument mít nesmí
+        zmena["dokument"] = [novy_dok]
+        steps.append(_irop_step_api("ZmenZasilku (nová verze dokumentu)",
+                                     du.zmen_zasilku, zasilka_id, verze, zmena))
     else:
         steps.append({"name": "ZmenZasilku", "passed": False, "status": 0,
                        "elapsed_ms": 0, "data": None,

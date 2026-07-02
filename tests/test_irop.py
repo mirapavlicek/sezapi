@@ -207,6 +207,86 @@ def test_tech4_500_z_backendu_propise_abp_chybu():
     assert _irop_hodnoceni_scenare(r) == "NEVYHOVUJE"
 
 
+# --- TS-TECH-8: tělo ZmenZasilku (regrese E01002/E01001) -----------------------
+
+def test_tech8_zmena_nese_novou_verzi_dokumentu_bez_readonly_poli():
+    """Regrese: tělo změny obsahovalo dokument z Vyhledej/DejZasilku vč.
+    read-only id/verzeRadku/soubor.id (E01002 'nesmí být špecifikován')
+    a hash bez obsahu souboru (E01001 hash mismatch). Nově se posílá
+    NOVÁ verze dokumentu s obsahem a správným hashem (dle metodiky)."""
+    import base64 as b64
+    import hashlib as hl
+    from sez_api.app import _irop_tech8
+
+    nalezena_zasilka = {
+        "id": "z-1", "verzeRadku": "AAAAAAABm14=",
+        "nazev": "Původní", "popis": "x",
+        "typ": {"ciselnikKod": "medical-document-type", "kod": "11506-3",
+                 "verze": "1.0.0", "nazev": " Průběžná zpráva", "valid": True},
+        "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0",
+                          "verze": "1.0.1"},
+        "autor": "155348468", "zdravotnickyPracovnik": "155348468",
+        "poskytovatel": "25488627", "pacient": "3740100325",
+        "ispzs": "SEZ API IROP Test", "adresat": "00064165",
+        "adresatTyp": {"kod": "PZS"}, "dostupnost": True,
+        "dokument": [{
+            "id": "d-1", "verzeRadku": "AAAAAAABm2A=",
+            "nazev": "IROP testovací dokument",
+            "jazyk": {"ciselnikKod": "languages", "kod": "cs", "verze": "5.0.0"},
+            "typ": {"ciselnikKod": "medical-document-type", "kod": "11506-3"},
+            "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0"},
+            "autor": "155348468",
+            "autorData": {"jmeno": "PAVLA", "prijmeni": "DVOŘÁKOVÁ"},
+            "pacient": "3740100325",
+            "pacientData": {"rid": "3740100325"},
+            "dostupnost": True,
+            "hash": "62ebc8b1" * 8, "velikost": 64,
+            "soubor": {"id": "s-1", "soubor": None, "cesta": None},
+        }],
+    }
+
+    class _DU:
+        last_request_debug = None
+
+        def vyhledej_zasilku(self, od, do, rid=None, **kw):
+            return _FakeResp({"zasilka": [nalezena_zasilka]})
+
+        def zmen_zasilku(self, zasilka_id, verze, zmena):
+            self.zmena = zmena
+            self.args = (zasilka_id, verze)
+            return _FakeResp({"id": zasilka_id})
+
+    du = _DU()
+    r = _irop_tech8({}, {"du": du}, None)
+    assert r["passed"] == r["total"] == 2
+    assert du.args == ("z-1", "AAAAAAABm14=")
+    docs = du.zmena["dokument"]
+    assert len(docs) == 1
+    d = docs[0]
+    # žádná read-only pole
+    for zakazane in ("id", "verzeRadku", "autorData", "pacientData"):
+        assert zakazane not in d, f"dokument nesmí nést {zakazane}"
+    assert "id" not in d["soubor"]
+    # nová verze má obsah a hash odpovídá obsahu
+    obsah = b64.b64decode(d["soubor"]["soubor"])
+    assert d["hash"] == hl.sha256(obsah).hexdigest()
+    assert d["velikost"] == len(obsah)
+    # zásilka v těle nenese id/verzeRadku (jdou v query parametrech)
+    assert "id" not in du.zmena and "verzeRadku" not in du.zmena
+
+
+def test_du_sanitize_dokument():
+    from sez_api.app import _du_sanitize_dokument
+    # bez obsahu souboru → None (hash by neprošel)
+    assert _du_sanitize_dokument({"id": "d", "hash": "x",
+                                    "soubor": {"id": "s"}}) is None
+    # s obsahem → read-only pole pryč, obsah zůstává
+    d = _du_sanitize_dokument({"id": "d", "verzeRadku": "v", "hash": "x",
+                                 "nazev": "n", "autorData": {"a": 1},
+                                 "soubor": {"id": "s", "soubor": "QUJD"}})
+    assert d == {"hash": "x", "nazev": "n", "soubor": {"soubor": "QUJD"}}
+
+
 # --- TS-TECH-5: metadata/Provenance jen informativní --------------------------
 
 class _FakeTermX:
