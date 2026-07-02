@@ -4497,6 +4497,37 @@ async def codegen_iris(req: IrisCodegenRequest):
     except Exception as e:
         return JSONResponse({"status": 500, "error": str(e)})
 
+@app.get("/api/codegen/iris/irop")
+async def codegen_iris_irop():
+    """Vrátí připravené IRIS třídy pro IROP testovací volání:
+
+    - ``SEZ.IROP.TestRunner`` – runner scénářů (stejná volání jako UI testy),
+      každé volání loguje request (metoda/URL/query/tělo) i response
+      (HTTP status/tělo).
+    - ``SEZ.IROP.VolaniLog`` – persistentní debug log volání
+      (SQL: ``SELECT * FROM SEZ_IROP.VolaniLog``).
+
+    Závisí na referenčních třídách ``SEZ.API.*`` (Config, HttpClient,
+    DocasneUloziste, …) v ``docs/analytics/src/cls/SEZ/API``.
+    """
+    base = Path(__file__).parent.parent / "docs" / "analytics" / "src" / "cls" / "SEZ" / "IROP"
+    files = {}
+    for name in ("TestRunner", "VolaniLog"):
+        p = base / f"{name}.cls"
+        try:
+            files[f"SEZ.IROP.{name}"] = p.read_text(encoding="utf-8")
+        except Exception as exc:
+            files[f"SEZ.IROP.{name}"] = f"// soubor nenalezen: {p} ({exc})"
+    return JSONResponse({
+        "status": 200,
+        "popis": ("IRIS třídy pro spouštění IROP scénářů s logováním volání "
+                   "a odpovědí (SEZ.IROP.VolaniLog). Import: "
+                   "Do $System.OBJ.Load(cesta, \"ck\") nebo VS Code ObjectScript."),
+        "zavislosti": "SEZ.API.Config, SEZ.API.HttpClient, SEZ.API.DocasneUloziste",
+        "classes": files,
+    })
+
+
 @app.get("/api/codegen/iris/services")
 async def codegen_iris_services():
     from sez_api.iris_codegen import SERVICE_META
@@ -6483,6 +6514,38 @@ IROP_POVINNE_SCENARE = {
 }
 
 
+def _irop_attach_req_resp(result: dict) -> dict:
+    """Doplní ke KAŽDÉMU kroku scénáře strukturované ``request`` (co se
+    posílá: metoda, URL, query parametry, tělo, hlavičky) a ``response``
+    (HTTP status + tělo odpovědi) – pro ladění dle požadavku metodiky
+    („dokumentace průběhu testu": logy volání a odpovědí).
+
+    Kroky bez HTTP volání (lokální generování/validace) mají
+    ``request: null``.
+    """
+    def _one(step: dict):
+        if "request" not in step:
+            dbg = step.get("_debug") or {}
+            du = dbg.get("du_debug") or {}
+            req = {
+                "method": dbg.get("method") or du.get("method"),
+                "url": dbg.get("url") or du.get("url"),
+                "params": dbg.get("params") or du.get("params"),
+                "body": dbg.get("body") if dbg.get("body") is not None else du.get("body"),
+                "headers": dbg.get("headers") or du.get("headers"),
+            }
+            step["request"] = req if (req["url"] or req["method"]) else None
+        if "response" not in step:
+            step["response"] = {"status": step.get("status"),
+                                 "body": step.get("data")}
+        return step
+
+    for key in ("steps", "public_steps"):
+        for step in result.get(key) or []:
+            _one(step)
+    return result
+
+
 def _irop_hodnoceni_scenare(result: dict) -> str:
     """Hodnocení scénáře dle metodiky (kapitola Hodnocení a výsledky):
 
@@ -6543,6 +6606,7 @@ async def irop_run(scenario_id: str, request: Request):
         body = {}
     result = scenario["fn"](body, _modules, _client)
     result["hodnoceni"] = _irop_hodnoceni_scenare(result)
+    _irop_attach_req_resp(result)
     return JSONResponse(result)
 
 
@@ -6554,6 +6618,7 @@ def _irop_run_all_impl(body: dict) -> dict:
         r = sdef["fn"](body, _modules, _client)
         r["scenario_id"] = sid
         r["hodnoceni"] = _irop_hodnoceni_scenare(r)
+        _irop_attach_req_resp(r)
         results.append(r)
         total_passed += r.get("passed", 0)
         total_steps += r.get("total", 0)
@@ -6605,6 +6670,7 @@ async def irop_protokol(request: Request):
         r = sdef["fn"](body, _modules, _client)
         r["scenario_id"] = sid
         r["hodnoceni"] = _irop_hodnoceni_scenare(r)
+        _irop_attach_req_resp(r)
         results.append(r)
 
     hodnoceni_celkove = _irop_hodnoceni_celkove([r["hodnoceni"] for r in results])
@@ -6639,7 +6705,9 @@ async def irop_protokol(request: Request):
                      "http_status": s.get("status"),
                      "trvani_ms": s.get("elapsed_ms"),
                      "vyhrada": s.get("note") or s.get("_note"),
-                     "chyba": s.get("error")}
+                     "chyba": s.get("error"),
+                     "volani": s.get("request"),
+                     "odpoved": s.get("response")}
                     for s in (r.get("steps") or [])
                 ],
             }

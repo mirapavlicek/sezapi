@@ -14,6 +14,7 @@ from sez_api.app import (
     IROP_SCENARIOS,
     IROP_POVINNE_SCENARE,
     _irop_adresat,
+    _irop_attach_req_resp,
     _irop_hodnoceni_scenare,
     _irop_hodnoceni_celkove,
     _irop_obs2,
@@ -262,6 +263,79 @@ def test_obs2_zasilka_ma_adresata_jineho_pzs():
     _irop_obs2({"ico": "25488627", "ico_adresat": "00179906",
                 "doc_type": "pacientsky-souhrn"}, {"du": du2}, None)
     assert du2.zasilky[0]["adresat"] == "00179906"
+
+
+# --- request/response debug u každého kroku -----------------------------------
+
+def test_kazdy_krok_ma_request_a_response():
+    """Každý krok musí po _irop_attach_req_resp obsahovat 'request'
+    (co se posílá) a 'response' (návratové hodnoty) pro debug."""
+    result = {
+        "steps": [
+            # krok s HTTP voláním (debug z SEZClient.last_request_debug)
+            {"name": "Over", "passed": True, "status": 200, "elapsed_ms": 5,
+             "data": {"stav": "Povoleno"},
+             "_debug": {"method": "GET",
+                          "url": "https://gw/registrOpravneni/api/v1/Opravneni/Over",
+                          "params": {"IdSluzbyEZ": 3},
+                          "body": None,
+                          "headers": {"Authorization": "Bearer xx..."}}},
+            # lokální krok bez HTTP volání
+            {"name": "Generování FHIR Bundle", "passed": True, "status": 200,
+             "elapsed_ms": 0, "data": {"entries": 4}, "_debug": {}},
+            # DÚ krok s debug informacemi v du_debug
+            {"name": "UlozZasilku", "passed": True, "status": 200, "elapsed_ms": 9,
+             "data": {"id": "z-1"},
+             "_debug": {"du_debug": {"method": "POST",
+                                        "url": "https://gw/docasneUloziste/api/v1/Zasilka/UlozZasilku",
+                                        "body": {"nazev": "x"}}}},
+        ],
+    }
+    _irop_attach_req_resp(result)
+    s1, s2, s3 = result["steps"]
+
+    assert s1["request"]["method"] == "GET"
+    assert s1["request"]["url"].endswith("/Opravneni/Over")
+    assert s1["request"]["params"] == {"IdSluzbyEZ": 3}
+    assert s1["response"] == {"status": 200, "body": {"stav": "Povoleno"}}
+
+    assert s2["request"] is None, "lokální krok nemá HTTP volání"
+    assert s2["response"]["body"] == {"entries": 4}
+
+    assert s3["request"]["method"] == "POST"
+    assert s3["request"]["body"] == {"nazev": "x"}
+    assert s3["response"]["status"] == 200
+
+
+def test_api_scenario_endpoint_vraci_request_response():
+    """Endpoint /api/irop/scenario vrací u kroků request/response
+    (offline: klient nepřipojen → 503; ověříme přes run-all impl na fake)."""
+    ro = _FakeRO()
+    r = _irop_tech4({}, {"ro": ro}, None)
+    _irop_attach_req_resp(r)
+    for step in r["steps"]:
+        assert "request" in step
+        assert "response" in step
+        assert step["response"]["status"] == step["status"]
+
+
+def test_iris_irop_endpoint_vraci_tridy():
+    r = _client().get("/api/codegen/iris/irop")
+    assert r.status_code == 200
+    data = r.json()
+    assert "SEZ.IROP.TestRunner" in data["classes"]
+    assert "SEZ.IROP.VolaniLog" in data["classes"]
+    runner = data["classes"]["SEZ.IROP.TestRunner"]
+    log = data["classes"]["SEZ.IROP.VolaniLog"]
+    assert "Class SEZ.IROP.TestRunner Extends %RegisteredObject" in runner
+    assert "Class SEZ.IROP.VolaniLog Extends %Persistent" in log
+    # runner loguje request i response každého volání
+    assert "VolaniLog).Zapis" in runner
+    assert "RequestBody" in log and "ResponseBody" in log and "HttpStatus" in log
+    # scénáře dle metodiky
+    for m in ("RunTech1", "RunTech2A", "RunTech2B", "RunTech4", "RunTech5",
+              "RunTech6", "RunObs1", "RunAll"):
+        assert m in runner, f"chybí metoda {m}"
 
 
 def test_tech5_informativni_kroky_nesrazi_scenar():
