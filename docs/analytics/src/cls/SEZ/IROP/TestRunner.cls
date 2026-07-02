@@ -343,8 +343,35 @@ Method RunTech89(pAkce As %String = "zneplatni") As %Status
         Set query("Id") = id
         Set query("VerzeRadku") = verze
         If pAkce = "zmen" {
-            Set zmena = {"nazev": ("Změněno IRIS TestRunner " _ $ZDateTime($ZTimestamp, 3))}
-            Do ..Krok(scenar, "ZmenZasilku", "PUT",
+            // Tělo změny dle kontraktu: povinná pole zásilky (převzatá
+            // z nalezené) + NOVÁ verze dokumentu s obsahem a správným
+            // hashem. Dokumenty z Vyhledej/DejZasilku nelze poslat zpět –
+            // nesou read-only id/verzeRadku/soubor.id (E01002) a bez
+            // obsahu souboru neprojde kontrola hashe (E01001).
+            Set zmena = {
+                "nazev": ("Změněno IRIS TestRunner " _ $ZDateTime($ZTimestamp, 3)),
+                "typ": (prvni.%Get("typ")),
+                "klasifikace": (prvni.%Get("klasifikace")),
+                "autor": (prvni.%Get("autor")),
+                "zdravotnickyPracovnik": (prvni.%Get("zdravotnickyPracovnik")),
+                "poskytovatel": (prvni.%Get("poskytovatel")),
+                "pacient": (prvni.%Get("pacient")),
+                "ispzs": (prvni.%Get("ispzs")),
+                "adresat": (prvni.%Get("adresat")),
+                "adresatTyp": (prvni.%Get("adresatTyp")),
+                "dostupnost": true,
+                "dokument": []
+            }
+            Set obsah = "IROP TS-TECH-8 – nová verze dokumentu (IRIS) "
+                _ $ZDateTime($ZTimestamp, 3, 1, 3)
+            Set hashHex = $ZConvert(##class(%xsd.hexBinary).LogicalToXSD(
+                $System.Encryption.SHAHash(256, obsah)), "l")
+            $$$ThrowOnError(##class(SEZ.API.DocasneUloziste).PridejDokument(
+                zmena, "IROP testovací dokument – nová verze",
+                prvni.%Get("pacient"), hashHex, $Length(obsah),
+                ..Base64(obsah), , "text/plain",
+                prvni.%Get("autor"), prvni.%Get("poskytovatel")))
+            Do ..Krok(scenar, "ZmenZasilku (nová verze dokumentu)", "PUT",
                 "/docasneUloziste/api/v1/Zasilka/ZmenZasilku?Id=" _ id _ "&VerzeRadku=" _ verze,
                 zmena, , .resp)
         } Else {
