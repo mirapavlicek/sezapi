@@ -231,6 +231,8 @@ Method RunTech4() As %Status
             Quit
         }
 
+        // Opravňující je dle metodiky vždy Pacient (přístup k dokumentaci
+        // pacienta). Kombinace PZS→ZP na T2 shazuje backend RO (Abp 500).
         Kill query
         Set query("IdSluzbyEZ") = idSluzby
         Set query("IdTypuDokumentace") = idTypu
@@ -244,11 +246,11 @@ Method RunTech4() As %Status
         Kill query
         Set query("IdSluzbyEZ") = idSluzby
         Set query("IdTypuDokumentace") = idTypu
-        Set query("OpravnujiciOsoba.Role") = "PoskytovatelZdravotnickychSluzeb"
-        Set query("OpravnujiciOsoba.Hodnota") = ..ICO
+        Set query("OpravnujiciOsoba.Role") = "Pacient"
+        Set query("OpravnujiciOsoba.Hodnota") = ..Rid
         Set query("OpravnenaOsoba.Role") = "ZdravotnickyPracovnik"
         Set query("OpravnenaOsoba.Hodnota") = ..KrzpId
-        Do ..Krok("TS-TECH-4", "Over: PZS→ZP (zastupování)", "GET",
+        Do ..Krok("TS-TECH-4", "Over: Pacient→ZP (přístup k dokumentaci)", "GET",
             "/registrOpravneni/api/v1/Opravneni/Over", , .query, .resp)
     } Catch ex {
         Set sc = ex.AsStatus()
