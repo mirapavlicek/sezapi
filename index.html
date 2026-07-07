@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnergyGame – budovatel energetické sítě</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <header id="hud">
+    <div class="hud-group">
+      <span class="hud-item" title="Peníze"><b id="money">0 ₤</b></span>
+      <span class="hud-item" title="Dodávka / poptávka">⚡ <b id="power">0 / 0 MW</b></span>
+      <span class="hud-item" title="Bilance příjmů">💰 <b id="income">+0/min</b></span>
+      <span class="hud-item" title="Skóre">★ <b id="score">0</b></span>
+      <span class="hud-item" id="clock">06:00</span>
+    </div>
+    <div class="hud-group">
+      <button id="btn-speed" class="hud-btn">▶ 1×</button>
+      <button id="btn-newmap" class="hud-btn" title="Vygeneruje novou náhodnou mapu">Nová mapa</button>
+      <span class="hud-item dim" id="seed-label"></span>
+    </div>
+  </header>
+
+  <nav id="toolbar"></nav>
+
+  <div id="hover-info"></div>
+  <div id="log"></div>
+  <canvas id="minimap" title="Klikni pro přesun kamery"></canvas>
+
+  <div id="help">
+    <b>Jak hrát:</b> postav elektrárnu (vodní <b>jen na řece</b> – výkon roste s průtokem),
+    u města postav <b>rozvodnu</b> (dosah 6 dlaždic) a vše propoj <b>vedením</b> (nástroj 7,
+    klikáním z budovy na budovu). Přehrada zaplaví údolí, dá velký výkon a posílí průtok
+    po proudu. Hlídej přetížená vedení (červená) a napájej všechna města – rostou a platí.
+    <br><span class="dim">Myš: táhnutím posun, kolečko zoom · klávesy 1–7 nástroje, Q prohlížení, X bourání, mezerník pauza, +/− rychlost.</span>
+  </div>
+
+  <script src="js/rng.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/atlas.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

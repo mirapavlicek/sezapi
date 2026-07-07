@@ -1,0 +1,13 @@
+{
+  "name": "energygame",
+  "version": "1.0.0",
+  "description": "Budovatelská strategie o stavbě energetické sítě – 2D izometrie ve WebGL2, čistě v prohlížeči.",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node test/smoke.js"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.50.0"
+  },
+  "license": "MIT"
+}
