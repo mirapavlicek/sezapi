@@ -41,6 +41,18 @@ ověřen živě (EZCA Validace v1.0.0 NOVÁ, Terminologie v1.1.0); dle aktualit
 Manuálu EZ pro PZS (k 16. 6. 2026) dále SZZ v2.0.4 na T2 (Standard SZZ 2.1)
 a Popis API DÚ v1.2 (ZpochybniZasilku). Živé T2 verze: /api/services/discover.
 
+Revize NCEZ zdrojů 2026-07-20:
+- apio katalog i aktuality Manuálu EZ beze změny (poslední záznam 16. 6.).
+- API endpointy (aktualizace 17. 7. 2026): NOVÉ požadavky na HTTP hlavičky –
+  X-Correlation-Id (UUID v4+) a User-Agent „název-aplikace/verze (prostředí;
+  výrobceSW)" doporučené od 1. 9. 2026 a POVINNÉ od 1. 1. 2027; traceparent
+  volitelný, X-Request-Id deprecated. Klient obě hlavičky posílá
+  (SEZClient.user_agent(), session i request úroveň).
+- HL7 CZ HDR IG (CI build 10. 7. 2026): přejmenován canonical composition
+  profilu cz-composition-hdr → composition-cz-hdr (constraints beze změny);
+  fhir_ezd aktualizován, starý canonical přijímán jako výhrada.
+  ps 0.0.1 / img 0.1.0-ballot / cz-ems 0.0.2 / cz-core 1.0.0 beze změny.
+
 UI: sekce „eHealth NIS" – pacientocentrický klinický kokpit, který kolem
 jednoho RID agreguje 360° přehled napříč službami (emergentní dataset SZZ,
 léky/alergie, aktivní eŽádanky, zásilky DÚ, oprávnění RO, historie KRP).
@@ -130,7 +142,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.27.0"
+__version__ = "2.28.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

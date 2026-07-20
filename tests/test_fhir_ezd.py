@@ -72,6 +72,33 @@ def test_hdr_type_dle_ig_34105_7():
     assert codes == ["34105-7"]
 
 
+def test_hdr_novy_canonical_composition_profilu():
+    """CI build HDR IG z 10. 7. 2026 přejmenoval canonical composition
+    profilu na composition-cz-hdr; starý cz-composition-hdr je alias."""
+    meta = EZD_KATEGORIE["propousteci-zprava"]
+    assert meta["composition_profile"].endswith("/composition-cz-hdr")
+    assert any(a.endswith("/cz-composition-hdr")
+                for a in meta["composition_profile_aliasy"])
+    # builder deklaruje nový canonical
+    comp = _composition(_build("propousteci-zprava"))
+    assert meta["composition_profile"] in comp["meta"]["profile"]
+
+
+def test_hdr_stary_canonical_je_vyhrada_ne_chyba():
+    from sez_api.fhir_ezd import validate_ezd_bundle
+    bundle = _build("propousteci-zprava")
+    comp = _composition(bundle)
+    comp["meta"]["profile"] = [
+        "https://hl7.cz/fhir/hdr/StructureDefinition/cz-composition-hdr"]
+    v = validate_ezd_bundle(bundle)
+    assert v["valid"], "starý canonical nesmí být chyba"
+    assert any("starší canonical" in w for w in v["warnings"])
+    # detekce kategorie funguje i podle aliasu (bez type kódu)
+    from sez_api.fhir_ezd import detect_kategorie
+    comp["type"] = {"coding": [{"system": "http://loinc.org", "code": "99999-9"}]}
+    assert detect_kategorie(bundle) == "propousteci-zprava"
+
+
 def test_hdr_povinny_encounter_a_prubeh_hospitalizace():
     bundle = _build("propousteci-zprava")
     comp = _composition(bundle)
