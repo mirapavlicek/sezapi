@@ -750,9 +750,15 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
       <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);border-color:#bfdbfe">
         <div class="card-title" style="color:#1e3a8a">Aktuální verze API a poslední změny</div>
         <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
-          <strong>Revize 2. 7. 2026</strong> dle veřejné dokumentace: živě ověřen PROD katalog <code>apio.csez.gov.cz/apidoc</code> (EZCA Validace v1.0.0, Terminologie v1.1.0) + <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/190251011" target="_blank" style="color:#1e40af">aktuality Manuálu EZ pro PZS</a> (stav k 16. 6. 2026). Poslední živá kontrola <strong>T2 gateway</strong> (<code>/apidoc/config.json</code> přes mTLS) proběhla <strong>8. 6. 2026</strong> – T2 je dostupná jen z ČR/SK, spusťte znovu přes <a href="/api/services/discover?force=true" target="_blank" style="color:#1e40af">/api/services/discover</a>, který verze načte živě.
+          <strong>Revize 20. 7. 2026</strong> dle veřejné dokumentace: živě ověřen PROD katalog <code>apio.csez.gov.cz/apidoc</code> (beze změny: EZCA Validace v1.0.0, Terminologie v1.1.0), <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/190251011" target="_blank" style="color:#1e40af">aktuality Manuálu EZ pro PZS</a> (poslední záznam stále 16. 6. 2026), stránka <strong>API endpointy aktualizována 17. 7. 2026</strong> (nové povinné HTTP hlavičky – viz box níže) a CI buildy HL7 CZ IG (HDR přestavěn 10. 7. – přejmenován canonical composition profilu). Poslední živá kontrola <strong>T2 gateway</strong> proběhla <strong>8. 6. 2026</strong> – T2 je dostupná jen z ČR/SK, spusťte znovu přes <a href="/api/services/discover?force=true" target="_blank" style="color:#1e40af">/api/services/discover</a>, který verze načte živě.
           Kontext změn: <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129" target="_blank" style="color:#1e40af">MZČR Confluence – Novinky</a> a <a href="https://www.ezdravi.gov.cz/katalog-sluzeb" target="_blank" style="color:#1e40af">katalog služeb eZdraví</a>. Detail JWT: <a href="/api/debug/jwt" target="_blank" style="color:#1e40af">/api/debug/jwt</a>.
         </p>
+        <div style="margin-bottom:10px;padding:10px 12px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;line-height:1.6">
+          <strong>API endpointy 17. 7. 2026 – nové požadavky na HTTP hlavičky (deadline!):</strong>
+          <code>X-Correlation-Id</code> (UUID v4+, max 128 znaků) a <code>User-Agent</code> ve formátu <code>název-aplikace/verze (prostředí; výrobceSW)</code> jsou <strong>doporučené od 1. 9. 2026 a POVINNÉ od 1. 1. 2027</strong>.
+          <code>traceparent</code> (W3C Trace Context) volitelný; <code>X-Request-Id</code> je deprecated; <code>X-Manufacturer-Company/Product</code> se nezpracovávají.
+          Tento klient obě povinné hlavičky posílá: X-Correlation-Id generuje pro každý request, User-Agent <code>sez-api/&lt;verze&gt; (T2; Krajska zdravotni a.s.)</code> je nastaven na session i request úrovni.
+        </div>
         <table style="font-size:12px">
           <thead><tr><th>Služba</th><th>Verze</th><th>Poslední změna</th></tr></thead>
           <tbody>

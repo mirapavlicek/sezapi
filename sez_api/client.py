@@ -300,10 +300,25 @@ class SEZClient:
         self.last_response = None
         self.last_request_debug = None
 
+    @staticmethod
+    def user_agent() -> str:
+        """User-Agent dle požadavku API endpointy (aktualizace 17. 7. 2026):
+        formát ``název-aplikace/verze (prostředí; výrobceSW)``.
+        Doporučené od 1. 9. 2026, POVINNÉ od 1. 1. 2027 (RFC 9110 §10.1.5)."""
+        try:
+            from sez_api import __version__ as _ver
+        except Exception:
+            _ver = "0"
+        prostredi = getattr(SEZConfig, "ENVIRONMENT", "T2")
+        return f"sez-api/{_ver} ({prostredi}; Krajska zdravotni a.s.)"
+
     def _new_session(self):
         s = requests.Session()
         s.cert = self.auth.tls_cert
         s.verify = True
+        # Session-level default: pokryje gateway, DÚ, JSU, TermX public
+        # i multipart uploady (explicitní hlavičky requestu mají přednost).
+        s.headers["User-Agent"] = self.user_agent()
         return s
 
     def _reset_session(self):
@@ -384,11 +399,15 @@ class SEZClient:
             return {}
 
     def _headers(self, extra: dict = None) -> dict:
+        # X-Correlation-Id: doporučené od 9/2026, POVINNÉ od 1. 1. 2027
+        # (UUID v4+, max 128 znaků); User-Agent viz user_agent().
+        # Zdroj: API endpointy (Manuál EZ pro PZS), aktualizace 17. 7. 2026.
         h = {
             "Authorization": f"Bearer {self.auth.build_assertion()}",
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Accept-Language": "cs",
+            "User-Agent": self.user_agent(),
             "X-Correlation-Id": str(uuid.uuid4()),
             "X-Trace-Id": str(uuid.uuid4()),
         }

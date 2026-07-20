@@ -526,7 +526,9 @@ class NCPeH:
             if self.c is not None and hasattr(self.c, "session"):
                 resp = self.c.session.post(url, json=body, timeout=60)
             else:
-                resp = requests.post(url, json=body, timeout=60)
+                from sez_api.client import SEZClient
+                resp = requests.post(url, json=body, timeout=60,
+                                      headers={"User-Agent": SEZClient.user_agent()})
             try:
                 data = resp.json()
             except Exception:

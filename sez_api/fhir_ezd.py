@@ -110,7 +110,13 @@ EZD_KATEGORIE = {
         "ig_url": "https://build.fhir.org/ig/HL7-cz/hdr/",
         "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 1 bod 4",
         "bundle_profile": "https://hl7.cz/fhir/hdr/StructureDefinition/cz-bundle-hdr",
-        "composition_profile": "https://hl7.cz/fhir/hdr/StructureDefinition/cz-composition-hdr",
+        # CI build IG z 10. 7. 2026 přejmenoval canonical composition profilu
+        # (cz-composition-hdr → composition-cz-hdr); constraints beze změny
+        # (typ 34105-7, encounter 1..1, presentedForm 1..*, sekce 8648-8).
+        "composition_profile": "https://hl7.cz/fhir/hdr/StructureDefinition/composition-cz-hdr",
+        "composition_profile_aliasy": [
+            "https://hl7.cz/fhir/hdr/StructureDefinition/cz-composition-hdr",
+        ],
         # POZOR: dle IG je typ 34105-7 (Hospital Discharge summary),
         # nikoli 18842-5 (Discharge summary) používaný v číselníku DÚ.
         "type_coding": {"system": LOINC, "code": "34105-7",
@@ -362,7 +368,9 @@ def detect_kategorie(bundle: dict) -> str | None:
                 return kat
         profiles = (comp.get("meta") or {}).get("profile") or []
         for kat, meta in EZD_KATEGORIE.items():
-            if meta["composition_profile"] in profiles:
+            znama = [meta["composition_profile"],
+                      *meta.get("composition_profile_aliasy", [])]
+            if any(p in profiles for p in znama):
                 return kat
     return None
 
@@ -436,9 +444,17 @@ def validate_ezd_bundle(bundle, kategorie: str = None) -> dict:
                     f"Composition.type nemá kód {tc['code']} ({tc['system']}) "
                     f"dle profilu {meta['composition_profile']}")
             profiles = (comp.get("meta") or {}).get("profile") or []
+            aliasy = meta.get("composition_profile_aliasy", [])
             if meta["composition_profile"] not in profiles:
-                warnings.append(
-                    f"Composition.meta.profile nedeklaruje {meta['composition_profile']}")
+                if any(a in profiles for a in aliasy):
+                    warnings.append(
+                        "Composition.meta.profile používá starší canonical "
+                        f"{[a for a in aliasy if a in profiles][0]} – aktuální "
+                        f"je {meta['composition_profile']} (přejmenováno "
+                        "v CI buildu IG 10. 7. 2026)")
+                else:
+                    warnings.append(
+                        f"Composition.meta.profile nedeklaruje {meta['composition_profile']}")
 
             for codings in meta["category_codings"]:
                 expected = codings[0]

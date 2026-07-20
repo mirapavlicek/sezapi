@@ -65,6 +65,35 @@ class _FakeClient:
         return self.calls[-1]
 
 
+# --- HTTP hlavičky dle API endpointy (aktualizace 17. 7. 2026) ---------------
+
+def test_user_agent_dle_pozadovaneho_formatu():
+    """API endpointy (17. 7. 2026): User-Agent 'název-aplikace/verze
+    (prostředí; výrobceSW)' – doporučený od 9/2026, POVINNÝ od 1. 1. 2027."""
+    import re
+    from sez_api.client import SEZClient
+    ua = SEZClient.user_agent()
+    assert re.fullmatch(r"[\w.-]+/[\w.]+ \([^;]+; [^)]+\)", ua), ua
+    import sez_api
+    assert f"sez-api/{sez_api.__version__}" in ua
+
+
+def test_gateway_hlavicky_obsahuji_user_agent_a_correlation_id():
+    from sez_api.client import SEZClient
+
+    class _FakeAuth:
+        def build_assertion(self, extra_headers=None):
+            return "assertion"
+
+    c = SEZClient.__new__(SEZClient)
+    c.auth = _FakeAuth()
+    h = c._headers()
+    assert h["User-Agent"].startswith("sez-api/")
+    # X-Correlation-Id: UUID (v4+), povinné od 1. 1. 2027
+    import uuid as _uuid
+    _uuid.UUID(h["X-Correlation-Id"])
+
+
 # --- Terminologie ----------------------------------------------------------
 
 class _PrefixResp(_FakeResp):
