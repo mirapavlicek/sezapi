@@ -1,0 +1,2663 @@
+{
+  "info": {
+    "title": "Terminologie",
+    "description": "Standard Conformance Statement for the Terminology Server provided by TermX\n\n<details>\r\n    <summary><strong>Verze 1.1.0</strong></summary>\r\n    <br />\r\n    <p><strong>Změny:</strong></p>\r\n    <ul>\r\n        <li>Doplňuje popisy a příklady operací pro externí uživatele ve Swagger UI a přidává operaci GET /manifest, která zpřístupní seznam dostupných číselníků a jejich verzí.\r\n        <li>GET /manifest zpřístupní seznam dostupných číselníků a jejich verzí. Možné vstupní parametry:\r\n        <ul>\r\n            <li>lastUpdate - seznam číselníků s verzí změněných/aktivovaných od zadaného data včetně\r\n            <li>effectiveDate - seznam číselníků s verzí, které jsou platné k zadanému datu\r\n            <li>bez parametrů - seznam číselníků s verzí, které jsou platné k aktuálnímu datu\r\n        </ul>\r\n",
+    "contact": {},
+    "version": "v1.1.0"
+  },
+  "servers": [
+    {
+      "url": "/terminologie"
+    }
+  ],
+  "openapi": "3.0.1",
+  "tags": [
+    {
+      "name": "ValueSet",
+      "description": "ValueSet Resource Interactions"
+    },
+    {
+      "name": "CodeSystem",
+      "description": "CodeSystem Resource Interactions"
+    },
+    {
+      "name": "ConceptMap",
+      "description": "ConceptMap Resource Interactions"
+    },
+    {
+      "name": "Manifest",
+      "description": "Seznam dostupných číselníků a jejich verzí"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "fhir_Resource": {
+        "type": "object",
+        "description": "FHIR Resource"
+      },
+      "OperationOutcome": {
+        "type": "object",
+        "description": "FHIR OperationOutcome resource describing an error, warning or informational message.",
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "example": "OperationOutcome"
+          },
+          "issue": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "invalid"
+                },
+                "diagnostics": {
+                  "type": "string",
+                  "example": "Invalid request parameter."
+                }
+              }
+            }
+          }
+        }
+      },
+      "ManifestResponse": {
+        "type": "object",
+        "description": "Odpověď operace GET /manifest obsahující seznam dostupných číselníků a jejich verzí.",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Datum a čas vygenerování odpovědi.",
+            "example": "2026-05-25T10:15:30"
+          },
+          "lastUpdateFilter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Použitá hodnota filtru lastUpdate, pokud byl parametr zadán.",
+            "example": "2026-05-19"
+          },
+          "effectiveDateFilter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Použitá hodnota filtru effectiveDate, pokud byl parametr zadán.",
+            "example": "2026-05-19"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Počet vrácených číselníků.",
+            "example": 1
+          },
+          "valuesets": {
+            "type": "array",
+            "description": "Seznam dostupných číselníků a jejich verzí.",
+            "items": {
+              "$ref": "#/components/schemas/ManifestValueSetItem"
+            }
+          }
+        }
+      },
+      "ManifestValueSetItem": {
+        "type": "object",
+        "description": "Položka seznamu dostupných číselníků.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor číselníku.",
+            "example": "example-value-set"
+          },
+          "url": {
+            "type": "string",
+            "description": "Kanonická URL číselníku.",
+            "example": "https://example.org/fhir/ValueSet/example-value-set"
+          },
+          "version": {
+            "type": "string",
+            "description": "Verze číselníku.",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "string",
+            "description": "Stav verze číselníku.",
+            "example": "active"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Datum účinnosti verze číselníku.",
+            "example": "2026-05-19T00:00:00"
+          },
+          "download": {
+            "$ref": "#/components/schemas/ManifestDownloadLinks"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Počet konceptů v číselníku.",
+            "example": 125
+          }
+        }
+      },
+      "ManifestDownloadLinks": {
+        "type": "object",
+        "description": "Odkazy pro získání obsahu číselníku.",
+        "properties": {
+          "expand": {
+            "type": "string",
+            "description": "Odkaz na FHIR ValueSet $expand pro danou verzi číselníku.",
+            "example": "/terminologie/ValueSet/$expand?valueSetVersion=1.0.0&url=https://example.org/fhir/ValueSet/example-value-set"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Neplatný požadavek nebo chybějící povinný parametr.",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "invalid",
+                  "diagnostics": "Invalid request parameter."
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Požadovaný zdroj, kód nebo číselník nebyl nalezen.",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "not-found",
+                  "diagnostics": "Requested resource was not found."
+                }
+              ]
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Interní chyba serveru.",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "exception",
+                  "diagnostics": "Internal server error."
+                }
+              ]
+            }
+          }
+        }
+      },
+      "ResponseStatus500": {
+        "description": "Error: response status is 500",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "exception",
+                  "details": {
+                    "text": "For input string: \"abc\""
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "ResponseStatus404": {
+        "description": "Error: response status is 404",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "not-found",
+                  "details": {
+                    "text": "value set version not found"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "ResponseStatus400": {
+        "description": "Error: response status is 400",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "invalid",
+                  "details": {
+                    "text": "code parameter required"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "ResponseManifestStatus400": {
+        "description": "Error: response status is 400",
+        "content": {
+          "application/fhir+json": {
+            "schema": {
+              "$ref": "#/components/schemas/OperationOutcome"
+            },
+            "example": {
+              "issue": [
+                {
+                  "severity": "ERROR",
+                  "code": "400",
+                  "message": "Bad Request"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/manifest": {
+      "get": {
+        "summary": "Seznam dostupných číselníků a jejich verzí",
+        "tags": [
+          "Manifest"
+        ],
+        "description": "Zpřístupní seznam dostupných číselníků a jejich verzí.\n\nMožné vstupní parametry:\n- lastUpdate: seznam číselníků s verzí změněných/aktivovaných od zadaného data včetně.\n- effectiveDate: seznam číselníků s verzí, které jsou platné k zadanému datu.\n- bez parametrů: seznam číselníků s verzí, které jsou platné k aktuálnímu datu.\n\nPodporovaný formát data:\n- YYYY-MM-DD\n- YYYY-MM-DDTHH:mm:ssZ",
+        "operationId": "getManifest",
+        "parameters": [
+          {
+            "name": "lastUpdate",
+            "in": "query",
+            "required": false,
+            "description": "Seznam číselníků s verzí změněných/aktivovaných od zadaného data včetně.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}Z)?$"
+            },
+            "examples": {
+              "date": {
+                "summary": "Datum",
+                "value": "2026-05-19"
+              },
+              "dateTimeUtc": {
+                "summary": "Datum a čas v UTC",
+                "value": "2026-05-19T10:15:30Z"
+              }
+            }
+          },
+          {
+            "name": "effectiveDate",
+            "in": "query",
+            "required": false,
+            "description": "Seznam číselníků s verzí, které jsou platné k zadanému datu.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}Z)?$"
+            },
+            "examples": {
+              "date": {
+                "summary": "Datum",
+                "value": "2026-05-19"
+              },
+              "dateTimeUtc": {
+                "summary": "Datum a čas v UTC",
+                "value": "2026-05-19T10:15:30Z"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seznam dostupných číselníků a jejich verzí.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManifestResponse"
+                },
+                "examples": {
+                  "withoutParameters": {
+                    "summary": "Bez parametrů",
+                    "value": {
+                      "generatedAt": "2026-05-27T11:19:12.047776538",
+                      "lastUpdateFilter": "2026-05-01T10:15:30Z",
+                      "count": 22,
+                      "valuesets": [
+                        {
+                          "id": "administrative-gender",
+                          "url": "http://hl7.org/fhir/ValueSet/administrative-gender",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 4,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/administrative-gender"
+                          }
+                        },
+                        {
+                          "id": "codesystem-content-mode",
+                          "url": "http://hl7.org/fhir/ValueSet/codesystem-content-mode",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/codesystem-content-mode"
+                          }
+                        },
+                        {
+                          "id": "concept-property-type",
+                          "url": "http://hl7.org/fhir/ValueSet/concept-property-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 7,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/concept-property-type"
+                          }
+                        },
+                        {
+                          "id": "contact-point-system",
+                          "url": "http://hl7.org/fhir/ValueSet/contact-point-system",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 7,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/contact-point-system"
+                          }
+                        },
+                        {
+                          "id": "contact-point-use",
+                          "url": "http://hl7.org/fhir/ValueSet/contact-point-use",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/contact-point-use"
+                          }
+                        },
+                        {
+                          "id": "definition-topic",
+                          "url": "http://hl7.org/fhir/ValueSet/definition-topic",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 9,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/definition-topic"
+                          }
+                        },
+                        {
+                          "id": "definition-use",
+                          "url": "http://hl7.org/fhir/ValueSet/definition-use",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 6,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/definition-use"
+                          }
+                        },
+                        {
+                          "id": "device-type",
+                          "url": "http://hl7.org/fhir/ValueSet/device-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 13590,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/device-type"
+                          }
+                        },
+                        {
+                          "id": "druhpotratutest",
+                          "url": "https://uzis.cz/terminology/ValueSet/DruhPotratuTest",
+                          "version": "1.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-18T00:00:00",
+                          "total": 1,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.0.0&url=https://uzis.cz/terminology/ValueSet/DruhPotratuTest"
+                          }
+                        },
+                        {
+                          "id": "filter-operator",
+                          "url": "http://hl7.org/fhir/ValueSet/filter-operator",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 11,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/filter-operator"
+                          }
+                        },
+                        {
+                          "id": "jurisdiction",
+                          "url": "http://hl7.org/fhir/ValueSet/jurisdiction",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 249,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/jurisdiction"
+                          }
+                        },
+                        {
+                          "id": "languages",
+                          "url": "http://hl7.org/fhir/ValueSet/languages",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 82,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/languages"
+                          }
+                        },
+                        {
+                          "id": "namingsystem-identifier-type",
+                          "url": "http://hl7.org/fhir/ValueSet/namingsystem-identifier-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 6,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/namingsystem-identifier-type"
+                          }
+                        },
+                        {
+                          "id": "namingsystem-type",
+                          "url": "http://hl7.org/fhir/ValueSet/namingsystem-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 3,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/namingsystem-type"
+                          }
+                        },
+                        {
+                          "id": "observation-category",
+                          "url": "http://hl7.org/fhir/ValueSet/observation-category",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 9,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/observation-category"
+                          }
+                        },
+                        {
+                          "id": "observation-interpretation",
+                          "url": "http://hl7.org/fhir/ValueSet/observation-interpretation",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 47,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/observation-interpretation"
+                          }
+                        },
+                        {
+                          "id": "permitted-data-type",
+                          "url": "http://hl7.org/fhir/ValueSet/permitted-data-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 11,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/permitted-data-type"
+                          }
+                        },
+                        {
+                          "id": "publication-status",
+                          "url": "http://hl7.org/fhir/ValueSet/publication-status",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 4,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/publication-status"
+                          }
+                        },
+                        {
+                          "id": "request-priority-cz",
+                          "url": "https://hl7.cz/terminology/ValueSet/request-priority-cz",
+                          "version": "1.1.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-07T00:00:00",
+                          "total": 2,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.1.0&url=https://hl7.cz/terminology/ValueSet/request-priority-cz"
+                          }
+                        },
+                        {
+                          "id": "usage-context-type",
+                          "url": "http://terminology.hl7.org/ValueSet/usage-context-type",
+                          "version": "1.0.1",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 10,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.0.1&url=http://terminology.hl7.org/ValueSet/usage-context-type"
+                          }
+                        },
+                        {
+                          "id": "v2-0487",
+                          "url": "http://terminology.hl7.org/ValueSet/v2-0487",
+                          "version": "2.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 315,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=2.0.0&url=http://terminology.hl7.org/ValueSet/v2-0487"
+                          }
+                        },
+                        {
+                          "id": "version-algorithm",
+                          "url": "http://hl7.org/fhir/ValueSet/version-algorithm",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/version-algorithm"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "withLastUpdate": {
+                    "summary": "S parametrem lastUpdate",
+                    "value": {
+                      "generatedAt": "2026-05-27T11:19:12.047776538",
+                      "lastUpdateFilter": "2026-05-01T10:15:30Z",
+                      "count": 22,
+                      "valuesets": [
+                        {
+                          "id": "administrative-gender",
+                          "url": "http://hl7.org/fhir/ValueSet/administrative-gender",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 4,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/administrative-gender"
+                          }
+                        },
+                        {
+                          "id": "codesystem-content-mode",
+                          "url": "http://hl7.org/fhir/ValueSet/codesystem-content-mode",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/codesystem-content-mode"
+                          }
+                        },
+                        {
+                          "id": "concept-property-type",
+                          "url": "http://hl7.org/fhir/ValueSet/concept-property-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 7,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/concept-property-type"
+                          }
+                        },
+                        {
+                          "id": "contact-point-system",
+                          "url": "http://hl7.org/fhir/ValueSet/contact-point-system",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 7,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/contact-point-system"
+                          }
+                        },
+                        {
+                          "id": "contact-point-use",
+                          "url": "http://hl7.org/fhir/ValueSet/contact-point-use",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/contact-point-use"
+                          }
+                        },
+                        {
+                          "id": "definition-topic",
+                          "url": "http://hl7.org/fhir/ValueSet/definition-topic",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 9,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/definition-topic"
+                          }
+                        },
+                        {
+                          "id": "definition-use",
+                          "url": "http://hl7.org/fhir/ValueSet/definition-use",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 6,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/definition-use"
+                          }
+                        },
+                        {
+                          "id": "device-type",
+                          "url": "http://hl7.org/fhir/ValueSet/device-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 13590,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/device-type"
+                          }
+                        },
+                        {
+                          "id": "druhpotratutest",
+                          "url": "https://uzis.cz/terminology/ValueSet/DruhPotratuTest",
+                          "version": "1.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-18T00:00:00",
+                          "total": 1,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.0.0&url=https://uzis.cz/terminology/ValueSet/DruhPotratuTest"
+                          }
+                        },
+                        {
+                          "id": "filter-operator",
+                          "url": "http://hl7.org/fhir/ValueSet/filter-operator",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 11,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/filter-operator"
+                          }
+                        },
+                        {
+                          "id": "jurisdiction",
+                          "url": "http://hl7.org/fhir/ValueSet/jurisdiction",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 249,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/jurisdiction"
+                          }
+                        },
+                        {
+                          "id": "languages",
+                          "url": "http://hl7.org/fhir/ValueSet/languages",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 82,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/languages"
+                          }
+                        },
+                        {
+                          "id": "namingsystem-identifier-type",
+                          "url": "http://hl7.org/fhir/ValueSet/namingsystem-identifier-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 6,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/namingsystem-identifier-type"
+                          }
+                        },
+                        {
+                          "id": "namingsystem-type",
+                          "url": "http://hl7.org/fhir/ValueSet/namingsystem-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 3,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/namingsystem-type"
+                          }
+                        },
+                        {
+                          "id": "observation-category",
+                          "url": "http://hl7.org/fhir/ValueSet/observation-category",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 9,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/observation-category"
+                          }
+                        },
+                        {
+                          "id": "observation-interpretation",
+                          "url": "http://hl7.org/fhir/ValueSet/observation-interpretation",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 47,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/observation-interpretation"
+                          }
+                        },
+                        {
+                          "id": "permitted-data-type",
+                          "url": "http://hl7.org/fhir/ValueSet/permitted-data-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 11,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/permitted-data-type"
+                          }
+                        },
+                        {
+                          "id": "publication-status",
+                          "url": "http://hl7.org/fhir/ValueSet/publication-status",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 4,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/publication-status"
+                          }
+                        },
+                        {
+                          "id": "request-priority-cz",
+                          "url": "https://hl7.cz/terminology/ValueSet/request-priority-cz",
+                          "version": "1.1.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-07T00:00:00",
+                          "total": 2,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.1.0&url=https://hl7.cz/terminology/ValueSet/request-priority-cz"
+                          }
+                        },
+                        {
+                          "id": "usage-context-type",
+                          "url": "http://terminology.hl7.org/ValueSet/usage-context-type",
+                          "version": "1.0.1",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 10,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.0.1&url=http://terminology.hl7.org/ValueSet/usage-context-type"
+                          }
+                        },
+                        {
+                          "id": "v2-0487",
+                          "url": "http://terminology.hl7.org/ValueSet/v2-0487",
+                          "version": "2.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 315,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=2.0.0&url=http://terminology.hl7.org/ValueSet/v2-0487"
+                          }
+                        },
+                        {
+                          "id": "version-algorithm",
+                          "url": "http://hl7.org/fhir/ValueSet/version-algorithm",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/version-algorithm"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "withEffectiveDate": {
+                    "summary": "S parametrem effectiveDate",
+                    "value": {
+                      "generatedAt": "2026-05-27T11:19:12.047776538",
+                      "lastUpdateFilter": "2026-05-01T10:15:30Z",
+                      "count": 22,
+                      "valuesets": [
+                        {
+                          "id": "administrative-gender",
+                          "url": "http://hl7.org/fhir/ValueSet/administrative-gender",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 4,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/administrative-gender"
+                          }
+                        },
+                        {
+                          "id": "codesystem-content-mode",
+                          "url": "http://hl7.org/fhir/ValueSet/codesystem-content-mode",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/codesystem-content-mode"
+                          }
+                        },
+                        {
+                          "id": "concept-property-type",
+                          "url": "http://hl7.org/fhir/ValueSet/concept-property-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 7,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/concept-property-type"
+                          }
+                        },
+                        {
+                          "id": "contact-point-system",
+                          "url": "http://hl7.org/fhir/ValueSet/contact-point-system",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 7,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/contact-point-system"
+                          }
+                        },
+                        {
+                          "id": "contact-point-use",
+                          "url": "http://hl7.org/fhir/ValueSet/contact-point-use",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/contact-point-use"
+                          }
+                        },
+                        {
+                          "id": "definition-topic",
+                          "url": "http://hl7.org/fhir/ValueSet/definition-topic",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 9,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/definition-topic"
+                          }
+                        },
+                        {
+                          "id": "definition-use",
+                          "url": "http://hl7.org/fhir/ValueSet/definition-use",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 6,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/definition-use"
+                          }
+                        },
+                        {
+                          "id": "device-type",
+                          "url": "http://hl7.org/fhir/ValueSet/device-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 13590,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/device-type"
+                          }
+                        },
+                        {
+                          "id": "druhpotratutest",
+                          "url": "https://uzis.cz/terminology/ValueSet/DruhPotratuTest",
+                          "version": "1.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-18T00:00:00",
+                          "total": 1,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.0.0&url=https://uzis.cz/terminology/ValueSet/DruhPotratuTest"
+                          }
+                        },
+                        {
+                          "id": "filter-operator",
+                          "url": "http://hl7.org/fhir/ValueSet/filter-operator",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 11,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/filter-operator"
+                          }
+                        },
+                        {
+                          "id": "jurisdiction",
+                          "url": "http://hl7.org/fhir/ValueSet/jurisdiction",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 249,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/jurisdiction"
+                          }
+                        },
+                        {
+                          "id": "languages",
+                          "url": "http://hl7.org/fhir/ValueSet/languages",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 82,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/languages"
+                          }
+                        },
+                        {
+                          "id": "namingsystem-identifier-type",
+                          "url": "http://hl7.org/fhir/ValueSet/namingsystem-identifier-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 6,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/namingsystem-identifier-type"
+                          }
+                        },
+                        {
+                          "id": "namingsystem-type",
+                          "url": "http://hl7.org/fhir/ValueSet/namingsystem-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 3,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/namingsystem-type"
+                          }
+                        },
+                        {
+                          "id": "observation-category",
+                          "url": "http://hl7.org/fhir/ValueSet/observation-category",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 9,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/observation-category"
+                          }
+                        },
+                        {
+                          "id": "observation-interpretation",
+                          "url": "http://hl7.org/fhir/ValueSet/observation-interpretation",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 47,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/observation-interpretation"
+                          }
+                        },
+                        {
+                          "id": "permitted-data-type",
+                          "url": "http://hl7.org/fhir/ValueSet/permitted-data-type",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 11,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/permitted-data-type"
+                          }
+                        },
+                        {
+                          "id": "publication-status",
+                          "url": "http://hl7.org/fhir/ValueSet/publication-status",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 4,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/publication-status"
+                          }
+                        },
+                        {
+                          "id": "request-priority-cz",
+                          "url": "https://hl7.cz/terminology/ValueSet/request-priority-cz",
+                          "version": "1.1.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-07T00:00:00",
+                          "total": 2,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.1.0&url=https://hl7.cz/terminology/ValueSet/request-priority-cz"
+                          }
+                        },
+                        {
+                          "id": "usage-context-type",
+                          "url": "http://terminology.hl7.org/ValueSet/usage-context-type",
+                          "version": "1.0.1",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 10,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=1.0.1&url=http://terminology.hl7.org/ValueSet/usage-context-type"
+                          }
+                        },
+                        {
+                          "id": "v2-0487",
+                          "url": "http://terminology.hl7.org/ValueSet/v2-0487",
+                          "version": "2.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 315,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=2.0.0&url=http://terminology.hl7.org/ValueSet/v2-0487"
+                          }
+                        },
+                        {
+                          "id": "version-algorithm",
+                          "url": "http://hl7.org/fhir/ValueSet/version-algorithm",
+                          "version": "6.0.0",
+                          "status": "active",
+                          "effectiveDate": "2026-05-13T00:00:00",
+                          "total": 5,
+                          "download": {
+                            "expand": "https://termx-api-t2-pub.csez.cz/fhir/ValueSet/$expand?valueSetVersion=6.0.0&url=http://hl7.org/fhir/ValueSet/version-algorithm"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseManifestStatus400"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        }
+      }
+    },
+    "/ValueSet": {
+      "get": {
+        "summary": "Vyhledání ValueSet zdrojů",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "Vyhledá ValueSet zdroje podle zadaných vyhledávacích parametrů.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "_count",
+            "in": "query",
+            "description": "Maximální počet položek ve stránce výsledků.",
+            "example": "10"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "_page",
+            "in": "query",
+            "description": "Číslo stránky výsledků.",
+            "example": "1"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID zdroje.",
+            "name": "_id",
+            "in": "query",
+            "example": "example-value-set"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "version",
+            "in": "query",
+            "description": "Verze ValueSet zdroje.",
+            "example": "1.0.0"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "url",
+            "in": "query",
+            "description": "Kanonická URL ValueSet zdroje.",
+            "example": "https://example.org/fhir/ValueSet/example-value-set"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "name",
+            "in": "query",
+            "description": "Technický název ValueSet zdroje.",
+            "example": "ExampleValueSet"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "title",
+            "in": "query",
+            "description": "Zobrazovaný název ValueSet zdroje.",
+            "example": "Ukázkový číselník"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "status",
+            "in": "query",
+            "description": "Stav ValueSet zdroje.",
+            "example": "active"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "reference",
+            "in": "query",
+            "description": "Reference použitá ve ValueSet zdroji.",
+            "example": "https://example.org/fhir/CodeSystem/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "publisher",
+            "in": "query",
+            "description": "Vydavatel ValueSet zdroje.",
+            "example": "TermX"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "description",
+            "in": "query",
+            "description": "Textový popis ValueSet zdroje.",
+            "example": "Ukázkový číselník"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "code",
+            "in": "query",
+            "description": "Kód obsažený ve ValueSet zdroji.",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "identifier",
+            "in": "query",
+            "description": "Identifikátor ValueSet zdroje.",
+            "example": "example-identifier"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "name": "date",
+            "in": "query",
+            "description": "Datum ValueSet zdroje.",
+            "example": "2026-05-19"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Výsledek vyhledávání ValueSet zdrojů ve formě FHIR Bundle.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Bundle",
+                  "type": "searchset",
+                  "total": 1,
+                  "link": [
+                    {
+                      "relation": "self",
+                      "url": "http://api-terminologie.csez.gov.cz/fhir/ValueSet?_id=publication-status&_page=1"
+                    },
+                    {
+                      "relation": "first",
+                      "url": "http://api-terminologie.csez.gov.cz/fhir/ValueSet?_id=publication-status&_page=1"
+                    },
+                    {
+                      "relation": "last",
+                      "url": "http://api-terminologie.csez.gov.cz/fhir/ValueSet?_id=publication-status&_page=1"
+                    }
+                  ],
+                  "entry": [
+                    {
+                      "fullUrl": "ValueSet/publication-status--4.3.0",
+                      "resource": {
+                        "resourceType": "ValueSet",
+                        "id": "publication-status--4.3.0",
+                        "text": {
+                          "status": "generated",
+                          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include all codes defined in <a href=\"codesystem-publication-status.html\"><code>http://hl7.org/fhir/publication-status</code></a></li></ul></div>"
+                        },
+                        "extension": [
+                          {
+                            "url": "http://hl7.org/fhir/tools/StructureDefinition/web-source",
+                            "valueUrl": "https://terminologie.ezdravi.gov.cz//fhir/ValueSet/publication-status"
+                          }
+                        ],
+                        "url": "http://hl7.org/fhir/ValueSet/publication-status",
+                        "identifier": [
+                          {
+                            "system": "urn:ietf:rfc:3986",
+                            "value": "urn:oid:2.16.840.1.113883.4.642.3.3"
+                          }
+                        ],
+                        "version": "4.3.0",
+                        "name": "PublicationStatus",
+                        "title": "PublicationStatus",
+                        "status": "active",
+                        "experimental": false,
+                        "publisher": "HL7 (FHIR Project)",
+                        "contact": [
+                          {
+                            "telecom": [
+                              {
+                                "system": "url",
+                                "value": "http://hl7.org/fhir"
+                              },
+                              {
+                                "system": "email",
+                                "value": "fhir@lists.hl7.org"
+                              }
+                            ]
+                          }
+                        ],
+                        "description": "The lifecycle status of an artifact.",
+                        "effectivePeriod": {
+                          "start": "2025-12-12T00:00:00Z"
+                        },
+                        "compose": {
+                          "inactive": false,
+                          "include": [
+                            {
+                              "system": "http://hl7.org/fhir/publication-status",
+                              "version": "4.3.0"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        }
+      }
+    },
+    "/ValueSet/$expand": {
+      "get": {
+        "summary": "Expanze ValueSet zdroje",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "Provede expanzi ValueSet zdroje podle kanonické URL a volitelně konkrétní verze.",
+        "responses": {
+          "200": {
+            "description": "Výsledek expanze ValueSet zdroje.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "ValueSet",
+                  "id": "publication-status--4.3.0",
+                  "text": {
+                    "status": "generated",
+                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include all codes defined in <a href=\"codesystem-publication-status.html\"><code>http://hl7.org/fhir/publication-status</code></a></li></ul></div>"
+                  },
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/tools/StructureDefinition/web-source",
+                      "valueUrl": "https://terminologie.ezdravi.gov.cz//fhir/ValueSet/publication-status"
+                    }
+                  ],
+                  "url": "http://hl7.org/fhir/ValueSet/publication-status",
+                  "identifier": [
+                    {
+                      "system": "urn:ietf:rfc:3986",
+                      "value": "urn:oid:2.16.840.1.113883.4.642.3.3"
+                    }
+                  ],
+                  "version": "4.3.0",
+                  "name": "PublicationStatus",
+                  "title": "PublicationStatus",
+                  "status": "active",
+                  "experimental": false,
+                  "publisher": "HL7 (FHIR Project)",
+                  "contact": [
+                    {
+                      "telecom": [
+                        {
+                          "system": "url",
+                          "value": "http://hl7.org/fhir"
+                        },
+                        {
+                          "system": "email",
+                          "value": "fhir@lists.hl7.org"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "The lifecycle status of an artifact.",
+                  "effectivePeriod": {
+                    "start": "2025-12-12T00:00:00Z"
+                  },
+                  "compose": {
+                    "inactive": false,
+                    "include": [
+                      {
+                        "system": "http://hl7.org/fhir/publication-status",
+                        "version": "4.3.0"
+                      }
+                    ]
+                  },
+                  "expansion": {
+                    "total": 4,
+                    "parameter": [
+                      {
+                        "name": "url",
+                        "valueString": "http://hl7.org/fhir/ValueSet/publication-status"
+                      }
+                    ],
+                    "contains": [
+                      {
+                        "system": "http://hl7.org/fhir/publication-status",
+                        "version": "4.3.0",
+                        "code": "draft",
+                        "display": "Draft"
+                      },
+                      {
+                        "system": "http://hl7.org/fhir/publication-status",
+                        "version": "4.3.0",
+                        "code": "retired",
+                        "display": "Retired"
+                      },
+                      {
+                        "system": "http://hl7.org/fhir/publication-status",
+                        "version": "4.3.0",
+                        "code": "active",
+                        "display": "Active"
+                      },
+                      {
+                        "system": "http://hl7.org/fhir/publication-status",
+                        "version": "4.3.0",
+                        "code": "unknown",
+                        "display": "Unknown"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ResponseStatus404"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kanonická URL ValueSet zdroje, který má být expandován.",
+            "name": "url",
+            "in": "query",
+            "example": "https://example.org/fhir/ValueSet/example-value-set"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Konkrétní verze ValueSet zdroje použitá pro expanzi.",
+            "name": "valueSetVersion",
+            "in": "query",
+            "example": "1.0.0"
+          }
+        ]
+      }
+    },
+    "/ValueSet/{id}/$expand": {
+      "get": {
+        "summary": "Expanze ValueSet zdroje podle ID",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "Provede expanzi ValueSet zdroje identifikovaného pomocí ID.",
+        "responses": {
+          "200": {
+            "description": "Výsledek expanze ValueSet zdroje.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "ValueSet",
+                  "id": "administrative-gender--4.0.1",
+                  "language": "en",
+                  "text": {
+                    "status": "generated",
+                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Include all codes defined in <a href=\"codesystem-administrative-gender.html\"><code>http://hl7.org/fhir/administrative-gender</code></a></li></ul></div>"
+                  },
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/tools/StructureDefinition/web-source",
+                      "valueUrl": "https://terminologie.ezdravi.gov.cz//fhir/ValueSet/administrative-gender"
+                    }
+                  ],
+                  "url": "http://hl7.org/fhir/ValueSet/administrative-gender",
+                  "identifier": [
+                    {
+                      "system": "urn:ietf:rfc:3986",
+                      "value": "urn:oid:2.16.840.1.113883.4.642.3.1"
+                    }
+                  ],
+                  "version": "4.0.1",
+                  "name": "AdministrativeGender",
+                  "title": "AdministrativeGender",
+                  "status": "active",
+                  "experimental": false,
+                  "date": "2026-03-11T10:35:19.458127Z",
+                  "publisher": "HL7 (FHIR Project)",
+                  "contact": [
+                    {
+                      "telecom": [
+                        {
+                          "system": "url",
+                          "value": "http://hl7.org/fhir"
+                        },
+                        {
+                          "system": "email",
+                          "value": "fhir@lists.hl7.org"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "The gender of a person used for administrative purposes.",
+                  "effectivePeriod": {
+                    "start": "2025-12-12T00:00:00Z"
+                  },
+                  "compose": {
+                    "inactive": false,
+                    "include": [
+                      {
+                        "system": "http://hl7.org/fhir/administrative-gender",
+                        "version": "4.0.1"
+                      }
+                    ]
+                  },
+                  "expansion": {
+                    "total": 4,
+                    "contains": [
+                      {
+                        "system": "http://hl7.org/fhir/administrative-gender",
+                        "version": "5.0.0-cibuild",
+                        "code": "unknown",
+                        "display": "Unknown"
+                      },
+                      {
+                        "system": "http://hl7.org/fhir/administrative-gender",
+                        "version": "5.0.0-cibuild",
+                        "code": "female",
+                        "display": "Female"
+                      },
+                      {
+                        "system": "http://hl7.org/fhir/administrative-gender",
+                        "version": "5.0.0-cibuild",
+                        "code": "male",
+                        "display": "Male"
+                      },
+                      {
+                        "system": "http://hl7.org/fhir/administrative-gender",
+                        "version": "5.0.0-cibuild",
+                        "code": "other",
+                        "display": "Other"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ResponseStatus404"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "ID ValueSet zdroje.",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "example-value-set",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/ValueSet/$validate-code": {
+      "get": {
+        "summary": "Validace kódu vůči ValueSet zdroji",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "Ověří, zda zadaný kód patří do určeného ValueSet zdroje.",
+        "responses": {
+          "200": {
+            "description": "Výsledek validace kódu.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "result",
+                      "valueBoolean": true
+                    },
+                    {
+                      "name": "code",
+                      "valueCode": "male"
+                    },
+                    {
+                      "name": "system",
+                      "valueUri": "http://hl7.org/fhir/administrative-gender"
+                    },
+                    {
+                      "name": "display",
+                      "valueString": "Male"
+                    },
+                    {
+                      "name": "version",
+                      "valueString": "5.0.0-cibuild"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseStatus400"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kanonická URL ValueSet zdroje.",
+            "name": "url",
+            "in": "query",
+            "example": "https://example.org/fhir/ValueSet/example-value-set"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Konkrétní verze ValueSet zdroje.",
+            "name": "valueSetVersion",
+            "in": "query",
+            "example": "1.0.0"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kód, který má být validován.",
+            "name": "code",
+            "in": "query",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "URI systému kódů.",
+            "name": "system",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Verze systému kódů.",
+            "name": "systemVersion",
+            "in": "query",
+            "example": "1.0.0"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Zobrazovaný název kódu.",
+            "name": "display",
+            "in": "query",
+            "example": "Ukázkový kód"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR Coding reprezentace kódu.",
+            "name": "coding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR CodeableConcept reprezentace kódu.",
+            "name": "codeableConcept",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/ValueSet/{id}/$validate-code": {
+      "get": {
+        "summary": "Validace kódu vůči ValueSet zdroji podle ID",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "Ověří, zda zadaný kód patří do ValueSet zdroje identifikovaného pomocí ID.",
+        "responses": {
+          "200": {
+            "description": "Výsledek validace kódu.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "result",
+                      "valueBoolean": true
+                    },
+                    {
+                      "name": "code",
+                      "valueCode": "male"
+                    },
+                    {
+                      "name": "system",
+                      "valueUri": "http://hl7.org/fhir/administrative-gender"
+                    },
+                    {
+                      "name": "display",
+                      "valueString": "Male"
+                    },
+                    {
+                      "name": "version",
+                      "valueString": "5.0.0-cibuild"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseStatus400"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kód, který má být validován.",
+            "name": "code",
+            "in": "query",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "URI systému kódů.",
+            "name": "system",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Verze systému kódů.",
+            "name": "systemVersion",
+            "in": "query",
+            "example": "1.0.0"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Zobrazovaný název kódu.",
+            "name": "display",
+            "in": "query",
+            "example": "Ukázkový kód"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR Coding reprezentace kódu.",
+            "name": "coding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR CodeableConcept reprezentace kódu.",
+            "name": "codeableConcept",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "ID ValueSet zdroje.",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "example-value-set",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/CodeSystem/$lookup": {
+      "get": {
+        "summary": "Vyhledání detailu kódu v CodeSystem zdroji",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "Operace CodeSystem $lookup vrací detailní informace o kódu v daném systému. Klient obvykle zadává parametry system a code, volitelně version, date nebo property.",
+        "responses": {
+          "200": {
+            "description": "Detail kódu byl nalezen.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "name",
+                      "valueString": "administrative-gender"
+                    },
+                    {
+                      "name": "version",
+                      "valueString": "5.0.0-cibuild"
+                    },
+                    {
+                      "name": "display",
+                      "valueString": "Male"
+                    },
+                    {
+                      "name": "designation",
+                      "part": [
+                        {
+                          "name": "use",
+                          "valueCoding": {
+                            "code": "definition"
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "valueString": "Male."
+                        },
+                        {
+                          "name": "language",
+                          "valueString": "en"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseStatus400"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResponseStatus404"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kód, jehož detail má být vyhledán.",
+            "name": "code",
+            "in": "query",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "URI systému kódů, ve kterém má být kód vyhledán.",
+            "name": "system",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Verze systému kódů.",
+            "name": "version",
+            "in": "query",
+            "example": "1.0.0"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Datum, ke kterému mají být informace vráceny.",
+            "name": "date",
+            "in": "query",
+            "example": "2026-05-19"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Vlastnost, kterou klient požaduje vrátit ve výstupu.",
+            "name": "property",
+            "in": "query",
+            "example": "designation"
+          }
+        ]
+      }
+    },
+    "/CodeSystem/{id}/$lookup": {
+      "get": {
+        "summary": "Vyhledání detailu kódu v CodeSystem zdroji podle ID",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "Operace CodeSystem $lookup vrací detailní informace o kódu v CodeSystem zdroji identifikovaném pomocí ID.",
+        "responses": {
+          "200": {
+            "description": "Detail kódu byl nalezen.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "name",
+                      "valueString": "administrative-gender"
+                    },
+                    {
+                      "name": "version",
+                      "valueString": "5.0.0-cibuild"
+                    },
+                    {
+                      "name": "display",
+                      "valueString": "Male"
+                    },
+                    {
+                      "name": "designation",
+                      "part": [
+                        {
+                          "name": "use",
+                          "valueCoding": {
+                            "code": "definition"
+                          }
+                        },
+                        {
+                          "name": "value",
+                          "valueString": "Male."
+                        },
+                        {
+                          "name": "language",
+                          "valueString": "en"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseStatus400"
+          },
+          "404": {
+            "$ref": "#/components/responses/ResponseStatus404"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kód, jehož detail má být vyhledán.",
+            "name": "code",
+            "in": "query",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Datum, ke kterému mají být informace vráceny.",
+            "name": "date",
+            "in": "query",
+            "example": "2026-05-19T00:00:00"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Vlastnost, kterou klient požaduje vrátit ve výstupu.",
+            "name": "property",
+            "in": "query",
+            "example": "designation"
+          },
+          {
+            "name": "id",
+            "description": "ID CodeSystem zdroje.",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "example-code-system",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/CodeSystem/$validate-code": {
+      "get": {
+        "summary": "Validace kódu vůči CodeSystem zdroji",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "Ověří, zda zadaný kód existuje v určeném CodeSystem zdroji.",
+        "responses": {
+          "200": {
+            "description": "Výsledek validace kódu.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "result",
+                      "valueBoolean": true
+                    },
+                    {
+                      "name": "display",
+                      "valueString": "Ukázkový kód"
+                    },
+                    {
+                      "name": "message",
+                      "valueString": "Code is valid in the specified code system."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kanonická URL CodeSystem zdroje.",
+            "name": "url",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kód, který má být validován.",
+            "name": "code",
+            "in": "query",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Verze CodeSystem zdroje.",
+            "name": "version",
+            "in": "query",
+            "example": "1.0.0"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Zobrazovaný název kódu.",
+            "name": "display",
+            "in": "query",
+            "example": "Ukázkový kód"
+          }
+        ]
+      }
+    },
+    "/CodeSystem/{id}/$validate-code": {
+      "get": {
+        "summary": "Validace kódu vůči CodeSystem zdroji podle ID",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "Ověří, zda zadaný kód existuje v CodeSystem zdroji identifikovaném pomocí ID.",
+        "responses": {
+          "200": {
+            "description": "Výsledek validace kódu.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "result",
+                      "valueBoolean": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseStatus400"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kód, který má být validován.",
+            "name": "code",
+            "in": "query",
+            "example": "example-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Zobrazovaný název kódu.",
+            "name": "display",
+            "in": "query",
+            "example": "Ukázkový kód"
+          },
+          {
+            "name": "id",
+            "description": "ID CodeSystem zdroje.",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "example-code-system",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/CodeSystem/$subsumes": {
+      "get": {
+        "summary": "Ověření subsumpce dvou kódů",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "Ověří vztah subsumpce mezi dvěma kódy v daném systému kódů.",
+        "responses": {
+          "200": {
+            "description": "Výsledek ověření subsumpce.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "outcome",
+                      "valueCode": "not-subsumed"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ResponseStatus400"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "První porovnávaný kód.",
+            "name": "codeA",
+            "in": "query",
+            "example": "parent-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Druhý porovnávaný kód.",
+            "name": "codeB",
+            "in": "query",
+            "example": "child-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "URI systému kódů.",
+            "name": "system",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Verze systému kódů.",
+            "name": "version",
+            "in": "query",
+            "example": "1.0.0"
+          }
+        ]
+      }
+    },
+    "/CodeSystem/{id}/$subsumes": {
+      "get": {
+        "summary": "Ověření subsumpce dvou kódů podle ID CodeSystem zdroje",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "Ověří vztah subsumpce mezi dvěma kódy v CodeSystem zdroji identifikovaném pomocí ID.",
+        "responses": {
+          "200": {
+            "description": "Výsledek ověření subsumpce.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "outcome",
+                      "valueCode": "subsumes"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/ResponseStatus404"
+          },
+          "500": {
+            "$ref": "#/components/responses/ResponseStatus500"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "První porovnávaný kód.",
+            "name": "codeA",
+            "in": "query",
+            "example": "parent-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Druhý porovnávaný kód.",
+            "name": "codeB",
+            "in": "query",
+            "example": "child-code"
+          },
+          {
+            "name": "id",
+            "description": "ID CodeSystem zdroje.",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "example-code-system",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/ConceptMap/$translate": {
+      "get": {
+        "summary": "Překlad kódu pomocí ConceptMap",
+        "tags": [
+          "ConceptMap"
+        ],
+        "description": "Přeloží zadaný zdrojový kód na cílový kód pomocí ConceptMap.",
+        "responses": {
+          "200": {
+            "description": "Výsledek překladu kódu.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "result",
+                      "valueBoolean": true
+                    },
+                    {
+                      "name": "match",
+                      "part": [
+                        {
+                          "name": "equivalence",
+                          "valueCode": "equivalent"
+                        },
+                        {
+                          "name": "concept",
+                          "valueCoding": {
+                            "system": "https://example.org/fhir/CodeSystem/target",
+                            "code": "target-code",
+                            "display": "Cílový kód"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Kanonická URL ConceptMap zdroje.",
+            "name": "url",
+            "in": "query",
+            "example": "https://example.org/fhir/ConceptMap/example"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Zdrojový kód k překladu.",
+            "name": "sourceCode",
+            "in": "query",
+            "example": "source-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Systém zdrojového kódu.",
+            "name": "system",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/source"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR Coding reprezentace zdrojového kódu.",
+            "name": "sourceCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR CodeableConcept reprezentace zdrojového kódu.",
+            "name": "sourceCodeableConcept",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cílový kód.",
+            "name": "targetCode",
+            "in": "query",
+            "example": "target-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cílový systém kódů.",
+            "name": "targetSystem",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/target"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR Coding reprezentace cílového kódu.",
+            "name": "targetCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR CodeableConcept reprezentace cílového kódu.",
+            "name": "targetCodeableConcept",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/ConceptMap/{id}/$translate": {
+      "get": {
+        "summary": "Překlad kódu pomocí ConceptMap podle ID",
+        "tags": [
+          "ConceptMap"
+        ],
+        "description": "Přeloží zadaný zdrojový kód na cílový kód pomocí ConceptMap zdroje identifikovaného pomocí ID.",
+        "responses": {
+          "200": {
+            "description": "Výsledek překladu kódu.",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": {
+                  "resourceType": "Parameters",
+                  "parameter": [
+                    {
+                      "name": "result",
+                      "valueBoolean": true
+                    },
+                    {
+                      "name": "match",
+                      "part": [
+                        {
+                          "name": "equivalence",
+                          "valueCode": "equivalent"
+                        },
+                        {
+                          "name": "concept",
+                          "valueCoding": {
+                            "system": "https://example.org/fhir/CodeSystem/target",
+                            "code": "target-code",
+                            "display": "Cílový kód"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Zdrojový kód k překladu.",
+            "name": "sourceCode",
+            "in": "query",
+            "example": "source-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Systém zdrojového kódu.",
+            "name": "system",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/source"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR Coding reprezentace zdrojového kódu.",
+            "name": "sourceCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR CodeableConcept reprezentace zdrojového kódu.",
+            "name": "sourceCodeableConcept",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cílový kód.",
+            "name": "targetCode",
+            "in": "query",
+            "example": "target-code"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cílový systém kódů.",
+            "name": "targetSystem",
+            "in": "query",
+            "example": "https://example.org/fhir/CodeSystem/target"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR Coding reprezentace cílového kódu.",
+            "name": "targetCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "FHIR CodeableConcept reprezentace cílového kódu.",
+            "name": "targetCodeableConcept",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "ID ConceptMap zdroje.",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "example-concept-map",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    }
+  }
+}

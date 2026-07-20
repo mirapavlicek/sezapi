@@ -1,0 +1,369 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "EZCA Validace",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/ezcaValidace"
+    }
+  ],
+  "paths": {
+    "/api/v1/dokumenty/validate": {
+      "post": {
+        "tags": [
+          "Dokumenty"
+        ],
+        "summary": "Provede online/offline validaci dokumentu (elektronický posudek).",
+        "parameters": [
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "6ddb509e-18e7-408c-bdec-34161b4c5f5d"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidaceRequest"
+              },
+              "examples": {
+                "Online": {
+                  "summary": "Online validace",
+                  "description": "Validuje na základě hash dokumentu (dokumentHash).",
+                  "value": {
+                    "typValidace": "online",
+                    "typDokumentu": "elp",
+                    "dokumentId": "3c9dfc6f-657e-48ff-5914-08deaa2bf565",
+                    "dokumentHash": "62E1201B445910197F109AC45F8E1EB0D3717ECD931830AF43861D2D9104586B2360070FE1033C196B0AF0F5A774149152BF1EBB3D1414548FEF27EB958FE1F8"
+                  }
+                },
+                "Offline": {
+                  "summary": "Offline validace",
+                  "description": "Validuje na základě datumu vystavení, datumu narození a příjmení.",
+                  "value": {
+                    "typValidace": "offline",
+                    "typDokumentu": "elp",
+                    "dokumentId": "d0cfbf8d-078f-4dff-ef13-08deaa2b3622",
+                    "datumVystaveni": "2026-05-04",
+                    "datumNarozeni": "2013-03-03",
+                    "prijmeni": "SVATÁ"
+                  }
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidaceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidaceDokumentuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simple-health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "SimpleHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JednoduchaHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "Health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/detail-health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "DetailHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthCheckResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "number",
+            "format": "double"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "releaseId": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JednoduchaHealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TypDokumentuEnum": {
+        "enum": [
+          "elp"
+        ],
+        "type": "string"
+      },
+      "TypValidaceEnum": {
+        "enum": [
+          "offline",
+          "online"
+        ],
+        "type": "string"
+      },
+      "ValidaceDokumentuResponse": {
+        "type": "object",
+        "properties": {
+          "platnyDokument": {
+            "type": "boolean"
+          },
+          "dokumentNalezen": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidaceRequest": {
+        "type": "object",
+        "properties": {
+          "typValidace": {
+            "$ref": "#/components/schemas/TypValidaceEnum"
+          },
+          "dokumentHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "dokumentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "typDokumentu": {
+            "$ref": "#/components/schemas/TypDokumentuEnum"
+          },
+          "datumVystaveni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Dokumenty"
+    },
+    {
+      "name": "Health"
+    }
+  ]
+}
