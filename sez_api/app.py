@@ -3248,8 +3248,15 @@ async def debug_jwt():
                 "version": "v1.0.5 (T2) / v1.1.0 (apio)",
                 "note": ("Gateway: /terminologie/... BEZ /fhir (dle swaggeru v1.0.5 i v1.1.0; "
                           "legacy /terminologie/fhir po upgrade T2 vrací 406 – klient prefix "
-                          "autodetekuje) | Veřejný mirror: termx-api-t2-pub.csez.cz/fhir (mTLS)"),
+                          "autodetekuje) | Veřejný mirror: termx-api-t2-pub.csez.cz/fhir (mTLS) "
+                          "| Open API bez přihlášení: apio.csez.gov.cz/apidoc"),
                 "public_base": TERMX_PUB_BASE,
+                # Webová rozhraní dle tabulky API endpointy (21. 7. 2026)
+                "web_ui": {
+                    "T2": "https://terminologie.ezdravi.gov.cz/landing",
+                    "PROD": ["https://termx.ezdravi.gov.cz/",
+                              "https://snomed.ezdravi.gov.cz/"],
+                },
                 "endpoints": [
                     {"method": "GET", "path": "/terminologie/ValueSet/{id}", "desc": "Načtení ValueSetu"},
                     {"method": "GET", "path": "/terminologie/ValueSet/$expand", "desc": "Expandování ValueSetu"},

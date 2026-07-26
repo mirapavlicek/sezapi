@@ -303,18 +303,38 @@ class SEZClient:
     @staticmethod
     def user_agent() -> str:
         """User-Agent dle požadavku API endpointy (aktualizace 21. 7. 2026):
-        formát ``název-aplikace/verze (prostředí; výrobceSW)``, kde
-        prostředí musí být hodnota **Test** nebo **Prod** (nikoli T2/PROD).
-        POVINNÉ od 1. 9. 2026 (dřívější znění uvádělo 1. 1. 2027);
-        RFC 9110 §10.1.5."""
+        formát ``název-aplikace/verze (prostředí; výrobceSW[; poznámka])``,
+        kde prostředí musí být hodnota **Test** nebo **Prod** (nikoli
+        T2/PROD). POVINNÉ od 1. 9. 2026 (dřívější znění uvádělo
+        1. 1. 2027); RFC 9110 §10.1.5.
+
+        Název aplikace, výrobce i volitelnou poznámku lze přenastavit přes
+        SEZ_APP_NAME / SEZ_VENDOR / SEZ_UA_NOTE."""
         try:
             from sez_api import __version__ as _ver
         except Exception:
             _ver = "0"
+        try:
+            from sez_api import config as _cfg
+            nazev = _cfg.SEZ_APP_NAME or "sez-api"
+            vyrobce = _cfg.SEZ_VENDOR or "Krajska zdravotni a.s."
+            poznamka = _cfg.SEZ_UA_NOTE or ""
+        except Exception:
+            nazev, vyrobce, poznamka = "sez-api", "Krajska zdravotni a.s.", ""
         env_key = getattr(SEZConfig, "ENVIRONMENT", "T2")
         env = SEZ_ENVIRONMENTS.get(env_key, {})
         prostredi = "Prod" if env.get("base_env") == "PROD" else "Test"
-        return f"sez-api/{_ver} ({prostredi}; Krajska zdravotni a.s.)"
+        detail = f"{prostredi}; {vyrobce}" + (f"; {poznamka}" if poznamka else "")
+        return f"{nazev}/{_ver} ({detail})"
+
+    @staticmethod
+    def traceparent() -> str:
+        """W3C Trace Context hlavička ``traceparent`` – volitelná dle API
+        endpointy, ale pokud se pošle, MUSÍ odpovídat specifikaci:
+        ``00-<32 hex trace-id>-<16 hex span-id>-01`` (nenulové id)."""
+        trace_id = uuid.uuid4().hex                    # 32 hex znaků
+        span_id = uuid.uuid4().hex[:16]                # 16 hex znaků
+        return f"00-{trace_id}-{span_id}-01"
 
     def _new_session(self):
         s = requests.Session()
@@ -416,6 +436,14 @@ class SEZClient:
             "X-Correlation-Id": str(uuid.uuid4()),
             "X-Trace-Id": str(uuid.uuid4()),
         }
+        # traceparent (W3C) je volitelný – posílá se jen při zapnutí
+        # SEZ_SEND_TRACEPARENT, aby se nikdy neodeslal neplatný formát.
+        try:
+            from sez_api import config as _cfg
+            if getattr(_cfg, "SEZ_SEND_TRACEPARENT", False):
+                h["traceparent"] = self.traceparent()
+        except Exception:
+            pass
         if extra:
             h.update(extra)
         return h

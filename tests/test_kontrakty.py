@@ -93,6 +93,67 @@ def test_user_agent_prostredi_test_nebo_prod():
         SEZConfig.ENVIRONMENT = puvodni
 
 
+def test_traceparent_odpovida_w3c_specifikaci():
+    """traceparent je volitelný, ale pokud se pošle, musí odpovídat W3C
+    Trace Context: 00-<32 hex>-<16 hex>-<flags>, id nesmí být nulová."""
+    import re
+    from sez_api.client import SEZClient
+    tp = SEZClient.traceparent()
+    m = re.fullmatch(r"00-([0-9a-f]{32})-([0-9a-f]{16})-0[01]", tp)
+    assert m, tp
+    assert m.group(1) != "0" * 32 and m.group(2) != "0" * 16
+
+
+def test_traceparent_se_posila_jen_po_zapnuti():
+    from sez_api import config as cfg
+    from sez_api.client import SEZClient
+
+    class _FakeAuth:
+        def build_assertion(self, extra_headers=None):
+            return "assertion"
+
+    c = SEZClient.__new__(SEZClient)
+    c.auth = _FakeAuth()
+    puvodni = cfg.SEZ_SEND_TRACEPARENT
+    try:
+        cfg.SEZ_SEND_TRACEPARENT = False
+        assert "traceparent" not in c._headers()
+        cfg.SEZ_SEND_TRACEPARENT = True
+        assert c._headers()["traceparent"].startswith("00-")
+    finally:
+        cfg.SEZ_SEND_TRACEPARENT = puvodni
+
+
+def test_neposilame_deprecated_hlavicky():
+    """X-Request-Id je deprecated a X-Manufacturer-* se nezpracovávají."""
+    from sez_api.client import SEZClient
+
+    class _FakeAuth:
+        def build_assertion(self, extra_headers=None):
+            return "assertion"
+
+    c = SEZClient.__new__(SEZClient)
+    c.auth = _FakeAuth()
+    h = c._headers()
+    for zakazana in ("X-Request-Id", "X-Manufacturer-Company",
+                      "X-Manufacturer-Product"):
+        assert zakazana not in h
+
+
+def test_user_agent_lze_prenastavit_konfiguraci():
+    from sez_api import config as cfg
+    from sez_api.client import SEZClient
+    puvodni = (cfg.SEZ_APP_NAME, cfg.SEZ_VENDOR, cfg.SEZ_UA_NOTE)
+    try:
+        cfg.SEZ_APP_NAME, cfg.SEZ_VENDOR, cfg.SEZ_UA_NOTE = (
+            "MojeAplikace", "VyrobceXYZ", "Nasazeno u ABC")
+        ua = SEZClient.user_agent()
+        assert ua.startswith("MojeAplikace/")
+        assert ua.endswith("(Test; VyrobceXYZ; Nasazeno u ABC)"), ua
+    finally:
+        cfg.SEZ_APP_NAME, cfg.SEZ_VENDOR, cfg.SEZ_UA_NOTE = puvodni
+
+
 def test_gateway_hlavicky_obsahuji_user_agent_a_correlation_id():
     from sez_api.client import SEZClient
 
