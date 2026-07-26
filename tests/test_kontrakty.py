@@ -68,14 +68,29 @@ class _FakeClient:
 # --- HTTP hlavičky dle API endpointy (aktualizace 17. 7. 2026) ---------------
 
 def test_user_agent_dle_pozadovaneho_formatu():
-    """API endpointy (17. 7. 2026): User-Agent 'název-aplikace/verze
-    (prostředí; výrobceSW)' – doporučený od 9/2026, POVINNÝ od 1. 1. 2027."""
+    """API endpointy (21. 7. 2026): User-Agent 'název-aplikace/verze
+    (prostředí; výrobceSW)' – POVINNÝ od 1. 9. 2026; prostředí musí být
+    hodnota 'Test' nebo 'Prod'."""
     import re
     from sez_api.client import SEZClient
     ua = SEZClient.user_agent()
-    assert re.fullmatch(r"[\w.-]+/[\w.]+ \([^;]+; [^)]+\)", ua), ua
+    assert re.fullmatch(r"[\w.-]+/[\w.]+ \((Test|Prod); [^)]+\)", ua), ua
     import sez_api
     assert f"sez-api/{sez_api.__version__}" in ua
+
+
+def test_user_agent_prostredi_test_nebo_prod():
+    """Regrese: dřív se posílalo T2/PROD, dokumentace vyžaduje Test/Prod."""
+    from sez_api.client import SEZClient, SEZConfig
+    puvodni = getattr(SEZConfig, "ENVIRONMENT", "T2")
+    try:
+        for env, ocekavano in (("T2", "Test"), ("T2_CMS", "Test"),
+                                ("PROD", "Prod"), ("PROD_CMS", "Prod"),
+                                ("NEZNAME", "Test")):
+            SEZConfig.ENVIRONMENT = env
+            assert f"({ocekavano};" in SEZClient.user_agent(), env
+    finally:
+        SEZConfig.ENVIRONMENT = puvodni
 
 
 def test_gateway_hlavicky_obsahuji_user_agent_a_correlation_id():
