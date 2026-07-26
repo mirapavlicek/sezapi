@@ -186,6 +186,23 @@ def uzis_mode(env_key: str = "T2") -> str:
 
 
 # ---------------------------------------------------------------------------
+# HTTP hlavičky dle stránky API endpointy (Manuál EZ pro PZS, 21. 7. 2026)
+# ---------------------------------------------------------------------------
+# traceparent (W3C Trace Context) je VOLITELNÁ hlavička; pokud je odeslána,
+# musí odpovídat specifikaci (version-traceid-spanid-flags). Gateway ji
+# zpracuje a propaguje do navazujících volání, takže pomáhá při dohledávání
+# incidentů. Výchozí stav vypnuto – zapnout lze SEZ_SEND_TRACEPARENT=true.
+SEZ_SEND_TRACEPARENT = _env_bool("SEZ_SEND_TRACEPARENT", False)
+
+# Název aplikace a výrobce SW pro hlavičku User-Agent (POVINNÁ od 1. 9. 2026;
+# formát: název-aplikace/verze (Test|Prod; výrobceSW[; další informace])).
+SEZ_APP_NAME = env("SEZ_APP_NAME", "sez-api")
+SEZ_VENDOR = env("SEZ_VENDOR", "Krajska zdravotni a.s.")
+# Volitelný doplněk do závorky User-Agent (např. „Nasazeno u ABC").
+SEZ_UA_NOTE = env("SEZ_UA_NOTE", "")
+
+
+# ---------------------------------------------------------------------------
 # NCPeH – Národní kontaktní místo pro elektronické zdravotnictví
 # (přeshraniční pacientský souhrn, MyHealth@EU / eHDSI; provozuje Kraj Vysočina)
 # ---------------------------------------------------------------------------

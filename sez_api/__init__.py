@@ -46,6 +46,14 @@ Revize NCEZ zdrojů 2026-07-26:
   od 1. 9. 2026 (dřív 1. 1. 2027) a jako prostředí se očekává hodnota
   „Test" / „Prod" – klient dřív posílal T2/PROD, opraveno mapováním dle
   base_env prostředí. X-Correlation-Id beze změny (povinné od 1. 1. 2027).
+  Doplněno: název aplikace / výrobce / poznámka v User-Agent jsou
+  konfigurovatelné (SEZ_APP_NAME, SEZ_VENDOR, SEZ_UA_NOTE); volitelná
+  W3C hlavička traceparent (SEZ_SEND_TRACEPARENT, generuje validní
+  00-<traceid>-<spanid>-01); deprecated X-Request-Id ani
+  X-Manufacturer-* neposíláme. Ověřeny adresy z tabulky endpointů
+  (PROD gateway api.csez.gov.cz, JSU, open apidoc apio) – souhlasí;
+  doplněny adresy webového rozhraní TermX (terminologie.ezdravi.gov.cz
+  pro test, termx/snomed.ezdravi.gov.cz pro produkci).
 - Ostatní zdroje beze změny: apio katalog i obě specifikace (Terminologie
   v1.1.0, EZCAValidace v1.0.0 – bitově shodné se snapshoty), aktuality
   Manuálu EZ (poslední záznam 16. 6.), stránky testovacího rámce/metodiky/
@@ -157,7 +165,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.28.1"
+__version__ = "2.29.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

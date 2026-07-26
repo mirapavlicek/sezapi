@@ -758,8 +758,8 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           <strong>API endpointy 21. 7. 2026 – zpřísněné požadavky na HTTP hlavičky (deadline!):</strong>
           <code>User-Agent</code> ve formátu <code>název-aplikace/verze (prostředí; výrobceSW)</code> je nově <strong>POVINNÝ už od 1. 9. 2026</strong> (dřívější znění uvádělo 1. 1. 2027) a jako prostředí se očekává hodnota <strong>Test</strong> nebo <strong>Prod</strong>.
           <code>X-Correlation-Id</code> (UUID v4+, max 128 znaků) zůstává doporučený od 1. 9. 2026 a povinný od 1. 1. 2027.
-          <code>traceparent</code> (W3C Trace Context) volitelný; <code>X-Request-Id</code> deprecated; <code>X-Manufacturer-Company/Product</code> se nezpracovávají.
-          Tento klient obě hlavičky posílá: X-Correlation-Id generuje pro každý request, User-Agent <code>sez-api/&lt;verze&gt; (Test|Prod; Krajska zdravotni a.s.)</code> na session i request úrovni (prostředí se přepíná dle zvoleného prostředí).
+          <code>traceparent</code> (W3C Trace Context) volitelný – klient ho umí posílat po zapnutí <code>SEZ_SEND_TRACEPARENT=true</code> (generuje validní <code>00-&lt;traceid&gt;-&lt;spanid&gt;-01</code>); <code>X-Request-Id</code> deprecated (neposíláme); <code>X-Manufacturer-Company/Product</code> se nezpracovávají (neposíláme).
+          Obě požadované hlavičky klient posílá: X-Correlation-Id (UUID) pro každý request a User-Agent <code>sez-api/&lt;verze&gt; (Test|Prod; Krajska zdravotni a.s.)</code> na session i request úrovni; název/výrobce/poznámku lze přenastavit přes <code>SEZ_APP_NAME</code>, <code>SEZ_VENDOR</code>, <code>SEZ_UA_NOTE</code>.
         </div>
         <table style="font-size:12px">
           <thead><tr><th>Služba</th><th>Verze</th><th>Poslední změna</th></tr></thead>
@@ -4871,11 +4871,17 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
             <span class="card-title">Terminologický server – FHIR R4 v1.0.5 (termit.ncez)</span>
           </div>
           <p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">
-            FHIR terminologie v <code>/terminologie/fhir</code> přes SEZ Gateway (mTLS+JWT) nebo přímo
+            FHIR terminologie na cestě <code>/terminologie/...</code> (BEZ <code>/fhir</code> – dle swaggeru;
+            klient prefix autodetekuje) přes SEZ Gateway (mTLS+JWT) nebo přímo
             přes veřejný mirror <code>termx-api-t2-pub.csez.cz</code> (jen mTLS). Kanonické URL
             ValueSetů a CodeSystémů publikované terminologickým serverem směřují na
             <code>ncez.mzcr.cz/terminology/...</code>, případně <code>hl7.cz/terminology/...</code>
-            či <code>hl7.org/fhir/...</code>.
+            či <code>hl7.org/fhir/...</code>.<br>
+            <strong>Webové rozhraní</strong> (dle tabulky API endpointy, 21. 7. 2026):
+            test <a href="https://terminologie.ezdravi.gov.cz/landing" target="_blank">terminologie.ezdravi.gov.cz</a>,
+            produkce <a href="https://termx.ezdravi.gov.cz/" target="_blank">termx.ezdravi.gov.cz</a> a
+            <a href="https://snomed.ezdravi.gov.cz/" target="_blank">snomed.ezdravi.gov.cz</a>;
+            Open API bez přihlášení <a href="https://apio.csez.gov.cz/apidoc/" target="_blank">apio.csez.gov.cz/apidoc</a>.
           </p>
 
           <div class="hint warn" style="margin-bottom:8px">
