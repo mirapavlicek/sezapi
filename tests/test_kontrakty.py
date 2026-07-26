@@ -123,6 +123,31 @@ def test_iris_objectscript_posila_user_agent():
     assert re.fullmatch(r"[\w.-]+/[\w.]+ \((Test|Prod); [^)]+\)", ua), ua
 
 
+def test_iris_generator_user_agent_prijima_stejne_hlavicky_jako_python():
+    """Samostatný generátor SEZ.API.UserAgent musí uznávat právě ty hlavičky,
+    které projdou i v Pythonu – včetně volitelné poznámky za výrobcem."""
+    import re
+    from pathlib import Path
+    zdroj = (Path(__file__).resolve().parents[1]
+             / "docs/analytics/src/cls/SEZ/API/UserAgent.cls").read_text(encoding="utf-8")
+    for clen in ("ClassMethod Dej(", "ClassMethod Sestav(", "ClassMethod Validuj(",
+                 "ClassMethod Token(", "ClassMethod Komentar(", "ClassMethod Prostredi("):
+        assert clen in zdroj, clen
+
+    m = re.search(r'Parameter PATTERN = "([^"]+)"', zdroj)
+    assert m, "PATTERN nenalezen"
+    vzor = re.compile(m.group(1))
+
+    from sez_api.client import SEZClient
+    assert vzor.match(SEZClient.user_agent()), SEZClient.user_agent()
+    for platna in ("nis-kz/3.4.1 (Prod; Krajska zdravotni a.s.)",
+                    "sez-api-iris/1.0.0 (Test; Vyrobce; Nasazeno u ABC)"):
+        assert vzor.match(platna), platna
+    for neplatna in ("Mozilla/4.0 (compatible; InterSystems IRIS;)",
+                      "nis-kz/1.0 (T2; KZ)", "nis kz/1.0 (Test; KZ)", "nis-kz/1.0"):
+        assert not vzor.match(neplatna), neplatna
+
+
 def test_generovany_iris_klient_posila_user_agent():
     """Generátor ObjectScript klienta (sez_api.iris_codegen) musí do volání
     vkládat User-Agent i X-Correlation-Id."""
