@@ -8699,6 +8699,36 @@ async def zpravy_validovat(request: Request):
     return JSONResponse(v)
 
 
+@app.post("/api/zpravy/iris-kod")
+async def zpravy_iris_kod(req: ZpravaRequest):
+    """Vygeneruje InterSystems IRIS (ObjectScript) kód, který tutéž zprávu
+    sestaví, zvaliduje a uloží do DÚ:
+
+    * ``snippet`` – úryvek pro terminál / metodu (obsah sekcí, validace,
+      odeslání),
+    * ``trida``   – hotová ``.cls`` třída s předvyplněnými sekcemi,
+    * ``builder`` – runtime třída ``SEZ.EZD.Builder`` společná všem typům.
+    """
+    from sez_api import iris_ezd as _iris_ezd
+    try:
+        balicek = _iris_ezd.gen_vse(
+            req.kategorie, rid=req.rid, autor=req.autor, ico=req.ico,
+            pzs_nazev=req.pzs_nazev, title=req.title, sekce=req.sekce,
+            pacient=req.pacient, autor_data=req.autor_data,
+            ico_adresat=(req.pacient or {}).get("ico_adresat", "00064165"))
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    return JSONResponse(balicek)
+
+
+@app.get("/api/zpravy/iris-builder")
+async def zpravy_iris_builder():
+    """Zdrojový kód runtime třídy ``SEZ.EZD.Builder`` (ke stažení)."""
+    from sez_api import iris_ezd as _iris_ezd
+    return JSONResponse({"nazev": "SEZ.EZD.Builder",
+                          "zdroj": _iris_ezd.builder_cls()})
+
+
 @app.post("/api/zpravy/odeslat-du")
 async def zpravy_odeslat_du(req: ZpravaRequest):
     """Sestaví zprávu a uloží ji jako zásilku do Dočasného úložiště.

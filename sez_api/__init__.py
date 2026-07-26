@@ -54,6 +54,14 @@ live náhled JSON s okamžitou L1 validací, validace vlastního JSON,
 stažení/kopírování a odeslání do DÚ. API: /api/zpravy/katalog,
 /ukazka/{kategorie}, /nahled, /validovat, /odeslat-du.
 
+Generátor InterSystems IRIS pro zprávy eZD (sez_api.iris_ezd + tlačítko
+„Generovat IRIS kód" v builderu): z vyplněného formuláře vytvoří
+ObjectScript, který tutéž zprávu sestaví, zvaliduje dle L1 a uloží do DÚ –
+úryvek pro terminál, hotovou .cls třídu s předvyplněnými sekcemi a runtime
+třídu SEZ.EZD.Builder (Sestav / Validuj / ZasilkaProDU / SestavAOdesli,
+zná všech 5 kategorií vč. povinných i volitelných sekcí).
+API: /api/zpravy/iris-kod, /api/zpravy/iris-builder.
+
 Revize NCEZ zdrojů 2026-07-26:
 - API endpointy (aktualizace 21. 7. 2026): User-Agent je nově POVINNÝ už
   od 1. 9. 2026 (dřív 1. 1. 2027) a jako prostředí se očekává hodnota
@@ -178,7 +186,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.30.0"
+__version__ = "2.31.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

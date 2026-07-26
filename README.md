@@ -370,6 +370,29 @@ REST API: `GET /api/zpravy/katalog`, `GET /api/zpravy/ukazka/{kategorie}`,
 `POST /api/zpravy/nahled`, `POST /api/zpravy/validovat`,
 `POST /api/zpravy/odeslat-du`.
 
+#### Generátor pro InterSystems IRIS
+
+Tlačítko **„Generovat IRIS kód"** vytvoří z vyplněného formuláře
+ObjectScript, který tutéž zprávu sestaví přímo v IRIS:
+
+- **úryvek pro terminál** – obsah sekcí, sestavení, L1 validace a odeslání do DÚ,
+- **hotová `.cls` třída** (`SEZ.EZD.Zpravy.<Typ>`) s předvyplněnými sekcemi
+  a metodami `Sestav()` / `Nahled()` / `Odesli()`,
+- **runtime třída `SEZ.EZD.Builder`** (`docs/analytics/src/cls/SEZ/EZD/Builder.cls`)
+  společná všem typům – `Sestav`, `Validuj`, `ZasilkaProDU`, `SestavAOdesli`,
+  metadata profilů a katalog povinných i volitelných sekcí.
+
+```objectscript
+Set sekce = ##class(%DynamicObject).%New()
+Do sekce.%Set("sectionHospitalCourse", "Průběh hospitalizace bez komplikací.")
+Set bundle = ##class(SEZ.EZD.Builder).Sestav("propousteci-zprava",
+    "2667873559", "102129137", "25488627", .sekce, .sc)
+Set validace = ##class(SEZ.EZD.Builder).Validuj(bundle, "propousteci-zprava")
+Write validace.valid, !, bundle.%ToJSON()
+```
+
+REST API: `POST /api/zpravy/iris-kod`, `GET /api/zpravy/iris-builder`.
+
 ### Testování IROP/NPO (Testovací rámec MZČR/NCEZ)
 
 Sekce **IROP/NPO Testy** ve webovém rozhraní implementuje testovací scénáře
