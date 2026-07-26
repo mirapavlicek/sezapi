@@ -99,6 +99,13 @@ def gen_snippet(kategorie: str, *, rid: str = "2667873559",
     pacient = pacient or {}
     autor_data = autor_data or {}
 
+    # Kroky se číslují průběžně – volitelné bloky (pacient, autor) se
+    # negenerují vždy, číslování proto nesmí být zapsané pevně.
+    citac = iter(range(1, 99))
+
+    def krok(popis: str) -> str:
+        return f"// {next(citac)}) {popis}"
+
     L = [
         f"// {meta['nazev']} – FHIR document Bundle dle {meta['ig']} {meta['ig_verze']}",
         f"// Standard: {meta['ig_url']}",
@@ -106,12 +113,12 @@ def gen_snippet(kategorie: str, *, rid: str = "2667873559",
         f"// Vygenerováno builderem zpráv eZD {datetime.now().strftime('%Y-%m-%d %H:%M')}",
         "// Vyžaduje třídy SEZ.EZD.Builder a SEZ.API.* (Config, HttpClient, DocasneUloziste).",
         "",
-        "// 1) Obsah sekcí dokumentu",
+        krok("Obsah sekcí dokumentu"),
     ]
     L += _sekce_bloky(kategorie, sekce, promenna="sekce", odsazeni="")
 
     if pacient.get("jmeno") or pacient.get("prijmeni") or pacient.get("datum_narozeni"):
-        L += ["", "// 2) Demografie pacienta (volitelné)",
+        L += ["", krok("Demografie pacienta (volitelné)"),
               "Set pacient = ##class(%DynamicObject).%New()"]
         if pacient.get("jmeno"):
             L.append(f"Do pacient.%Set(\"jmeno\", {_os_str(pacient['jmeno'])})")
@@ -123,7 +130,7 @@ def gen_snippet(kategorie: str, *, rid: str = "2667873559",
         L += ["", "Set pacient = \"\""]
 
     if autor_data.get("jmeno") or autor_data.get("prijmeni"):
-        L += ["", "// 3) Autor dokumentu (volitelné)",
+        L += ["", krok("Autor dokumentu (volitelné)"),
               "Set autorData = ##class(%DynamicObject).%New()"]
         for klic, hodnota in (("titul", autor_data.get("titul")),
                                ("jmeno", autor_data.get("jmeno")),
@@ -135,19 +142,19 @@ def gen_snippet(kategorie: str, *, rid: str = "2667873559",
 
     L += [
         "",
-        "// 4) Sestavení dokumentu (hlavička dle IG profilu, úroveň L1)",
+        krok("Sestavení dokumentu (hlavička dle IG profilu, úroveň L1)"),
         "Set bundle = ##class(SEZ.EZD.Builder).Sestav(",
         f"    {_os_str(kategorie)}, {_os_str(rid)}, {_os_str(autor)}, {_os_str(ico)},",
         f"    .sekce, .sc, {_os_str(pzs_nazev)}, {_os_str(title or '')}, \"\", pacient, autorData)",
         "If $$$ISERR(sc) { Do $System.Status.DisplayError(sc) Quit }",
         "",
-        "// 5) Lokální kontrola L1 (plná validace: https://validator.fhir.org/)",
+        krok("Lokální kontrola L1 (plná validace: https://validator.fhir.org/)"),
         f"Set validace = ##class(SEZ.EZD.Builder).Validuj(bundle, {_os_str(kategorie)})",
         "Write \"Validní: \", validace.valid, !",
         "If 'validace.valid { Write validace.chyby.%ToJSON(), ! Quit }",
         "Write bundle.%ToJSON(), !",
         "",
-        "// 6) Odeslání do Dočasného úložiště (adresát musí být JINÉ PZS než tvůrce)",
+        krok("Odeslání do Dočasného úložiště (adresát musí být JINÉ PZS než tvůrce)"),
         f"Set config = ##class(SEZ.API.Config).%New({_os_str(ico + '_KrajskaZdravotniVerejnyTest')})",
         "Set config.P12CertFile = \"/opt/certs/krajska_zdravotni.pfx\"",
         "Set sc = ##class(SEZ.EZD.Builder).SestavAOdesli(config,",

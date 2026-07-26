@@ -130,6 +130,10 @@
                 <label>Gateway</label>
                 <input type="text" id="cfg-gateway" value="gwy-ext-sec-t2.csez.cz" readonly/>
             </div>
+            <div class="form-group">
+                <label>User-Agent (hlavička odesílaná na bránu, povinná od 1. 9. 2026)</label>
+                <input type="text" id="cfg-useragent" value="#($ZCONVERT(##class(SEZ.API.Config).UserAgent(),"O","HTML"))#" readonly/>
+            </div>
             <button class="btn btn-primary" onclick="testConnection()">Otestovat připojení</button>
             <button class="btn" style="margin-left:8px;background:#e67e22;color:#fff" onclick="diagToken()">Diagnostika tokenu</button>
         </div>

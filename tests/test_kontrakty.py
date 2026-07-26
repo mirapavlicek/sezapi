@@ -93,6 +93,72 @@ def test_user_agent_prostredi_test_nebo_prod():
         SEZConfig.ENVIRONMENT = puvodni
 
 
+def test_iris_objectscript_posila_user_agent():
+    """Referenční IRIS třídy musí hlavičku posílat také – %Net.HttpRequest
+    jinak doplní vlastní 'Mozilla/4.0 (compatible; ...)', které formátu
+    User-Agent podle API endpointy nevyhovuje."""
+    import re
+    from pathlib import Path
+    src = Path(__file__).resolve().parents[1] / "docs/analytics/src"
+    config = (src / "cls/SEZ/API/Config.cls").read_text(encoding="utf-8")
+    http = (src / "cls/SEZ/API/HttpClient.cls").read_text(encoding="utf-8")
+    csp = (src / "csp/SEZAPI.csp").read_text(encoding="utf-8")
+
+    assert "ClassMethod UserAgent()" in config
+    # Každé sestavení %Net.HttpRequest musí hlavičku nastavit.
+    for jmeno, kod in (("Config.cls", config), ("HttpClient.cls", http)):
+        pocet_req = kod.count("##class(%Net.HttpRequest).%New()")
+        pocet_ua = kod.count('SetHeader("User-Agent"')
+        assert pocet_ua >= pocet_req, f"{jmeno}: {pocet_ua} UA / {pocet_req} req"
+    # Ovládací panel v CSP zobrazuje efektivní hodnotu hlavičky.
+    assert "##class(SEZ.API.Config).UserAgent()" in csp
+
+    # Formát sestavovaný v ObjectScriptu odpovídá požadovanému vzoru.
+    def _param(nazev, default=""):
+        m = re.search(rf'Parameter {nazev} = "([^"]*)"', config)
+        return m.group(1) if m else default
+
+    ua = "{}/{} ({}; {})".format(_param("APPNAME"), _param("APPVERSION"),
+                                 "Test", _param("VENDOR"))
+    assert re.fullmatch(r"[\w.-]+/[\w.]+ \((Test|Prod); [^)]+\)", ua), ua
+
+
+def test_iris_generator_user_agent_prijima_stejne_hlavicky_jako_python():
+    """Samostatný generátor SEZ.API.UserAgent musí uznávat právě ty hlavičky,
+    které projdou i v Pythonu – včetně volitelné poznámky za výrobcem."""
+    import re
+    from pathlib import Path
+    zdroj = (Path(__file__).resolve().parents[1]
+             / "docs/analytics/src/cls/SEZ/API/UserAgent.cls").read_text(encoding="utf-8")
+    for clen in ("ClassMethod Dej(", "ClassMethod Sestav(", "ClassMethod Validuj(",
+                 "ClassMethod Token(", "ClassMethod Komentar(", "ClassMethod Prostredi("):
+        assert clen in zdroj, clen
+
+    m = re.search(r'Parameter PATTERN = "([^"]+)"', zdroj)
+    assert m, "PATTERN nenalezen"
+    vzor = re.compile(m.group(1))
+
+    from sez_api.client import SEZClient
+    assert vzor.match(SEZClient.user_agent()), SEZClient.user_agent()
+    for platna in ("nis-kz/3.4.1 (Prod; Krajska zdravotni a.s.)",
+                    "sez-api-iris/1.0.0 (Test; Vyrobce; Nasazeno u ABC)"):
+        assert vzor.match(platna), platna
+    for neplatna in ("Mozilla/4.0 (compatible; InterSystems IRIS;)",
+                      "nis-kz/1.0 (T2; KZ)", "nis kz/1.0 (Test; KZ)", "nis-kz/1.0"):
+        assert not vzor.match(neplatna), neplatna
+
+
+def test_generovany_iris_klient_posila_user_agent():
+    """Generátor ObjectScript klienta (sez_api.iris_codegen) musí do volání
+    vkládat User-Agent i X-Correlation-Id."""
+    from sez_api.iris_codegen import gen_client_class
+    kod = gen_client_class("SEZ", "KRP", [])
+    assert 'SetHeader("User-Agent", ..UserAgent())' in kod
+    assert 'SetHeader("X-Correlation-Id"' in kod
+    assert "Method UserAgent() As %String" in kod
+    assert 'Property Prostredi As %String(VALUELIST = ",Test,Prod")' in kod
+
+
 def test_traceparent_odpovida_w3c_specifikaci():
     """traceparent je volitelný, ale pokud se pošle, musí odpovídat W3C
     Trace Context: 00-<32 hex>-<16 hex>-<flags>, id nesmí být nulová."""

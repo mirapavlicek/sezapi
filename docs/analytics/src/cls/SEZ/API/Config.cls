@@ -35,6 +35,34 @@ Parameter TIMEOUT = 30;
 /// Platnost JWT assertion v sekundách (dle MZČR doporučení max 60s)
 Parameter ASSERTIONVALIDITY = 55;
 
+/// Název volající aplikace pro hlavičku User-Agent (bez mezer a lomítek).
+Parameter APPNAME = "sez-api-iris";
+
+/// Verze volající aplikace pro hlavičku User-Agent.
+Parameter APPVERSION = "1.0.0";
+
+/// Výrobce SW pro hlavičku User-Agent (bez závorek a středníků).
+Parameter VENDOR = "Krajska zdravotni a.s.";
+
+/// Volitelná doplňující informace v User-Agent (např. "Nasazeno u ABC").
+Parameter UANOTE = "";
+
+/// Sestaví hlavičku User-Agent dle stránky API endpointy (21. 7. 2026):
+/// formát <název-aplikace>/<verze> (Test|Prod; výrobceSW[; poznámka]).
+/// POVINNÁ od 1. 9. 2026 (RFC 9110, sekce 10.1.5).
+///
+/// Prostředí se určuje z hostname gateway – testovací brány obsahují
+/// "-t2", produkce je api.csez.gov.cz.
+ClassMethod UserAgent() As %String
+{
+    Set prostredi = $Select(..#GATEWAY [ "-t2": "Test", 1: "Prod")
+    Set detail = prostredi _ "; " _ ..#VENDOR
+    If ..#UANOTE '= "" {
+        Set detail = detail _ "; " _ ..#UANOTE
+    }
+    Quit ..#APPNAME _ "/" _ ..#APPVERSION _ " (" _ detail _ ")"
+}
+
 /// Client ID (formát: "ICO_nazev", např. "25488627_KrajskaZdravotniVerejnyTest")
 Property ClientId As %String;
 
@@ -129,6 +157,7 @@ Method RefreshToken(Output pToken As %String) As %Status
         Set req.SSLConfiguration = ..#SSLCONFIG
         Set req.ContentType = "application/x-www-form-urlencoded"
         Set req.Timeout = ..#TIMEOUT
+        Do req.SetHeader("User-Agent", ..UserAgent())
 
         Do req.InsertFormData("grant_type", "client_credentials")
         Do req.InsertFormData("client_id", ..ClientId)
@@ -355,6 +384,7 @@ Method DiagToken() As %Status
         Do req.SetHeader("Authorization", "Bearer "_token)
         Do req.SetHeader("Accept", "application/json")
         Do req.SetHeader("Accept-Language", "cs")
+        Do req.SetHeader("User-Agent", ..UserAgent())
         Set sc2 = req.Get("/notifikace/api/v1/notifikace/ping")
         If $$$ISERR(sc2) {
             Write "Gateway chyba: ",$System.Status.GetErrorText(sc2),!
