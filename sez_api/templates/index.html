@@ -478,6 +478,7 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
     <div class="nav-item" data-section="ncpeh"><span class="icon">&#127758;</span> NCPeH Pacientský souhrn <span style="font-size:9px;background:#059669;color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px">EU</span></div>
 
     <div class="nav-group-label">Klinická data</div>
+    <div class="nav-item" data-section="zpravy"><span class="icon">&#128220;</span> Zprávy eZD (builder) <span style="font-size:9px;background:#7c3aed;color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px">FHIR</span></div>
     <div class="nav-item" data-section="zzs"><span class="icon">&#128657;</span> Záchranná služba (ZZS)</div>
     <div class="nav-item" data-section="szz"><span class="icon">&#10010;</span> SZZ Zdravotní záznam</div>
     <div class="nav-item" data-section="szz2"><span class="icon">&#9879;</span> SZZ v2 Prevence/Screen.</div>
@@ -5722,6 +5723,78 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
     </div>
 
     <!-- ====================================================================
+         Zprávy eZD – interaktivní builder dokumentů dle HL7 CZ IG
+         ==================================================================== -->
+    <div class="section" id="sec-zpravy">
+      <div class="section-header">
+        <h3>Zprávy eZD – builder dokumentů</h3>
+        <p>Sestavte elektronický zdravotní dokument ve <strong>FHIR JSON</strong> podle závazných standardů MZ (HL7 CZ Implementation Guides). Vyberte typ zprávy, vyplňte sekce a JSON se generuje i validuje průběžně.</p>
+      </div>
+
+      <!-- 1. Výběr typu zprávy -->
+      <div class="card">
+        <div class="card-title">1. Typ zprávy</div>
+        <div id="zpravyTypy" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+          <div style="color:var(--fg3);font-size:13px"><span class="spinner"></span> Načítám katalog…</div>
+        </div>
+        <div id="zpravyDoc" style="display:none;margin-top:12px;padding:10px 12px;border-radius:6px;background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.25);font-size:12px;line-height:1.7"></div>
+      </div>
+
+      <!-- 2. Formulář -->
+      <div class="card" id="zpravyFormCard" style="display:none">
+        <div class="card-title">2. Údaje dokumentu</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+          <div class="form-group"><label>Pacient (RID)</label><input id="zpRid" value="2667873559" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Pacient – jméno</label><input id="zpJmeno" placeholder="MRAČENA" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Pacient – příjmení</label><input id="zpPrijmeni" placeholder="MRAKOMOROVÁ" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Datum narození</label><input id="zpDatumNar" type="date" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Autor (KRZP ID)</label><input id="zpAutor" value="102129137" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Autor – jméno a příjmení</label><input id="zpAutorJmeno" placeholder="MUDr. Jan Novák" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Poskytovatel (IČO)</label><input id="zpIco" value="25488627" oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group"><label>Název PZS</label><input id="zpPzsNazev" value="Krajská zdravotní, a.s." oninput="zpravyNahledDebounced()"></div>
+          <div class="form-group" style="grid-column:1/-1"><label>Titulek dokumentu</label><input id="zpTitle" placeholder="např. Propouštěcí zpráva – hospitalizace 12.–18. 7. 2026" oninput="zpravyNahledDebounced()"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-primary" onclick="zpravyVyplnitUkazku()">Vyplnit ukázková data</button>
+          <button class="btn" onclick="zpravyVycistit()">Vyčistit sekce</button>
+          <label style="font-size:12px;display:flex;gap:6px;align-items:center;margin-left:auto">
+            <input type="checkbox" id="zpZobrazitVse" onchange="zpravyRenderSekce()"> Zobrazit i nevyplněné volitelné sekce
+          </label>
+        </div>
+      </div>
+
+      <!-- 3. Sekce -->
+      <div class="card" id="zpravySekceCard" style="display:none">
+        <div class="card-title">3. Sekce dokumentu <span id="zpravySekceInfo" style="font-weight:400;font-size:12px;color:var(--fg3)"></span></div>
+        <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">Povinné sekce (dle IG profilu) jsou vždy zobrazené a musí být v dokumentu; volitelné se do JSON přidají jen když je vyplníte. Každý řádek textu = jedna položka sekce.</p>
+        <div id="zpravySekce"></div>
+      </div>
+
+      <!-- 4. Výsledek -->
+      <div class="card" id="zpravyVysledekCard" style="display:none">
+        <div class="card-title">4. Vygenerovaný dokument (FHIR JSON)</div>
+        <div id="zpravyValidace" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn btn-primary" onclick="zpravyNahled()">Přegenerovat</button>
+          <button class="btn" onclick="zpravyKopirovat()">Kopírovat JSON</button>
+          <button class="btn" onclick="zpravyStahnout()">Stáhnout .json</button>
+          <button class="btn btn-green" onclick="zpravyOdeslatDu()">Odeslat do Dočasného úložiště</button>
+        </div>
+        <div class="json-box" id="zpravyJson" style="max-height:520px">-</div>
+        <div id="zpravyOdeslaniResult" style="margin-top:10px"></div>
+      </div>
+
+      <!-- 5. Validace vlastního JSON -->
+      <div class="card" id="zpravyValCard" style="display:none">
+        <div class="card-title">5. Validace vlastního JSON</div>
+        <p style="font-size:11px;color:var(--fg3);margin:0 0 8px">Vložte FHIR document Bundle z vašeho NIS a zkontrolujte ho proti L1 kritériím (typ dokumentu, povinné sekce, presentedForm, RID pacienta…). Plnou strukturální validaci provádí <a href="https://validator.fhir.org/" target="_blank">validator.fhir.org</a>.</p>
+        <textarea id="zpravyValInput" style="width:100%;min-height:140px;font-family:var(--mono);font-size:11px" placeholder='{"resourceType":"Bundle","type":"document", ...}'></textarea>
+        <div style="margin-top:8px"><button class="btn btn-primary" onclick="zpravyValidovatVlastni()">Zkontrolovat</button></div>
+        <div class="json-box" id="zpravyValResult" style="margin-top:10px">-</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
          NCPeH – přeshraniční pacientský souhrn (MyHealth@EU / eHDSI)
          ==================================================================== -->
     <div class="section" id="sec-ncpeh">
@@ -7125,6 +7198,7 @@ function initNav() {
       if (sec === 'sukl') suklInit();
       if (sec === 'uzis') uzisInit();
       if (sec === 'ncpeh') ncpehInit();
+      if (sec === 'zpravy') zpravyInit();
     });
   });
   initNavEnhancements();
@@ -15653,6 +15727,226 @@ async function roNcpehTypDetail() {
   if (!id) { toast('Zadejte ID typu dokumentace', true); return; }
   const r = await api('GET', '/api/ro-ncpeh/typy-dokumentaci/' + encodeURIComponent(id));
   _showJson('roNcpehTypyResult', r);
+}
+
+// ===========================================================================
+// Zprávy eZD – interaktivní builder dokumentů dle HL7 CZ IG
+// ===========================================================================
+let _zpTypy = null;          // katalog z /api/zpravy/katalog
+let _zpAktivni = null;       // vybraná kategorie
+let _zpSekceHodnoty = {};    // {slice: text}
+let _zpBundle = null;        // poslední vygenerovaný Bundle
+let _zpTimer = null;
+
+async function zpravyInit() {
+  if (_zpTypy) return;
+  const data = await api('GET', '/api/zpravy/katalog');
+  _zpTypy = (data && data.typy) || [];
+  const el = document.getElementById('zpravyTypy');
+  el.innerHTML = _zpTypy.map(t => {
+    const povinnych = t.sekce.filter(s => s.povinna).length;
+    return '<div class="zp-typ" data-kat="' + esc(t.kategorie) + '" onclick="zpravyVybrat(\'' + esc(t.kategorie) + '\')" ' +
+      'style="cursor:pointer;padding:12px;border:2px solid var(--border);border-radius:8px;background:var(--bg2);transition:all .15s">' +
+      '<div style="font-weight:700;font-size:13px;margin-bottom:4px">' + esc(t.nazev) + '</div>' +
+      '<div style="font-size:11px;color:var(--fg3);font-family:var(--mono)">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</div>' +
+      '<div style="font-size:11px;color:var(--fg3);margin-top:4px">LOINC <code>' + esc(t.type_coding.code) + '</code> · ' +
+      t.sekce.length + ' sekcí (' + povinnych + ' povinných)</div></div>';
+  }).join('');
+}
+
+function zpravyVybrat(kat) {
+  _zpAktivni = _zpTypy.find(t => t.kategorie === kat);
+  if (!_zpAktivni) return;
+  _zpSekceHodnoty = {};
+  document.querySelectorAll('.zp-typ').forEach(d => {
+    const akt = d.dataset.kat === kat;
+    d.style.borderColor = akt ? '#7c3aed' : 'var(--border)';
+    d.style.background = akt ? 'rgba(124,58,237,.08)' : 'var(--bg2)';
+  });
+  const t = _zpAktivni, p = t.pozadavky;
+  const pozadavky = [];
+  if (p.presentedForm) pozadavky.push('presentedForm (PDF/A vizuál)');
+  if (p.encounter) pozadavky.push('encounter (hospitalizace)');
+  if (p.language) pozadavky.push('language');
+  if (p.identifier) pozadavky.push('identifier');
+  if (p.confidentiality) pozadavky.push('confidentiality');
+  if (p.diagnosticReport) pozadavky.push('DiagnosticReport v Bundle');
+  const doc = document.getElementById('zpravyDoc');
+  doc.style.display = 'block';
+  doc.innerHTML =
+    '<div style="font-weight:700;color:#5b21b6;margin-bottom:6px">' + esc(t.nazev) + '</div>' +
+    '<strong>Standard:</strong> <a href="' + esc(t.ig_url) + '" target="_blank">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</a> · ' +
+    '<strong>Legislativa:</strong> ' + esc(t.legislativa) + '<br>' +
+    '<strong>Composition profil:</strong> <code>' + esc(t.composition_profile) + '</code><br>' +
+    '<strong>Bundle profil:</strong> <code>' + esc(t.bundle_profile) + '</code><br>' +
+    '<strong>Typ dokumentu:</strong> LOINC <code>' + esc(t.type_coding.code) + '</code> ' + esc(t.type_coding.display || '') +
+    ' · <strong>kód pro DÚ:</strong> <code>' + esc(t.du_typ_kod) + '</code><br>' +
+    '<strong>Povinné prvky profilu:</strong> ' + (pozadavky.length ? esc(pozadavky.join(', ')) : 'jen základní hlavička') +
+    ' · minimálně <strong>' + p.min_sekci + '</strong> sekcí';
+  document.getElementById('zpravyFormCard').style.display = '';
+  document.getElementById('zpravySekceCard').style.display = '';
+  document.getElementById('zpravyVysledekCard').style.display = '';
+  document.getElementById('zpravyValCard').style.display = '';
+  zpravyRenderSekce();
+  zpravyNahled();
+}
+
+function zpravyRenderSekce() {
+  if (!_zpAktivni) return;
+  const zobrazitVse = document.getElementById('zpZobrazitVse').checked;
+  const sekce = _zpAktivni.sekce.filter(s =>
+    s.povinna || zobrazitVse || (_zpSekceHodnoty[s.slice] || '').trim());
+  const skryto = _zpAktivni.sekce.length - sekce.length;
+  document.getElementById('zpravySekceInfo').textContent =
+    skryto > 0 ? '(' + sekce.length + ' z ' + _zpAktivni.sekce.length + ' – ' + skryto + ' volitelných skryto)' : '';
+  document.getElementById('zpravySekce').innerHTML = sekce.map(s => {
+    const val = _zpSekceHodnoty[s.slice] || '';
+    const badge = s.povinna
+      ? '<span class="badge badge-err" style="font-size:9px;padding:1px 5px">POVINNÁ</span>'
+      : '<span class="badge" style="font-size:9px;padding:1px 5px;background:var(--bg3);color:var(--fg3)">volitelná</span>';
+    return '<div style="margin-bottom:10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2)">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' + badge +
+      '<strong style="font-size:12px">' + esc(s.title) + '</strong>' +
+      '<code style="font-size:10px;color:var(--fg3)">LOINC ' + esc(s.code) + ' · ' + esc(s.slice) + '</code></div>' +
+      '<textarea data-slice="' + esc(s.slice) + '" oninput="zpravySekceInput(this)" rows="2" ' +
+      'style="width:100%;font-size:12px;font-family:inherit" ' +
+      'placeholder="Každý řádek = jedna položka sekce">' + esc(val) + '</textarea></div>';
+  }).join('') || '<div style="color:var(--fg3);font-size:12px">Žádné sekce k zobrazení.</div>';
+}
+
+function zpravySekceInput(ta) {
+  _zpSekceHodnoty[ta.dataset.slice] = ta.value;
+  zpravyNahledDebounced();
+}
+
+function zpravyPayload() {
+  const sekce = {};
+  Object.entries(_zpSekceHodnoty).forEach(([k, v]) => {
+    const radky = String(v || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    if (radky.length) sekce[k] = radky;
+  });
+  const celeJmeno = (document.getElementById('zpAutorJmeno').value || '').trim();
+  const casti = celeJmeno.split(/\s+/).filter(Boolean);
+  let autorData = null;
+  if (casti.length) {
+    const titul = /\.$/.test(casti[0]) ? casti.shift() : '';
+    autorData = { titul: titul, jmeno: casti.slice(0, -1).join(' ') || casti[0] || '', prijmeni: casti.length > 1 ? casti[casti.length - 1] : '' };
+  }
+  const pac = {};
+  const j = document.getElementById('zpJmeno').value.trim();
+  const p = document.getElementById('zpPrijmeni').value.trim();
+  const dn = document.getElementById('zpDatumNar').value;
+  if (j) pac.jmeno = j;
+  if (p) pac.prijmeni = p;
+  if (dn) pac.datum_narozeni = dn;
+  return {
+    kategorie: _zpAktivni.kategorie,
+    rid: document.getElementById('zpRid').value.trim(),
+    autor: document.getElementById('zpAutor').value.trim(),
+    ico: document.getElementById('zpIco').value.trim(),
+    pzs_nazev: document.getElementById('zpPzsNazev').value.trim(),
+    title: document.getElementById('zpTitle').value.trim() || null,
+    pacient: Object.keys(pac).length ? pac : null,
+    autor_data: autorData,
+    sekce: sekce,
+  };
+}
+
+function zpravyNahledDebounced() {
+  if (_zpTimer) clearTimeout(_zpTimer);
+  _zpTimer = setTimeout(zpravyNahled, 400);
+}
+
+async function zpravyNahled() {
+  if (!_zpAktivni) return;
+  const data = await api('POST', '/api/zpravy/nahled', zpravyPayload());
+  if (!data || data.error) {
+    document.getElementById('zpravyValidace').innerHTML =
+      '<span class="badge badge-err">CHYBA</span> ' + esc((data && data.error) || 'neznámá chyba');
+    return;
+  }
+  _zpBundle = data.bundle;
+  const v = data.validace || {};
+  let h = '<span class="badge ' + (v.valid ? 'badge-ok' : 'badge-err') + '" style="font-size:13px;padding:4px 12px">' +
+    (v.valid ? 'VALIDNÍ (L1)' : 'NEVALIDNÍ') + '</span> ' +
+    '<span style="font-size:11px;color:var(--fg3);font-family:var(--mono)">' +
+    (data.velikost_bytes || 0) + ' B · sha256 ' + esc(String(data.sha256 || '').substring(0, 16)) + '… · ' +
+    (_zpBundle.entry || []).length + ' resources</span>';
+  if ((v.errors || []).length) {
+    h += '<ul style="margin:8px 0 0 18px;font-size:12px;color:#dc2626">' +
+      v.errors.map(e => '<li>' + esc(e) + '</li>').join('') + '</ul>';
+  }
+  if ((v.warnings || []).length) {
+    h += '<ul style="margin:6px 0 0 18px;font-size:11px;color:#92400e">' +
+      v.warnings.map(w => '<li>Výhrada: ' + esc(w) + '</li>').join('') + '</ul>';
+  }
+  document.getElementById('zpravyValidace').innerHTML = h;
+  document.getElementById('zpravyJson').innerHTML = syntaxHighlight(JSON.stringify(_zpBundle, null, 2));
+}
+
+async function zpravyVyplnitUkazku() {
+  if (!_zpAktivni) return;
+  const d = await api('GET', '/api/zpravy/ukazka/' + encodeURIComponent(_zpAktivni.kategorie));
+  if (!d || d.error) return toast('Ukázku nelze načíst', true);
+  _zpSekceHodnoty = {};
+  Object.entries(d.sekce_ukazka || {}).forEach(([k, v]) => {
+    _zpSekceHodnoty[k] = Array.isArray(v) ? v.join('\n') : String(v);
+  });
+  if (d.title) document.getElementById('zpTitle').value = d.title;
+  document.getElementById('zpJmeno').value = 'MRAČENA';
+  document.getElementById('zpPrijmeni').value = 'MRAKOMOROVÁ';
+  document.getElementById('zpDatumNar').value = '1971-11-26';
+  document.getElementById('zpAutorJmeno').value = 'MUDr. Jan Novák';
+  zpravyRenderSekce();
+  zpravyNahled();
+  toast('Vyplněna ukázková data – ' + esc(_zpAktivni.nazev));
+}
+
+function zpravyVycistit() {
+  _zpSekceHodnoty = {};
+  document.getElementById('zpTitle').value = '';
+  zpravyRenderSekce();
+  zpravyNahled();
+}
+
+function zpravyKopirovat() {
+  if (!_zpBundle) return toast('Není co kopírovat', true);
+  const txt = JSON.stringify(_zpBundle, null, 2);
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('JSON zkopírován'));
+  else toast('Clipboard není dostupný', true);
+}
+
+function zpravyStahnout() {
+  if (!_zpBundle) return toast('Není co stahovat', true);
+  _downloadText(JSON.stringify(_zpBundle, null, 2),
+    _zpAktivni.kategorie + '-' + new Date().toISOString().slice(0, 10) + '.json', 'application/fhir+json');
+}
+
+async function zpravyOdeslatDu() {
+  if (!_zpAktivni) return;
+  const el = document.getElementById('zpravyOdeslaniResult');
+  el.innerHTML = '<span class="spinner"></span> Odesílám do Dočasného úložiště…';
+  const r = await api('POST', '/api/zpravy/odeslat-du', zpravyPayload());
+  if (r && r.error) {
+    el.innerHTML = '<span class="badge badge-err">CHYBA</span> ' + esc(r.error);
+    if (r.validace) el.innerHTML += '<div class="json-box" style="margin-top:6px">' + syntaxHighlight(JSON.stringify(r.validace, null, 2)) + '</div>';
+    return;
+  }
+  const id = (r && r.data && r.data.id) || '';
+  el.innerHTML = '<span class="badge ' + (id ? 'badge-ok' : 'badge-warn') + '">' + (id ? 'ULOŽENO' : 'ODPOVĚĎ') + '</span> ' +
+    (id ? 'ID zásilky: <code>' + esc(id) + '</code>' : '') +
+    '<div class="json-box" style="margin-top:6px;max-height:220px">' + syntaxHighlight(JSON.stringify(r, null, 2)) + '</div>';
+  if (id) toast('Zpráva uložena do DÚ, ID ' + id);
+}
+
+async function zpravyValidovatVlastni() {
+  const raw = document.getElementById('zpravyValInput').value.trim();
+  if (!raw) return toast('Vložte JSON', true);
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch (e) { return toast('Neplatný JSON: ' + e.message, true); }
+  const r = await api('POST', '/api/zpravy/validovat', { bundle: parsed });
+  document.getElementById('zpravyValResult').innerHTML = syntaxHighlight(JSON.stringify(r, null, 2));
+  toast(r && r.valid ? 'Dokument prošel L1 kontrolami' : 'Dokument má chyby', !(r && r.valid));
 }
 
 // ===========================================================================

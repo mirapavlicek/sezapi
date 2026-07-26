@@ -100,6 +100,26 @@ EZD_KATEGORIE = {
              "title": "Problémy"},
         ],
         "min_sections": 1,
+        # Volitelné sekce dle cz-composition-ps (0..1) – pro interaktivní
+        # builder v GUI. Povinné sekce jsou v required_sections.
+        "optional_sections": [
+            {"slice": "sectionImmunizations", "code": "11369-6", "title": "Očkování"},
+            {"slice": "sectionResults", "code": "30954-2", "title": "Výsledky vyšetření"},
+            {"slice": "sectionProceduresHx", "code": "47519-4", "title": "Historie výkonů"},
+            {"slice": "sectionMedicalDevices", "code": "46264-8", "title": "Zdravotnické prostředky"},
+            {"slice": "sectionAdvanceDirectives", "code": "42348-3", "title": "Dříve vyslovená přání"},
+            {"slice": "sectionAlerts", "code": "104605-1", "title": "Upozornění"},
+            {"slice": "sectionFunctionalStatus", "code": "47420-5", "title": "Funkční stav"},
+            {"slice": "sectionPregnancyHx", "code": "10162-6", "title": "Anamnéza gravidity"},
+            {"slice": "sectionPatientStory", "code": "10164-2", "title": "Anamnéza dle pacienta"},
+            {"slice": "sectionPlanOfCare", "code": "18776-5", "title": "Plán péče"},
+            {"slice": "sectionSocialHistory", "code": "29762-2", "title": "Sociální anamnéza"},
+            {"slice": "sectionVitalSigns", "code": "8716-3", "title": "Vitální funkce"},
+            {"slice": "sectionTravelHx", "code": "10182-4", "title": "Cestovní anamnéza"},
+            {"slice": "sectionPatientHx", "code": "11329-0", "title": "Anamnéza"},
+            {"slice": "sectionPastProblems", "code": "11348-0", "title": "Dřívější problémy"},
+            {"slice": "sectionAttachments", "code": "77599-9", "title": "Přílohy"},
+        ],
         # kód pro DÚ metadata (číselník medical-document-type)
         "du_typ_kod": "60591-5",
     },
@@ -133,6 +153,30 @@ EZD_KATEGORIE = {
              "title": "Průběh hospitalizace"},
         ],
         "min_sections": 1,
+        "optional_sections": [
+            {"slice": "sectionAdmissionEvaluation", "code": "67851-6", "title": "Vyhodnocení při příjmu"},
+            {"slice": "sectionPatientHx", "code": "35090-0", "title": "Anamnéza"},
+            {"slice": "sectionAllergies", "code": "48765-2", "title": "Alergie a intolerance"},
+            {"slice": "sectionAlert", "code": "104605-1", "title": "Upozornění"},
+            {"slice": "sectionProblemList", "code": "11450-4", "title": "Seznam problémů"},
+            {"slice": "sectionDiagnosticSummary", "code": "11535-2", "title": "Souhrn diagnóz"},
+            {"slice": "sectionSignificantProcedures", "code": "10185-7", "title": "Významné výkony"},
+            {"slice": "sectionSignificantResults", "code": "30954-2", "title": "Významné výsledky"},
+            {"slice": "sectionPhysicalFindings", "code": "29545-1", "title": "Fyzikální nález"},
+            {"slice": "sectionVitalSigns", "code": "8716-3", "title": "Vitální funkce"},
+            {"slice": "sectionFunctionalStatus", "code": "47420-5", "title": "Funkční stav"},
+            {"slice": "sectionMedicalDevices", "code": "57080-4", "title": "Zdravotnické prostředky"},
+            {"slice": "sectionPharmacotherapy", "code": "87232-5", "title": "Farmakoterapie"},
+            {"slice": "sectionDischargeMedications", "code": "75311-1", "title": "Medikace při propuštění"},
+            {"slice": "sectionDischargeDetails", "code": "8650-4", "title": "Podrobnosti propuštění"},
+            {"slice": "sectionDischargeInstructions", "code": "8653-8", "title": "Instrukce při propuštění"},
+            {"slice": "sectionSynthesis", "code": "67781-5", "title": "Souhrnná zpráva"},
+            {"slice": "sectionCareTeam", "code": "85847-2", "title": "Tým péče"},
+            {"slice": "sectionPlanOfCare", "code": "18776-5", "title": "Plán péče"},
+            {"slice": "sectionAdvanceDirectives", "code": "42348-3", "title": "Dříve vyslovená přání"},
+            {"slice": "sectionPayers", "code": "48768-6", "title": "Plátci"},
+            {"slice": "sectionAttachments", "code": "77599-9", "title": "Přílohy"},
+        ],
         "du_typ_kod": "18842-5",
     },
     "obrazove-vysetreni": {
@@ -172,6 +216,15 @@ EZD_KATEGORIE = {
         ],
         "min_sections": 4,
         "diagnostic_report_required": True,  # Bundle.entry:diagnosticReport 1..*
+        "optional_sections": [
+            {"slice": "clinicalQuestion", "code": "18785-6", "title": "Klinická otázka"},
+            {"slice": "comparison", "code": "18834-2", "title": "Srovnání s předchozími"},
+            {"slice": "findings", "code": "59776-5", "title": "Nález"},
+            {"slice": "impression", "code": "19005-8", "title": "Závěr / hodnocení"},
+            {"slice": "recommendation", "code": "18783-1", "title": "Doporučení"},
+            {"slice": "communication", "code": "73568-8", "title": "Komunikace s ošetřujícím"},
+            {"slice": "report", "code": "LP173421-1", "title": "Text zprávy"},
+        ],
         "du_typ_kod": "18748-4",
     },
     "vyjezd-zzs": {
@@ -194,9 +247,99 @@ EZD_KATEGORIE = {
             {"slice": "mission", "code": "67664-3", "title": "Výjezd"},
         ],
         "min_sections": 1,
+        "optional_sections": [
+            {"slice": "dispatch", "code": "67660-1", "title": "Výzva / dispečink"},
+            {"slice": "timeline", "code": "67667-6", "title": "Časová osa výjezdu"},
+            {"slice": "patientHx", "code": "11329-0", "title": "Anamnéza"},
+            {"slice": "allergies", "code": "48765-2", "title": "Alergie a intolerance"},
+            {"slice": "alert", "code": "75310-3", "title": "Upozornění"},
+            {"slice": "findings", "code": "29545-1", "title": "Nález na místě"},
+            {"slice": "procedure", "code": "29554-3", "title": "Provedené výkony"},
+            {"slice": "significantProcedures", "code": "10185-7", "title": "Významné výkony"},
+            {"slice": "medicalDevices", "code": "57080-4", "title": "Zdravotnické prostředky"},
+            {"slice": "diagnosticSummary", "code": "11450-4", "title": "Diagnostický souhrn"},
+            {"slice": "courseOfTreatment", "code": "18682-5", "title": "Průběh ošetření"},
+            {"slice": "recommendations", "code": "18776-5", "title": "Doporučení"},
+            {"slice": "payers", "code": "48768-6", "title": "Plátci"},
+            {"slice": "attachments", "code": "34109-9", "title": "Přílohy"},
+        ],
         "du_typ_kod": "67796-3",
     },
+    "laboratorni-vysetreni": {
+        "nazev": "Laboratorní zpráva",
+        "ig": "hl7.fhir.cz.lab",
+        "ig_verze": "0.5.0",
+        "ig_url": "https://build.fhir.org/ig/HL7-cz/cz-lab/",
+        "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 1 bod 3B",
+        "bundle_profile": "https://hl7.cz/fhir/lab/StructureDefinition/cz-bundle-lab",
+        "composition_profile": "https://hl7.cz/fhir/lab/StructureDefinition/cz-composition-lab-report",
+        # Composition.type má binding na cz-lab-report-types-VS (bez fixního
+        # patternu); 11502-2 = Laboratory report
+        "type_coding": {"system": LOINC, "code": "11502-2",
+                         "display": "Laboratory report"},
+        "category_codings": [],
+        "presented_form_required": False,
+        "encounter_required": False,
+        "language_required": True,        # Composition.language 1..1
+        "identifier_required": False,
+        "confidentiality_required": False,
+        # cz-composition-lab-report: section 1..*; slices attachment (77599-9)
+        # a annotations (48767-8) jsou 0..*. Laboratorní výsledky nesou
+        # DiagnosticReport + Observation (Bundle entry), zde je textová sekce.
+        "required_sections": [
+            {"slice": "annotations", "code": "48767-8", "title": "Komentář k výsledkům"},
+        ],
+        "min_sections": 1,
+        "optional_sections": [
+            {"slice": "attachment", "code": "77599-9", "title": "Přílohy"},
+        ],
+        # Bundle.entry:diagnosticReport 1..1 (povinné dle cz-bundle-lab)
+        "diagnostic_report_required": True,
+        "du_typ_kod": "11502-2",
+    },
 }
+
+
+def sekce_katalog(kategorie: str) -> list[dict]:
+    """Vrátí všechny sekce kategorie pro interaktivní builder – povinné
+    (dle IG) i volitelné, s LOINC kódem, českým názvem a příznakem
+    ``povinna``. Pořadí: nejprve povinné, pak volitelné."""
+    meta = EZD_KATEGORIE.get(kategorie)
+    if meta is None:
+        raise ValueError(f"Neznámá kategorie eZD: {kategorie!r}")
+    out = [{**s, "povinna": True} for s in meta["required_sections"]]
+    out += [{**s, "povinna": False} for s in meta.get("optional_sections", [])]
+    return out
+
+
+def katalog_zprav() -> list[dict]:
+    """Katalog typů zpráv eZD pro GUI: metadata, standard, legislativa
+    a seznam sekcí (povinné + volitelné)."""
+    return [
+        {
+            "kategorie": kat,
+            "nazev": meta["nazev"],
+            "ig": meta["ig"],
+            "ig_verze": meta["ig_verze"],
+            "ig_url": meta["ig_url"],
+            "legislativa": meta["legislativa"],
+            "composition_profile": meta["composition_profile"],
+            "bundle_profile": meta["bundle_profile"],
+            "type_coding": meta["type_coding"],
+            "du_typ_kod": meta["du_typ_kod"],
+            "pozadavky": {
+                "presentedForm": bool(meta.get("presented_form_required")),
+                "encounter": bool(meta.get("encounter_required")),
+                "language": bool(meta.get("language_required")),
+                "identifier": bool(meta.get("identifier_required")),
+                "confidentiality": bool(meta.get("confidentiality_required")),
+                "diagnosticReport": bool(meta.get("diagnostic_report_required")),
+                "min_sekci": meta.get("min_sections", 1),
+            },
+            "sekce": sekce_katalog(kat),
+        }
+        for kat, meta in EZD_KATEGORIE.items()
+    ]
 
 
 def _narrative(text: str) -> dict:
@@ -222,12 +365,20 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
                      pacient: dict = None,
                      pdf_base64: str = None,
                      title: str = None,
-                     bundle_identifier: str = None) -> dict:
+                     bundle_identifier: str = None,
+                     sekce: dict = None,
+                     autor: dict = None) -> dict:
     """Sestaví FHIR R4 document Bundle konformní s HL7 CZ IG (úroveň L1).
 
     ``kategorie`` je jeden z klíčů :data:`EZD_KATEGORIE`. Hlavička
     (Composition) obsahuje všechny povinné elementy a sekce dle profilu
     vč. presentedForm (PDF); tělo (klinické zdroje) není na L1 vyžadováno.
+
+    ``sekce`` je volitelný slovník ``{slice: text | [text, ...]}`` s obsahem
+    jednotlivých sekcí (pro interaktivní builder v GUI). Povinné sekce se
+    doplní vždy – i bez textu, s poznámkou o nedostupnosti informace.
+    Volitelné sekce se přidají jen tehdy, mají-li obsah.
+    ``autor`` může nést ``{"jmeno", "prijmeni", "titul"}`` pro Practitioner.
     """
     meta = EZD_KATEGORIE.get(kategorie)
     if meta is None:
@@ -265,11 +416,45 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
         "resourceType": "Practitioner",
         "identifier": [{"system": KRZPID_SYSTEM, "value": autor_krzpid}],
     }
+    autor = autor or {}
+    if autor.get("jmeno") or autor.get("prijmeni"):
+        jmeno_obj = {
+            "use": "official",
+            "family": autor.get("prijmeni", ""),
+        }
+        if autor.get("jmeno"):
+            jmeno_obj["given"] = [autor["jmeno"]]
+        if autor.get("titul"):
+            jmeno_obj["prefix"] = [autor["titul"]]
+        practitioner_resource["name"] = [jmeno_obj]
     organization_resource = {
         "resourceType": "Organization",
         "identifier": [{"system": ICO_SYSTEM, "value": ico}],
         "name": pzs_nazev,
     }
+
+    # Sekce: povinné vždy, volitelné jen s obsahem (viz docstring)
+    sekce = sekce or {}
+
+    def _obsah(slice_name: str) -> str | None:
+        val = sekce.get(slice_name)
+        if val is None:
+            return None
+        if isinstance(val, (list, tuple)):
+            items = [str(v).strip() for v in val if str(v).strip()]
+            return " · ".join(items) if items else None
+        text = str(val).strip()
+        return text or None
+
+    sekce_list = []
+    for s in meta["required_sections"]:
+        sekce_list.append(_section(
+            s["code"], s["title"],
+            _obsah(s["slice"]) or "Informace není k dispozici"))
+    for s in meta.get("optional_sections", []):
+        text = _obsah(s["slice"])
+        if text:
+            sekce_list.append(_section(s["code"], s["title"], text))
 
     composition = {
         "resourceType": "Composition",
@@ -281,8 +466,7 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
         "author": [{"reference": pract_uuid}],
         "custodian": {"reference": org_uuid},
         "title": title or f"{meta['nazev']} – testovací dokument (IROP/NPO)",
-        "section": [_section(s["code"], s["title"])
-                     for s in meta["required_sections"]],
+        "section": sekce_list,
     }
     if meta["category_codings"]:
         composition["category"] = [{"coding": [dict(c) for c in codings]}
@@ -343,6 +527,101 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
         "timestamp": now_iso,
         "entry": entries,
     }
+
+
+# ---------------------------------------------------------------------------
+# Ukázková data pro interaktivní builder
+# ---------------------------------------------------------------------------
+
+# Demonstrační obsah sekcí pro každý typ zprávy – slouží jako „Vyplnit
+# ukázková data" v GUI a jako příklad JSON v dokumentaci. Kódované položky
+# (SNOMED/LOINC/ATC) patří v plné úrovni L3 do entry; na L1 jde o text.
+UKAZKY = {
+    "pacientsky-souhrn": {
+        "title": "Pacientský souhrn – Mračena Mrakomorová",
+        "sekce": {
+            "sectionProblems": ["Diabetes mellitus 2. typu (E11)",
+                                 "Arteriální hypertenze (I10)"],
+            "sectionMedications": ["Metformin 1000 mg 2×denně",
+                                    "Ramipril 5 mg 1×denně"],
+            "sectionAllergies": ["Penicilin – exantém (2019)"],
+            "sectionImmunizations": ["Tetanus (2021)", "COVID-19 mRNA (2023)"],
+            "sectionVitalSigns": ["TK 138/86", "P 72", "Hmotnost 78 kg"],
+            "sectionSocialHistory": ["Nekuřák", "Alkohol příležitostně"],
+        },
+    },
+    "propousteci-zprava": {
+        "title": "Propouštěcí zpráva – hospitalizace 12.–18. 7. 2026",
+        "sekce": {
+            "sectionHospitalCourse": [
+                "Pacient přijat pro dekompenzaci diabetu s hyperglykemií 22 mmol/l.",
+                "Zaveden inzulinový režim, stav se stabilizoval, glykemie 7–9 mmol/l.",
+            ],
+            "sectionProblemList": ["Dekompenzovaný diabetes mellitus 2. typu"],
+            "sectionDiagnosticSummary": ["E11.9 – Diabetes mellitus 2. typu bez komplikací"],
+            "sectionDischargeMedications": ["Metformin 1000 mg 2×denně",
+                                             "Inzulin glargin 14 j. na noc"],
+            "sectionDischargeInstructions": [
+                "Kontrola u diabetologa do 14 dnů, měření glykemie 2× denně.",
+            ],
+            "sectionAllergies": ["Penicilin – exantém"],
+            "sectionVitalSigns": ["TK 130/80 při propuštění"],
+        },
+    },
+    "obrazove-vysetreni": {
+        "title": "CT hrudníku – nález",
+        "sekce": {
+            "imagingstudy": ["CT hrudníku bez kontrastu, 18. 7. 2026, 120 kV"],
+            "order": ["Žádanka č. Z-2026-4471, indikace: dušnost, susp. pneumonie"],
+            "history": ["Kuřák 20 let, 3 dny febrilie a produktivní kašel"],
+            "procedure": ["Nativní CT hrudníku, rozsah apex–bráníce"],
+            "findings": [
+                "V pravém dolním laloku splývavé konsolidace s air-bronchogramem.",
+                "Bez pleurálního výpotku, mediastinum bez lymfadenopatie.",
+            ],
+            "impression": ["Pneumonie pravého dolního laloku."],
+            "recommendation": ["Kontrolní snímek po 6 týdnech ATB terapie."],
+        },
+    },
+    "vyjezd-zzs": {
+        "title": "Záznam o výjezdu ZZS – náhlá zástava oběhu",
+        "sekce": {
+            "mission": ["Výzva 18:42, výjezd RLP, místo: Ústí nad Labem, Hrnčířská 12"],
+            "dispatch": ["Priorita 1 – bezvědomí, nedýchá (dle volajícího)"],
+            "timeline": ["18:42 výzva", "18:48 na místě", "19:15 předání na UP"],
+            "findings": ["Pacient nereagující, bez dechu, GCS 3, komorová fibrilace"],
+            "procedure": ["KPR 12 min, defibrilace 3×, intubace, adrenalin 3 mg i.v."],
+            "diagnosticSummary": ["I46.9 – Zástava srdce, NS (ROSC v 19:02)"],
+            "courseOfTreatment": ["Po ROSC transport za monitorace na urgentní příjem"],
+        },
+    },
+    "laboratorni-vysetreni": {
+        "title": "Laboratorní zpráva – biochemie a KO",
+        "sekce": {
+            "annotations": [
+                "Glukóza 12,4 mmol/l (ref. 3,9–5,6) – zvýšeno",
+                "HbA1c 68 mmol/mol (ref. do 42) – zvýšeno",
+                "CRP 84 mg/l (ref. do 5) – zvýšeno",
+                "Leukocyty 13,8 ×10⁹/l (ref. 4,0–10,0) – zvýšeno",
+            ],
+        },
+    },
+}
+
+
+def ukazka_zpravy(kategorie: str, *, rid: str = "2667873559",
+                   autor_krzpid: str = "102129137", ico: str = "25488627",
+                   pzs_nazev: str = "Krajská zdravotní, a.s.") -> dict:
+    """Vrátí kompletní ukázkový document Bundle dané kategorie – vhodný
+    jako příklad JSON i jako výchozí obsah v GUI builderu."""
+    u = UKAZKY.get(kategorie, {})
+    return build_ezd_bundle(
+        kategorie, rid=rid, autor_krzpid=autor_krzpid, ico=ico,
+        pzs_nazev=pzs_nazev, title=u.get("title"), sekce=u.get("sekce"),
+        pacient={"jmeno": "MRAČENA", "prijmeni": "MRAKOMOROVÁ",
+                  "datum_narozeni": "1971-11-26"},
+        autor={"jmeno": "Jan", "prijmeni": "Novák", "titul": "MUDr."},
+    )
 
 
 # ---------------------------------------------------------------------------

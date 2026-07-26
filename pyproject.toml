@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sez-api"
-version = "2.29.0"
+version = "2.30.0"
 description = "Python klient a webové rozhraní pro SEZ API (Sdílené elektronické zdravotnictví ČR)"
 readme = "README.md"
 requires-python = ">=3.10"
