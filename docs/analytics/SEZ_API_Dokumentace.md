@@ -116,9 +116,29 @@ Assertion se podepisuje **privátním klíčem** z certifikátu EZCA II (formát
 | `Authorization` | string | `Bearer <JWT_assertion>` |
 | `Content-Type` | string | `application/json` |
 | `Accept-Language` | string | Jazyk odpovědi (`cs`, `en`, `de`), výchozí `cs` |
+| `User-Agent` | string | `<název-aplikace>/<verze> (Test\|Prod; výrobceSW)` – **povinná od 1. 9. 2026** |
 | `X-Correlation-Id` | uuid | ID korelace pro trasování |
 | `X-Trace-Id` | uuid | ID trasování |
 | `If-Match` | string | ETag pro optimistickou souběžnost (SZZ, ELP) |
+
+#### User-Agent v IRIS / CSP
+
+`%Net.HttpRequest` si bez explicitního nastavení doplní vlastní
+`User-Agent: Mozilla/4.0 (compatible; ...)`, které formátu SEZ nevyhovuje –
+hlavičku je proto nutné nastavit u **každého** requestu. Hodnotu sestavuje
+`SEZ.API.Config:UserAgent()` (prostředí se odvodí z hostname brány, výrobce
+a název aplikace jsou parametry `VENDOR`, `APPNAME`, `APPVERSION`):
+
+```objectscript
+Set req = ##class(%Net.HttpRequest).%New()
+Do req.SetHeader("User-Agent", ##class(SEZ.API.Config).UserAgent())
+Do req.SetHeader("X-Correlation-Id", ##class(SEZ.API.Config).NewUUID())
+```
+
+V CSP stránce (`SEZAPI.csp`, záložka *Konfigurace*) se efektivní hodnota
+zobrazuje přes výraz `#(##class(SEZ.API.Config).UserAgent())#`. Pro příchozí
+volání (např. `%CSP.REST` endpoint pro notifikace) se hlavička naopak jen čte:
+`%request.GetCgiEnv("HTTP_USER_AGENT")`.
 
 ---
 
@@ -1629,6 +1649,7 @@ Odpoved: true | false
 | `Authorization` | Request | string | `Bearer <JWT_assertion>` |
 | `Content-Type` | Request | string | `application/json` |
 | `Accept-Language` | Request | string | `cs` / `en` / `de` |
+| `User-Agent` | Request | string | `<aplikace>/<verze> (Test\|Prod; výrobceSW)`, povinná od 1. 9. 2026 |
 | `X-Correlation-Id` | Request | uuid | ID pro korelaci požadavků |
 | `X-Trace-Id` | Request | uuid | ID pro trasování |
 | `If-Match` | Request | string | ETag pro optimistickou souběžnost (SZZ, ELP) |
@@ -1658,6 +1679,7 @@ curl -s -X POST \
   -H "Authorization: Bearer $ASSERTION" \
   -H "Content-Type: application/json" \
   -H "Accept-Language: cs" \
+  -H "User-Agent: sez-api-iris/1.0.0 (Test; Krajska zdravotni a.s.)" \
   -H "X-Correlation-Id: $(uuidgen)" \
   -d '{
     "zadostInfo": {

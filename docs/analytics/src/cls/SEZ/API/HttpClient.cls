@@ -91,6 +91,7 @@ Method ExecuteInternal(pMethod As %String, pPath As %String, ByRef pQueryParams,
         Do req.SetHeader("Authorization", "Bearer "_token)
         Do req.SetHeader("Accept", "application/json")
         Do req.SetHeader("Accept-Language", ..Config.#DEFAULTLANG)
+        Do req.SetHeader("User-Agent", ##class(SEZ.API.Config).UserAgent())
         Do req.SetHeader("X-Correlation-Id", ##class(SEZ.API.Config).NewUUID())
         Do req.SetHeader("X-Trace-Id", ##class(SEZ.API.Config).NewUUID())
 
@@ -202,6 +203,7 @@ Method GetBinaryInternal(pPath As %String, Output pStream As %Stream.TmpBinary, 
 
         Do req.SetHeader("Authorization", "Bearer "_token)
         Do req.SetHeader("Accept-Language", ..Config.#DEFAULTLANG)
+        Do req.SetHeader("User-Agent", ##class(SEZ.API.Config).UserAgent())
         Do req.SetHeader("X-Correlation-Id", ##class(SEZ.API.Config).NewUUID())
 
         Set sc = req.Get(pPath)
