@@ -41,6 +41,21 @@ ověřen živě (EZCA Validace v1.0.0 NOVÁ, Terminologie v1.1.0); dle aktualit
 Manuálu EZ pro PZS (k 16. 6. 2026) dále SZZ v2.0.4 na T2 (Standard SZZ 2.1)
 a Popis API DÚ v1.2 (ZpochybniZasilku). Živé T2 verze: /api/services/discover.
 
+Revize NCEZ zdrojů 2026-07-26:
+- API endpointy (aktualizace 21. 7. 2026): User-Agent je nově POVINNÝ už
+  od 1. 9. 2026 (dřív 1. 1. 2027) a jako prostředí se očekává hodnota
+  „Test" / „Prod" – klient dřív posílal T2/PROD, opraveno mapováním dle
+  base_env prostředí. X-Correlation-Id beze změny (povinné od 1. 1. 2027).
+- Ostatní zdroje beze změny: apio katalog i obě specifikace (Terminologie
+  v1.1.0, EZCAValidace v1.0.0 – bitově shodné se snapshoty), aktuality
+  Manuálu EZ (poslední záznam 16. 6.), stránky testovacího rámce/metodiky/
+  API KRP/eŽádanky/RO. CI buildy HL7 CZ IG přestavěny (HDR 24. 7., IMG
+  22. 7., cz-core 22. 7.) – ověřeno, že constraints i canonicals zůstávají.
+- Lint: ruff 0.16 rozšířil výchozí sadu pravidel; v pyproject zafixován
+  dosavadní select (E4/E7/E9/F), aby lint nezávisel na verzi nástroje.
+- Živé ověření T2 nadále blokuje expirovaný klientský certifikát
+  (krajska_zdravotni.pfx, notAfter 2026-04-21 → TLS „certificate expired").
+
 Revize NCEZ zdrojů 2026-07-20:
 - apio katalog i aktuality Manuálu EZ beze změny (poslední záznam 16. 6.).
 - API endpointy (aktualizace 17. 7. 2026): NOVÉ požadavky na HTTP hlavičky –
@@ -142,7 +157,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.28.0"
+__version__ = "2.28.1"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
