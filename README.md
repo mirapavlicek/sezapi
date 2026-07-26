@@ -346,6 +346,30 @@ python tests/test_dokumentace.py   # živý test proti T2
 python3 -m pytest tests/           # offline testy (kontrakty, FHIR eZD, IROP)
 ```
 
+### Builder zpráv eZD (sekce „Zprávy eZD")
+
+Interaktivní tvorba elektronických zdravotních dokumentů ve FHIR JSON dle
+závazných standardů MZ – **pět typů zpráv**:
+
+| Typ zprávy | HL7 CZ IG | LOINC | Legislativa |
+|---|---|---|---|
+| Pacientský souhrn | `hl7.fhir.cz.ps` 0.0.1 | 60591-5 | vyhl. 444/2024 Sb., příl. 2 |
+| Propouštěcí zpráva | `hl7.fhir.cz.hdr` 0.1.0 | 34105-7 | příl. 1 bod 4 |
+| Zpráva z obrazového vyšetření | `hl7.fhir.cz.img` 0.1.0-ballot | 18748-4 | příl. 1 bod 3C |
+| Zpráva o výjezdu ZZS | `hl7.fhir.cz.ems` 0.0.2 | 67796-3 | příl. 1 bod 6B |
+| Laboratorní zpráva | `hl7.fhir.cz.lab` 0.5.0 | 11502-2 | příl. 1 bod 3B |
+
+Ovládání: vyberete typ (zobrazí se dokumentace profilu – povinné prvky,
+kanonické URL, kód pro DÚ), vyplníte údaje a sekce (povinné jsou vždy
+zobrazené, volitelné se do JSON přidají jen s obsahem) a JSON se
+**generuje i validuje průběžně**. K dispozici je vyplnění ukázkovými daty,
+kopírování/stažení JSON, validace vlastního dokumentu a odeslání do
+Dočasného úložiště.
+
+REST API: `GET /api/zpravy/katalog`, `GET /api/zpravy/ukazka/{kategorie}`,
+`POST /api/zpravy/nahled`, `POST /api/zpravy/validovat`,
+`POST /api/zpravy/odeslat-du`.
+
 ### Testování IROP/NPO (Testovací rámec MZČR/NCEZ)
 
 Sekce **IROP/NPO Testy** ve webovém rozhraní implementuje testovací scénáře

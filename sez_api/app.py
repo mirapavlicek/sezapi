@@ -8620,6 +8620,144 @@ async def img_order_fulfill(ncez_id: str, request: Request):
 
 
 # ===========================================================================
+# Zprávy eZD – interaktivní builder dokumentů dle HL7 CZ IG
+# ---------------------------------------------------------------------------
+# Katalog typů zpráv (5 kategorií), live náhled JSON, ukázková data,
+# validace L1 a odeslání do Dočasného úložiště.
+# ===========================================================================
+
+@app.get("/api/zpravy/katalog")
+async def zpravy_katalog():
+    """Katalog typů zpráv eZD: standard (IG), legislativa, požadavky
+    profilu a seznam sekcí (povinné + volitelné) pro builder."""
+    return JSONResponse({"typy": _fhir_ezd.katalog_zprav()})
+
+
+@app.get("/api/zpravy/ukazka/{kategorie}")
+async def zpravy_ukazka(kategorie: str, rid: str = "2667873559",
+                         autor: str = "102129137", ico: str = "25488627"):
+    """Ukázkový (plně vyplněný) document Bundle dané kategorie."""
+    try:
+        bundle = _fhir_ezd.ukazka_zpravy(kategorie, rid=rid,
+                                          autor_krzpid=autor, ico=ico)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+    v = _fhir_ezd.validate_ezd_bundle(bundle, kategorie=kategorie)
+    return JSONResponse({
+        "kategorie": kategorie,
+        "sekce_ukazka": (_fhir_ezd.UKAZKY.get(kategorie) or {}).get("sekce", {}),
+        "title": (_fhir_ezd.UKAZKY.get(kategorie) or {}).get("title"),
+        "bundle": bundle,
+        "validace": v,
+    })
+
+
+class ZpravaRequest(BaseModel):
+    kategorie: str
+    rid: str = "2667873559"
+    autor: str = "102129137"
+    ico: str = "25488627"
+    pzs_nazev: str = "Krajská zdravotní, a.s."
+    title: Optional[str] = None
+    pacient: Optional[dict] = None
+    autor_data: Optional[dict] = None
+    sekce: Optional[dict] = None
+    pdf_base64: Optional[str] = None
+
+
+@app.post("/api/zpravy/nahled")
+async def zpravy_nahled(req: ZpravaRequest):
+    """Live náhled: sestaví document Bundle z hodnot ve formuláři
+    a hned ho zvaliduje dle L1 kritérií příslušného IG profilu."""
+    try:
+        bundle = _fhir_ezd.build_ezd_bundle(
+            req.kategorie, rid=req.rid, autor_krzpid=req.autor, ico=req.ico,
+            pzs_nazev=req.pzs_nazev, title=req.title,
+            pacient=req.pacient, autor=req.autor_data,
+            sekce=req.sekce, pdf_base64=req.pdf_base64)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    v = _fhir_ezd.validate_ezd_bundle(bundle, kategorie=req.kategorie)
+    obsah = json.dumps(bundle, ensure_ascii=False).encode("utf-8")
+    return JSONResponse({
+        "bundle": bundle,
+        "validace": v,
+        "velikost_bytes": len(obsah),
+        "sha256": hashlib.sha256(obsah).hexdigest(),
+    })
+
+
+@app.post("/api/zpravy/validovat")
+async def zpravy_validovat(request: Request):
+    """Validace vlastního FHIR JSON (vloženého uživatelem) dle L1."""
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Tělo není platný JSON"}, status_code=400)
+    bundle = body.get("bundle", body)
+    v = _fhir_ezd.validate_ezd_bundle(bundle, kategorie=body.get("kategorie"))
+    return JSONResponse(v)
+
+
+@app.post("/api/zpravy/odeslat-du")
+async def zpravy_odeslat_du(req: ZpravaRequest):
+    """Sestaví zprávu a uloží ji jako zásilku do Dočasného úložiště.
+
+    Adresát musí být jiné PZS než tvůrce (DÚ validace E01001) – bere se
+    z pole ``pacient.ico_adresat`` nebo výchozí testovací PZS.
+    """
+    if not _connected:
+        return JSONResponse({"error": "Klient není připojen"}, status_code=503)
+    try:
+        bundle = _fhir_ezd.build_ezd_bundle(
+            req.kategorie, rid=req.rid, autor_krzpid=req.autor, ico=req.ico,
+            pzs_nazev=req.pzs_nazev, title=req.title,
+            pacient=req.pacient, autor=req.autor_data,
+            sekce=req.sekce, pdf_base64=req.pdf_base64)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+    v = _fhir_ezd.validate_ezd_bundle(bundle, kategorie=req.kategorie)
+    if not v["valid"]:
+        return JSONResponse({"error": "Zpráva nesplňuje L1 kritéria – "
+                                       "opravte chyby před odesláním",
+                              "validace": v}, status_code=422)
+
+    meta = _fhir_ezd.EZD_KATEGORIE[req.kategorie]
+    content = json.dumps(bundle, ensure_ascii=False).encode("utf-8")
+    sha = hashlib.sha256(content).hexdigest()
+    adresat = _irop_adresat((req.pacient or {}), req.ico)
+    typ_kod = meta["du_typ_kod"]
+    zasilka = {
+        "nazev": req.title or f"{meta['nazev']} (builder)",
+        "popis": f"Vytvořeno v GUI builderu zpráv eZD dle {meta['ig']} {meta['ig_verze']}",
+        "typ": {"ciselnikKod": "medical-document-type", "kod": typ_kod, "verze": "1.0.0"},
+        "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": ""},
+        "autor": req.autor, "zdravotnickyPracovnik": req.autor,
+        "poskytovatel": req.ico, "pacient": req.rid,
+        "ispzs": "SEZ API builder", "adresat": adresat,
+        "adresatTyp": {"ciselnikKod": "typ-adresata", "kod": "PZS", "verze": "1.0.0"},
+        "dostupnost": True,
+        "dokument": [{
+            "nazev": req.title or meta["nazev"],
+            "jazyk": {"ciselnikKod": "languages", "kod": "cs", "verze": "5.0.0"},
+            "typ": {"ciselnikKod": "medical-document-type", "kod": typ_kod, "verze": "1.0.0"},
+            "klasifikace": {"ciselnikKod": "document-category", "kod": "11503-0", "verze": ""},
+            "autor": req.autor, "poskytovatel": req.ico, "pacient": req.rid,
+            "dostupnost": True,
+            "duvernost": {"ciselnikKod": "v3-Confidentiality", "kod": "N", "verze": "2.0.0"},
+            "format": {"ciselnikKod": "format-code",
+                        "kod": "urn:ihe:iti:xds:2017:mimeTypeSufficient", "verze": "1.0.0"},
+            "mime": {"ciselnikKod": "media-type", "kod": "application/fhir+json", "verze": "1.0.0"},
+            "hash": sha, "velikost": len(content),
+            "soubor": {"soubor": base64.b64encode(content).decode()},
+        }],
+    }
+    result = timed_call(_modules["du"].uloz_zasilku, zasilka)
+    return result
+
+
+# ===========================================================================
 # NCPeH – přeshraniční pacientský souhrn (MyHealth@EU / eHDSI)
 # ---------------------------------------------------------------------------
 # Role A: PZS jako poskytovatel dat – endpoint pro národní konektor NCPNC

@@ -10,6 +10,9 @@ Podporované služby:
   - ELPv2 (Elektronické posudky v2)
   - ELPv3 (Elektronické posudky v3.0.1)
   - eŽádanky (vč. simulačního enginu)
+  - Zprávy eZD (builder dokumentů dle HL7 CZ IG – 5 typů: pacientský
+      souhrn, propouštěcí zpráva, zpráva z obrazového vyšetření, zpráva
+      o výjezdu ZZS, laboratorní zpráva; katalog sekcí, ukázky, L1 validace)
   - FHIR Imaging Order (HL7-cz img-order IG v0.1.0-ballot, R4 → /eZadanky bridge)
       • závislosti: cz-core 0.3.0, cz-terminology 0.2.0, eu.base 2.0.0
       • taxonomie (ValueSets) napojené na živý TermX (public mirror) –
@@ -40,6 +43,16 @@ Revize veřejné dokumentace 2026-07-02: PROD katalog apio.csez.gov.cz/apidoc
 ověřen živě (EZCA Validace v1.0.0 NOVÁ, Terminologie v1.1.0); dle aktualit
 Manuálu EZ pro PZS (k 16. 6. 2026) dále SZZ v2.0.4 na T2 (Standard SZZ 2.1)
 a Popis API DÚ v1.2 (ZpochybniZasilku). Živé T2 verze: /api/services/discover.
+
+Builder zpráv eZD (2026-07-26): interaktivní GUI sekce „Zprávy eZD" pro
+tvorbu elektronických zdravotních dokumentů dle HL7 CZ IG – pět typů zpráv
+(pacientský souhrn ps 0.0.1, propouštěcí zpráva hdr 0.1.0, zpráva
+z obrazového vyšetření img 0.1.0-ballot, zpráva o výjezdu ZZS cz-ems 0.0.2
+a NOVĚ laboratorní zpráva cz-lab 0.5.0). Katalog všech sekcí každého
+profilu (povinné i volitelné, LOINC kódy + české názvy), ukázková data,
+live náhled JSON s okamžitou L1 validací, validace vlastního JSON,
+stažení/kopírování a odeslání do DÚ. API: /api/zpravy/katalog,
+/ukazka/{kategorie}, /nahled, /validovat, /odeslat-du.
 
 Revize NCEZ zdrojů 2026-07-26:
 - API endpointy (aktualizace 21. 7. 2026): User-Agent je nově POVINNÝ už
@@ -165,7 +178,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.29.0"
+__version__ = "2.30.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
