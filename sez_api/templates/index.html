@@ -5779,9 +5779,47 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
           <button class="btn" onclick="zpravyKopirovat()">Kopírovat JSON</button>
           <button class="btn" onclick="zpravyStahnout()">Stáhnout .json</button>
           <button class="btn btn-green" onclick="zpravyOdeslatDu()">Odeslat do Dočasného úložiště</button>
+          <button class="btn" onclick="zpravyIrisKod()" style="border-color:#a78bfa;color:#5b21b6">Generovat IRIS kód</button>
         </div>
         <div class="json-box" id="zpravyJson" style="max-height:520px">-</div>
         <div id="zpravyOdeslaniResult" style="margin-top:10px"></div>
+      </div>
+
+      <!-- 5. InterSystems IRIS generátor -->
+      <div class="card" id="zpravyIrisCard" style="display:none;background:linear-gradient(135deg,#f5f3ff 0%,#f8fafc 100%);border-color:#ddd6fe">
+        <div class="card-title" style="color:#5b21b6">InterSystems IRIS – generovaný kód</div>
+        <p style="font-size:11px;color:var(--fg3);margin:0 0 8px">
+          Kód sestaví <strong>tutéž zprávu</strong> v IRIS přes <code>SEZ.EZD.Builder</code>, zvaliduje ji dle L1 a uloží do Dočasného úložiště.
+          Runtime třídu <code>SEZ.EZD.Builder</code> (společná všem typům) stačí importovat jednou.
+        </p>
+        <div class="sub-tabs" id="zpravyIrisTabs">
+          <div class="sub-tab active" data-panel="zpravy-iris-snippet">Úryvek (terminál)</div>
+          <div class="sub-tab" data-panel="zpravy-iris-trida">Třída .cls</div>
+          <div class="sub-tab" data-panel="zpravy-iris-builder">SEZ.EZD.Builder</div>
+        </div>
+        <div class="sub-panel active" id="zpravy-iris-snippet">
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <button class="btn" onclick="zpravyIrisKopirovat('snippet')">Kopírovat</button>
+            <button class="btn" onclick="zpravyIrisStahnout('snippet')">Stáhnout .txt</button>
+          </div>
+          <pre class="json-box" id="zpravyIrisSnippet" style="max-height:420px;font-size:11px">-</pre>
+        </div>
+        <div class="sub-panel" id="zpravy-iris-trida">
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
+            <button class="btn" onclick="zpravyIrisKopirovat('trida')">Kopírovat</button>
+            <button class="btn" onclick="zpravyIrisStahnout('trida')">Stáhnout .cls</button>
+            <code style="font-size:11px;color:var(--fg3)" id="zpravyIrisTridaNazev"></code>
+          </div>
+          <pre class="json-box" id="zpravyIrisTrida" style="max-height:420px;font-size:11px">-</pre>
+        </div>
+        <div class="sub-panel" id="zpravy-iris-builder">
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <button class="btn" onclick="zpravyIrisKopirovat('builder')">Kopírovat</button>
+            <button class="btn" onclick="zpravyIrisStahnout('builder')">Stáhnout .cls</button>
+            <code style="font-size:11px;color:var(--fg3)">SEZ.EZD.Builder – runtime třída (Sestav / Validuj / ZasilkaProDU / SestavAOdesli)</code>
+          </div>
+          <pre class="json-box" id="zpravyIrisBuilder" style="max-height:420px;font-size:11px">-</pre>
+        </div>
       </div>
 
       <!-- 5. Validace vlastního JSON -->
@@ -15937,6 +15975,42 @@ async function zpravyOdeslatDu() {
     (id ? 'ID zásilky: <code>' + esc(id) + '</code>' : '') +
     '<div class="json-box" style="margin-top:6px;max-height:220px">' + syntaxHighlight(JSON.stringify(r, null, 2)) + '</div>';
   if (id) toast('Zpráva uložena do DÚ, ID ' + id);
+}
+
+let _zpIris = null;
+
+async function zpravyIrisKod() {
+  if (!_zpAktivni) return;
+  const card = document.getElementById('zpravyIrisCard');
+  card.style.display = '';
+  document.getElementById('zpravyIrisSnippet').textContent = 'Generuji…';
+  const d = await api('POST', '/api/zpravy/iris-kod', zpravyPayload());
+  if (!d || d.error) { toast((d && d.error) || 'Generování selhalo', true); return; }
+  _zpIris = d;
+  document.getElementById('zpravyIrisSnippet').textContent = d.snippet;
+  document.getElementById('zpravyIrisTrida').textContent = d.trida;
+  document.getElementById('zpravyIrisBuilder').textContent = d.builder;
+  document.getElementById('zpravyIrisTridaNazev').textContent = d.trida_nazev;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  toast('IRIS kód vygenerován – ' + d.trida_nazev);
+}
+
+function zpravyIrisKopirovat(co) {
+  if (!_zpIris) return toast('Nejdřív vygenerujte kód', true);
+  const txt = _zpIris[co] || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('Zkopírováno'));
+  else toast('Clipboard není dostupný', true);
+}
+
+function zpravyIrisStahnout(co) {
+  if (!_zpIris) return toast('Nejdřív vygenerujte kód', true);
+  const soubory = {
+    snippet: [_zpAktivni.kategorie + '-iris.txt', 'text/plain'],
+    trida: [(_zpIris.trida_nazev || 'Zprava').split('.').pop() + '.cls', 'text/plain'],
+    builder: ['Builder.cls', 'text/plain'],
+  };
+  const [nazev, mime] = soubory[co] || ['iris.txt', 'text/plain'];
+  _downloadText(_zpIris[co] || '', nazev, mime);
 }
 
 async function zpravyValidovatVlastni() {
