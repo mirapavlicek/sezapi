@@ -3428,8 +3428,12 @@ class SUKLDLP:
     _source: str | None = None
     _loaded_at: float = 0.0
     _error: str | None = None
+    # Skutečně použitá URL balíku (po autodetekci z katalogu).
+    _url: str = ""
 
-    # Kandidátní názvy sloupců (schéma DLP se mezi verzemi liší) – zkusí se po řadě.
+    # Kandidátní názvy sloupců (schéma DLP se mezi verzemi liší) – zkusí se po
+    # řadě. První v seznamu je název podle datového rozhraní DLP
+    # (opendata.sukl.cz/soubory/DLP_datove_rozhrani<datum>.csv).
     _COLS = {
         "kod": ["KOD_SUKL", "KODSUKL", "KOD"],
         "nazev": ["NAZEV", "NÁZEV", "NAZ"],
@@ -3437,12 +3441,31 @@ class SUKLDLP:
         "forma": ["FORMA", "LEKOVA_FORMA", "F"],
         "baleni": ["BALENI", "DOPLNEK_NAZ", "VELIKOST_BALENI", "DOPLNEK"],
         "atc": ["ATC_WHO", "ATC", "ATCWHO"],
-        "ucinna_latka": ["NAZEV_LATKY", "UCINNA_LATKA", "LATKA", "SLOZENI"],
+        "ucinna_latka": ["LL", "NAZEV_LATKY", "UCINNA_LATKA", "LATKA", "SLOZENI"],
         "cesta": ["CESTA", "CESTA_PODANI"],
-        "drzitel": ["DRZITEL", "DRZITEL_ROZHODNUTI", "NAZEV_DRZITELE"],
-        "stav_registrace": ["STAV_REG", "STAV_REGISTRACE", "STAV"],
+        "drzitel": ["DRZ", "DRZITEL", "DRZITEL_ROZHODNUTI", "NAZEV_DRZITELE"],
+        "stav_registrace": ["REG", "STAV_REG", "STAV_REGISTRACE", "STAV"],
         "vydej": ["VYDEJ", "ZPUSOB_VYDEJE"],
     }
+
+    # Soubory s přípravky v archivu, v pořadí preference. Archiv obsahuje ~30
+    # CSV (data i číselníky), takže se nesmí brát první podle pořadí v ZIPu.
+    _DATOVE_SOUBORY = ("dlp_lecivepripravky", "lecivepripravky", "dlp_lecive")
+
+    # Číselníky v témže archivu: pole -> (soubor, sloupec s kódem, sloupec s názvem).
+    # V CSV s přípravky jsou jen zkratky (držitel "ZNB", výdej "R").
+    _CISELNIKY = {
+        "drzitel": ("dlp_organizace", "ZKR_ORG", "NAZEV"),
+        "stav_registrace": ("dlp_stavyreg", "REG", "NAZEV"),
+        "vydej": ("dlp_vydej", "VYDEJ", "NAZEV"),
+    }
+
+    # Číselníky léčivých látek – sloupec LL obsahuje kódy oddělené čárkou
+    # ("12,223"), názvy jsou v samostatných souborech.
+    _CISELNIKY_LATEK = (
+        ("dlp_lecivelatky", "KOD_LATKY", "NAZEV"),
+        ("dlp_latky", "KOD_LATKY", "NAZEV"),
+    )
 
     def __init__(self, client: SEZClient = None):
         self.c = client
@@ -3454,7 +3477,115 @@ class SUKLDLP:
         SUKLDLP._source = "sample"
         SUKLDLP._loaded_at = time.time()
         SUKLDLP._error = error
+        SUKLDLP._url = ""
         return SUKLDLP._index
+
+    @staticmethod
+    def _csv_rows(data: bytes) -> list[list[str]]:
+        """Dekóduje CSV z balíku DLP (cp1250, oddělovač ';')."""
+        import csv
+        import io
+        for enc in ("cp1250", "utf-8-sig", "utf-8"):
+            try:
+                text = data.decode(enc)
+                break
+            except UnicodeDecodeError:
+                continue
+        else:
+            text = data.decode("cp1250", errors="replace")
+        return list(csv.reader(io.StringIO(text), delimiter=";"))
+
+    @classmethod
+    def _vyber_soubor(cls, names: list) -> str | None:
+        """Vybere CSV s léčivými přípravky podle preference, ne podle pořadí
+        v archivu (jinak se načte první číselník, např. dlp_atc.csv)."""
+        for vzor in cls._DATOVE_SOUBORY:
+            for n in names:
+                if vzor in n.lower():
+                    return n
+        return names[0] if names else None
+
+    @classmethod
+    def _zjisti_url(cls, url: str) -> tuple:
+        """Pro hodnotu "auto" najde v katalogu odkaz na aktuální balík – SÚKL
+        publikuje balík s datem v názvu (SOD<datum>/DLP<datum>.zip), takže
+        pevně zadaná URL po každé aktualizaci přestane platit.
+
+        Vrací (url, chyba).
+        """
+        if (url or "").strip().lower() != "auto":
+            return url, None
+
+        import re
+        from sez_api import config as _cfg
+        katalog = getattr(_cfg, "SUKL_DLP_KATALOG", "")
+        if not katalog:
+            return "", "SUKL_DLP_KATALOG není nastavena"
+        try:
+            resp = requests.get(katalog, timeout=30)
+            resp.raise_for_status()
+        except Exception as exc:
+            return "", f"katalog DLP nedostupný: {str(exc)[:150]}"
+        odkazy = re.findall(
+            r"https?://[^\"'\s]+/soubory/SOD\d{8}/DLP\d{8}\.zip", resp.text)
+        if not odkazy:
+            return "", "v katalogu DLP nebyl nalezen odkaz na balík"
+        # Datum je součástí názvu, takže nejnovější balík je lexikograficky poslední.
+        return sorted(set(odkazy))[-1], None
+
+    def _doplnit_ciselniky(self, zf, records: list) -> None:
+        """Přeloží zkratky (držitel, stav registrace, výdej) na názvy z číselníků
+        v témže archivu. Původní kód zůstává v poli <pole>_kod."""
+        for pole, (soubor, kl_kod, kl_nazev) in self._CISELNIKY.items():
+            mapa = self._nacti_ciselnik(zf, soubor, kl_kod, kl_nazev)
+            if not mapa:
+                continue
+            for r in records:
+                kod = (r.get(pole) or "").strip()
+                if not kod:
+                    continue
+                r[pole + "_kod"] = kod
+                if kod in mapa:
+                    r[pole] = mapa[kod]
+
+    def _doplnit_latky(self, zf, records: list) -> None:
+        """Přeloží kódy léčivých látek ze sloupce LL na názvy. Kódy zůstávají
+        v poli ucinna_latka_kod."""
+        mapa: dict = {}
+        for zaklad, kl_kod, kl_nazev in self._CISELNIKY_LATEK:
+            for kod, nazev in self._nacti_ciselnik(zf, zaklad, kl_kod, kl_nazev).items():
+                mapa.setdefault(kod, nazev)
+        if not mapa:
+            return
+        for r in records:
+            hodnota = (r.get("ucinna_latka") or "").strip()
+            if not hodnota:
+                continue
+            kody = [k.strip() for k in hodnota.split(",") if k.strip()]
+            nazvy = [mapa.get(k, k) for k in kody]
+            if nazvy != kody:
+                r["ucinna_latka_kod"] = hodnota
+                r["ucinna_latka"] = ", ".join(nazvy)
+
+    def _nacti_ciselnik(self, zf, zaklad: str, kl_kod: str, kl_nazev: str) -> dict:
+        name = next((n for n in zf.namelist() if zaklad in n.lower()), None)
+        if not name:
+            return {}
+        try:
+            rows = self._csv_rows(zf.read(name))
+        except Exception:
+            return {}
+        if not rows:
+            return {}
+        header = [c.strip().upper() for c in rows[0]]
+        if (kl_kod not in header) or (kl_nazev not in header):
+            return {}
+        i_kod, i_naz = header.index(kl_kod), header.index(kl_nazev)
+        out = {}
+        for r in rows[1:]:
+            if len(r) > max(i_kod, i_naz) and r[i_kod].strip():
+                out[r[i_kod].strip()] = r[i_naz].strip()
+        return out
 
     def _norm_row(self, header: list, row: list) -> dict:
         raw = {header[i].strip().upper(): (row[i].strip() if i < len(row) else "")
@@ -3474,30 +3605,24 @@ class SUKLDLP:
 
         from sez_api import config as _cfg
         import io
-        import csv
         import zipfile
 
         url = getattr(_cfg, "SUKL_DLP_URL", "")
         if not url:
             return self._load_samples("SUKL_DLP_URL není nastavena")
 
+        url, chyba = self._zjisti_url(url)
+        if not url:
+            return self._load_samples(chyba or "URL balíku DLP se nepodařilo zjistit")
+
         try:
-            resp = requests.get(url, timeout=30)
+            resp = requests.get(url, timeout=60)
             resp.raise_for_status()
             data = resp.content
             records: list[dict] = []
 
             def _parse_csv_bytes(b: bytes):
-                for enc in ("cp1250", "utf-8-sig", "utf-8"):
-                    try:
-                        text = b.decode(enc)
-                        break
-                    except UnicodeDecodeError:
-                        continue
-                else:
-                    text = b.decode("cp1250", errors="replace")
-                reader = csv.reader(io.StringIO(text), delimiter=";")
-                rows = list(reader)
+                rows = self._csv_rows(b)
                 if not rows:
                     return
                 header = rows[0]
@@ -3507,15 +3632,11 @@ class SUKLDLP:
 
             if url.lower().endswith(".zip") or data[:2] == b"PK":
                 zf = zipfile.ZipFile(io.BytesIO(data))
-                # Preferuj soubor s "lecivepripravky" / "dlp" v názvu.
-                names = zf.namelist()
-                target = next(
-                    (n for n in names if "lecivepripravky" in n.lower()
-                     or "dlp_lecive" in n.lower() or n.lower().startswith("dlp")),
-                    names[0] if names else None,
-                )
+                target = self._vyber_soubor(zf.namelist())
                 if target:
                     _parse_csv_bytes(zf.read(target))
+                self._doplnit_ciselniky(zf, records)
+                self._doplnit_latky(zf, records)
             else:
                 _parse_csv_bytes(data)
 
@@ -3527,6 +3648,7 @@ class SUKLDLP:
             SUKLDLP._source = "opendata"
             SUKLDLP._loaded_at = time.time()
             SUKLDLP._error = None
+            SUKLDLP._url = url
             logger.info("SÚKL DLP načteno: %d přípravků z %s", len(records), url)
             return SUKLDLP._index
         except Exception as exc:
@@ -3535,14 +3657,18 @@ class SUKLDLP:
 
     # --- veřejné API ------------------------------------------------------
     def status(self) -> dict:
+        from sez_api import config as _cfg
         idx = self._ensure_index()
         return {
             "zdroj": SUKLDLP._source,
             "pocet": len(idx or []),
             "nacteno": SUKLDLP._loaded_at,
             "chyba": SUKLDLP._error,
-            "url": getattr(__import__("sez_api.config", fromlist=["SUKL_DLP_URL"]),
-                           "SUKL_DLP_URL", ""),
+            # url = balík, ze kterého se data skutečně načetla (u "auto" zjištěný
+            # z katalogu); url_konfigurace = co je nastaveno v konfiguraci.
+            "url": SUKLDLP._url or getattr(_cfg, "SUKL_DLP_URL", ""),
+            "url_konfigurace": getattr(_cfg, "SUKL_DLP_URL", ""),
+            "katalog": getattr(_cfg, "SUKL_DLP_KATALOG", ""),
         }
 
     def reload(self) -> dict:
