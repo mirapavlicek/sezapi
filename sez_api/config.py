@@ -34,6 +34,15 @@ INTERNAL_API_KEY = env("SEZ_INTERNAL_API_KEY", "")
 # Prostředí, proti kterému interní API ztotožňuje (default produkce).
 INTERNAL_ENV = env("SEZ_INTERNAL_ENV", "PROD")
 
+# Úložiště certifikátů převzatých z centrální distribuce (API pro nasazení
+# ostrého certifikátu). Když v něm certifikát je, má přednost před
+# SEZ_PROD_P12_PATH – po restartu tedy poběží naposledy nasazený certifikát.
+CERT_STORE_DIR = env("SEZ_CERT_STORE_DIR", "")
+# Samostatný klíč pro API distribuce certifikátů. Prázdné = použije se
+# SEZ_INTERNAL_API_KEY (nasazení certifikátu je ale citlivější operace než
+# ztotožnění, proto se doporučuje vlastní klíč).
+CERT_API_KEY = env("SEZ_CERT_API_KEY", "")
+
 PROD_CLIENT_ID = env("SEZ_PROD_CLIENT_ID", "")
 PROD_P12_PATH = env("SEZ_PROD_P12_PATH", "")
 PROD_P12_PASSWORD = env("SEZ_PROD_P12_PASSWORD", "")
@@ -91,6 +100,24 @@ SUKL_DLP_KATALOG = env(
     "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
 )
 SUKL_DLP_CACHE_DIR = env("SUKL_DLP_CACHE_DIR", "/tmp/sukl_dlp")
+
+
+def cert_store_dir() -> str:
+    """Adresář s certifikáty převzatými z centrální distribuce.
+
+    Bez explicitního `SEZ_CERT_STORE_DIR` se použije podadresář u produkčního
+    certifikátu (tam, kam je nasazení zvyklé sahat), jinak `data/certs`
+    v pracovním adresáři."""
+    if CERT_STORE_DIR:
+        return CERT_STORE_DIR
+    if PROD_P12_PATH:
+        return str(Path(PROD_P12_PATH).expanduser().parent / "certstore")
+    return str(Path.cwd() / "data" / "certs")
+
+
+def cert_api_key() -> str:
+    """Klíč vyžadovaný pro API distribuce certifikátů."""
+    return (CERT_API_KEY or INTERNAL_API_KEY or "").strip()
 
 
 def sukl_erecept_endpoint(env_key: str = "T2") -> str:

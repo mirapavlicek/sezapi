@@ -195,6 +195,9 @@ Volitelné proměnné:
 | Proměnná | Výchozí | Popis |
 |----------|---------|-------|
 | `SEZ_CERT_UID` | (z certifikátu) | UID certifikátu z EZCA portálu |
+| `SEZ_CERT_STORE_DIR` | vedle PROD certifikátu | Úložiště certifikátů převzatých přes `/internal/v1/certifikat` |
+| `SEZ_CERT_API_KEY` | (`SEZ_INTERNAL_API_KEY`) | Klíč pro API distribuce certifikátů |
+| `SEZ_INTERNAL_API_KEY` | (bez ochrany) | Klíč vyžadovaný interním API `/internal` |
 | `SEZ_GATEWAY` | `https://gwy-ext-sec-t2.csez.cz` | URL API Gateway |
 | `SEZ_HOST` | `0.0.0.0` | Adresa webového serveru |
 | `SEZ_PORT` | `8000` | Port webového serveru |
@@ -415,6 +418,58 @@ dle [Metodiky testování EHR fáze I](https://mzcr.atlassian.net/wiki/spaces/EP
   (A / B / ZZS) na `/api/irop/povinne-scenare`.
 - **Protokol o provedení testu** (povinný výstup testů) lze vygenerovat
   tlačítkem v záložce „Spustit vše" nebo přes `POST /api/irop/protokol`.
+
+## Interní API (`/internal`)
+
+Rozhraní pro navazující systémy (NIS), oddělené od webového UI. Swagger:
+`/internal/docs`. Autentizace hlavičkou `X-Api-Key`, když je nastaven
+`SEZ_INTERNAL_API_KEY`.
+
+### Ztotožnění pacienta → RID
+
+`POST /internal/v1/ztotozneni` (dávkově `/v1/ztotozneni/davka`). Metody KRP se
+zkoušejí od nejpřesnější, dokud pacient není nalezen; při úspěchu žádné volání
+navíc neodejde. Podporuje i **rodné číslo bez jména** (univerzální hledání).
+Vyzkoušené metody vrací pole `pokusy`.
+
+### Převzetí ostrého certifikátu z centrální distribuce
+
+`POST /internal/v1/certifikat` přijme PKCS#12 v base64, zvaliduje ho, uloží a
+**rovnou zařadí do provozu** – bez restartu aplikace.
+
+```bash
+curl -X POST https://<host>/internal/v1/certifikat \
+  -H "X-Api-Key: $SEZ_CERT_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "pfxBase64": "'"$(base64 -w0 novy_cert.p12)"'",
+    "password": "heslo-k-p12",
+    "clientId": "25488627_NIS",
+    "certUid": "85cf28c4-c190-406f-bc96-f92ad25b3202",
+    "prostredi": "PROD",
+    "zdroj": "centralni-distribuce"
+  }'
+```
+
+Průběh: validace (heslo, privátní klíč, doba platnosti) → záloha stávajícího →
+atomické uložení s právy `0600` → přestavění klienta → ověření (podpis JWT a
+volání číselníku KRP). **Když s novým certifikátem nelze klienta sestavit,
+automaticky se vrátí předchozí** a volání skončí chybou 502, takže provoz
+nezůstane bez funkčního certifikátu.
+
+| Endpoint | Popis |
+|----------|-------|
+| `POST /internal/v1/certifikat` | Převzít a nasadit certifikát |
+| `GET /internal/v1/certifikat` | Subject, platnost, `dnyDoExpirace` (monitoring) |
+| `GET /internal/v1/certifikat/historie` | Seznam předchozích verzí |
+| `POST /internal/v1/certifikat/rollback` | Vrátit předchozí certifikát |
+
+Užitečná pole požadavku: `pouzeOverit` (jen validace, nic se neukládá),
+`vynutitNeplatny` (nasazení v předstihu, než začne platnost), `overitVolanim`
+(vypnutí zkušebního dotazu na bránu). Heslo se ukládá do souboru s právy `0600`
+vedle certifikátu a v odpovědích API se nikdy nevrací.
+
+Adresář úložiště určuje `SEZ_CERT_STORE_DIR`; naposledy převzatý certifikát má
+po restartu přednost před `SEZ_PROD_P12_PATH`.
 
 ## Struktura projektu
 
