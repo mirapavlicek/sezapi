@@ -47,6 +47,13 @@ INTERNAL_RETRY_BACKOFF = float(env("SEZ_INTERNAL_RETRY_BACKOFF", "0.25"))
 # nezahájí, pokud by se do rozpočtu nevešla – odpověď přijde včas s tím,
 # co se zjistit stihlo. 0 = bez omezení.
 ZTOTOZNENI_BUDGET_MS = int(env("SEZ_ZTOTOZNENI_BUDGET_MS", "4000"))
+# Kolik souběžných volání na bránu smí interní API držet. Každé potřebuje
+# vlastního HTTP klienta (requests.Session není thread-safe), certifikát a
+# podpis JWT se sdílejí.
+INTERNAL_POOL_SIZE = int(env("SEZ_INTERNAL_POOL_SIZE", "8"))
+# Kolik položek dávkového ztotožnění se zpracovává najednou. Omezuje zátěž
+# brány; 1 = sekvenčně jako dřív.
+DAVKA_SOUBEZNOST = int(env("SEZ_DAVKA_SOUBEZNOST", "4"))
 
 # Úložiště certifikátů převzatých z centrální distribuce (API pro nasazení
 # ostrého certifikátu). Když v něm certifikát je, má přednost před
