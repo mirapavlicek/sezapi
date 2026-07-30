@@ -35,6 +35,7 @@ from sez_api.client import (
     EZCA2SpravaCertifikatu, EZCAValidace, KRPv3, SZZv2, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
     UZISNrpzs, UZIS, UZISObsazenostLuzek,
 )
+from sez_api.certstore import CertChyba, CertStore, dekoduj_pfx, zkontroluj_pfx
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_ezd as _fhir_ezd
 from sez_api import ncpeh as _ncpeh_mod
@@ -8895,6 +8896,31 @@ _internal_lock = _threading.Lock()
 _internal_state: dict = {"krp": None, "auth": None, "client": None, "cert": None}
 
 
+def _cert_store(prostredi: str = "") -> CertStore:
+    """Úložiště certifikátů z centrální distribuce pro dané prostředí.
+    CMS varianty používají stejný certifikát jako přístup po internetu."""
+    env_key = (prostredi or cfg.INTERNAL_ENV or "PROD").upper()
+    zaklad = env_key[:-4] if env_key.endswith("_CMS") else env_key
+    return CertStore(cfg.cert_store_dir(), zaklad)
+
+
+def _credentials_pro(env_key: str) -> dict:
+    """Přihlašovací údaje prostředí. Certifikát nasazený přes API distribuce
+    má přednost před cestou z konfigurace, takže po restartu poběží ten
+    naposledy převzatý."""
+    creds = dict(cfg.ENV_CREDENTIALS.get(env_key) or {})
+    store = _cert_store(env_key)
+    if store.existuje():
+        meta = store.metadata()
+        creds["p12_path"] = str(store.pfx_path)
+        creds["p12_password"] = store.heslo()
+        if meta.get("clientId"):
+            creds["client_id"] = meta["clientId"]
+        if meta.get("certUid"):
+            creds["cert_uid"] = meta["certUid"]
+    return creds
+
+
 def _build_internal_prod() -> dict:
     """Vytvoří dedikovaného klienta pro interní ztotožnění (default PROD).
 
@@ -8902,14 +8928,15 @@ def _build_internal_prod() -> dict:
     stav), takže globální switch_environment hlavní aplikace tohoto klienta
     neovlivní."""
     env_key = cfg.INTERNAL_ENV or "PROD"
-    creds = cfg.ENV_CREDENTIALS.get(env_key) or {}
+    creds = _credentials_pro(env_key)
     envdef = SEZ_ENVIRONMENTS.get(env_key)
     if not envdef:
         raise RuntimeError(f"Neznámé prostředí '{env_key}'.")
     if not creds.get("p12_path"):
         raise RuntimeError(
-            f"Chybí certifikát pro prostředí {env_key} "
-            f"(nastavte SEZ_PROD_P12_PATH / SEZ_PROD_P12_PASSWORD).")
+            f"Chybí certifikát pro prostředí {env_key} – nasaďte jej přes "
+            f"POST /internal/v1/certifikat nebo nastavte SEZ_PROD_P12_PATH "
+            f"/ SEZ_PROD_P12_PASSWORD.")
     icfg = SEZConfig()
     icfg.GATEWAY = envdef["gateway"]
     icfg.TOKEN_AUDIENCE = envdef["jsu_audience"]
@@ -8923,16 +8950,21 @@ def _build_internal_prod() -> dict:
     )
     client = SEZClient(auth)
     cert = auth._signing_cert
+    store = _cert_store(env_key)
+    platny_do = cert.not_valid_after_utc
     return {
         "krp": KRP(client),
         "auth": auth,
         "client": client,
         "cert": {
             "subject": cert.subject.rfc4514_string(),
-            "valid_to": cert.not_valid_after_utc.isoformat(),
+            "valid_to": platny_do.isoformat(),
+            "dny_do_expirace": (platny_do - datetime.now(timezone.utc)).days,
             "client_id": creds["client_id"],
             "gateway": envdef["gateway"],
             "environment": env_key,
+            # Odkud certifikát pochází – z centrální distribuce, nebo z .env.
+            "zdroj": "distribuce" if store.existuje() else "konfigurace",
         },
     }
 
@@ -9084,8 +9116,14 @@ internal_app = FastAPI(
         "Vyzkoušené metody se vracejí v poli `pokusy`.\n\n"
         "Endpointy: jednotlivě `POST /v1/ztotozneni`, dávkově "
         "`POST /v1/ztotozneni/davka`.\n\n"
+        "### Certifikát z centrální distribuce\n\n"
+        "`POST /v1/certifikat` převezme ostrý certifikát (PKCS#12 v base64), "
+        "zvaliduje ho, uloží a **rovnou zařadí do provozu** – bez restartu "
+        "aplikace. Stav a expiraci vrací `GET /v1/certifikat`, návrat k "
+        "předchozímu `POST /v1/certifikat/rollback`.\n\n"
         "Autentizace: hlavička `X-Api-Key` (povinná, je-li nastaven "
-        "`SEZ_INTERNAL_API_KEY`)."
+        "`SEZ_INTERNAL_API_KEY`; pro certifikáty lze mít vlastní "
+        "`SEZ_CERT_API_KEY`)."
     ),
     version=__version__,
     docs_url="/docs",
@@ -9383,6 +9421,314 @@ async def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
         pocet=len(req.polozky), nalezeno=nalezeno,
         prostredi=env_key, vysledky=vysledky,
     )
+
+
+# --- Převzetí ostrého certifikátu z centrální distribuce ------------------- #
+
+def _require_cert_api_key(x_api_key: Optional[str] = Header(
+        default=None, alias="X-Api-Key",
+        description="Klíč pro distribuci certifikátů (SEZ_CERT_API_KEY, "
+                    "případně SEZ_INTERNAL_API_KEY).")):
+    expected = cfg.cert_api_key()
+    if expected and (not x_api_key or x_api_key.strip() != expected):
+        raise HTTPException(status_code=401, detail="Neplatný nebo chybějící X-Api-Key.")
+    return True
+
+
+class CertifikatRequest(BaseModel):
+    pfxBase64: str = Field(
+        ..., description="Certifikát PKCS#12 (PFX/P12) s privátním klíčem, "
+                         "kódovaný base64. Přijímá se i s data URL prefixem "
+                         "a zalomenými řádky.")
+    password: str = Field(..., description="Heslo k PKCS#12.")
+    clientId: Optional[str] = Field(
+        None, description="client_id pro bránu (např. \"25488627_NIS\"). "
+                          "Neuvedené = zachová se dosavadní.")
+    certUid: Optional[str] = Field(
+        None, description="UID certifikátu z EZCA (kid v JWT). Neuvedené = "
+                          "odvodí se z certifikátu (SubjectKeyIdentifier).")
+    prostredi: str = Field("PROD", description="Cílové prostředí (PROD, T2).")
+    poznamka: Optional[str] = Field(None, description="Volitelný popis pro audit.")
+    zdroj: Optional[str] = Field(
+        None, description="Označení systému, který certifikát dodal (audit).")
+    pouzeOverit: bool = Field(
+        False, description="True = certifikát se jen zvaliduje a zahodí "
+                           "(nic se neukládá ani nenasazuje).")
+    vynutitNeplatny: bool = Field(
+        False, description="True = přijmout i certifikát mimo dobu platnosti "
+                           "(pro nasazení v předstihu).")
+    overitVolanim: bool = Field(
+        True, description="Po nasazení zkusit volání na bránu (číselník KRP) "
+                          "a vrátit jeho HTTP status.")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "pfxBase64": "MIIKzQIBAzCCCo…",
+                "password": "tajne-heslo",
+                "clientId": "25488627_NIS",
+                "certUid": "85cf28c4-c190-406f-bc96-f92ad25b3202",
+                "prostredi": "PROD",
+                "zdroj": "centralni-distribuce",
+                "poznamka": "Obnova certifikátu 2026",
+            }]
+        }
+    }
+
+
+class CertifikatInfo(BaseModel):
+    subject: Optional[str] = None
+    issuer: Optional[str] = None
+    serialNumber: Optional[str] = None
+    platnyOd: Optional[str] = None
+    platnyDo: Optional[str] = None
+    dnyDoExpirace: Optional[int] = None
+    fingerprintSha256: Optional[str] = None
+    kid: Optional[str] = Field(
+        None, description="Identifikátor klíče odvozený z certifikátu "
+                          "(SubjectKeyIdentifier) – použije se, když UID z EZCA "
+                          "není zadané.")
+    clientId: Optional[str] = None
+    certUid: Optional[str] = Field(
+        None, description="UID certifikátu z EZCA, které se posílá jako kid "
+                          "v hlavičce JWT.")
+    prostredi: Optional[str] = None
+    cesta: Optional[str] = None
+    nahranoV: Optional[str] = None
+    poznamka: Optional[str] = None
+    zdroj: Optional[str] = None
+    chyba: Optional[str] = None
+
+
+class CertifikatResponse(BaseModel):
+    ok: bool = Field(..., description="True = certifikát je v pořádku.")
+    aktivovano: bool = Field(
+        ..., description="True = certifikát je nasazený a používá se pro další volání.")
+    zprava: str
+    certifikat: CertifikatInfo
+    predchozi: Optional[CertifikatInfo] = Field(
+        None, description="Certifikát, který byl nahrazen (uložený v historii).")
+    overeni: Optional[dict] = Field(
+        None, description="Výsledek ověření po nasazení (podpis JWT, volání brány).")
+
+
+def _cert_info_model(data: dict) -> CertifikatInfo:
+    return CertifikatInfo(**{k: v for k, v in (data or {}).items()
+                             if k in CertifikatInfo.model_fields})
+
+
+def _overeni_po_nasazeni(overit_volanim: bool) -> dict:
+    """Ověří, že s novým certifikátem lze podepsat JWT a (volitelně) že ho
+    brána přijme. Nevyhazuje – výsledek se vrací volajícímu."""
+    vysledek: dict = {}
+    mods = _internal_modules()
+    auth = mods.get("auth")
+    try:
+        assertion = auth.build_assertion()
+        vysledek["podpisJwt"] = bool(assertion)
+        vysledek["kid"] = getattr(auth, "_kid", None)
+    except Exception as exc:
+        vysledek["podpisJwt"] = False
+        vysledek["chyba"] = f"Podpis JWT selhal: {exc}"
+        return vysledek
+
+    if overit_volanim:
+        try:
+            resp = mods["krp"].ciselnik("pohlavi")
+            status = getattr(resp, "status_code", 0)
+            vysledek["volaniBrany"] = {"endpoint": "KRP /ciselnik/pohlavi",
+                                        "httpStatus": status,
+                                        "ok": 200 <= status < 300}
+        except Exception as exc:
+            vysledek["volaniBrany"] = {"endpoint": "KRP /ciselnik/pohlavi",
+                                        "ok": False, "chyba": str(exc)[:200]}
+    return vysledek
+
+
+def _aktualizuj_konfiguraci(env_key: str, store, meta: dict) -> None:
+    """Propíše nasazený certifikát do konfigurace, aby ho používalo i hlavní
+    rozhraní (přepnutí prostředí v GUI), nejen interní API."""
+    cesta, heslo = str(store.pfx_path), store.heslo()
+    zaklad = env_key[:-4] if env_key.endswith("_CMS") else env_key
+    for klic in (zaklad, f"{zaklad}_CMS"):
+        creds = cfg.ENV_CREDENTIALS.get(klic)
+        if not creds:
+            continue
+        creds["p12_path"] = cesta
+        creds["p12_password"] = heslo
+        if meta.get("clientId"):
+            creds["client_id"] = meta["clientId"]
+        if meta.get("certUid"):
+            creds["cert_uid"] = meta["certUid"]
+    if zaklad == "PROD":
+        cfg.PROD_P12_PATH = cesta
+        cfg.PROD_P12_PASSWORD = heslo
+        if meta.get("clientId"):
+            cfg.PROD_CLIENT_ID = meta["clientId"]
+        if meta.get("certUid"):
+            cfg.PROD_CERT_UID = meta["certUid"]
+
+
+@internal_app.post(
+    "/v1/certifikat",
+    response_model=CertifikatResponse,
+    tags=["certifikát"],
+    summary="Převzít ostrý certifikát z centrální distribuce a nasadit ho",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+async def internal_certifikat_nasadit(req: CertifikatRequest):
+    """Přijme PKCS#12 v base64, zvaliduje ho, uloží a **rovnou zařadí do
+    provozu** – další volání už jdou s novým certifikátem, bez restartu.
+
+    Postup: validace → záloha stávajícího → atomické uložení → přestavění
+    klienta → ověření (podpis JWT, volání brány). Když nasazení selže,
+    automaticky se vrátí předchozí certifikát a operace skončí chybou.
+    """
+
+    env_key = (req.prostredi or "PROD").upper()
+    if env_key not in cfg.ENV_CREDENTIALS:
+        raise HTTPException(status_code=422,
+                            detail=f"Neznámé prostředí '{req.prostredi}'.")
+    try:
+        pfx = dekoduj_pfx(req.pfxBase64)
+        popis = zkontroluj_pfx(pfx, req.password, vynutit=req.vynutitNeplatny)
+    except CertChyba as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    if req.pouzeOverit:
+        popis["prostredi"] = env_key
+        return CertifikatResponse(
+            ok=True, aktivovano=False,
+            zprava="Certifikát je v pořádku, na přání se neukládal.",
+            certifikat=_cert_info_model(popis))
+
+    store = _cert_store(env_key)
+    predchozi = store.info() if store.existuje() else {}
+    try:
+        meta = store.uloz(pfx, req.password, popis=popis,
+                          client_id=(req.clientId or "").strip(),
+                          cert_uid=(req.certUid or "").strip(),
+                          poznamka=(req.poznamka or "").strip(),
+                          zdroj=(req.zdroj or "").strip())
+    except (OSError, CertChyba) as e:
+        raise HTTPException(status_code=500,
+                            detail=f"Certifikát nelze uložit: {e}")
+
+    _aktualizuj_konfiguraci(env_key, store, meta)
+    _internal_reset()
+    try:
+        overeni = _overeni_po_nasazeni(req.overitVolanim)
+    except Exception as e:
+        # Nový certifikát nelze použít – vracíme se k předchozímu, ať provoz jede.
+        logger.error("Nasazení certifikátu selhalo (%s), vracím předchozí", e)
+        vraceno = False
+        try:
+            if predchozi:
+                obnova = store.rollback()
+                _aktualizuj_konfiguraci(env_key, store, obnova)
+                vraceno = True
+        except Exception as exc2:
+            logger.error("Rollback certifikátu selhal: %s", exc2)
+        finally:
+            _internal_reset()
+        raise HTTPException(
+            status_code=502,
+            detail=(f"Certifikát byl uložen, ale klienta s ním nelze sestavit: {e}. "
+                    + ("Předchozí certifikát byl obnoven." if vraceno
+                       else "Předchozí certifikát nebyl k dispozici, "
+                            "prostředí je bez funkčního certifikátu.")))
+
+    logger.info("Nasazen certifikát %s z distribuce: %s (platnost do %s)",
+                env_key, meta.get("subject"), meta.get("platnyDo"))
+    return CertifikatResponse(
+        ok=True, aktivovano=True,
+        zprava=f"Certifikát nasazen pro prostředí {env_key}.",
+        certifikat=_cert_info_model(meta),
+        predchozi=_cert_info_model(predchozi) if predchozi else None,
+        overeni=overeni)
+
+
+@internal_app.get(
+    "/v1/certifikat",
+    response_model=CertifikatInfo,
+    tags=["certifikát"],
+    summary="Informace o aktuálně používaném certifikátu",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+async def internal_certifikat_info(prostredi: str = "PROD"):
+    """Vrátí subject, platnost a počet dnů do expirace – vhodné pro monitoring
+    a naplánování obnovy."""
+    env_key = (prostredi or "PROD").upper()
+    store = _cert_store(env_key)
+    if store.existuje():
+        return _cert_info_model(store.info())
+
+    # Bez převzatého certifikátu popíšeme ten z konfigurace.
+    creds = cfg.ENV_CREDENTIALS.get(env_key) or {}
+    cesta = creds.get("p12_path")
+    if not cesta:
+        raise HTTPException(status_code=404,
+                            detail=f"Pro prostředí {env_key} není certifikát nasazen.")
+    try:
+        with open(cesta, "rb") as f:
+            popis = zkontroluj_pfx(f.read(), creds.get("p12_password", ""),
+                                   vynutit=True)
+    except CertChyba as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except OSError as e:
+        raise HTTPException(status_code=404, detail=f"Certifikát nelze načíst: {e}")
+    popis.update({"prostredi": env_key, "cesta": cesta,
+                  "clientId": creds.get("client_id", ""),
+                  "certUid": creds.get("cert_uid", ""),
+                  "zdroj": "konfigurace"})
+    return _cert_info_model(popis)
+
+
+@internal_app.get(
+    "/v1/certifikat/historie",
+    tags=["certifikát"],
+    summary="Historie nasazených certifikátů",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+async def internal_certifikat_historie(prostredi: str = "PROD"):
+    store = _cert_store(prostredi)
+    return {"prostredi": (prostredi or "PROD").upper(),
+            "aktivni": _cert_info_model(store.info()) if store.existuje() else None,
+            "historie": store.historie()}
+
+
+@internal_app.post(
+    "/v1/certifikat/rollback",
+    response_model=CertifikatResponse,
+    tags=["certifikát"],
+    summary="Vrátit předchozí certifikát ze historie",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+async def internal_certifikat_rollback(prostredi: str = "PROD", zaloha: str = ""):
+    """Vrátí do provozu předchozí certifikát – například když nový brána
+    odmítne až při reálném volání."""
+
+    env_key = (prostredi or "PROD").upper()
+    store = _cert_store(env_key)
+    predchozi = store.info() if store.existuje() else {}
+    try:
+        meta = store.rollback(zaloha)
+    except CertChyba as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    _aktualizuj_konfiguraci(env_key, store, meta)
+    _internal_reset()
+    try:
+        overeni = _overeni_po_nasazeni(False)
+    except Exception as e:
+        raise HTTPException(status_code=502,
+                            detail=f"Obnovený certifikát nelze použít: {e}")
+    return CertifikatResponse(
+        ok=True, aktivovano=True,
+        zprava=f"Obnoven předchozí certifikát pro {env_key}.",
+        certifikat=_cert_info_model(meta),
+        predchozi=_cert_info_model(predchozi) if predchozi else None,
+        overeni=overeni)
 
 
 app.mount("/internal", internal_app)
