@@ -290,6 +290,9 @@ class SEZClient:
     MAX_RETRIES = 3
     RETRY_CODES = {401, 403, 500, 502, 503, 504}
     RETRY_BACKOFF = [0.5, 1.5, 3.0]
+    # Výchozí timeout jednoho HTTP volání. Synchronní rozhraní (interní API
+    # se svým vlastním timeoutem) si ho na instanci klienta snižuje.
+    DEFAULT_TIMEOUT = 30
     TOKEN_ERROR_CODES = {"E01060", "E01061", "E01062", "E01050"}
 
     def __init__(self, auth: SEZAuth):
@@ -299,6 +302,30 @@ class SEZClient:
         self.last_status = 0
         self.last_response = None
         self.last_request_debug = None
+        self._deadline = None
+
+    def nastav_deadline(self, sekundy: float = None) -> None:
+        """Tvrdý strop pro volání na bránu (sekundy od teď), None = bez stropu.
+
+        Timeout jednoho volání sám nestačí: s opakováním může jedna operace
+        trvat několikanásobek (timeout + pauza + timeout). Synchronní volající
+        s krátkým timeoutem tak zůstane bez odpovědi. S deadlinem se timeout
+        každého pokusu zkrátí na zbývající čas a opakování se nezahájí, pokud
+        by strop přeteklo."""
+        self._deadline = (time.monotonic() + sekundy) if sekundy else None
+
+    def _zbyva_do_deadline(self):
+        """Zbývající čas v sekundách, nebo None při vypnutém deadlinu."""
+        if self._deadline is None:
+            return None
+        return self._deadline - time.monotonic()
+
+    def _muze_opakovat(self, delay: float) -> bool:
+        """Vejde se do stropu ještě pauza a další pokus?"""
+        zbyva = self._zbyva_do_deadline()
+        if zbyva is None:
+            return True
+        return (zbyva - delay) > 0.3
 
     @staticmethod
     def user_agent() -> str:
@@ -450,7 +477,7 @@ class SEZClient:
 
     def _request(self, method: str, path: str, retry: bool = True, **kwargs) -> requests.Response:
         url = self.config.GATEWAY + path
-        kwargs.setdefault("timeout", 30)
+        kwargs.setdefault("timeout", self.DEFAULT_TIMEOUT)
 
         extra_headers = kwargs.pop("extra_headers", None)
         max_attempts = (self.MAX_RETRIES + 1) if retry else 1
@@ -462,8 +489,22 @@ class SEZClient:
             "body": kwargs.get("json"),
         }
 
+        # Minimum, se kterým má smysl volání vůbec začínat.
+        MIN_TIMEOUT = 0.2
+        pozadovany_timeout = kwargs["timeout"]
+
         attempts_log = []
         for attempt in range(max_attempts):
+            zbyva = self._zbyva_do_deadline()
+            if zbyva is not None:
+                if zbyva <= MIN_TIMEOUT:
+                    self.last_request_debug["attempts"] = attempts_log
+                    raise requests.Timeout(
+                        f"Vypršel časový strop pro volání {path} "
+                        f"(zbývalo {max(zbyva, 0):.2f}s).")
+                # Timeout pokusu se vejde do zbývajícího času.
+                kwargs["timeout"] = max(MIN_TIMEOUT, min(pozadovany_timeout, zbyva - 0.05))
+
             hdrs = self._headers(extra_headers)
             kwargs["headers"] = hdrs
             safe_hdrs = {
@@ -512,6 +553,11 @@ class SEZClient:
 
                 if token_err and not is_last:
                     delay = self.RETRY_BACKOFF[min(attempt, len(self.RETRY_BACKOFF) - 1)]
+                    if not self._muze_opakovat(delay):
+                        logger.warning("%s (HTTP %d) %s – opakování by přeteklo "
+                                       "časový strop, vracím odpověď",
+                                       token_err, resp.status_code, path)
+                        break
                     logger.warning(
                         "%s (HTTP %d) %s (pokus %d/%d) – reset session, čekám %.1fs",
                         token_err, resp.status_code, path,
@@ -528,6 +574,10 @@ class SEZClient:
                     break
 
                 delay = self.RETRY_BACKOFF[min(attempt, len(self.RETRY_BACKOFF) - 1)]
+                if not self._muze_opakovat(delay):
+                    logger.warning("HTTP %d %s – opakování by přeteklo časový "
+                                   "strop, vracím odpověď", resp.status_code, path)
+                    break
                 logger.warning(
                     "HTTP %d %s (pokus %d/%d) – čekám %.1fs a opakuji",
                     resp.status_code, path, attempt + 1, max_attempts, delay
@@ -544,11 +594,11 @@ class SEZClient:
                     "error": f"{type(e).__name__}: {e}",
                     "headers": safe_hdrs,
                 })
-                if attempt == max_attempts - 1:
+                delay = self.RETRY_BACKOFF[min(attempt, len(self.RETRY_BACKOFF) - 1)]
+                if attempt == max_attempts - 1 or not self._muze_opakovat(delay):
                     self.last_request_debug["headers"] = safe_hdrs
                     self.last_request_debug["attempts"] = attempts_log
                     raise
-                delay = self.RETRY_BACKOFF[min(attempt, len(self.RETRY_BACKOFF) - 1)]
                 logger.warning(
                     "Chyba spojení %s (pokus %d/%d) – reset session, čekám %.1fs",
                     type(e).__name__, attempt + 1, max_attempts, delay
