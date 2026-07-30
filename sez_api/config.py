@@ -81,10 +81,14 @@ SUKL_ERECEPT_ENDPOINT = env("SUKL_ERECEPT_ENDPOINT", "")
 # Certifikát pro mTLS k eRecept (volitelné, když se liší od SEZ certifikátu).
 SUKL_CERT_PATH = env("SUKL_CERT_PATH", "")
 SUKL_CERT_PASSWORD = env("SUKL_CERT_PASSWORD", "")
-# DLP – URL aktuálního balíku otevřených dat a lokální cache.
-SUKL_DLP_URL = env(
-    "SUKL_DLP_URL",
-    "https://opendata.sukl.cz/soubory/SOD20260101/DLP_CADORE.zip",
+# DLP – balík otevřených dat a lokální cache.
+# SÚKL publikuje balík pod názvem s datem vydání (SOD<RRRRMMDD>/DLP<RRRRMMDD>.zip),
+# takže pevná URL po každé aktualizaci zastará. Výchozí "auto" znamená, že se
+# aktuální odkaz najde v katalogu; prázdná hodnota vypne živé načítání (vzorky).
+SUKL_DLP_URL = env("SUKL_DLP_URL", "auto")
+SUKL_DLP_KATALOG = env(
+    "SUKL_DLP_KATALOG",
+    "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
 )
 SUKL_DLP_CACHE_DIR = env("SUKL_DLP_CACHE_DIR", "/tmp/sukl_dlp")
 

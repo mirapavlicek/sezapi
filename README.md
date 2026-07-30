@@ -228,7 +228,8 @@ Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
 | `SUKL_REG_ID` | Registrační ID SW přidělené SÚKL (prázdné = simulace) |
 | `SUKL_ERECEPT_ENDPOINT_TEST` / `SUKL_ERECEPT_ENDPOINT` | Endpoint SOAP rozhraní eReceptu |
 | `SUKL_CERT_PATH` / `SUKL_CERT_PASSWORD` | Certifikát pro mTLS k eReceptu (volitelné) |
-| `SUKL_DLP_URL` | URL balíku otevřených dat DLP |
+| `SUKL_DLP_URL` | Balík otevřených dat DLP – `auto` (výchozí) najde aktuální v katalogu, prázdné = vzorky |
+| `SUKL_DLP_KATALOG` | Katalog otevřených dat, ze kterého se `auto` odkaz zjišťuje |
 | `SUKL_DLP_CACHE_DIR` | Lokální cache DLP (výchozí `/tmp/sukl_dlp`) |
 
 Živý režim SÚKL: pokud je prázdné `SUKL_CERT_PATH`, použije se pro mTLS certifikát
