@@ -58,6 +58,15 @@ def store_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(cfg, "CERT_STORE_DIR", str(tmp_path / "certs"), raising=False)
     monkeypatch.setattr(cfg, "CERT_API_KEY", "", raising=False)
     monkeypatch.setattr(cfg, "INTERNAL_API_KEY", "", raising=False)
+    # Nasazení propisuje certifikát do globální konfigurace. Bez obnovení by
+    # další testy hlásily funkční PROD spojení proti certifikátu ve smazaném
+    # tmp_path a sada by závisela na pořadí testů.
+    monkeypatch.setattr(cfg, "ENV_CREDENTIALS",
+                        {k: dict(v) for k, v in cfg.ENV_CREDENTIALS.items()},
+                        raising=False)
+    for atr in ("PROD_P12_PATH", "PROD_P12_PASSWORD",
+                "PROD_CLIENT_ID", "PROD_CERT_UID"):
+        monkeypatch.setattr(cfg, atr, getattr(cfg, atr, ""), raising=False)
     return tmp_path / "certs"
 
 
@@ -342,6 +351,36 @@ def test_nasazeny_certifikat_je_pouzitelny_pro_klienta(store_dir, klient_atrapa)
         assert "CN=NIS Ostry" in auth._signing_cert.subject.rfc4514_string()
     finally:
         auth.cleanup()
+
+
+def test_ostatni_workery_prevezmou_novy_certifikat(store_dir, klient_atrapa):
+    """Aplikace běží ve více procesech a nasazení přestaví klienta jen v tom,
+    který request obsloužil. Ostatní musí výměnu poznat podle úložiště – jinak
+    by až do restartu jely se starým certifikátem."""
+    from sez_api.app import _internal_modules, _internal_state
+
+    c = TestClient(app)
+    assert c.post("/internal/v1/certifikat", json={
+        "pfxBase64": _b64(_vyrob_pfx(cn="Prvni")), "password": "tajne",
+        "overitVolanim": False}).status_code == 200
+
+    # Stav "cizího" workeru: klient postavený nad původním certifikátem.
+    _internal_modules()
+    postaveno = klient_atrapa["postaveno"]
+
+    # Bez změny úložiště se klient nepřestavuje (žádný stat navíc za request).
+    _internal_modules()
+    assert klient_atrapa["postaveno"] == postaveno
+
+    # Výměna certifikátu mimo tento proces – zápis přímo do úložiště.
+    druhy = _vyrob_pfx(cn="Druhy")
+    store = CertStore(store_dir, "PROD")
+    store.uloz(druhy, "tajne", popis=zkontroluj_pfx(druhy, "tajne"))
+
+    _internal_modules()
+    assert klient_atrapa["postaveno"] == postaveno + 1
+    assert _internal_state["stamp"] == (store.pfx_path.stat().st_size,
+                                        store.pfx_path.stat().st_mtime_ns)
 
 
 def test_api_nezname_prostredi(store_dir, klient_atrapa):

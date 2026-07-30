@@ -8904,7 +8904,8 @@ import threading as _threading  # noqa: E402 – záměrně až u interní sub-a
 from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 
 _internal_lock = _threading.Lock()
-_internal_state: dict = {"krp": None, "auth": None, "client": None, "cert": None}
+_internal_state: dict = {"krp": None, "auth": None, "client": None, "cert": None,
+                         "stamp": None}
 
 
 def _cert_store(prostredi: str = "") -> CertStore:
@@ -8913,6 +8914,19 @@ def _cert_store(prostredi: str = "") -> CertStore:
     env_key = (prostredi or cfg.INTERNAL_ENV or "PROD").upper()
     zaklad = env_key[:-4] if env_key.endswith("_CMS") else env_key
     return CertStore(cfg.cert_store_dir(), zaklad)
+
+
+def _cert_store_stamp(env_key: str) -> tuple:
+    """Otisk stavu úložiště certifikátů (velikost + mtime aktivního PKCS#12).
+
+    Aplikace běží ve více workerech a každý si drží vlastní klienty. Nasazení
+    přes API přestaví pool jen v tom procesu, který request obsloužil –
+    ostatní poznají výměnu právě podle změny tohoto otisku."""
+    try:
+        st = _cert_store(env_key).pfx_path.stat()
+    except OSError:
+        return ()
+    return (st.st_size, st.st_mtime_ns)
 
 
 def _credentials_pro(env_key: str) -> dict:
@@ -8986,11 +9000,19 @@ def _build_internal_prod() -> dict:
 
 
 def _internal_modules() -> dict:
+    env_key = cfg.INTERNAL_ENV or "PROD"
     with _internal_lock:
+        # Otisk se čte před sestavením, aby se při současné výměně certifikátu
+        # nezapamatoval novější stav, než se kterým klienti skutečně vznikli.
+        stamp = _cert_store_stamp(env_key)
+        if _internal_state.get("krp") is not None and _internal_state.get("stamp") != stamp:
+            logger.info("Certifikát v úložišti se změnil, přebírám ho")
+            _internal_zahod()
         if _internal_state.get("krp") is None:
             _internal_state.update(_build_internal_prod())
             _internal_state["pool"] = _queue.LifoQueue()
             _internal_state["pool_vydano"] = 0
+            _internal_state["stamp"] = stamp
         return _internal_state
 
 
@@ -9044,17 +9066,23 @@ def _novy_interni_client(auth) -> SEZClient:
     return client
 
 
+def _internal_zahod() -> None:
+    """Zahodí klienty i dočasné PEM soubory. Volá se pod _internal_lock."""
+    try:
+        if _internal_state.get("auth"):
+            _internal_state["auth"].cleanup()
+    except Exception:
+        pass
+    # Pool se zahazuje celý – po výměně certifikátu by z něj jinak dál
+    # chodili klienti postavení nad tím starým.
+    _internal_state.update({"krp": None, "auth": None, "client": None,
+                            "cert": None, "pool": None, "pool_vydano": 0,
+                            "stamp": None})
+
+
 def _internal_reset() -> None:
     with _internal_lock:
-        try:
-            if _internal_state.get("auth"):
-                _internal_state["auth"].cleanup()
-        except Exception:
-            pass
-        # Pool se zahazuje celý – po výměně certifikátu by z něj jinak dál
-        # chodili klienti postavení nad tím starým.
-        _internal_state.update({"krp": None, "auth": None, "client": None,
-                                "cert": None, "pool": None, "pool_vydano": 0})
+        _internal_zahod()
 
 
 def _scalar(v):
