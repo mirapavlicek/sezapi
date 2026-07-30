@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 import uuid
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -8899,7 +8899,9 @@ async def ncpeh_validace_cda(request: Request):
 #
 # Volitelná ochrana hlavičkou X-Api-Key (env SEZ_INTERNAL_API_KEY).
 # ===========================================================================
+import queue as _queue  # noqa: E402 – záměrně až u interní sub-aplikace
 import threading as _threading  # noqa: E402 – záměrně až u interní sub-aplikace
+from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 
 _internal_lock = _threading.Lock()
 _internal_state: dict = {"krp": None, "auth": None, "client": None, "cert": None}
@@ -8987,7 +8989,59 @@ def _internal_modules() -> dict:
     with _internal_lock:
         if _internal_state.get("krp") is None:
             _internal_state.update(_build_internal_prod())
+            _internal_state["pool"] = _queue.LifoQueue()
+            _internal_state["pool_vydano"] = 0
         return _internal_state
+
+
+@contextmanager
+def _zapujc_krp():
+    """Zapůjčí KRP klienta pro jedno volání a vrátí ho zpět do poolu.
+
+    Souběžné požadavky nesmí sdílet jednu instanci: ``requests.Session`` není
+    thread-safe a klient si drží stav jednoho volání (časový strop, poslední
+    odpověď a diagnostika). Klienti se vytvářejí líně až do
+    ``SEZ_INTERNAL_POOL_SIZE`` a sdílejí jednu autentizaci (podpis JWT je
+    bezstavový), takže certifikát se načítá jen jednou.
+    """
+    mods = _internal_modules()
+    pool = mods.get("pool")
+    if pool is None or not mods.get("auth"):
+        # Stav bez poolu (např. podstrčený klient v testech) – použije se přímo.
+        yield mods["krp"]
+        return
+    limit = max(1, cfg.INTERNAL_POOL_SIZE)
+    try:
+        krp = pool.get_nowait()
+    except _queue.Empty:
+        with _internal_lock:
+            if _internal_state.get("pool_vydano", 0) < limit:
+                _internal_state["pool_vydano"] = _internal_state.get("pool_vydano", 0) + 1
+                krp = None
+            else:
+                krp = False
+        if krp is None:
+            krp = KRP(_novy_interni_client(mods["auth"]))
+        else:
+            # Pool je vyčerpaný – počkáme na uvolnění, ať KRP nezahltíme.
+            krp = pool.get()
+    try:
+        yield krp
+    finally:
+        try:
+            krp.c.nastav_deadline(None)
+        except Exception:
+            pass
+        pool.put(krp)
+
+
+def _novy_interni_client(auth) -> SEZClient:
+    """Další HTTP klient nad sdílenou autentizací, s limity interního API."""
+    client = SEZClient(auth)
+    client.DEFAULT_TIMEOUT = cfg.INTERNAL_HTTP_TIMEOUT
+    client.MAX_RETRIES = max(0, cfg.INTERNAL_MAX_RETRIES)
+    client.RETRY_BACKOFF = [cfg.INTERNAL_RETRY_BACKOFF]
+    return client
 
 
 def _internal_reset() -> None:
@@ -8997,7 +9051,10 @@ def _internal_reset() -> None:
                 _internal_state["auth"].cleanup()
         except Exception:
             pass
-        _internal_state.update({"krp": None, "auth": None, "client": None, "cert": None})
+        # Pool se zahazuje celý – po výměně certifikátu by z něj jinak dál
+        # chodili klienti postavení nad tím starým.
+        _internal_state.update({"krp": None, "auth": None, "client": None,
+                                "cert": None, "pool": None, "pool_vydano": 0})
 
 
 def _scalar(v):
@@ -9339,16 +9396,16 @@ def _ztotozni_safe(fields: dict, ucel: str):
 
     Timeouty a chyby spojení se neopakují – ty už řeší retry v klientu
     a druhý průchod by zdvojnásobil dobu odpovědi."""
-    mods = _internal_modules()
     try:
-        return _ztotozni(mods["krp"], ucel=ucel, **fields)
+        with _zapujc_krp() as krp:
+            return _ztotozni(krp, ucel=ucel, **fields)
     except (ValueError, requests.Timeout, requests.ConnectionError):
         raise
     except Exception as e:
         logger.warning("Interní ztotožnění – chyba KRP: %s, obnovuji klienta", e)
         _internal_reset()
-        mods = _internal_modules()
-        return _ztotozni(mods["krp"], ucel=ucel, **fields)
+        with _zapujc_krp() as krp:
+            return _ztotozni(krp, ucel=ucel, **fields)
 
 
 def _item_fields(obj) -> dict:
@@ -9364,10 +9421,15 @@ def _item_fields(obj) -> dict:
     summary="Ztotožnit jednoho pacienta a vrátit RID",
     dependencies=[Depends(_require_api_key)],
 )
-async def internal_ztotozneni(req: ZtotozneniRequest):
+def internal_ztotozneni(req: ZtotozneniRequest):
     """Ztotožní pacienta v KRP (produkce) a vrátí jeho **RID**.
 
-    Výběr metody se řídí vyplněnými poli (viz priorita v popisu API)."""
+    Výběr metody se řídí vyplněnými poli (viz priorita v popisu API).
+
+    Endpoint je záměrně synchronní (``def``): volání na bránu blokuje, takže
+    v korutině by zdrželo celou smyčku událostí a souběžné požadavky by se
+    zpracovávaly jeden po druhém. Takto je FastAPI pouští v pracovních
+    vláknech a běží skutečně souběžně."""
     env_key = cfg.INTERNAL_ENV or "PROD"
     try:
         _internal_modules()
@@ -9456,10 +9518,13 @@ class ZtotozneniDavkaResponse(BaseModel):
     summary="Ztotožnit dávku pacientů a vrátit RID pro každého",
     dependencies=[Depends(_require_api_key)],
 )
-async def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
+def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
     """Ztotožní více pacientů najednou. Každá položka se vyhodnocuje samostatně –
     chyba jedné položky neovlivní ostatní. Pořadí výsledků odpovídá vstupu a lze
-    je spárovat přes ``ref``."""
+    je spárovat přes ``ref``.
+
+    Položky se zpracovávají souběžně (``SEZ_DAVKA_SOUBEZNOST``); endpoint je
+    synchronní, aby blokující volání neucpala smyčku událostí."""
     env_key = cfg.INTERNAL_ENV or "PROD"
     if not req.polozky:
         raise HTTPException(status_code=422, detail="Dávka neobsahuje žádné položky.")
@@ -9471,33 +9536,40 @@ async def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Interní PROD klient není dostupný: {e}")
 
-    vysledky: list[DavkaVysledek] = []
-    nalezeno = 0
-    for i, it in enumerate(req.polozky):
+    def _polozka(i: int, it) -> DavkaVysledek:
         try:
             method, status, kandidati, chyba, diag = _ztotozni_safe(
                 _item_fields(it), it.ucel)
             primary = next((k for k in kandidati if k.rid), None)
-            ok = bool(primary and primary.rid)
-            if ok:
-                nalezeno += 1
-            vysledky.append(DavkaVysledek(
-                poradi=i, ref=it.ref, nalezeno=ok,
+            return DavkaVysledek(
+                poradi=i, ref=it.ref, nalezeno=bool(primary and primary.rid),
                 rid=primary.rid if primary else None,
                 pocetKandidatu=len(kandidati), metoda=method,
                 substavZtotozneni=primary.substavZtotozneni if primary else None,
                 upstreamStatus=status, chyba=chyba,
                 trvaniMs=diag["trvaniMs"], vyprselCas=diag["vyprselCas"],
-            ))
+            )
         except ValueError as e:
-            vysledky.append(DavkaVysledek(poradi=i, ref=it.ref, nalezeno=False,
-                                          chyba=str(e)))
+            return DavkaVysledek(poradi=i, ref=it.ref, nalezeno=False, chyba=str(e))
         except Exception as e:
-            vysledky.append(DavkaVysledek(poradi=i, ref=it.ref, nalezeno=False,
-                                          chyba=f"Volání KRP selhalo: {e}"))
+            return DavkaVysledek(poradi=i, ref=it.ref, nalezeno=False,
+                                 chyba=f"Volání KRP selhalo: {e}")
+
+    # Položky jsou na sobě nezávislé, takže se zpracovávají souběžně; počet
+    # současných volání omezuje SEZ_DAVKA_SOUBEZNOST, aby se bránu nezahltilo.
+    soubeznost = max(1, min(cfg.DAVKA_SOUBEZNOST, cfg.INTERNAL_POOL_SIZE,
+                            len(req.polozky)))
+    if soubeznost == 1:
+        vysledky = [_polozka(i, it) for i, it in enumerate(req.polozky)]
+    else:
+        with ThreadPoolExecutor(max_workers=soubeznost,
+                                thread_name_prefix="ztotozneni") as executor:
+            # Pořadí výsledků odpovídá vstupu bez ohledu na pořadí dokončení.
+            vysledky = list(executor.map(lambda p: _polozka(*p),
+                                         enumerate(req.polozky)))
 
     return ZtotozneniDavkaResponse(
-        pocet=len(req.polozky), nalezeno=nalezeno,
+        pocet=len(req.polozky), nalezeno=sum(1 for v in vysledky if v.nalezeno),
         prostredi=env_key, vysledky=vysledky,
     )
 

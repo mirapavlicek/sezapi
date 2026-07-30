@@ -445,8 +445,22 @@ ne chyba serveru.
 | `SEZ_INTERNAL_HTTP_TIMEOUT` | `3` | Timeout jednoho volání na bránu (s) |
 | `SEZ_INTERNAL_MAX_RETRIES` | `1` | Počet opakování při 5xx/401/403 |
 | `SEZ_INTERNAL_RETRY_BACKOFF` | `0.25` | Pauza mezi opakováními (s) |
+| `SEZ_INTERNAL_POOL_SIZE` | `8` | Souběžných volání na bránu na jeden worker |
+| `SEZ_DAVKA_SOUBEZNOST` | `4` | Položek dávky zpracovávaných najednou (1 = sekvenčně) |
 
 Rozpočet nechte alespoň o sekundu nižší než timeout volajícího.
+
+### Souběžnost
+
+Endpointy interního API jsou synchronní, takže je FastAPI pouští v pracovních
+vláknech – blokující volání na bránu neucpe smyčku událostí a **požadavky se
+zpracovávají souběžně**. Každé volání si půjčuje vlastního HTTP klienta z poolu
+(`requests.Session` není thread-safe a klient si drží stav jednoho volání);
+certifikát a podpis JWT se sdílejí, takže se PKCS#12 načítá jen jednou.
+
+Dávka zpracovává položky paralelně se zachováním pořadí výsledků. Celkový počet
+souběžných spojení na bránu je `SEZ_INTERNAL_POOL_SIZE` × počet workerů
+(`sez-api.service` spouští 4), takže při výchozím nastavení až 32.
 
 ### Převzetí ostrého certifikátu z centrální distribuce
 

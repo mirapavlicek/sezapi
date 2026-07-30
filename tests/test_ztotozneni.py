@@ -407,6 +407,170 @@ def test_ztotozni_safe_neopakuje_pri_timeoutu(monkeypatch):
     assert resetu["pocet"] == 0, "klient se při timeoutu nemá resetovat"
 
 
+# --- souběžnost ------------------------------------------------------------
+
+class _PomaluOdpovidajiciKRP:
+    """Brána, která na každý dotaz odpovídá se zpožděním."""
+
+    def __init__(self, zpozdeni: float = 0.3):
+        self.zpozdeni = zpozdeni
+        self.soucasne = 0
+        self.max_soucasne = 0
+        self._zamek = __import__("threading").Lock()
+
+    def _odpoved(self):
+        import time
+        with self._zamek:
+            self.soucasne += 1
+            self.max_soucasne = max(self.max_soucasne, self.soucasne)
+        try:
+            time.sleep(self.zpozdeni)
+            return _Resp(200, _nalezeny_pacient())
+        finally:
+            with self._zamek:
+                self.soucasne -= 1
+
+    def hledat_jmeno_rc(self, *a, **kw):
+        return self._odpoved()
+
+    def hledat_jmeno_cp(self, *a, **kw):
+        return self._odpoved()
+
+    def hledat_jmeno_dn(self, *a, **kw):
+        return self._odpoved()
+
+    def hledat_cizinec_cp(self, *a, **kw):
+        return self._odpoved()
+
+    def hledat_uni(self, *a, **kw):
+        return self._odpoved()
+
+
+def test_soubezne_pozadavky_se_neserializuji(monkeypatch):
+    """Regrese: endpoint byl `async def` a blokující volání na bránu drželo
+    smyčku událostí, takže souběžné požadavky čekaly jeden na druhý."""
+    import asyncio
+    import time
+
+    import httpx
+
+    from sez_api import app as A
+    from sez_api import config as cfg
+
+    krp = _PomaluOdpovidajiciKRP(0.3)
+    monkeypatch.setattr(cfg, "INTERNAL_API_KEY", "", raising=False)
+    monkeypatch.setattr(A, "_internal_modules",
+                        lambda: {"krp": krp, "auth": None, "client": None, "cert": {}})
+
+    async def _pust():
+        transport = httpx.ASGITransport(app=A.app)
+        async with httpx.AsyncClient(transport=transport,
+                                     base_url="http://test", timeout=60) as c:
+            telo = {"jmeno": "Jan", "prijmeni": "Novák", "rodneCislo": "8001011234"}
+            t0 = time.monotonic()
+            odpovedi = await asyncio.gather(*[
+                c.post("/internal/v1/ztotozneni", json=telo) for _ in range(5)])
+            return time.monotonic() - t0, odpovedi
+
+    trvani, odpovedi = asyncio.run(_pust())
+
+    assert all(r.status_code == 200 and r.json()["nalezeno"] for r in odpovedi)
+    # Sériově by to trvalo 5 × 0,3 s = 1,5 s.
+    assert trvani < 1.0, f"souběžné požadavky trvaly {trvani:.2f}s (serializace?)"
+    assert krp.max_soucasne > 1, "na bránu nešlo víc dotazů najednou"
+
+
+def test_davka_bezi_paralelne_a_drzi_poradi(monkeypatch):
+    import time
+
+    from starlette.testclient import TestClient
+
+    from sez_api import app as A
+    from sez_api import config as cfg
+
+    krp = _PomaluOdpovidajiciKRP(0.3)
+    monkeypatch.setattr(cfg, "INTERNAL_API_KEY", "", raising=False)
+    monkeypatch.setattr(cfg, "DAVKA_SOUBEZNOST", 4, raising=False)
+    monkeypatch.setattr(cfg, "INTERNAL_POOL_SIZE", 8, raising=False)
+    monkeypatch.setattr(A, "_internal_modules",
+                        lambda: {"krp": krp, "auth": None, "client": None, "cert": {}})
+
+    polozky = [{"ref": f"p{i}", "jmeno": "Jan", "prijmeni": "Novák",
+                "rodneCislo": "8001011234"} for i in range(8)]
+    t0 = time.monotonic()
+    r = TestClient(A.app).post("/internal/v1/ztotozneni/davka",
+                               json={"polozky": polozky})
+    trvani = time.monotonic() - t0
+
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["pocet"] == 8 and d["nalezeno"] == 8
+    # Sériově 8 × 0,3 s = 2,4 s; při souběžnosti 4 zhruba dvě vlny.
+    assert trvani < 1.6, f"dávka trvala {trvani:.2f}s (serializace?)"
+    assert krp.max_soucasne > 1
+    assert [v["ref"] for v in d["vysledky"]] == [p["ref"] for p in polozky]
+    assert [v["poradi"] for v in d["vysledky"]] == list(range(8))
+
+
+def test_davka_respektuje_limit_soubeznosti(monkeypatch):
+    """Souběžnost je omezená, aby se brána nezahltila."""
+    from starlette.testclient import TestClient
+
+    from sez_api import app as A
+    from sez_api import config as cfg
+
+    krp = _PomaluOdpovidajiciKRP(0.2)
+    monkeypatch.setattr(cfg, "INTERNAL_API_KEY", "", raising=False)
+    monkeypatch.setattr(cfg, "DAVKA_SOUBEZNOST", 2, raising=False)
+    monkeypatch.setattr(cfg, "INTERNAL_POOL_SIZE", 8, raising=False)
+    monkeypatch.setattr(A, "_internal_modules",
+                        lambda: {"krp": krp, "auth": None, "client": None, "cert": {}})
+
+    r = TestClient(A.app).post("/internal/v1/ztotozneni/davka", json={
+        "polozky": [{"jmeno": "Jan", "prijmeni": "Novák",
+                     "rodneCislo": "8001011234"} for _ in range(6)]})
+    assert r.status_code == 200
+    assert krp.max_soucasne <= 2, f"souběžně běželo {krp.max_soucasne} volání"
+
+
+def test_pool_pujcuje_ruzne_klienty_a_vraci_je(monkeypatch):
+    """Souběžná volání nesmí sdílet jednu instanci klienta (session ani
+    časový strop), pool je proto vytváří až do limitu a recykluje."""
+    import queue as _q
+
+    from sez_api import app as A
+    from sez_api import config as cfg
+
+    monkeypatch.setattr(cfg, "INTERNAL_POOL_SIZE", 2, raising=False)
+    vyrobene = []
+
+    class _FakeKlient:
+        def nastav_deadline(self, s=None):
+            return None
+
+    def _novy(auth):
+        k = _FakeKlient()
+        vyrobene.append(k)
+        return k
+
+    monkeypatch.setattr(A, "_novy_interni_client", _novy)
+    monkeypatch.setattr(A, "KRP", lambda client: type("K", (), {"c": client})())
+    stav = {"krp": object(), "auth": object(), "client": None, "cert": {},
+            "pool": _q.LifoQueue(), "pool_vydano": 0}
+    monkeypatch.setattr(A, "_internal_modules", lambda: stav)
+    monkeypatch.setattr(A, "_internal_state", stav)
+
+    with A._zapujc_krp() as prvni:
+        with A._zapujc_krp() as druhy:
+            assert prvni is not druhy, "souběžná volání dostala tutéž instanci"
+    assert len(vyrobene) == 2
+
+    # Po vrácení se klienti recyklují, další se už nevyrábí.
+    with A._zapujc_krp() as treti:
+        assert treti in (prvni, druhy)
+    assert len(vyrobene) == 2
+
+
 # --- normalizace rodného čísla ---------------------------------------------
 
 def test_normalizace_rodneho_cisla():
