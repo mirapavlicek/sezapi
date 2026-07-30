@@ -8982,19 +8982,38 @@ def _odpoved_records(body) -> list:
 
 
 def _upstream_error(body) -> Optional[str]:
+    """Chybová hláška z odpovědi KRP. Podle swaggeru je seznam chyb
+    v ``odpovedInfo.chybyZpracovani`` (položky ErrorModel s ``message``);
+    starší/plošší varianty (``chyby``, ``data.chyby``) se zkoušejí také."""
     if not isinstance(body, dict):
         return None
-    chyby = body.get("chyby") or (body.get("data") or {}).get("chyby") \
-        if isinstance(body.get("data"), dict) else body.get("chyby")
-    if isinstance(chyby, list) and chyby:
-        msgs = []
-        for c in chyby:
-            if isinstance(c, dict):
-                msgs.append(c.get("uzivatelskaZprava") or c.get("zprava")
-                            or c.get("message") or str(c))
-        if msgs:
-            return "; ".join(m for m in msgs if m)
-    return None
+    data = body.get("data") if isinstance(body.get("data"), dict) else {}
+    info = body.get("odpovedInfo") or data.get("odpovedInfo") or {}
+    if not isinstance(info, dict):
+        info = {}
+
+    kandidati = (info.get("chybyZpracovani"), body.get("chybyZpracovani"),
+                 body.get("chyby"), data.get("chyby"))
+    for chyby in kandidati:
+        if isinstance(chyby, dict):
+            chyby = [chyby]
+        if isinstance(chyby, list) and chyby:
+            msgs = []
+            for c in chyby:
+                if isinstance(c, dict):
+                    msgs.append(c.get("uzivatelskaZprava") or c.get("zprava")
+                                or c.get("message") or str(c))
+                elif c:
+                    msgs.append(str(c))
+            msgs = [m for m in msgs if m]
+            if msgs:
+                return "; ".join(msgs)
+
+    # Když KRP chybu nevypíše, alespoň textový popis stavu ("NENALEZENO" apod.).
+    popis = _scalar(info.get("popis")) or _scalar(body.get("popis"))
+    stav = _scalar(info.get("stav")) or _scalar(body.get("stav"))
+    souhrn = " – ".join(str(x) for x in (stav, popis) if x)
+    return souhrn or None
 
 
 # --- Pydantic modely (pro Swagger) ----------------------------------------- #
@@ -9043,6 +9062,10 @@ class ZtotozneniResponse(BaseModel):
     prostredi: str = Field(..., description="Cílové prostředí (např. PROD).")
     upstreamStatus: int = Field(..., description="HTTP status odpovědi KRP gateway.")
     chyba: Optional[str] = Field(None, description="Chybová hláška z KRP, pokud nastala.")
+    pokusy: list[dict] = Field(
+        default_factory=list,
+        description="Vyzkoušené metody KRP v pořadí, s HTTP statusem a počtem "
+                    "kandidátů – pro dohledání, proč pacient nebyl nalezen.")
 
 
 internal_app = FastAPI(
@@ -9051,11 +9074,14 @@ internal_app = FastAPI(
         "Interní rozhraní pro **ztotožnění pacienta** (získání RID) proti "
         "kmenovému registru pacientů (KRP) na **produkčním** prostředí.\n\n"
         "Volání zadá identifikátory pacienta a získá zpět jeho **RID**. "
-        "Podporované kombinace vstupů (v tomto pořadí priority):\n\n"
+        "Metody KRP se zkoušejí v tomto pořadí, dokud pacient není nalezen "
+        "(při úspěchu se další volání neposílá):\n\n"
         "1. jméno + příjmení + rodné číslo\n"
         "2. jméno + příjmení + číslo pojištěnce\n"
         "3. jméno + příjmení + datum narození\n"
-        "4. číslo pojištěnce (cizinec)\n\n"
+        "4. univerzální hledání – rodné číslo nebo datum narození i **bez jména**\n"
+        "5. číslo pojištěnce (cizinec bez rodného čísla)\n\n"
+        "Vyzkoušené metody se vracejí v poli `pokusy`.\n\n"
         "Endpointy: jednotlivě `POST /v1/ztotozneni`, dávkově "
         "`POST /v1/ztotozneni/davka`.\n\n"
         "Autentizace: hlavička `X-Api-Key` (povinná, je-li nastaven "
@@ -9091,43 +9117,59 @@ async def internal_health():
         return JSONResponse({"ok": False, "error": str(e)}, status_code=503)
 
 
-def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
-              cisloPojistence=None, datumNarozeni=None, statniObcanstvi=None,
-              ucel="LECBA"):
-    """Zvolí metodu KRP dle vyplněných polí, zavolá ji a vrátí
-    (metoda, http_status, kandidati, chyba).
+def _normalizuj_rc(rodne_cislo) -> str:
+    """Rodné číslo z NIS přichází v různých podobách ("035309/106",
+    "035309 106"), KRP očekává souvislou číselnou řadu."""
+    return "".join(ch for ch in (rodne_cislo or "") if ch.isdigit())
 
-    ValueError = chybí použitelná kombinace identifikátorů."""
-    j = (jmeno or "").strip()
-    p = (prijmeni or "").strip()
-    rc = (rodneCislo or "").replace("/", "").strip()
-    cp = (cisloPojistence or "").strip()
-    dn = (datumNarozeni or "").strip()
-    so = statniObcanstvi or None
 
+def _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel) -> list:
+    """Metody KRP použitelné pro zadané identifikátory, od nejpřesnější.
+
+    Kombinace bez jména (typicky rodné číslo z NIS) zvládne jen univerzální
+    hledání – ostatní metody jméno vyžadují, a `cizinec_cp` je určená pro
+    cizince bez rodného čísla, takže na českého pacienta vrací 404.
+    """
+    pokusy = []
     if j and p and rc:
-        method = "jmeno_prijmeni_rc"
-        resp = krp.hledat_jmeno_rc(j, p, rc, ucel)
-    elif j and p and cp:
-        method = "jmeno_prijmeni_cp"
-        resp = krp.hledat_jmeno_cp(j, p, cp, ucel)
-    elif j and p and dn:
-        method = "jmeno_prijmeni_datum_narozeni"
-        resp = krp.hledat_jmeno_dn(j, p, dn, so, ucel)
-    elif cp:
-        method = "cizinec_cp"
-        resp = krp.hledat_cizinec_cp(cp, so, ucel)
-    else:
-        raise ValueError(
-            "Zadejte jednu z kombinací: (jméno+příjmení+rodné číslo) | "
-            "(jméno+příjmení+číslo pojištěnce) | "
-            "(jméno+příjmení+datum narození) | (číslo pojištěnce).")
+        pokusy.append(("jmeno_prijmeni_rc",
+                       lambda: krp.hledat_jmeno_rc(j, p, rc, ucel)))
+    if j and p and cp:
+        pokusy.append(("jmeno_prijmeni_cp",
+                       lambda: krp.hledat_jmeno_cp(j, p, cp, ucel)))
+    if j and p and dn:
+        pokusy.append(("jmeno_prijmeni_datum_narozeni",
+                       lambda: krp.hledat_jmeno_dn(j, p, dn, so, ucel)))
+    if rc or dn:
+        pokusy.append(("uni", lambda: krp.hledat_uni(
+            ucel, rodneCislo=rc or None, datumNarozeni=dn or None,
+            jmeno=j or None, prijmeni=p or None,
+            cisloPojistence=cp or None, statniObcanstvi=so)))
+    if rc and not (j and p):
+        # Záloha pro případ, že univerzální hledání není na certifikátu
+        # povolené: schéma VyhledaniPodleJmenoPrijmeniRC nemá povinná pole,
+        # takže samotné rodné číslo je přípustný dotaz.
+        pokusy.append(("jmeno_prijmeni_rc",
+                       lambda: krp.hledat_jmeno_rc(j or None, p or None, rc, ucel)))
+    if cp:
+        pokusy.append(("cizinec_cp",
+                       lambda: krp.hledat_cizinec_cp(cp, so, ucel)))
+    return pokusy
 
+
+def _kandidati_z_odpovedi(resp) -> tuple:
+    """Vytáhne kandidáty z odpovědi KRP. Vrací (status, kandidati, telo)."""
     status = getattr(resp, "status_code", 0)
     try:
         body = resp.json()
     except Exception:
         body = {}
+
+    # Stav ztotožnění vrací KRP v hlavičce odpovědi (odpovedInfo.subStav),
+    # v záznamu pacienta toto pole není.
+    info = body.get("odpovedInfo") if isinstance(body, dict) else None
+    substav_odpovedi = _scalar((info or {}).get("subStav")) if isinstance(info, dict) else None
+
     kandidati = []
     for r in _odpoved_records(body):
         rid = _scalar(r.get("rid"))
@@ -9136,12 +9178,50 @@ def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
             jmeno=_scalar(r.get("jmeno")),
             prijmeni=_scalar(r.get("prijmeni")),
             datumNarozeni=_scalar(r.get("datumNarozeni")),
-            substavZtotozneni=_scalar(r.get("substavZtotozneni")),
+            substavZtotozneni=_scalar(r.get("substavZtotozneni")) or substav_odpovedi,
         ))
     kandidati = [k for k in kandidati if k.rid] or kandidati
-    has_rid = any(k.rid for k in kandidati)
-    chyba = _upstream_error(body) if (status >= 400 or not has_rid) else None
-    return method, status, kandidati, chyba
+    return status, kandidati, body
+
+
+def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
+              cisloPojistence=None, datumNarozeni=None, statniObcanstvi=None,
+              ucel="LECBA"):
+    """Zkusí metody KRP podle vyplněných polí a vrátí
+    (metoda, http_status, kandidati, chyba, pokusy).
+
+    Na další metodu se přejde jen tehdy, když ta předchozí pacienta nenašla –
+    při úspěchu se žádné volání navíc neposílá.
+
+    ValueError = chybí použitelná kombinace identifikátorů."""
+    j = (jmeno or "").strip()
+    p = (prijmeni or "").strip()
+    rc = _normalizuj_rc(rodneCislo)
+    cp = (cisloPojistence or "").replace("/", "").replace(" ", "").strip()
+    dn = (datumNarozeni or "").strip()
+    so = statniObcanstvi or None
+
+    pokusy = _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel)
+    if not pokusy:
+        raise ValueError(
+            "Zadejte alespoň jednu z kombinací: (jméno+příjmení+rodné číslo) | "
+            "(jméno+příjmení+číslo pojištěnce) | "
+            "(jméno+příjmení+datum narození) | rodné číslo | datum narození | "
+            "číslo pojištěnce.")
+
+    prehled: list[dict] = []
+    method = status = chyba = None
+    kandidati: list = []
+    for method, volani in pokusy:
+        status, kandidati, body = _kandidati_z_odpovedi(volani())
+        chyba = _upstream_error(body) if (status >= 400 or not any(
+            k.rid for k in kandidati)) else None
+        prehled.append({"metoda": method, "upstreamStatus": status,
+                        "pocetKandidatu": len(kandidati)})
+        if any(k.rid for k in kandidati):
+            break
+
+    return method, status, kandidati, chyba, prehled
 
 
 def _ztotozni_safe(fields: dict, ucel: str):
@@ -9182,7 +9262,8 @@ async def internal_ztotozneni(req: ZtotozneniRequest):
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Interní PROD klient není dostupný: {e}")
     try:
-        method, status, kandidati, chyba = _ztotozni_safe(_item_fields(req), req.ucel)
+        method, status, kandidati, chyba, pokusy = _ztotozni_safe(
+            _item_fields(req), req.ucel)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
@@ -9199,6 +9280,7 @@ async def internal_ztotozneni(req: ZtotozneniRequest):
         prostredi=env_key,
         upstreamStatus=status,
         chyba=chyba,
+        pokusy=pokusy,
     )
 
 
@@ -9277,7 +9359,8 @@ async def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
     nalezeno = 0
     for i, it in enumerate(req.polozky):
         try:
-            method, status, kandidati, chyba = _ztotozni_safe(_item_fields(it), it.ucel)
+            method, status, kandidati, chyba, _pokusy = _ztotozni_safe(
+                _item_fields(it), it.ucel)
             primary = next((k for k in kandidati if k.rid), None)
             ok = bool(primary and primary.rid)
             if ok:
