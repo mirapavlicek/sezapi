@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Optional
 
 import httpx
+import requests
 
 from fastapi import FastAPI, Request, UploadFile, File, Form, Header, HTTPException, Depends
 from fastapi.openapi.utils import get_openapi
@@ -205,6 +206,14 @@ def get_client():
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     get_client()
+    # Klient interního API se staví líně při prvním volání (načtení PKCS#12,
+    # zápis PEM). Předehřátím se tato režie nepromítne do doby odpovědi
+    # prvního ztotožnění, které mívá jen několikasekundový timeout.
+    try:
+        _internal_modules()
+    except Exception as e:
+        logger.info("Interní PROD klient se nepředehřál (%s) – postaví se "
+                    "při prvním volání.", e)
     yield
     if _auth:
         _auth.cleanup()
@@ -8949,6 +8958,11 @@ def _build_internal_prod() -> dict:
         config=icfg,
     )
     client = SEZClient(auth)
+    # Interní API odpovídá synchronně, volající má krátký timeout – výchozí
+    # 30s timeout se 4 pokusy a backoffem až 5 s by ho nechal bez odpovědi.
+    client.DEFAULT_TIMEOUT = cfg.INTERNAL_HTTP_TIMEOUT
+    client.MAX_RETRIES = max(0, cfg.INTERNAL_MAX_RETRIES)
+    client.RETRY_BACKOFF = [cfg.INTERNAL_RETRY_BACKOFF]
     cert = auth._signing_cert
     store = _cert_store(env_key)
     platny_do = cert.not_valid_after_utc
@@ -9096,8 +9110,14 @@ class ZtotozneniResponse(BaseModel):
     chyba: Optional[str] = Field(None, description="Chybová hláška z KRP, pokud nastala.")
     pokusy: list[dict] = Field(
         default_factory=list,
-        description="Vyzkoušené metody KRP v pořadí, s HTTP statusem a počtem "
-                    "kandidátů – pro dohledání, proč pacient nebyl nalezen.")
+        description="Vyzkoušené metody KRP v pořadí, s HTTP statusem, počtem "
+                    "kandidátů a dobou trvání – pro dohledání, proč pacient "
+                    "nebyl nalezen.")
+    trvaniMs: Optional[int] = Field(
+        None, description="Doba všech volání na KRP v milisekundách.")
+    vyprselCas: bool = Field(
+        False, description="True = nezkusily se všechny metody, protože vypršel "
+                           "časový rozpočet (SEZ_ZTOTOZNENI_BUDGET_MS).")
 
 
 internal_app = FastAPI(
@@ -9229,7 +9249,10 @@ def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
     (metoda, http_status, kandidati, chyba, pokusy).
 
     Na další metodu se přejde jen tehdy, když ta předchozí pacienta nenašla –
-    při úspěchu se žádné volání navíc neposílá.
+    při úspěchu se žádné volání navíc neposílá. Zřetězení je omezené časovým
+    rozpočtem (``SEZ_ZTOTOZNENI_BUDGET_MS``), aby odpověď stihla přijít dřív,
+    než volajícímu vyprší timeout: další metoda se nezahájí, pokud by se do
+    rozpočtu nevešla.
 
     ValueError = chybí použitelná kombinace identifikátorů."""
     j = (jmeno or "").strip()
@@ -9247,28 +9270,79 @@ def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
             "(jméno+příjmení+datum narození) | rodné číslo | datum narození | "
             "číslo pojištěnce.")
 
+    budget = max(0, cfg.ZTOTOZNENI_BUDGET_MS) / 1000.0
+    zacatek = time.monotonic()
     prehled: list[dict] = []
     method = status = chyba = None
     kandidati: list = []
-    for method, volani in pokusy:
-        status, kandidati, body = _kandidati_z_odpovedi(volani())
-        chyba = _upstream_error(body) if (status >= 400 or not any(
-            k.rid for k in kandidati)) else None
-        prehled.append({"metoda": method, "upstreamStatus": status,
-                        "pocetKandidatu": len(kandidati)})
-        if any(k.rid for k in kandidati):
-            break
+    vyprsel_cas = False
 
-    return method, status, kandidati, chyba, prehled
+    # Strop platí i pro jednotlivá volání včetně jejich opakování – timeout
+    # samotného požadavku by se jinak násobil počtem pokusů.
+    klient = getattr(krp, "c", None)
+    if budget and hasattr(klient, "nastav_deadline"):
+        klient.nastav_deadline(budget)
+    try:
+        for index, (method, volani) in enumerate(pokusy):
+            if budget and index:
+                zbyva = budget - (time.monotonic() - zacatek)
+                # Rezerva podle nejdelšího dosavadního volání – další metoda trvá
+                # přibližně stejně, takže nemá smysl ji začínat "na hranu".
+                rezerva = max((p.get("trvaniMs", 0) for p in prehled), default=0) / 1000.0
+                if zbyva <= max(rezerva, 0.3):
+                    vyprsel_cas = True
+                    break
+
+            t0 = time.monotonic()
+            try:
+                status, kandidati, body = _kandidati_z_odpovedi(volani())
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                # Nedostupná či pomalá brána nesmí skončit chybou serveru –
+                # volající dostane včas odpověď s popisem, co se nestihlo.
+                status, kandidati, body = 504, [], {}
+                chyba = f"Brána neodpověděla v časovém limitu ({type(exc).__name__})."
+                vyprsel_cas = True
+                prehled.append({"metoda": method, "upstreamStatus": status,
+                                "pocetKandidatu": 0, "chyba": chyba,
+                                "trvaniMs": round((time.monotonic() - t0) * 1000)})
+                break
+            nalezeno = any(k.rid for k in kandidati)
+            chyba = _upstream_error(body) if (status >= 400 or not nalezeno) else None
+            prehled.append({"metoda": method, "upstreamStatus": status,
+                            "pocetKandidatu": len(kandidati),
+                            "trvaniMs": round((time.monotonic() - t0) * 1000)})
+            if nalezeno:
+                break
+    finally:
+        if hasattr(klient, "nastav_deadline"):
+            klient.nastav_deadline(None)
+
+    trvani_ms = round((time.monotonic() - zacatek) * 1000)
+    if vyprsel_cas:
+        nezkousene = [m for m, _ in pokusy[len(prehled):]]
+        logger.warning("Ztotožnění: vypršel rozpočet %.0f ms po %s (%d ms), "
+                       "nezkoušeno: %s", budget * 1000,
+                       [p["metoda"] for p in prehled], trvani_ms, nezkousene)
+        if nezkousene:
+            chyba = " ".join(filter(None, [
+                chyba,
+                f"Vypršel časový rozpočet {round(budget * 1000)} ms, nezkoušené "
+                f"metody: {', '.join(nezkousene)}."]))
+
+    return method, status, kandidati, chyba, {
+        "pokusy": prehled, "trvaniMs": trvani_ms, "vyprselCas": vyprsel_cas}
 
 
 def _ztotozni_safe(fields: dict, ucel: str):
     """Jako _ztotozni, ale při chybě volání jednou obnoví PROD klienta
-    (např. po rotaci certifikátu / resetu session) a zopakuje."""
+    (např. po rotaci certifikátu / resetu session) a zopakuje.
+
+    Timeouty a chyby spojení se neopakují – ty už řeší retry v klientu
+    a druhý průchod by zdvojnásobil dobu odpovědi."""
     mods = _internal_modules()
     try:
         return _ztotozni(mods["krp"], ucel=ucel, **fields)
-    except ValueError:
+    except (ValueError, requests.Timeout, requests.ConnectionError):
         raise
     except Exception as e:
         logger.warning("Interní ztotožnění – chyba KRP: %s, obnovuji klienta", e)
@@ -9300,7 +9374,7 @@ async def internal_ztotozneni(req: ZtotozneniRequest):
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Interní PROD klient není dostupný: {e}")
     try:
-        method, status, kandidati, chyba, pokusy = _ztotozni_safe(
+        method, status, kandidati, chyba, diag = _ztotozni_safe(
             _item_fields(req), req.ucel)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -9318,7 +9392,9 @@ async def internal_ztotozneni(req: ZtotozneniRequest):
         prostredi=env_key,
         upstreamStatus=status,
         chyba=chyba,
-        pokusy=pokusy,
+        pokusy=diag["pokusy"],
+        trvaniMs=diag["trvaniMs"],
+        vyprselCas=diag["vyprselCas"],
     )
 
 
@@ -9362,6 +9438,8 @@ class DavkaVysledek(BaseModel):
     substavZtotozneni: Optional[str] = None
     upstreamStatus: Optional[int] = None
     chyba: Optional[str] = None
+    trvaniMs: Optional[int] = None
+    vyprselCas: bool = False
 
 
 class ZtotozneniDavkaResponse(BaseModel):
@@ -9397,7 +9475,7 @@ async def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
     nalezeno = 0
     for i, it in enumerate(req.polozky):
         try:
-            method, status, kandidati, chyba, _pokusy = _ztotozni_safe(
+            method, status, kandidati, chyba, diag = _ztotozni_safe(
                 _item_fields(it), it.ucel)
             primary = next((k for k in kandidati if k.rid), None)
             ok = bool(primary and primary.rid)
@@ -9409,6 +9487,7 @@ async def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
                 pocetKandidatu=len(kandidati), metoda=method,
                 substavZtotozneni=primary.substavZtotozneni if primary else None,
                 upstreamStatus=status, chyba=chyba,
+                trvaniMs=diag["trvaniMs"], vyprselCas=diag["vyprselCas"],
             ))
         except ValueError as e:
             vysledky.append(DavkaVysledek(poradi=i, ref=it.ref, nalezeno=False,

@@ -34,6 +34,20 @@ INTERNAL_API_KEY = env("SEZ_INTERNAL_API_KEY", "")
 # Prostředí, proti kterému interní API ztotožňuje (default produkce).
 INTERNAL_ENV = env("SEZ_INTERNAL_ENV", "PROD")
 
+# Interní API je synchronní – volající (NIS) mívá timeout kolem 5 s, takže
+# výchozí nastavení klienta (30s timeout, 4 pokusy s backoffem až 5 s) je pro
+# něj nepoužitelné. Tyto hodnoty platí jen pro klienta interního API.
+# Timeout jednoho HTTP volání na bránu (sekundy).
+INTERNAL_HTTP_TIMEOUT = float(env("SEZ_INTERNAL_HTTP_TIMEOUT", "3"))
+# Kolikrát se volání zopakuje při 5xx/401/403 (0 = bez opakování).
+INTERNAL_MAX_RETRIES = int(env("SEZ_INTERNAL_MAX_RETRIES", "1"))
+# Pauza mezi opakováními (sekundy).
+INTERNAL_RETRY_BACKOFF = float(env("SEZ_INTERNAL_RETRY_BACKOFF", "0.25"))
+# Celkový rozpočet na jedno ztotožnění (ms). Další vyhledávací metoda se
+# nezahájí, pokud by se do rozpočtu nevešla – odpověď přijde včas s tím,
+# co se zjistit stihlo. 0 = bez omezení.
+ZTOTOZNENI_BUDGET_MS = int(env("SEZ_ZTOTOZNENI_BUDGET_MS", "4000"))
+
 # Úložiště certifikátů převzatých z centrální distribuce (API pro nasazení
 # ostrého certifikátu). Když v něm certifikát je, má přednost před
 # SEZ_PROD_P12_PATH – po restartu tedy poběží naposledy nasazený certifikát.

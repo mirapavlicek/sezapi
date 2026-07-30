@@ -430,7 +430,23 @@ Rozhraní pro navazující systémy (NIS), oddělené od webového UI. Swagger:
 `POST /internal/v1/ztotozneni` (dávkově `/v1/ztotozneni/davka`). Metody KRP se
 zkoušejí od nejpřesnější, dokud pacient není nalezen; při úspěchu žádné volání
 navíc neodejde. Podporuje i **rodné číslo bez jména** (univerzální hledání).
-Vyzkoušené metody vrací pole `pokusy`.
+Vyzkoušené metody vrací pole `pokusy`, dobu zpracování `trvaniMs`.
+
+Volající bývá synchronní s krátkým timeoutem, proto má ztotožnění **tvrdě
+vynucený časový rozpočet**: timeout každého volání na bránu se zkracuje na
+zbývající čas, opakování se nezahájí, pokud by rozpočet přeteklo, a další
+vyhledávací metoda se nezkouší, pokud by se nevešla. Když brána neodpoví,
+vrátí se HTTP 200 s `nalezeno: false`, `vyprselCas: true` a popisem v `chyba` –
+ne chyba serveru.
+
+| Proměnná | Výchozí | Popis |
+|----------|---------|-------|
+| `SEZ_ZTOTOZNENI_BUDGET_MS` | `4000` | Celkový rozpočet na jedno ztotožnění (0 = bez omezení) |
+| `SEZ_INTERNAL_HTTP_TIMEOUT` | `3` | Timeout jednoho volání na bránu (s) |
+| `SEZ_INTERNAL_MAX_RETRIES` | `1` | Počet opakování při 5xx/401/403 |
+| `SEZ_INTERNAL_RETRY_BACKOFF` | `0.25` | Pauza mezi opakováními (s) |
+
+Rozpočet nechte alespoň o sekundu nižší než timeout volajícího.
 
 ### Převzetí ostrého certifikátu z centrální distribuce
 
