@@ -107,6 +107,24 @@ def test_cizinec_cp_se_nepouzije_jako_prvni_pri_rodnem_cisle():
     assert metoda == "cizinec_cp"  # poslední vyzkoušená, když nic nenašlo
 
 
+def test_zaloha_hledani_podle_rc_kdyz_uni_neni_povolene():
+    """Když univerzální hledání není na certifikátu povolené (403), zkusí se
+    ještě hledání podle rodného čísla."""
+    krp = _FakeKRP({
+        "uni": _Resp(403, {"odpovedInfo": {"stav": "ZAKAZANO",
+                                            "popis": "Metoda není povolena"}}),
+        "jmeno_prijmeni_rc": _Resp(200, _nalezeny_pacient("555")),
+    })
+    metoda, status, kandidati, chyba, pokusy = _ztotozni(krp, rodneCislo="035309/106")
+
+    assert [p["metoda"] for p in pokusy] == ["uni", "jmeno_prijmeni_rc"]
+    assert metoda == "jmeno_prijmeni_rc"
+    assert status == 200
+    assert kandidati[0].rid == "555"
+    assert chyba is None
+    assert pokusy[0]["upstreamStatus"] == 403
+
+
 def test_jmeno_a_rodne_cislo_ma_prednost():
     krp = _FakeKRP({"jmeno_prijmeni_rc": _Resp(200, _nalezeny_pacient("111"))})
     metoda, _s, kandidati, _ch, pokusy = _ztotozni(

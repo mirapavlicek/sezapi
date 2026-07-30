@@ -9145,6 +9145,12 @@ def _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel) -> list:
             ucel, rodneCislo=rc or None, datumNarozeni=dn or None,
             jmeno=j or None, prijmeni=p or None,
             cisloPojistence=cp or None, statniObcanstvi=so)))
+    if rc and not (j and p):
+        # Záloha pro případ, že univerzální hledání není na certifikátu
+        # povolené: schéma VyhledaniPodleJmenoPrijmeniRC nemá povinná pole,
+        # takže samotné rodné číslo je přípustný dotaz.
+        pokusy.append(("jmeno_prijmeni_rc",
+                       lambda: krp.hledat_jmeno_rc(j or None, p or None, rc, ucel)))
     if cp:
         pokusy.append(("cizinec_cp",
                        lambda: krp.hledat_cizinec_cp(cp, so, ucel)))
