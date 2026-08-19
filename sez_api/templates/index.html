@@ -6079,6 +6079,17 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">Akce na záznamu prevence</div>
           <div class="form-row">
+            <div class="form-group" style="flex:0 0 190px"><label>Verze API</label>
+              <select id="szz2ApiVerze">
+                <option value="v3" selected>v3 (Standard SZZ 3.0)</option>
+                <option value="v2">v2 (starší)</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:0 0 220px"><label>&nbsp;</label>
+              <label style="font-weight:400;font-size:12px"><input type="checkbox" id="szz2Samoplatce"> samoplátce ✦ (v3)</label>
+            </div>
+          </div>
+          <div class="form-row">
             <div class="form-group" style="flex:0 0 220px"><label>Akce</label>
               <select id="szz2PrevenceAkce">
                 <option value="vyhledat">📋 Vyhledat seznam</option>
@@ -6113,6 +6124,15 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
             <div class="sub-tab" data-panel="szz2-scr-mri">Prostaty MRI</div>
             <div class="sub-tab" data-panel="szz2-scr-ldct">Plic LDCT</div>
             <div class="sub-tab" data-panel="szz2-scr-aort">Aorty USG</div>
+            <div class="sub-tab" data-panel="szz2-scr-kolo">Kolorekt. koloskopie ✦</div>
+            <div class="sub-tab" data-panel="szz2-scr-vpsa">Prostaty vstupní PSA ✦</div>
+            <div class="sub-tab" data-panel="szz2-scr-urol">Prostaty urologické ✦</div>
+            <div class="sub-tab" data-panel="szz2-scr-biopp">Prostaty bioptické ✦</div>
+            <div class="sub-tab" data-panel="szz2-scr-pneu">Plic pneumologické ✦</div>
+          </div>
+          <div style="padding:6px 10px;background:var(--bg2);border-left:3px solid var(--ok, #27ae60);font-size:11px;color:var(--fg3);margin-bottom:8px">
+            ✦ = nové ve <strong>verzi API 3.0.0</strong> (Standard EZ SZZ 3.0, platný od 29. 7. 2026).
+            Vyžadují přepnutí verze na <code>v3</code> v kartě „Akce na záznamu screeningu“.
           </div>
           <div style="padding:6px 10px;background:var(--bg2);border-left:3px solid var(--accent);font-size:11px;color:var(--fg3);margin-bottom:8px">
             Pole dle DTO <code>v2.0.3</code>. Výsledky/typy jsou číselníkové – zadávejte <code>kód</code> (volitelně <code>kód@verze</code>). <code>krzpId</code> z DASTA configu.
@@ -6173,6 +6193,10 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2HpvscrDatum" placeholder="dd.mm.rrrr"></div>
               <div class="form-group"><label>Výsledek HPV (číselník)</label><input id="szz2HpvscrVysl" placeholder="kód nebo kód@verze"></div>
             </div>
+            <div class="form-row">
+              <div class="form-group"><label>Genotypy HPV testu ✦ (v3, při pozitivním výsledku)</label><input id="szz2HpvscrGenotypy" placeholder="např. HPV 16, HPV 18"></div>
+            </div>
+            <div style="font-size:11px;color:var(--fg3)">Ve verzi v3 je cesta <code>karcinomDeloznihoHrdlaHpv</code>; v2 používala <code>karcinomDDeloznihoHrdlaHpv</code> (dvojité D) – klient převede automaticky.</div>
           </div>
           <div class="sub-panel" id="szz2-scr-kolp">
             <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Děložní hrdlo – expertní kolposkopie (<code>karcinomDeloznihoHrdlaExpertniKolposkopie</code>).</p>
@@ -6228,10 +6252,109 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <div class="form-group"><label>Výsledek USG (číselník)</label><input id="szz2AortVysl" placeholder="kód nebo kód@verze"></div>
             </div>
           </div>
+
+          <!-- Screeningy nové ve verzi API 3.0.0 -->
+          <div class="sub-panel" id="szz2-scr-kolo">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Kolorektální karcinom – koloskopie (<code>kolorektalniKarcinomKoloskopie</code>), odbornost L10. ✦ v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2KoloRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2KoloKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2KoloDatum" placeholder="dd.mm.rrrr"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Typ koloskopie (číselník <code>gastro-typ-koloskopie</code>)</label><input id="szz2KoloTyp" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Kompletnost (<code>gastro-kompletnost-koloskopie</code>)</label><input id="szz2KoloKompl" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Výsledek BBPS (0–9, celé číslo)</label><input type="number" min="0" max="9" step="1" id="szz2KoloBbps" placeholder="0-9"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Normální nález *</label>
+                <select id="szz2KoloNormal"><option value="">–</option><option value="ano">ano</option><option value="ne">ne</option></select>
+              </div>
+              <div class="form-group"><label>Patologie (<code>gastro-patologie-nalez</code>)</label><input id="szz2KoloPatologie" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Počet adenomů a pilovitých lézí</label><input type="number" step="1" id="szz2KoloAdenomy" placeholder="počet"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Další doporučené vyšetření (<code>gastro-zaver</code>)</label><input id="szz2KoloZaver" placeholder="kód nebo kód@verze"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-vpsa">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prostaty – vstupní PSA (<code>karcinomProstatyVstupniPsa</code>), odbornost L42. ✦ v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2VpsaRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2VpsaKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2VpsaDatum" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Hladina screeningového PSA (µg/l) *</label><input type="number" step="0.01" id="szz2VpsaHladina" placeholder="1000-12000"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-urol">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prostaty – navazující urologické vyšetření (<code>karcinomProstatyUrologickeVysetreni</code>), odbornost L42. ✦ v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2UrolRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2UrolKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2UrolDatum" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Klinické vyšetření (<code>urologie-klinicke-vysetreni</code>)</label><input id="szz2UrolKlinicke" placeholder="kód nebo kód@verze"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Hladina PSA (µg/l)</label><input type="number" step="0.01" id="szz2UrolPsa" placeholder="1000-12000"></div>
+              <div class="form-group"><label>Objem prostaty (ml, 0–1000)</label><input type="number" step="0.01" id="szz2UrolObjem" placeholder="ml"></div>
+              <div class="form-group"><label>PSA denzita (0–10)</label><input type="number" step="0.01" id="szz2UrolDenzita" placeholder="PSAD"></div>
+              <div class="form-group"><label>PSA velocita (0–10)</label><input type="number" step="0.01" id="szz2UrolVelocita" placeholder="ng/ml/rok"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Další doporučené vyšetření * (<code>urologie-dalsi-vysetreni</code>)</label><input id="szz2UrolDalsi" placeholder="kód nebo kód@verze"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-biopp">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom prostaty – navazující bioptické vyšetření (<code>karcinomProstatyBioptickeVysetreni</code>), odbornost L42. ✦ v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2BioppRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2BioppKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2BioppDatum" placeholder="dd.mm.rrrr"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Typ biopsie * (<code>urologie-typ-biopsie</code>)</label><input id="szz2BioppTyp" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Výsledek * (<code>urologie-vysledek-biopt-vys</code>)</label><input id="szz2BioppVysl" placeholder="kód nebo kód@verze"></div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-pneu">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Karcinom plic – pneumologické vyšetření (<code>karcinomPlicPneumologickeVysetreni</code>), odbornost L32. ✦ v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2PneuRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2PneuKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2PneuDatum" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Kouření (<code>pneumologie-koureni</code>)</label><input id="szz2PneuKoureni" placeholder="kód nebo kód@verze"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Let od zanechání kouření</label><input type="number" step="0.1" id="szz2PneuLetZanechani" placeholder="roky"></div>
+              <div class="form-group"><label>Počet let kouření</label><input type="number" step="1" id="szz2PneuLetKoureni" placeholder="roky"></div>
+              <div class="form-group"><label>Počet balíčkoroků</label><input type="number" step="0.1" id="szz2PneuBalickoroky" placeholder="pack-years"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Fyzikální vyšetření (<code>pneumologie-fyzikalni-vysetreni</code>)</label><input id="szz2PneuFyzikalni" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>RTG plic (<code>pneumologie-rtg-plic</code>)</label><input id="szz2PneuRtg" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Funkční vyšetření (<code>pneumologie-funkcni-vysetreni</code>)</label><input id="szz2PneuFunkcni" placeholder="kód nebo kód@verze"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Doporučení screeningového LDCT *</label>
+                <select id="szz2PneuLdct"><option value="">–</option><option value="ano">ano</option><option value="ne">ne</option></select>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="card">
           <div class="card-title">Akce na záznamu screeningu</div>
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 190px"><label>Verze API</label>
+              <select id="szz2ApiVerze">
+                <option value="v3" selected>v3 (Standard SZZ 3.0)</option>
+                <option value="v2">v2 (starší)</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:0 0 220px"><label>&nbsp;</label>
+              <label style="font-weight:400;font-size:12px"><input type="checkbox" id="szz2Samoplatce"> samoplátce ✦ (v3)</label>
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group" style="flex:0 0 220px"><label>Akce</label>
               <select id="szz2ScreeningAkce">
@@ -16241,7 +16364,7 @@ function _szz2Date(id) { return _csDateToIso(_val(id)) || undefined; }
 function _szz2Dt(id) { const d = _csDateToIso(_val(id)); return d ? d + 'T00:00:00' : undefined; }
 function _szz2Bool(id) { const v = _val(id); return v === 'ano' ? true : (v === 'ne' ? false : undefined); }
 function _szz2Clean(o) { Object.keys(o).forEach(k => { if (o[k] === undefined) delete o[k]; }); return o; }
-function _szz2Base(ridId, krzpId, datumId) { return { rid: _val(ridId) || undefined, krzpId: _val(krzpId) || _szz2DefKrzp(), datumProvedeni: _szz2Date(datumId) }; }
+function _szz2Base(ridId, krzpId, datumId) { return { rid: _val(ridId) || undefined, krzpId: _val(krzpId) || _szz2DefKrzp(), datumProvedeni: _szz2Date(datumId), samoplatce: _szz2SamoplatceField() }; }
 
 function _szz2BuildPrevenceBody() {
   const sub = _szz2GetActiveSubPanel('szz2-prevence-panel');
@@ -16289,6 +16412,36 @@ function _szz2BuildScreeningBody() {
       denzitaPrsniTkaneTabar: _szz2Cis('szz2MamoTabar'), denzitaPrsniTkaneBirads: _szz2Cis('szz2MamoBirads'),
       denzitaPrsniTkaneImplantaty: _szz2Cis('szz2MamoImpl'), vysledekMamografie: _szz2Cis('szz2MamoVysl'),
     }) }),
+    // Screeningy nové ve verzi API 3.0.0 (Standard EZ SZZ 3.0)
+    'szz2-scr-kolo': () => ({ typ: 'kolorektalniKarcinomKoloskopie', body: _szz2Clean({
+      ..._szz2Base('szz2KoloRid', 'szz2KoloKrzp', 'szz2KoloDatum'),
+      typKoloskopie: _szz2Cis('szz2KoloTyp'), kompletnostKoloskopie: _szz2Cis('szz2KoloKompl'),
+      vysledekBbps: _szz2Int('szz2KoloBbps'), normalniNalez: _szz2Bool('szz2KoloNormal'),
+      patologieNalez: _szz2Cis('szz2KoloPatologie'), pocetAdenomuAPilovitychLezi: _szz2Int('szz2KoloAdenomy'),
+      dalsiDoporuceneVysetreni: _szz2Cis('szz2KoloZaver'),
+    }) }),
+    'szz2-scr-vpsa': () => ({ typ: 'karcinomProstatyVstupniPsa', body: _szz2Clean({
+      ..._szz2Base('szz2VpsaRid', 'szz2VpsaKrzp', 'szz2VpsaDatum'),
+      hladinaPsa: _szz2Num('szz2VpsaHladina'),
+    }) }),
+    'szz2-scr-urol': () => ({ typ: 'karcinomProstatyUrologickeVysetreni', body: _szz2Clean({
+      ..._szz2Base('szz2UrolRid', 'szz2UrolKrzp', 'szz2UrolDatum'),
+      vysledekKlinickehoVysetreni: _szz2Cis('szz2UrolKlinicke'), hladinaPsa: _szz2Num('szz2UrolPsa'),
+      objemProstaty: _szz2Num('szz2UrolObjem'), psaDenzita: _szz2Num('szz2UrolDenzita'),
+      psaVelocita: _szz2Num('szz2UrolVelocita'), dalsiDoporuceneVysetreni: _szz2Cis('szz2UrolDalsi'),
+    }) }),
+    'szz2-scr-biopp': () => ({ typ: 'karcinomProstatyBioptickeVysetreni', body: _szz2Clean({
+      ..._szz2Base('szz2BioppRid', 'szz2BioppKrzp', 'szz2BioppDatum'),
+      typBiopsie: _szz2Cis('szz2BioppTyp'), vysledekBioptickehoVysetreni: _szz2Cis('szz2BioppVysl'),
+    }) }),
+    'szz2-scr-pneu': () => ({ typ: 'karcinomPlicPneumologickeVysetreni', body: _szz2Clean({
+      ..._szz2Base('szz2PneuRid', 'szz2PneuKrzp', 'szz2PneuDatum'),
+      koureni: _szz2Cis('szz2PneuKoureni'), pocetLetZanechaniKoureni: _szz2Num('szz2PneuLetZanechani'),
+      pocetLetKoureni: _szz2Int('szz2PneuLetKoureni'), pocetBalickoroku: _szz2Num('szz2PneuBalickoroky'),
+      vysledekFyzikalnihoVysetreni: _szz2Cis('szz2PneuFyzikalni'), vysledekRtgPlic: _szz2Cis('szz2PneuRtg'),
+      vysledekFunkcnihoVysetreni: _szz2Cis('szz2PneuFunkcni'),
+      doporuceniScreeningovehoLdct: _szz2Bool('szz2PneuLdct'),
+    }) }),
     'szz2-scr-biop': () => ({ typ: 'karcinomPrsuBiopsie', body: _szz2Clean({
       ..._szz2Base('szz2BiopRid', 'szz2BiopKrzp', 'szz2BiopDatum'),
       typBiopsie: _szz2Cis('szz2BiopTyp'), vysledekBiopsie: _szz2Cis('szz2BiopVysl'),
@@ -16300,6 +16453,7 @@ function _szz2BuildScreeningBody() {
     'szz2-scr-hpv': () => ({ typ: 'karcinomDeloznihoHrdlaHpv', body: _szz2Clean({
       ..._szz2Base('szz2HpvscrRid', 'szz2HpvscrKrzp', 'szz2HpvscrDatum'),
       vysledekHpv: _szz2Cis('szz2HpvscrVysl'),
+      genotypyHpvTestu: (_szz2Verze() === 'v3' && _val('szz2HpvscrGenotypy')) || undefined,
     }) }),
     'szz2-scr-kolp': () => ({ typ: 'karcinomDeloznihoHrdlaExpertniKolposkopie', body: _szz2Clean({
       ..._szz2Base('szz2KolpRid', 'szz2KolpKrzp', 'szz2KolpDatum'),
@@ -16365,22 +16519,47 @@ function _szz2BuildEmergBody() {
   return map[sub] ? map[sub]() : { typ: 'alergie', body: {} };
 }
 
+// Verze API SZZ zvolená v UI. v3 = Standard EZ SZZ 3.0 (nové screeningy,
+// samoplatce, opravený název HPV screeningu); v2 zůstává pro starší nasazení.
+function _szz2Verze() { return _val('szz2ApiVerze') === 'v2' ? 'v2' : 'v3'; }
+function _szz2Prefix() { return _szz2Verze() === 'v2' ? 'szz2' : 'szz3'; }
+
+// Ve v2 měl HPV screening děložního hrdla v cestě dvojité „D".
+function _szz2TypDleVerze(typ) {
+  if (typ !== 'karcinomDeloznihoHrdlaHpv' && typ !== 'karcinomDDeloznihoHrdlaHpv') return typ;
+  return _szz2Verze() === 'v2' ? 'karcinomDDeloznihoHrdlaHpv' : 'karcinomDeloznihoHrdlaHpv';
+}
+
+// Položka samoplatce existuje až ve v3 – do v2 se neposílá.
+function _szz2SamoplatceField() {
+  const el = document.getElementById('szz2Samoplatce');
+  if (!el || !el.checked || _szz2Verze() === 'v2') return undefined;
+  return true;
+}
+
 async function _szz2DoCall(modul, builder, idSel, akceSel, overrideId, resultSel) {
   const akce = _val(akceSel);
   const id = _val(idSel);
   const built = builder();
-  const typ = built.typ;
+  const typ = _szz2TypDleVerze(built.typ);
+  const pref = _szz2Prefix();
   let body;
   try { body = _bodyOrOverride(overrideId, built.body); } catch { return; }
   let path, method;
-  if (akce === 'vytvor') { path = `/api/szz2/${modul}/${typ}`; method = 'POST'; }
-  else if (akce === 'vyhledat') { path = `/api/szz2/${modul}/${typ}/vyhledat`; method = 'POST'; }
+  if (akce === 'vytvor') { path = `/api/${pref}/${modul}/${typ}`; method = 'POST'; }
+  else if (akce === 'vyhledat') { path = `/api/${pref}/${modul}/${typ}/vyhledat`; method = 'POST'; }
   else if (akce === 'uprav') {
     if (!id) { toast('Zadejte ID', true); return; }
-    path = `/api/szz2/${modul}/${typ}/${encodeURIComponent(id)}`; method = 'PUT';
+    path = `/api/${pref}/${modul}/${typ}/${encodeURIComponent(id)}`; method = 'PUT';
   } else { // PATCH actions
     if (!id) { toast('Zadejte ID', true); return; }
-    path = `/api/szz2/${modul}/${typ}/${encodeURIComponent(id)}/${akce}`; method = 'PATCH';
+    path = `/api/${pref}/${modul}/${typ}/${encodeURIComponent(id)}/${akce}`; method = 'PATCH';
+  }
+  // Před zápisem do produkce zkontrolujeme rozsahy dle Validace SZZ 3.0.
+  if (_szz2Verze() === 'v3' && (akce === 'vytvor' || akce === 'uprav')) {
+    const kontrola = await api('POST', '/api/szz3/zkontrolovat', body);
+    const vyhrady = ((kontrola || {}).data || {}).vyhrady || [];
+    if (vyhrady.length) { toast(vyhrady.join(' '), true); return; }
   }
   const r = await api(method, path, body);
   _showJson(resultSel, r);

@@ -80,7 +80,20 @@ Revize NCEZ zdrojů 2026-08-19:
   0–10, volné texty max. 300 znaků) + klientská kontrola SZZv3.zkontroluj()
   a 15 nových číselníků (szz-ucast-*, gastro-*, urologie-*, pneumologie-*).
   API: /api/szz3/… vč. /api/szz3/katalog a /api/szz3/zkontrolovat.
-  Verze v2 zůstává dostupná paralelně.
+  Verze v2 zůstává dostupná paralelně. UI: v sekci SZZ lze přepnout verzi
+  API (v2/v3), zaškrtnout samoplátce a vyplnit pět nových screeningů
+  i genotypy HPV testu; před zápisem se tělo ověří proti rozsahům.
+- KRP vrací od 30. 7. 2026 u duplicitního pacienta více záznamů. Ztotožnění
+  proto v odpovědi rozlišuje `jednoznacne` (právě jeden pacient s RID) a při
+  duplicitě vrací `upozorneni`, aby NIS nepovažoval první RID za potvrzený.
+- eŽádanky 1.11.20: při vyplněném `upravenyPrijemce` server ignoruje
+  `upravenyPrijemceTyp` (adresátem je vždy PZS) – klient nadbytečné pole
+  neposílá, aby odeslané tělo odpovídalo uloženému stavu. NactiZadanku
+  navíc od 1.11.19 kontroluje integritu souboru a při nesouladu hashe
+  vrací 400 místo dokumentu.
+- Souhlas s nahlížením: rozšíření odpovědi (kdo a kdy nastavil) se týká
+  portálové části, v API pro PZS služba není; nesouhlas pacienta se projeví
+  jako HTTP 403 při čtení SZZ.
 - KRP: API verze v1 pro PZS bylo k 14. 8. 2026 VYPNUTO (oznámeno 28. 7.),
   k dispozici je v3 – klient v1 nikdy nepoužíval (v2/v3), doplněna poznámka
   v přehledu specifikací. Dále opravy na produkci: návratový objekt při

@@ -1006,6 +1006,12 @@ tělem požadavku dělá `SZZv3.zkontroluj()` respektive
 > Screening chronického onemocnění ledvin (CKD) je ve standardu popsaný, ale
 > označený jako **NEIMPLEMENTOVÁNO**, proto v klientovi není.
 
+**Nesouhlas pacienta s nahlížením** (§ 32 odst. 6 písm. d) zákona
+o elektronizaci zdravotnictví) se v API projeví jako **HTTP 403 Forbidden** –
+tedy stejným kódem jako nedostatečné oprávnění. Samotná služba pro nastavení
+souhlasu není součástí API pro PZS (je v portálové části; její odpověď byla
+28. 7. 2026 rozšířena o osobu a datum nastavení).
+
 ---
 
 ## 13. TermX Terminologie (FHIR)

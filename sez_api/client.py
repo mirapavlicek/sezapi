@@ -2299,6 +2299,11 @@ class EZadanky:
         return self.c.post(f"{self.BASE}/api/v1/eZadanka/VyhledejAktivniZadanku", body)
 
     def nacti_zadanku(self, zadanka_id):
+        """Načte žádanku vč. souboru.
+
+        Od verze 1.11.19 provádí server kontrolu integrity: pokud hash
+        dokumentu nesouhlasí se souborem, vrátí 400 s popisem místo toho, aby
+        vydal potenciálně pozměněný soubor."""
         return self.c.get(f"{self.BASE}/api/v1/eZadanka/NactiZadanku/{zadanka_id}")
 
     def stornuj(self, body):
@@ -2311,6 +2316,15 @@ class EZadanky:
         return self.c.patch(f"{self.BASE}/api/v1/eZadanka/VyridZadanku", body)
 
     def uprav(self, body):
+        """Upraví žádanku.
+
+        Pozor na chování od verze 1.11.20: je-li vyplněný `upravenyPrijemce`,
+        server ignoruje `upravenyPrijemceTyp` a adresátem je vždy PZS. Aby
+        odeslané tělo odpovídalo tomu, co se skutečně uloží, nadbytečný typ
+        odstraníme už tady."""
+        if isinstance(body, dict) and body.get("upravenyPrijemce") \
+                and "upravenyPrijemceTyp" in body:
+            body = {k: v for k, v in body.items() if k != "upravenyPrijemceTyp"}
         return self.c.patch(f"{self.BASE}/api/v1/eZadanka/UpravZadanku", body)
 
     def vrat_do_obehu(self, body):
