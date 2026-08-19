@@ -8,7 +8,7 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 |--------|-------|
 | **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla |
 | **DÚ** | Dočasné úložiště -- ukládání, vyhledávání a stahování zdravotnických zásilek |
-| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události |
+| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1, v2.0.1 a **v3.0.0** dle Standardu EZ SZZ 3.0) |
 | **ELP** | Elektronické posudky -- vyhledávání a správa lékařských posudků |
 | **eŽádanky** | Elektronické žádanky mezi poskytovateli |
 | **Notifikace** | Notifikační služba -- kanály, šablony, zdroje |
@@ -419,6 +419,40 @@ dle [Metodiky testování EHR fáze I](https://mzcr.atlassian.net/wiki/spaces/EP
 - **Protokol o provedení testu** (povinný výstup testů) lze vygenerovat
   tlačítkem v záložce „Spustit vše" nebo přes `POST /api/irop/protokol`.
 
+## SZZ v3.0.0 (Standard EZ SZZ 3.0)
+
+Od 29. 7. 2026 platí nová verze API Sdíleného zdravotního záznamu. Klient ji
+obsluhuje třídou `SZZv3` a endpointy `/api/szz3/…`; verze v2 zůstává dostupná
+paralelně, takže přechod nemusí být skokový.
+
+Co je nového proti v2:
+
+- **Pět nových screeningů**: kolorektální karcinom – koloskopie, karcinom
+  prostaty – vstupní PSA, navazující urologické a navazující bioptické
+  vyšetření, karcinom plic – pneumologické vyšetření.
+- **Opravený název HPV screeningu** děložního hrdla (v2 měla v cestě dvojité
+  „D“). Starý zápis klient přijímá jako alias.
+- **Položka `samoplatce`** (boolean, výchozí `false`) u všech preventivních
+  i screeningových vyšetření a **`genotypyHpvTestu`** u HPV screeningu.
+- **Souhrnné vyhledání** prevencí i screeningů jedním dotazem
+  (`POST /api/szz3/zdravotni-zaznamy/vyhledat`).
+- **Rozsahy hodnot** z přílohy Validace SZZ 3.0 (například NT-proBNP
+  0–100 000, výška 10–300 cm a váha 0–400 kg na tři desetinná místa, hladina
+  TOKS 0–500 µg/g, BBPS celé číslo 0–9, volné texty do 300 znaků).
+
+Přehled typů, rozsahů a nových číselníků vrací `GET /api/szz3/katalog`.
+Tělo požadavku lze proti rozsahům ověřit ještě před odesláním na bránu:
+
+```bash
+curl -X POST http://localhost:8000/api/szz3/zkontrolovat \
+  -H 'Content-Type: application/json' \
+  -d '{"vyska": 175.5, "ntProbnp": 120000, "samoplatce": true}'
+# → {"validni": false, "vyhrady": ["ntProbnp: hodnota 120000 je mimo rozsah 0–100000."]}
+```
+
+Jde o klientskou pojistku proti zjevně chybné hodnotě, ne o náhradu serverové
+validace.
+
 ## Interní API (`/internal`)
 
 Rozhraní pro navazující systémy (NIS), oddělené od webového UI. Swagger:
@@ -427,9 +461,13 @@ Rozhraní pro navazující systémy (NIS), oddělené od webového UI. Swagger:
 
 ### Ztotožnění pacienta → RID
 
-`POST /internal/v1/ztotozneni` (dávkově `/v1/ztotozneni/davka`). Metody KRP se
-zkoušejí od nejpřesnější, dokud pacient není nalezen; při úspěchu žádné volání
-navíc neodejde. Podporuje i **rodné číslo bez jména** (univerzální hledání).
+`POST /internal/v1/ztotozneni` (dávkově `/v1/ztotozneni/davka`). Volá se
+**KRP API v3** – verze v1 byla 14. 8. 2026 vypnuta a NCEZ ukončuje provoz
+i podporu v2. Návrat na v2 umožňuje `SEZ_INTERNAL_KRP_VERZE=v2`; použitou
+verzi vrací `GET /internal/health` v poli `krpVerze`.
+
+Metody KRP se zkoušejí od nejpřesnější, dokud pacient není nalezen; při úspěchu
+žádné volání navíc neodejde. Podporuje i **rodné číslo bez jména** (univerzální hledání).
 Vyzkoušené metody vrací pole `pokusy`, dobu zpracování `trvaniMs`.
 
 Volající bývá synchronní s krátkým timeoutem, proto má ztotožnění **tvrdě

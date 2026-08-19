@@ -33,6 +33,10 @@ WORKERS = int(env("SEZ_WORKERS", "1"))
 INTERNAL_API_KEY = env("SEZ_INTERNAL_API_KEY", "")
 # Prostředí, proti kterému interní API ztotožňuje (default produkce).
 INTERNAL_ENV = env("SEZ_INTERNAL_ENV", "PROD")
+# Verze API KRP použitá pro ztotožnění. NCEZ vypnul v1 (14. 8. 2026) a dle
+# plánu ukončuje provoz i podporu v2, proto se standardně volá v3.
+# Hodnota "v2" vrátí dřívější chování.
+INTERNAL_KRP_VERZE = env("SEZ_INTERNAL_KRP_VERZE", "v3").strip().lower()
 
 # Interní API je synchronní – volající (NIS) mívá timeout kolem 5 s, takže
 # výchozí nastavení klienta (30s timeout, 4 pokusy s backoffem až 5 s) je pro

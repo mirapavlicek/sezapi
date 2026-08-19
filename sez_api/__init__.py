@@ -5,7 +5,9 @@ Podporované služby:
   - KRP (Kmenový registr pacientů)
   - KRZP (Kmenový registr zdravotnických pracovníků)
   - DÚ (Dočasné úložiště)
-  - SZZ (Sdílený zdravotní záznam)
+  - SZZ (Sdílený zdravotní záznam – v1, v2.0.1 a NOVĚ v3.0.0 dle
+      Standardu EZ SZZ 3.0: nové screeningy, položka samoplatce,
+      rozsahy hodnot z přílohy Validace 3.0)
   - ELP (Elektronické posudky v1)
   - ELPv2 (Elektronické posudky v2)
   - ELPv3 (Elektronické posudky v3.0.1)
@@ -61,6 +63,34 @@ ObjectScript, který tutéž zprávu sestaví, zvaliduje dle L1 a uloží do DÚ
 třídu SEZ.EZD.Builder (Sestav / Validuj / ZasilkaProDU / SestavAOdesli,
 zná všech 5 kategorií vč. povinných i volitelných sekcí).
 API: /api/zpravy/iris-kod, /api/zpravy/iris-builder.
+
+Revize NCEZ zdrojů 2026-08-19:
+- SZZ má NOVOU verzi API 3.0.0 (Standard EZ SZZ 3.0 zveřejněný 29. 7. 2026,
+  aplikace nasazena na T1/T2 28. 7.). Doplněna třída SZZv3 – cesty /api/v3,
+  pět nových screeningů (kolorektální karcinom – koloskopie, karcinom
+  prostaty – vstupní PSA / navazující urologické / navazující bioptické
+  vyšetření, karcinom plic – pneumologické vyšetření), opravený název HPV
+  screeningu děložního hrdla (v2 měla dvojité „D“, přijímáme jako alias),
+  souhrnné /zdravotniZaznamy/vyhledat, nová volitelná položka `samoplatce`
+  (boolean, výchozí false) u všech prevencí i screeningů a `genotypyHpvTestu`
+  u HPV. Doplněny rozsahy hodnot z přílohy Validace SZZ 3.0 (ntProbnp
+  0–100 000, výška 10–300 cm, váha 0–400 kg a obvod pasu 10–400 cm na
+  3 desetinná místa, hladina TOKS 0–500 µg/g, BBPS 0–9 celé číslo, hladina
+  PSA 1 000–12 000 µg/l, objem prostaty 0–1 000 ml, PSA denzita i velocita
+  0–10, volné texty max. 300 znaků) + klientská kontrola SZZv3.zkontroluj()
+  a 15 nových číselníků (szz-ucast-*, gastro-*, urologie-*, pneumologie-*).
+  API: /api/szz3/… vč. /api/szz3/katalog a /api/szz3/zkontrolovat.
+  Verze v2 zůstává dostupná paralelně.
+- KRP: API verze v1 pro PZS bylo k 14. 8. 2026 VYPNUTO (oznámeno 28. 7.),
+  k dispozici je v3 – klient v1 nikdy nepoužíval (v2/v3), doplněna poznámka
+  v přehledu specifikací. Dále opravy na produkci: návratový objekt při
+  vyhledání duplicitního pacienta a hromadné ztotožnění (30. 7.), adresa
+  u nově založených pacientů (12. 8.) – bez dopadu na kontrakt.
+- Bez dopadu na kód: Žurnál činností 1.0.6 a MFE Notifikace 1.0.5 (22. 7.),
+  RO 1.0.8, DÚ/eŽádanky 1.11.20. Katalog apio (EZCA Validace v1.0.0,
+  Terminologie v1.1.0) i obě specifikace jsou bitově shodné se snapshoty.
+- Stránka „API endpointy“ beze změny od 21. 7. (User-Agent povinný
+  od 1. 9. 2026 – klient posílá), Manuál EZ bez nového záznamu po 30. 7.
 
 Revize NCEZ zdrojů 2026-07-26:
 - API endpointy (aktualizace 21. 7. 2026): User-Agent je nově POVINNÝ už
@@ -169,6 +199,7 @@ from sez_api.client import (
     RegistrOpravneniNcpeh,
     SZZ,
     SZZv2,
+    SZZv3,
     ELP,
     ELPv2,
     ELPv3,
@@ -186,7 +217,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.31.0"
+__version__ = "2.32.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
@@ -204,6 +235,7 @@ __all__ = [
     "RegistrOpravneniNcpeh",
     "SZZ",
     "SZZv2",
+    "SZZv3",
     "ELP",
     "ELPv2",
     "ELPv3",

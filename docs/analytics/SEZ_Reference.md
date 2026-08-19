@@ -76,7 +76,7 @@
 | API | Swagger UI / JSON | Lokální soubor |
 |-----|-------------------|----------------|
 | **KRP PZS v2** (gateway) | https://krp-pzs-t2.csez.cz/swagger/index.html | `swagger_specs/KrpPzs_v2.0.0.json` |
-| **KRP PZS v1** (direct) | https://krp-pzs-t2.csez.cz/swagger/index.html | `swagger_specs/KrpPzs_v1_direct.json` |
+| **KRP PZS v1** (direct) – **VYPNUTO k 14. 8. 2026**, snapshot jen pro historii; používejte v3 | https://krp-pzs-t2.csez.cz/swagger/index.html | `swagger_specs/KrpPzs_v1_direct.json` |
 | **TermX** (vyžaduje mTLS) | https://termx-swagger-web-t2-pub.csez.cz/swagger/?urls.primaryName=termx | `swagger_specs/TermxTerminologie_v1.0.5.json` |
 | **TermX FHIR** (vyžaduje mTLS) | https://termx-swagger-web-t2-pub.csez.cz/swagger/?urls.primaryName=termx-fhir | `swagger_specs/TermxTerminologie_v1.0.5.json` |
 | Dočasné úložiště v1 | (gateway) | `swagger_specs/DocasneUloziste_v1.0.0.json` |
