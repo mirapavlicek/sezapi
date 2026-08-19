@@ -885,6 +885,11 @@ NotifikaceOdeslatRequestModel
 **OpenAPI:** 3.0.4 | **Verze:** v1.0.6
 **Popis:** Externí API systému SZZ – určeno pro PZS
 
+> **Aktuální verze API je 3.0.0** (Standard EZ SZZ 3.0 s platností
+> od 29. 7. 2026, swagger `gwy-ext-sec-t2.csez.cz/apidoc/Sdileny_zdravotni_zaznam_v3`).
+> Verze v1 a v2 níže zůstávají dostupné. Přehled změn ve verzi 3 je
+> v části 12.4.
+
 ### Endpointy – přehled oblastí
 
 #### Emergentní záznam (29 endpointů)
@@ -936,6 +941,70 @@ Každá operace vyžaduje: `duvod` (důvod), `ico` (IČO poskytovatele), `krzpId
 ### Audit trail (AuditDto)
 
 Každý záznam obsahuje kompletní audit: kdo a kdy vytvořil / změnil / zneplatnil / zpochybnil / obnovil (pracovník + poskytovatel + datum + důvod)
+
+### 12.4 Verze 3.0.0 (Standard EZ SZZ 3.0, platnost od 29. 7. 2026)
+
+Cesty se mění z `/api/v2/…` na `/api/v3/…`; moduly (`prevence`,
+`screeningy`, `emergentniZaznam`, `lecivePripravky`, `ciselniky`) i sada
+operací (POST / `vyhledat` / PUT / PATCH `zneplatnit`, `zpochybnit`,
+`obnovit`) zůstávají. Klient: třída `SZZv3`, endpointy `/api/szz3/…`.
+
+**Nové screeningy** (`POST /api/v3/screeningy/{typ}`):
+
+| Typ | Vyšetření | Oprávněná odbornost |
+|-----|-----------|---------------------|
+| `kolorektalniKarcinomKoloskopie` | Kolorektální karcinom – koloskopie | L10 gastroenterologie |
+| `karcinomProstatyVstupniPsa` | Karcinom prostaty – vstupní PSA | L42 urologie |
+| `karcinomProstatyUrologickeVysetreni` | Karcinom prostaty – navazující urologické | L42 urologie |
+| `karcinomProstatyBioptickeVysetreni` | Karcinom prostaty – navazující bioptické | L42 urologie |
+| `karcinomPlicPneumologickeVysetreni` | Karcinom plic – pneumologické | L32 pneumologie a ftizeologie |
+
+**Změněný název:** HPV screening děložního hrdla je nově
+`karcinomDeloznihoHrdlaHpv` (verze v2 měla v cestě dvojité „D“ –
+`karcinomDDeloznihoHrdlaHpv`; klient starý zápis přijímá jako alias).
+
+**Nové položky:**
+
+- `samoplatce` – boolean u všech preventivních i screeningových vyšetření,
+  výchozí `false` (vyšetření hrazené ze zdravotního pojištění).
+- `genotypyHpvTestu` – volitelný text u HPV screeningu, vyplňuje se při
+  pozitivním výsledku.
+- Preventivní prohlídka praktického lékaře: účast ve screeningu karcinomu
+  plic, karcinomu prostaty a aneurysmatu abdominální aorty (číselníky
+  `szz-ucast-karcinom-plic`, `szz-ucast-karcinom-prostaty`,
+  `szz-ucast-ve-screeningu-aaa`) a `obvodPasu`.
+- Souhrn `POST /api/v3/zdravotniZaznamy/vyhledat` – prevence i screeningy
+  pacienta jedním dotazem.
+
+**Rozsahy hodnot** (příloha Validace ve SZZ v3.0):
+
+| Atribut | Rozsah | Desetinná místa |
+|---------|--------|-----------------|
+| `ntProbnp` | 0 – 100 000 pg/ml | celé číslo |
+| `vyska` | 10 – 300 cm | 3 |
+| `vaha` | 0 – 400 kg | 3 |
+| `obvodPasu` | 10 – 400 cm | 3 |
+| `hladinaToksUgG` | 0 – 500 µg/g (jen při vytvoření) | 2 |
+| `vysledekBbps` | 0 – 9 (Boston Bowel Preparation Scale) | celé číslo |
+| `hladinaPsa` | 1 000 – 12 000 µg/l | 2 |
+| `objemProstaty` | 0 – 1 000 ml | 2 |
+| `psaDenzita`, `psaVelocita` | 0 – 10 | 2 |
+
+Volné texty (`poznamka`, `popis`, `davkovani`, `genotypyHpvTestu`) mají limit
+300 znaků, datum zjištění lze zadat nejvýše 100 let zpětně. Kontrolu nad
+tělem požadavku dělá `SZZv3.zkontroluj()` respektive
+`POST /api/szz3/zkontrolovat`; závazná validace je na straně serveru.
+
+**Nové číselníky:** `szz-ucast-karcinom-plic`, `szz-ucast-karcinom-prostaty`,
+`szz-ucast-ve-screeningu-aaa`, `gastro-typ-koloskopie`,
+`gastro-kompletnost-koloskopie`, `gastro-patologie-nalez`, `gastro-zaver`,
+`urologie-klinicke-vysetreni`, `urologie-dalsi-vysetreni`,
+`urologie-typ-biopsie`, `urologie-vysledek-biopt-vys`,
+`pneumologie-koureni`, `pneumologie-fyzikalni-vysetreni`,
+`pneumologie-rtg-plic`, `pneumologie-funkcni-vysetreni`.
+
+> Screening chronického onemocnění ledvin (CKD) je ve standardu popsaný, ale
+> označený jako **NEIMPLEMENTOVÁNO**, proto v klientovi není.
 
 ---
 

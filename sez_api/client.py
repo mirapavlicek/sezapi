@@ -3141,7 +3141,8 @@ class EZCAValidace:
 # ===========================================================================
 # KRP v3.0.0 – BREAKING: bez diakritiky v atributech, podtržítka v cestách,
 # DatumNarozeni změněno z date-time na date pro MatkaNovorozence.
-# Plně paralelní s KRP v2.0.2 (oba se na T2 gateway momentálně používají).
+# Verze v1 byla vypnuta 14. 8. 2026, provoz a podpora v2 se dle plánu NCEZ
+# (stránka „Kmenový registr pacientů“) ukončuje – nové integrace patří na v3.
 # ===========================================================================
 class KRPv3:
     """KRP v3.0.0 – Kmenový registr pacientů (nový tvar URL)."""
@@ -3282,6 +3283,80 @@ class KRPv3:
 
 
 # ===========================================================================
+# Adaptér KRP v3 na rozhraní KRP v2 pro ztotožňování pacienta.
+# KRP v2 metody staví obálku zadostInfo samy, v3 přijímá celé tělo – díky
+# adaptéru může interní ztotožnění přejít na v3 bez zásahu do logiky výběru
+# vyhledávací metody. Důvod přechodu: NCEZ vypnul v1 (14. 8. 2026) a ukončuje
+# provoz i podporu v2.
+# ===========================================================================
+class KRPZtotozneniV3:
+    """KRP v3 se stejnými metodami, jaké používá ztotožnění u verze v2."""
+
+    BASE = "/krp"
+    VERZE = "v3"
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    @staticmethod
+    def _envelope(ucel, data):
+        from datetime import date
+        return {
+            "zadostInfo": {
+                "datum": date.today().isoformat(),
+                "ucel": ucel,
+                "zadostId": str(uuid.uuid4()),
+            },
+            "zadostData": data,
+        }
+
+    def ciselnik(self, nazev_ciselniku, ucel="LECBA"):
+        return self.c.post(f"{self.BASE}/api/v3/ciselnik/{nazev_ciselniku}",
+                           self._envelope(ucel, {}))
+
+    def hledat_rid(self, rid, ucel="LECBA"):
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/rid",
+                           self._envelope(ucel, {"rid": rid}))
+
+    def hledat_jmeno_rc(self, jmeno, prijmeni, rc, ucel="LECBA"):
+        data = {"rodneCislo": rc}
+        if jmeno:
+            data["jmeno"] = jmeno
+        if prijmeni:
+            data["prijmeni"] = prijmeni
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/jmeno_prijmeni_rc",
+                           self._envelope(ucel, data))
+
+    def hledat_jmeno_cp(self, jmeno, prijmeni, cislo_pojistence, ucel="LECBA"):
+        return self.c.post(
+            f"{self.BASE}/api/v3/pacient/hledat/jmeno_prijmeni_cp",
+            self._envelope(ucel, {"jmeno": jmeno, "prijmeni": prijmeni,
+                                   "cisloPojistence": cislo_pojistence}))
+
+    def hledat_jmeno_dn(self, jmeno, prijmeni, datum_narozeni,
+                        statni_obcanstvi=None, ucel="LECBA"):
+        data = {"jmeno": jmeno, "prijmeni": prijmeni,
+                "datumNarozeni": datum_narozeni}
+        if statni_obcanstvi:
+            data["statniObcanstvi"] = statni_obcanstvi
+        return self.c.post(
+            f"{self.BASE}/api/v3/pacient/hledat/jmeno_prijmeni_datum_narozeni",
+            self._envelope(ucel, data))
+
+    def hledat_cizinec_cp(self, cislo_pojistence, statni_obcanstvi=None, ucel="LECBA"):
+        data = {"cisloPojistence": cislo_pojistence}
+        if statni_obcanstvi:
+            data["statniObcanstvi"] = statni_obcanstvi
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/cizinec_cp",
+                           self._envelope(ucel, data))
+
+    def hledat_uni(self, ucel="LECBA", **kwargs):
+        data = {k: v for k, v in kwargs.items() if v is not None}
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/uni",
+                           self._envelope(ucel, data))
+
+
+# ===========================================================================
 # SZZ v2.0.1 – Sdílený zdravotní záznam (BREAKING – samostatné moduly
 # pro Prevence a Screeningy + emergentní záznam ve v2 shodný se v1).
 # Implementace doplňuje SZZ (v1) – obě verze se používají paralelně.
@@ -3411,6 +3486,214 @@ class SZZv2:
     def lecive_pripravky_zpochybnit(self, id_: str, body=None):
         """PATCH /api/v2/lecivePripravky/{id}/zpochybnit."""
         return self.c.patch(f"{self.BASE}/api/v2/lecivePripravky/{id_}/zpochybnit", body or {})
+
+
+# ===========================================================================
+# SZZ v3.0.0 – Sdílený zdravotní záznam (Standard EZ SZZ 3.0, 29. 7. 2026).
+# Proti v2: cesty /api/v3, pět nových screeningů (koloskopie, vstupní PSA,
+# navazující urologické a bioptické vyšetření, pneumologické vyšetření),
+# opravený překlep v HPV screeningu děložního hrdla a nová položka
+# `samoplatce` u všech preventivních i screeningových vyšetření.
+# v2 zůstává dostupná paralelně.
+# ===========================================================================
+class SZZv3:
+    """SZZ v3.0.0 – /api/v3 s moduly /prevence, /screeningy, /emergentniZaznam."""
+
+    BASE = "/sdilenyZdravotniZaznam"
+    VERZE_API = "3.0.0"
+    VERZE_STANDARDU = "3.0"
+
+    PREVENCE_TYPY = [
+        "kardiovaskularniRizika",
+        "ockovaniHpv",
+        "preventivniProhlidky",            # všeob. praktický lékař
+        "preventivniProhlidkyGynekologie",  # gynekolog
+        "preventivniProhlidkyPldd",        # praktický lékař pro děti a dorost
+    ]
+
+    # Screeningy dle Standardu SZZ 3.0, kap. 6. Nové proti v2 jsou koloskopie,
+    # vstupní PSA, navazující urologické a bioptické vyšetření prostaty
+    # a pneumologické vyšetření u karcinomu plic.
+    SCREENINGY_TYPY = [
+        "aneurysmaAbdominalniAortyUsg",
+        "karcinomDeloznihoHrdlaCytologie",
+        "karcinomDeloznihoHrdlaExpertniKolposkopie",
+        "karcinomDeloznihoHrdlaHpv",
+        "karcinomPlicLdct",
+        "karcinomPlicPneumologickeVysetreni",
+        "karcinomProstatyBioptickeVysetreni",
+        "karcinomProstatyMri",
+        "karcinomProstatyPsa",
+        "karcinomProstatyUrologickeVysetreni",
+        "karcinomProstatyVstupniPsa",
+        "karcinomPrsuBiopsie",
+        "karcinomPrsuMamografie",
+        "kolorektalniKarcinomKoloskopie",
+        "kolorektalniKarcinomToks",
+    ]
+
+    # Ve v2 byl HPV screening veden s dvojitým "D" (karcinomDDeloznihoHrdlaHpv);
+    # v3 je překlep opravený, starý zápis přijímáme jako alias.
+    SCREENINGY_ALIASY = {
+        "karcinomDDeloznihoHrdlaHpv": "karcinomDeloznihoHrdlaHpv",
+    }
+
+    EMERGENTNI_TYPY = [
+        "alergie", "krevniSkupina", "nezadouciPrihody",
+        "nezadouciReakce", "nezadouciUcinky", "nezadouciUdalosti",
+    ]
+
+    # Rozsahy číselných hodnot dle přílohy Validace ve SZZ v3.0
+    # (atribut → min, max, počet desetinných míst). Slouží jako klientská
+    # pojistka a podklad pro formuláře; závaznou kontrolu dělá server.
+    ROZSAHY = {
+        "ntProbnp": (0, 100000, 0),
+        "vyska": (10, 300, 3),
+        "vaha": (0, 400, 3),
+        "obvodPasu": (10, 400, 3),
+        "hladinaToksUgG": (0, 500, 2),
+        "vysledekBbps": (0, 9, 0),
+        "hladinaPsa": (1000, 12000, 2),
+        "objemProstaty": (0, 1000, 2),
+        "psaDenzita": (0, 10, 2),
+        "psaVelocita": (0, 10, 2),
+        "pocetLetZanechaniKoureni": (0, 120, 1),
+    }
+
+    # Maximální délka volných textů (poznámky, popisy) dle validací v3.
+    MAX_TEXT = 300
+
+    # Číselníky, které v3 přinesla nad rámec v2.
+    NOVE_CISELNIKY = [
+        "szz-ucast-karcinom-plic",
+        "szz-ucast-karcinom-prostaty",
+        "szz-ucast-ve-screeningu-aaa",
+        "gastro-typ-koloskopie",
+        "gastro-kompletnost-koloskopie",
+        "gastro-patologie-nalez",
+        "gastro-zaver",
+        "urologie-klinicke-vysetreni",
+        "urologie-dalsi-vysetreni",
+        "urologie-typ-biopsie",
+        "urologie-vysledek-biopt-vys",
+        "pneumologie-koureni",
+        "pneumologie-fyzikalni-vysetreni",
+        "pneumologie-rtg-plic",
+        "pneumologie-funkcni-vysetreni",
+    ]
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # --- Číselníky ---
+    def ciselniky(self):
+        return self.c.get(f"{self.BASE}/api/v3/ciselniky")
+
+    def ciselnik_polozky(self, kod):
+        return self.c.get(f"{self.BASE}/api/v3/ciselniky/{kod}/polozky")
+
+    def ciselniky_reindex(self, body=None):
+        return self.c.post(f"{self.BASE}/api/v3/ciselniky/reindex", body or {})
+
+    # --- Generický CRUD pro prevence/screeningy/emergentní záznam ---
+    def _crud(self, modul: str, typ: str):
+        base = f"{self.BASE}/api/v3/{modul}/{typ}"
+        return {
+            "vytvor": lambda body: self.c.post(base, body),
+            "vyhledat": lambda body: self.c.post(f"{base}/vyhledat", body),
+            "uprav": lambda id_, body: self.c.put(f"{base}/{id_}", body),
+            "obnovit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/obnovit", body or {}),
+            "zneplatnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zneplatnit", body or {}),
+            "zpochybnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zpochybnit", body or {}),
+        }
+
+    def prevence(self, typ: str):
+        if typ not in self.PREVENCE_TYPY:
+            raise ValueError(f"Neznámý typ prevence: {typ}. Povolené: {self.PREVENCE_TYPY}")
+        return self._crud("prevence", typ)
+
+    def screening(self, typ: str):
+        typ = self.SCREENINGY_ALIASY.get(typ, typ)
+        if typ not in self.SCREENINGY_TYPY:
+            raise ValueError(f"Neznámý screening: {typ}. Povolené: {self.SCREENINGY_TYPY}")
+        return self._crud("screeningy", typ)
+
+    def emergentni(self, typ: str):
+        if typ not in self.EMERGENTNI_TYPY:
+            raise ValueError(f"Neznámý emergentní typ: {typ}. Povolené: {self.EMERGENTNI_TYPY}")
+        return self._crud("emergentniZaznam", typ)
+
+    # --- Souhrnná vyhledávání ---
+    def prevence_vyhledat_souhrn(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/prevence/vyhledat", body)
+
+    def screeningy_vyhledat_souhrn(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/screeningy/vyhledat", body)
+
+    def emergentni_vyhledat_souhrn(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/emergentniZaznam/vyhledat", body)
+
+    def emergentni_pdf(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/emergentniZaznam/pdf", body)
+
+    def zdravotni_zaznamy_vyhledat(self, body):
+        """POST /api/v3/zdravotniZaznamy/vyhledat – všechny výsledky prevencí
+        i screeningů pacienta jedním dotazem (novinka v3)."""
+        return self.c.post(f"{self.BASE}/api/v3/zdravotniZaznamy/vyhledat", body)
+
+    # --- Léčivé přípravky ---
+    def lecive_pripravky_vytvor(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/lecivePripravky", body)
+
+    def lecive_pripravky_vyhledat(self, body):
+        return self.c.post(f"{self.BASE}/api/v3/lecivePripravky/vyhledat", body)
+
+    def lecive_pripravky_uprav(self, id_: str, body):
+        return self.c.put(f"{self.BASE}/api/v3/lecivePripravky/{id_}", body)
+
+    def lecive_pripravky_obnovit(self, id_: str, body=None):
+        return self.c.patch(f"{self.BASE}/api/v3/lecivePripravky/{id_}/obnovit", body or {})
+
+    def lecive_pripravky_zneplatnit(self, id_: str, body=None):
+        return self.c.patch(f"{self.BASE}/api/v3/lecivePripravky/{id_}/zneplatnit", body or {})
+
+    def lecive_pripravky_zpochybnit(self, id_: str, body=None):
+        return self.c.patch(f"{self.BASE}/api/v3/lecivePripravky/{id_}/zpochybnit", body or {})
+
+    # --- Klientská kontrola dat ---
+    @classmethod
+    def zkontroluj(cls, telo: dict) -> list:
+        """Projde tělo požadavku proti rozsahům z přílohy Validace SZZ 3.0
+        a vrátí seznam výhrad. Nejde o náhradu serverové validace – smyslem je
+        odhalit zjevně chybnou hodnotu ještě před odesláním do produkce."""
+        vyhrady = []
+        if not isinstance(telo, dict):
+            return ["Tělo požadavku není objekt."]
+
+        for klic, hodnota in telo.items():
+            if klic in cls.ROZSAHY and isinstance(hodnota, (int, float)) \
+                    and not isinstance(hodnota, bool):
+                minimum, maximum, desetinna = cls.ROZSAHY[klic]
+                if not (minimum <= hodnota <= maximum):
+                    vyhrady.append(
+                        f"{klic}: hodnota {hodnota} je mimo rozsah "
+                        f"{minimum}–{maximum}.")
+                elif desetinna == 0 and float(hodnota) != int(hodnota):
+                    vyhrady.append(f"{klic}: očekává se celé číslo.")
+                else:
+                    zbytek = str(float(hodnota)).split(".")[1].rstrip("0")
+                    if desetinna and len(zbytek) > desetinna:
+                        vyhrady.append(
+                            f"{klic}: nejvýše {desetinna} desetinná místa.")
+            elif isinstance(hodnota, str) and len(hodnota) > cls.MAX_TEXT \
+                    and klic in ("poznamka", "popis", "davkovani", "genotypyHpvTestu"):
+                vyhrady.append(
+                    f"{klic}: text přesahuje {cls.MAX_TEXT} znaků "
+                    f"({len(hodnota)}).")
+
+        if "samoplatce" in telo and not isinstance(telo["samoplatce"], bool):
+            vyhrady.append("samoplatce: očekává se true/false.")
+        return vyhrady
 
 
 # ===========================================================================

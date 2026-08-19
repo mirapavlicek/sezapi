@@ -407,6 +407,71 @@ def test_ztotozni_safe_neopakuje_pri_timeoutu(monkeypatch):
     assert resetu["pocet"] == 0, "klient se při timeoutu nemá resetovat"
 
 
+# --- verze API KRP ---------------------------------------------------------
+
+def test_ztotozneni_jde_standardne_na_krp_v3():
+    """KRP v1 je od 14. 8. 2026 vypnuté a provoz v2 se ukončuje, takže
+    ztotožnění musí volat v3 (adaptér doplní obálku zadostInfo)."""
+    from sez_api import config as cfg
+    from sez_api.client import KRPZtotozneniV3
+
+    assert cfg.INTERNAL_KRP_VERZE == "v3"
+
+    class _Klient:
+        def __init__(self):
+            self.volani = []
+
+        def post(self, path, body=None, timeout=None):
+            self.volani.append((path, body))
+            return _Resp(200, _nalezeny_pacient())
+
+    klient = _Klient()
+    krp = KRPZtotozneniV3(klient)
+    metoda, status, kandidati, _chyba, _diag = _ztotozni(
+        krp, jmeno="Marie", prijmeni="Dvořáková", rodneCislo="035309/106")
+
+    assert metoda == "jmeno_prijmeni_rc"
+    assert status == 200 and kandidati[0].rid
+    path, body = klient.volani[0]
+    assert path == "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc", path
+    # Obálku staví adaptér, aby logika ztotožnění zůstala stejná jako u v2.
+    assert body["zadostData"]["rodneCislo"] == "035309106"
+    assert body["zadostInfo"]["ucel"] == "LECBA"
+    assert body["zadostInfo"]["zadostId"]
+
+
+def test_adapter_v3_pokryva_vsechny_metody_ztotozneni():
+    from sez_api.client import KRPZtotozneniV3
+
+    class _Klient:
+        def __init__(self):
+            self.cesty = []
+
+        def post(self, path, body=None, timeout=None):
+            self.cesty.append(path)
+            return _Resp(404, _nenalezeno())
+
+    klient = _Klient()
+    krp = KRPZtotozneniV3(klient)
+    krp.hledat_jmeno_rc("A", "B", "8001011234")
+    krp.hledat_jmeno_cp("A", "B", "8001011234")
+    krp.hledat_jmeno_dn("A", "B", "1980-01-01")
+    krp.hledat_cizinec_cp("7712345678", "SVK")
+    krp.hledat_uni(rodneCislo="8001011234", datumNarozeni="1980-01-01")
+    krp.hledat_rid("2667873559")
+    krp.ciselnik("pohlavi")
+
+    assert all("/api/v3/" in c for c in klient.cesty), klient.cesty
+    assert klient.cesty[-1] == "/krp/api/v3/ciselnik/pohlavi"
+
+
+def test_lze_se_vratit_na_v2(monkeypatch):
+    """Přepínač zůstává, dokud PZS nepotvrdí, že v3 v produkci funguje."""
+    from sez_api import config as cfg
+    monkeypatch.setattr(cfg, "INTERNAL_KRP_VERZE", "v2", raising=False)
+    assert cfg.INTERNAL_KRP_VERZE == "v2"
+
+
 # --- souběžnost ------------------------------------------------------------
 
 class _PomaluOdpovidajiciKRP:

@@ -33,7 +33,7 @@ from sez_api import __version__
 from sez_api.client import (
     SEZAuth, SEZClient, SEZConfig, SEZ_ENVIRONMENTS, check_gateway_dns,
     KRP, KRZP, KRPZS, RegistrOpravneni, DocasneUloziste, SZZ, ELP, ELPv2, ELPv3, EZadanky, Notifikace, EZCA2,
-    EZCA2SpravaCertifikatu, EZCAValidace, KRPv3, SZZv2, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
+    EZCA2SpravaCertifikatu, EZCAValidace, KRPv3, KRPZtotozneniV3, SZZv2, SZZv3, RegistrOpravneniNcpeh, Terminologie, SUKLDLP, SUKLeRecept,
     UZISNrpzs, UZIS, UZISObsazenostLuzek,
 )
 from sez_api.certstore import CertChyba, CertStore, dekoduj_pfx, zkontroluj_pfx
@@ -165,6 +165,7 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
     _modules["du"] = DocasneUloziste(_client)
     _modules["szz"] = SZZ(_client)
     _modules["szz2"] = SZZv2(_client)
+    _modules["szz3"] = SZZv3(_client)
     _modules["elp"] = ELP(_client)
     _modules["elp2"] = ELPv2(_client)
     _modules["elp3"] = ELPv3(_client)
@@ -3029,6 +3030,168 @@ async def szz2_action_typ(modul: str, typ: str, id_: str, akce: str, request: Re
     if modul == "screeningy":
         return timed_call(_modules["szz2"].screening(typ)[akce], id_, body)
     return timed_call(_modules["szz2"].emergentni(typ)[akce], id_, body)
+
+
+# ---------------------------------------------------------------------------
+# SZZ v3.0.0 (Standard EZ SZZ 3.0, platný od 29. 7. 2026)
+# Nové screeningy, opravený HPV typ a položka `samoplatce`; v2 běží dál.
+# ---------------------------------------------------------------------------
+_SZZ3_MODULY = {"prevence", "screeningy", "emergentniZaznam"}
+
+
+def _szz3_crud(modul: str, typ: str):
+    """Vrátí sadu CRUD metod pro modul/typ, nebo vyhodí ValueError."""
+    mod = _modules["szz3"]
+    if modul == "prevence":
+        return mod.prevence(typ)
+    if modul == "screeningy":
+        return mod.screening(typ)
+    return mod.emergentni(typ)
+
+
+@app.get("/api/szz3/katalog")
+async def szz3_katalog():
+    """Přehled typů vyšetření, rozsahů hodnot a nových číselníků ve verzi 3."""
+    from sez_api.client import SZZv2, SZZv3
+    nove = sorted(set(SZZv3.SCREENINGY_TYPY)
+                  - set(SZZv2.SCREENINGY_TYPY) - {"karcinomDeloznihoHrdlaHpv"})
+    return JSONResponse({"status": 200, "data": {
+        "verzeApi": SZZv3.VERZE_API,
+        "verzeStandardu": SZZv3.VERZE_STANDARDU,
+        "platneOd": "2026-07-29",
+        "prevence": SZZv3.PREVENCE_TYPY,
+        "screeningy": SZZv3.SCREENINGY_TYPY,
+        "screeningyNoveVeV3": nove,
+        "emergentniZaznam": SZZv3.EMERGENTNI_TYPY,
+        "rozsahy": {k: {"min": v[0], "max": v[1], "desetinnaMista": v[2]}
+                    for k, v in SZZv3.ROZSAHY.items()},
+        "maxDelkaTextu": SZZv3.MAX_TEXT,
+        "noveCiselniky": SZZv3.NOVE_CISELNIKY,
+        "samoplatce": ("Volitelná položka boolean u všech preventivních "
+                        "i screeningových vyšetření, výchozí false."),
+        "genotypyHpvTestu": ("Volitelný text u screeningu karcinomu děložního "
+                              "hrdla – HPV, vyplňuje se při pozitivním výsledku."),
+    }})
+
+
+@app.post("/api/szz3/zkontrolovat")
+async def szz3_zkontrolovat(request: Request):
+    """Klientská kontrola těla proti rozsahům z přílohy Validace SZZ 3.0."""
+    from sez_api.client import SZZv3
+    body = await request.json()
+    vyhrady = SZZv3.zkontroluj(body)
+    return JSONResponse({"status": 200, "data": {
+        "validni": not vyhrady, "vyhrady": vyhrady}})
+
+
+@app.get("/api/szz3/ciselniky")
+async def szz3_ciselniky():
+    return timed_call(_modules["szz3"].ciselniky)
+
+
+@app.get("/api/szz3/ciselniky/{kod}/polozky")
+async def szz3_ciselnik_polozky(kod: str):
+    return timed_call(_modules["szz3"].ciselnik_polozky, kod)
+
+
+@app.post("/api/szz3/prevence/vyhledat")
+async def szz3_prevence_vyhledat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].prevence_vyhledat_souhrn, body)
+
+
+@app.post("/api/szz3/screeningy/vyhledat")
+async def szz3_screeningy_vyhledat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].screeningy_vyhledat_souhrn, body)
+
+
+@app.post("/api/szz3/zdravotni-zaznamy/vyhledat")
+async def szz3_zdravotni_zaznamy_vyhledat(request: Request):
+    """Novinka v3 – prevence i screeningy pacienta jedním dotazem."""
+    body = await request.json()
+    return timed_call(_modules["szz3"].zdravotni_zaznamy_vyhledat, body)
+
+
+@app.post("/api/szz3/emergentni/vyhledat")
+async def szz3_emergentni_vyhledat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].emergentni_vyhledat_souhrn, body)
+
+
+@app.post("/api/szz3/emergentni/pdf")
+async def szz3_emergentni_pdf(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].emergentni_pdf, body)
+
+
+# Léčivé přípravky musí být před generickými routami /api/szz3/{modul}/{typ},
+# jinak by je FastAPI namatchoval jako modul "lecive-pripravky".
+@app.post("/api/szz3/lecive-pripravky")
+async def szz3_lecive_pripravky_vytvor(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].lecive_pripravky_vytvor, body)
+
+
+@app.post("/api/szz3/lecive-pripravky/vyhledat")
+async def szz3_lecive_pripravky_vyhledat(request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].lecive_pripravky_vyhledat, body)
+
+
+@app.put("/api/szz3/lecive-pripravky/{id_}")
+async def szz3_lecive_pripravky_uprav(id_: str, request: Request):
+    body = await request.json()
+    return timed_call(_modules["szz3"].lecive_pripravky_uprav, id_, body)
+
+
+@app.patch("/api/szz3/lecive-pripravky/{id_}/{akce}")
+async def szz3_lecive_pripravky_akce(id_: str, akce: str, request: Request):
+    if akce not in {"obnovit", "zneplatnit", "zpochybnit"}:
+        return error_response(f"Neznámá akce: {akce}")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    metoda = getattr(_modules["szz3"], f"lecive_pripravky_{akce}")
+    return timed_call(metoda, id_, body)
+
+
+@app.post("/api/szz3/{modul}/{typ}")
+async def szz3_create(modul: str, typ: str, request: Request):
+    if modul not in _SZZ3_MODULY:
+        return error_response(f"Neznámý modul SZZ v3: {modul}")
+    body = await request.json()
+    return timed_call(_szz3_crud(modul, typ)["vytvor"], body)
+
+
+@app.post("/api/szz3/{modul}/{typ}/vyhledat")
+async def szz3_search_typ(modul: str, typ: str, request: Request):
+    if modul not in _SZZ3_MODULY:
+        return error_response(f"Neznámý modul SZZ v3: {modul}")
+    body = await request.json()
+    return timed_call(_szz3_crud(modul, typ)["vyhledat"], body)
+
+
+@app.put("/api/szz3/{modul}/{typ}/{id_}")
+async def szz3_update_typ(modul: str, typ: str, id_: str, request: Request):
+    if modul not in _SZZ3_MODULY:
+        return error_response(f"Neznámý modul SZZ v3: {modul}")
+    body = await request.json()
+    return timed_call(_szz3_crud(modul, typ)["uprav"], id_, body)
+
+
+@app.patch("/api/szz3/{modul}/{typ}/{id_}/{akce}")
+async def szz3_action_typ(modul: str, typ: str, id_: str, akce: str, request: Request):
+    if modul not in _SZZ3_MODULY:
+        return error_response(f"Neznámý modul SZZ v3: {modul}")
+    if akce not in {"obnovit", "zneplatnit", "zpochybnit"}:
+        return error_response(f"Neznámá akce: {akce}")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return timed_call(_szz3_crud(modul, typ)[akce], id_, body)
 
 
 # ---------------------------------------------------------------------------
@@ -8966,10 +9129,14 @@ def _build_internal_prod() -> dict:
     client.MAX_RETRIES = max(0, cfg.INTERNAL_MAX_RETRIES)
     client.RETRY_BACKOFF = [cfg.INTERNAL_RETRY_BACKOFF]
     cert = auth._signing_cert
+    krp_verze = (cfg.INTERNAL_KRP_VERZE or "v3").lower()
     store = _cert_store(env_key)
     platny_do = cert.not_valid_after_utc
     return {
-        "krp": KRP(client),
+        # KRP v1 je od 14. 8. 2026 vypnuté a provoz v2 se ukončuje, proto
+        # ztotožnění standardně jede na v3 (adaptér doplní obálku zadostInfo).
+        "krp": KRP(client) if krp_verze == "v2" else KRPZtotozneniV3(client),
+        "krpVerze": krp_verze,
         "auth": auth,
         "client": client,
         "cert": {
@@ -9225,6 +9392,7 @@ async def internal_health():
         return {
             "ok": True,
             "prostredi": cfg.INTERNAL_ENV or "PROD",
+            "krpVerze": mods.get("krpVerze", cfg.INTERNAL_KRP_VERZE),
             "cert": mods["cert"],
             "apiKeyRequired": bool((cfg.INTERNAL_API_KEY or "").strip()),
         }
