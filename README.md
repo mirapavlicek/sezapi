@@ -440,6 +440,11 @@ Co je nového proti v2:
   0–100 000, výška 10–300 cm a váha 0–400 kg na tři desetinná místa, hladina
   TOKS 0–500 µg/g, BBPS celé číslo 0–9, volné texty do 300 znaků).
 
+V uživatelském rozhraní se v sekci SZZ přepíná **verze API** (v2/v3),
+zaškrtává **samoplátce** a nové screeningy mají vlastní formuláře (v seznamu
+jsou označené ✦). Před zápisem se tělo automaticky ověří proti rozsahům, takže
+zjevně chybná hodnota do produkce neodejde.
+
 Přehled typů, rozsahů a nových číselníků vrací `GET /api/szz3/katalog`.
 Tělo požadavku lze proti rozsahům ověřit ještě před odesláním na bránu:
 

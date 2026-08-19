@@ -407,6 +407,62 @@ def test_ztotozni_safe_neopakuje_pri_timeoutu(monkeypatch):
     assert resetu["pocet"] == 0, "klient se při timeoutu nemá resetovat"
 
 
+# --- duplicitní pacient ----------------------------------------------------
+
+def _dva_pacienti() -> dict:
+    """KRP od 30. 7. 2026 upravil návratový objekt u duplicitního pacienta –
+    v odpovědi přijde více záznamů."""
+    return {"odpovedInfo": {"stav": "OK", "subStav": "DUPLICITA"},
+            "odpovedData": [
+                {"rid": "1111111111", "jmeno": {"hodnota": "Jan"},
+                 "prijmeni": {"hodnota": "Novák"}},
+                {"rid": "2222222222", "jmeno": {"hodnota": "Jan"},
+                 "prijmeni": {"hodnota": "Novák"}},
+            ]}
+
+
+def test_duplicita_neni_oznacena_jako_jednoznacny_nalez(monkeypatch):
+    """Při více kandidátech nesmí odpověď tvrdit, že je RID jednoznačné –
+    NIS musí vědět, že si má vybrat správného pacienta."""
+    from starlette.testclient import TestClient
+
+    from sez_api import app as A
+    from sez_api import config as cfg
+
+    krp = _FakeKRP({"jmeno_prijmeni_rc": _Resp(200, _dva_pacienti())})
+    monkeypatch.setattr(cfg, "INTERNAL_API_KEY", "", raising=False)
+    monkeypatch.setattr(A, "_internal_modules",
+                        lambda: {"krp": krp, "auth": None, "client": None, "cert": {}})
+
+    r = TestClient(A.app).post("/internal/v1/ztotozneni", json={
+        "jmeno": "Jan", "prijmeni": "Novák", "rodneCislo": "8001011234"})
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["nalezeno"] is True
+    assert d["pocetKandidatu"] == 2
+    assert d["jednoznacne"] is False
+    assert "duplicita" in d["upozorneni"].lower()
+    assert [k["rid"] for k in d["kandidati"]] == ["1111111111", "2222222222"]
+
+
+def test_jediny_nalez_je_jednoznacny(monkeypatch):
+    from starlette.testclient import TestClient
+
+    from sez_api import app as A
+    from sez_api import config as cfg
+
+    krp = _FakeKRP({"jmeno_prijmeni_rc": _Resp(200, _nalezeny_pacient())})
+    monkeypatch.setattr(cfg, "INTERNAL_API_KEY", "", raising=False)
+    monkeypatch.setattr(A, "_internal_modules",
+                        lambda: {"krp": krp, "auth": None, "client": None, "cert": {}})
+
+    d = TestClient(A.app).post("/internal/v1/ztotozneni", json={
+        "jmeno": "Marie", "prijmeni": "Dvořáková",
+        "rodneCislo": "035309/106"}).json()
+    assert d["jednoznacne"] is True
+    assert d["upozorneni"] is None
+
+
 # --- verze API KRP ---------------------------------------------------------
 
 def test_ztotozneni_jde_standardne_na_krp_v3():

@@ -185,8 +185,51 @@ def test_endpoint_zkontrolovat():
     assert "mimo rozsah" in chyba["data"]["vyhrady"][0]
 
 
+def test_gui_nabizi_nove_screeningy_a_prepinac_verze():
+    """Sekce SZZ v UI musí nabídnout nové typy vyšetření, volbu verze API
+    a zaškrtnutí samoplátce – jinak novinky nejsou uživateli dostupné."""
+    html = TestClient(app).get("/").text
+    for marker in ("szz2ApiVerze", "szz2Samoplatce",
+                   "kolorektalniKarcinomKoloskopie",
+                   "karcinomProstatyVstupniPsa",
+                   "karcinomProstatyUrologickeVysetreni",
+                   "karcinomProstatyBioptickeVysetreni",
+                   "karcinomPlicPneumologickeVysetreni",
+                   "szz2HpvscrGenotypy"):
+        assert marker in html, marker
+    # Volání se směruje podle zvolené verze a HPV typ se převádí.
+    assert "_szz2Prefix()" in html
+    assert "_szz2TypDleVerze" in html
+
+
 def test_v2_zustava_dostupna():
     """Verze 2 běží paralelně, aby nasazení nemusela přejít skokem."""
     c = _FakeClient()
     SZZv2(c).screening("karcinomDDeloznihoHrdlaHpv")["vytvor"]({})
     assert "/api/v2/" in c.volani[0][1]
+
+
+# --- eŽádanky 1.11.20 ------------------------------------------------------
+
+def test_uprav_zadanku_neposila_ignorovany_typ_prijemce():
+    """Od verze 1.11.20 server při vyplněném upravenyPrijemce ignoruje
+    upravenyPrijemceTyp a adresátem je vždy PZS – neposíláme tedy pole,
+    které by v odpovědi stejně nebylo respektováno."""
+    from sez_api.client import EZadanky
+
+    c = _FakeClient()
+    EZadanky(c).uprav({"id": "abc", "upravenyPrijemce": "25488627",
+                       "upravenyPrijemceTyp": "ZP", "verzeRadku": "AAA="})
+    _metoda, path, body = c.volani[0]
+    assert path.endswith("/UpravZadanku")
+    assert "upravenyPrijemceTyp" not in body
+    assert body["upravenyPrijemce"] == "25488627"
+
+
+def test_uprav_zadanku_bez_prijemce_telo_nemeni():
+    from sez_api.client import EZadanky
+
+    c = _FakeClient()
+    telo = {"id": "abc", "upravenyPrijemceTyp": "ZP"}
+    EZadanky(c).uprav(telo)
+    assert c.volani[0][2] == telo

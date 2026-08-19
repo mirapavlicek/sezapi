@@ -9370,6 +9370,14 @@ class ZtotozneniResponse(BaseModel):
     vyprselCas: bool = Field(
         False, description="True = nezkusily se všechny metody, protože vypršel "
                            "časový rozpočet (SEZ_ZTOTOZNENI_BUDGET_MS).")
+    jednoznacne: bool = Field(
+        False, description="True = KRP vrátil právě jednoho pacienta s RID. "
+                           "False při více kandidátech (duplicita v KRP) – RID "
+                           "je pak jen prvním z nich a je nutné rozhodnout, "
+                           "který pacient je správný.")
+    upozorneni: Optional[str] = Field(
+        None, description="Upozornění k výsledku (např. nalezeno více "
+                          "pacientů), které není chybou volání.")
 
 
 internal_app = FastAPI(
@@ -9640,6 +9648,18 @@ def internal_ztotozneni(req: ZtotozneniRequest):
         raise HTTPException(status_code=502, detail=f"Volání KRP selhalo: {e}")
 
     primary = next((k for k in kandidati if k.rid), None)
+    s_rid = [k for k in kandidati if k.rid]
+    # KRP od 30. 7. 2026 upravil návratový objekt při vyhledání duplicitního
+    # pacienta – více kandidátů znamená, že výsledek není jednoznačný a RID
+    # nelze použít bez rozhodnutí, který pacient je správný.
+    jednoznacne = len(s_rid) == 1
+    upozorneni = None
+    if len(s_rid) > 1:
+        upozorneni = (f"KRP vrátil {len(s_rid)} pacientů (duplicita) – RID "
+                      f"prvního z nich je jen návrh, ověřte správného pacienta "
+                      f"podle pole kandidati.")
+        logger.warning("Ztotožnění: %d kandidátů s RID (duplicita), metoda %s",
+                       len(s_rid), method)
     return ZtotozneniResponse(
         nalezeno=bool(primary and primary.rid),
         rid=primary.rid if primary else None,
@@ -9653,6 +9673,8 @@ def internal_ztotozneni(req: ZtotozneniRequest):
         pokusy=diag["pokusy"],
         trvaniMs=diag["trvaniMs"],
         vyprselCas=diag["vyprselCas"],
+        jednoznacne=jednoznacne,
+        upozorneni=upozorneni,
     )
 
 
@@ -9698,6 +9720,8 @@ class DavkaVysledek(BaseModel):
     chyba: Optional[str] = None
     trvaniMs: Optional[int] = None
     vyprselCas: bool = False
+    jednoznacne: bool = Field(
+        False, description="True = právě jeden pacient s RID; False u duplicity.")
 
 
 class ZtotozneniDavkaResponse(BaseModel):
@@ -9739,6 +9763,7 @@ def internal_ztotozneni_davka(req: ZtotozneniDavkaRequest):
             primary = next((k for k in kandidati if k.rid), None)
             return DavkaVysledek(
                 poradi=i, ref=it.ref, nalezeno=bool(primary and primary.rid),
+                jednoznacne=len([k for k in kandidati if k.rid]) == 1,
                 rid=primary.rid if primary else None,
                 pocetKandidatu=len(kandidati), metoda=method,
                 substavZtotozneni=primary.substavZtotozneni if primary else None,
