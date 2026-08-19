@@ -202,6 +202,24 @@ def test_gui_nabizi_nove_screeningy_a_prepinac_verze():
     assert "_szz2TypDleVerze" in html
 
 
+def test_tabulka_verzi_api_je_aktualizovana():
+    """Přehled „Aktuální verze API a poslední změny" v UI musí odpovídat
+    poslední revizi dokumentace – jinak podle něj integrátor pracuje se
+    zastaralými verzemi."""
+    html = TestClient(app).get("/").text
+    assert "Revize 19. 8. 2026" in html
+    # SZZ v3 a vypnuté KRP v1 jsou změny s dopadem na integraci.
+    assert "v3.0.0" in html and "NOVÁ VERZE" in html
+    assert "v1 VYPNUTO" in html
+    assert "SEZ_INTERNAL_KRP_VERZE" in html
+    # Verze služeb dle novinek z července a srpna.
+    assert "v1.11.20" in html      # DÚ i eŽádanky
+    assert "v1.0.8" in html        # Registr oprávnění
+    assert "Žurnál činností 1.0.6" in html
+    # Stará hlavička revize už tam být nemá.
+    assert "Revize 26. 7. 2026</strong> dle veřejné dokumentace" not in html
+
+
 def test_v2_zustava_dostupna():
     """Verze 2 běží paralelně, aby nasazení nemusela přejít skokem."""
     c = _FakeClient()
