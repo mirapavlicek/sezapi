@@ -37,6 +37,7 @@ from sez_api.client import (
     UZISNrpzs, UZIS, UZISObsazenostLuzek,
 )
 from sez_api.certstore import CertChyba, CertStore, dekoduj_pfx, zkontroluj_pfx
+from sez_api import certdistribuce
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_ezd as _fhir_ezd
 from sez_api import ncpeh as _ncpeh_mod
@@ -215,7 +216,12 @@ async def lifespan(application: FastAPI):
     except Exception as e:
         logger.info("Interní PROD klient se nepředehřál (%s) – postaví se "
                     "při prvním volání.", e)
+    try:
+        _distribuce_start()
+    except Exception as e:
+        logger.warning("Plánovač distribuce certifikátů se nespustil: %s", e)
     yield
+    _distribuce_stop_planovac()
     if _auth:
         _auth.cleanup()
 
@@ -9431,6 +9437,7 @@ async def internal_health():
             "krpVerze": mods.get("krpVerze", cfg.INTERNAL_KRP_VERZE),
             "cert": mods["cert"],
             "apiKeyRequired": bool((cfg.INTERNAL_API_KEY or "").strip()),
+            "distribuce": _distribuce_health(),
         }
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=503)
@@ -9941,6 +9948,61 @@ def _aktualizuj_konfiguraci(env_key: str, store, meta: dict) -> None:
             cfg.PROD_CERT_UID = meta["certUid"]
 
 
+class NasazeniChyba(RuntimeError):
+    """Certifikát se nepodařilo zařadit do provozu. `status` je HTTP kód pro
+    API, aby se stejná chyba dala vrátit z endpointu i zalogovat z plánovače."""
+
+    def __init__(self, zprava: str, status: int = 500):
+        super().__init__(zprava)
+        self.status = status
+
+
+def _uloz_a_zarad(env_key: str, pfx: bytes, heslo: str, popis: dict, *,
+                  client_id: str = "", cert_uid: str = "", poznamka: str = "",
+                  zdroj: str = "", overit_volanim: bool = True) -> tuple:
+    """Uloží certifikát do úložiště a zařadí ho do provozu.
+
+    Postup: záloha stávajícího → atomické uložení → přestavění klienta →
+    ověření (podpis JWT, volitelně volání brány). Když s novým certifikátem
+    nelze sestavit klienta, vrátí se předchozí, ať provoz jede dál.
+
+    Vrací (metadata, předchozí, ověření). Používá to jak `POST
+    /internal/v1/certifikat`, tak automatická kontrola distribuce."""
+    store = _cert_store(env_key)
+    predchozi = store.info() if store.existuje() else {}
+    try:
+        meta = store.uloz(pfx, heslo, popis=popis, client_id=client_id,
+                          cert_uid=cert_uid, poznamka=poznamka, zdroj=zdroj)
+    except (OSError, CertChyba) as e:
+        raise NasazeniChyba(f"Certifikát nelze uložit: {e}", 500) from e
+
+    _aktualizuj_konfiguraci(env_key, store, meta)
+    _internal_reset()
+    try:
+        overeni = _overeni_po_nasazeni(overit_volanim)
+    except Exception as e:
+        logger.error("Nasazení certifikátu selhalo (%s), vracím předchozí", e)
+        vraceno = False
+        try:
+            if predchozi:
+                obnova = store.rollback()
+                _aktualizuj_konfiguraci(env_key, store, obnova)
+                vraceno = True
+        except Exception as exc2:
+            logger.error("Rollback certifikátu selhal: %s", exc2)
+        finally:
+            _internal_reset()
+        raise NasazeniChyba(
+            f"Certifikát byl uložen, ale klienta s ním nelze sestavit: {e}. "
+            + ("Předchozí certifikát byl obnoven." if vraceno
+               else "Předchozí certifikát nebyl k dispozici, "
+                    "prostředí je bez funkčního certifikátu."), 502) from e
+
+    logger.info("Nasazen certifikát %s: %s (platnost do %s)",
+                env_key, meta.get("subject"), meta.get("platnyDo"))
+    return meta, predchozi, overeni
+
+
 @internal_app.post(
     "/v1/certifikat",
     response_model=CertifikatResponse,
@@ -9974,44 +10036,17 @@ async def internal_certifikat_nasadit(req: CertifikatRequest):
             zprava="Certifikát je v pořádku, na přání se neukládal.",
             certifikat=_cert_info_model(popis))
 
-    store = _cert_store(env_key)
-    predchozi = store.info() if store.existuje() else {}
     try:
-        meta = store.uloz(pfx, req.password, popis=popis,
-                          client_id=(req.clientId or "").strip(),
-                          cert_uid=(req.certUid or "").strip(),
-                          poznamka=(req.poznamka or "").strip(),
-                          zdroj=(req.zdroj or "").strip())
-    except (OSError, CertChyba) as e:
-        raise HTTPException(status_code=500,
-                            detail=f"Certifikát nelze uložit: {e}")
+        meta, predchozi, overeni = _uloz_a_zarad(
+            env_key, pfx, req.password, popis,
+            client_id=(req.clientId or "").strip(),
+            cert_uid=(req.certUid or "").strip(),
+            poznamka=(req.poznamka or "").strip(),
+            zdroj=(req.zdroj or "").strip(),
+            overit_volanim=req.overitVolanim)
+    except NasazeniChyba as e:
+        raise HTTPException(status_code=e.status, detail=str(e))
 
-    _aktualizuj_konfiguraci(env_key, store, meta)
-    _internal_reset()
-    try:
-        overeni = _overeni_po_nasazeni(req.overitVolanim)
-    except Exception as e:
-        # Nový certifikát nelze použít – vracíme se k předchozímu, ať provoz jede.
-        logger.error("Nasazení certifikátu selhalo (%s), vracím předchozí", e)
-        vraceno = False
-        try:
-            if predchozi:
-                obnova = store.rollback()
-                _aktualizuj_konfiguraci(env_key, store, obnova)
-                vraceno = True
-        except Exception as exc2:
-            logger.error("Rollback certifikátu selhal: %s", exc2)
-        finally:
-            _internal_reset()
-        raise HTTPException(
-            status_code=502,
-            detail=(f"Certifikát byl uložen, ale klienta s ním nelze sestavit: {e}. "
-                    + ("Předchozí certifikát byl obnoven." if vraceno
-                       else "Předchozí certifikát nebyl k dispozici, "
-                            "prostředí je bez funkčního certifikátu.")))
-
-    logger.info("Nasazen certifikát %s z distribuce: %s (platnost do %s)",
-                env_key, meta.get("subject"), meta.get("platnyDo"))
     return CertifikatResponse(
         ok=True, aktivovano=True,
         zprava=f"Certifikát nasazen pro prostředí {env_key}.",
@@ -10103,7 +10138,344 @@ async def internal_certifikat_rollback(prostredi: str = "PROD", zaloha: str = ""
         overeni=overeni)
 
 
+# ---------------------------------------------------------------------------
+# Automatická aktualizace certifikátu z centrální distribuce
+# ---------------------------------------------------------------------------
+
+def _distribuce_aktivni_popis(env_key: str) -> dict:
+    """Popis certifikátu, který je právě v provozu – z úložiště, jinak
+    z konfigurace (.env), aby šel porovnat s nabídkou distribuce."""
+    store = _cert_store(env_key)
+    if store.existuje():
+        return store.info()
+    creds = cfg.ENV_CREDENTIALS.get(env_key) or {}
+    cesta = creds.get("p12_path")
+    if not cesta:
+        return {}
+    try:
+        with open(cesta, "rb") as f:
+            popis = zkontroluj_pfx(f.read(), creds.get("p12_password", ""),
+                                   vynutit=True)
+        popis["zdroj"] = "konfigurace"
+        return popis
+    except (CertChyba, OSError) as exc:
+        logger.warning("Stávající certifikát %s nelze přečíst: %s", env_key, exc)
+        return {}
+
+
+def _distribuce_kontrola(*, vynutit: bool = False, jen_zjistit: bool = False) -> dict:
+    """Jedno kolo kontroly distribuce: zeptat se, porovnat, případně nasadit.
+
+    `jen_zjistit` = pouze ohlásí, co by se stalo (nic se neukládá).
+    `vynutit` = nasadit i certifikát, který by jinak vyšel jako starší nebo
+    předčasný (ruční zásah, když je něco vyloženě špatně).
+    """
+    hodnoty = certdistribuce.nastaveni()
+    env_key = (hodnoty.get("prostredi") or "PROD").upper()
+    zprava: dict = {"prostredi": env_key, "kontrolovanoV": datetime.now(timezone.utc).isoformat()}
+
+    zapisy = certdistribuce.stahni_zapisy(hodnoty)
+    zprava["zapisuCelkem"] = len(zapisy)
+    ico, sluzba = cfg.cert_dist_ocekavane()
+    zprava["filtr"] = {"ico": ico, "sluzba": sluzba}
+    zapis, duvody = certdistribuce.vyber_zapis(zapisy, ico, sluzba)
+    if duvody:
+        zprava["preskoceno"] = duvody
+    if zapis is None:
+        zprava.update({"akce": "nic", "duvod": "Distribuce nemá certifikát pro nás."})
+        return zprava
+
+    zprava["nabizeny"] = certdistribuce.popis_zapisu(zapis)
+    pfx, heslo, popis = certdistribuce.rozbal_a_zkontroluj(zapis, ico=ico, sluzba=sluzba)
+    aktivni = _distribuce_aktivni_popis(env_key)
+    zprava["aktivni"] = {k: aktivni.get(k) for k in
+                         ("subject", "serialNumber", "platnyDo", "dnyDoExpirace", "zdroj")}
+    zprava["certifikat"] = {k: popis.get(k) for k in
+                            ("subject", "serialNumber", "platnyOd", "platnyDo",
+                             "dnyDoExpirace", "fingerprintSha256")}
+
+    rozhodnuti = certdistribuce.rozhodni(popis, aktivni)
+    if vynutit and rozhodnuti["akce"] in ("starsi", "pockat", "aktualni"):
+        rozhodnuti = {"akce": "nasadit",
+                      "duvod": f"Vynuceno ručně ({rozhodnuti['duvod']})"}
+    zprava.update(rozhodnuti)
+
+    if rozhodnuti["akce"] != "nasadit" or jen_zjistit:
+        zprava["nasazeno"] = False
+        return zprava
+
+    meta, predchozi, overeni = _uloz_a_zarad(
+        env_key, pfx, heslo, popis,
+        client_id=(cfg.ENV_CREDENTIALS.get(env_key) or {}).get("client_id", ""),
+        # certUid se záměrně nepřebírá z distribuce: `kid` v JWT se dnes
+        # odvozuje z certifikátu (SubjectKeyIdentifier) a produkce na tom jede.
+        # EZCA uid zůstává jen v poznámce.
+        cert_uid="",
+        poznamka=f"distribuce id={certdistribuce.popis_zapisu(zapis)['id']} "
+                 f"uid={certdistribuce.popis_zapisu(zapis)['uid']}",
+        zdroj="centralni-distribuce",
+        overit_volanim=bool(hodnoty.get("overitVolanim", True)))
+    zprava["nasazeno"] = True
+    zprava["certifikat"] = {k: meta.get(k) for k in
+                            ("subject", "serialNumber", "platnyOd", "platnyDo",
+                             "dnyDoExpirace", "fingerprintSha256", "cesta")}
+    zprava["predchozi"] = {k: predchozi.get(k) for k in
+                           ("subject", "serialNumber", "platnyDo")} if predchozi else None
+    zprava["overeni"] = overeni
+    return zprava
+
+
+def _distribuce_zapis_vysledek(zprava: dict, chyba: str = "") -> None:
+    """Uloží výsledek kontroly do stavu, ať ho vidí GUI i ostatní workery."""
+    zmeny = {
+        "posledniKontrola": datetime.now(timezone.utc).isoformat(),
+        "posledniKontrolaTs": time.time(),
+        "posledniVysledek": None if chyba else {
+            k: zprava.get(k) for k in
+            ("akce", "duvod", "nasazeno", "zapisuCelkem", "nabizeny", "certifikat")},
+        "posledniChyba": chyba or None,
+    }
+    if not chyba and zprava.get("nasazeno"):
+        zmeny["posledniNasazeni"] = {
+            "kdy": datetime.now(timezone.utc).isoformat(),
+            "certifikat": zprava.get("certifikat"),
+            "predchozi": zprava.get("predchozi"),
+        }
+    certdistribuce.zapis_stav(zmeny)
+
+
+def _distribuce_kolo(vynutit: bool = False) -> dict:
+    """Kontrola se zámkem a se zápisem stavu – to, co dělá plánovač."""
+    with certdistribuce.Zamek() as zamek:
+        if not zamek.zkus_ziskat():
+            return {"akce": "preskoceno",
+                    "duvod": "Kontrolu právě provádí jiný worker."}
+        if not vynutit and certdistribuce.dalsi_kontrola_za() > 0:
+            return {"akce": "preskoceno",
+                    "duvod": "Kontrola už proběhla v tomto intervalu."}
+        try:
+            zprava = _distribuce_kontrola(vynutit=vynutit)
+        except (certdistribuce.DistribuceChyba, CertChyba, NasazeniChyba) as exc:
+            logger.error("Kontrola distribuce certifikátů selhala: %s", exc)
+            _distribuce_zapis_vysledek({}, chyba=str(exc))
+            return {"akce": "chyba", "duvod": str(exc)}
+        except Exception as exc:  # neznámá chyba nesmí zabít plánovač
+            logger.exception("Kontrola distribuce certifikátů selhala neočekávaně")
+            _distribuce_zapis_vysledek({}, chyba=f"{type(exc).__name__}: {exc}")
+            return {"akce": "chyba", "duvod": str(exc)}
+        _distribuce_zapis_vysledek(zprava)
+        if zprava.get("nasazeno"):
+            logger.info("Distribuce: nasazen nový certifikát – %s", zprava.get("duvod"))
+        else:
+            logger.info("Distribuce: %s – %s", zprava.get("akce"), zprava.get("duvod"))
+        return zprava
+
+
+_distribuce_stop = _threading.Event()
+_distribuce_vlakno: Optional[_threading.Thread] = None
+# Jak často se plánovač probouzí. Vlastní kontrola se provede jen když je čas
+# podle intervalu – probouzení je krátký spánek, ne volání distribuce.
+DISTRIBUCE_TIK_S = 300
+
+
+def _distribuce_planovac() -> None:
+    """Vlákno, které se v intervalu ptá distribuce na nový certifikát.
+
+    Běží v každém workeru, ale kontrolu provede vždy jen ten, který získá
+    zámek v úložišti – distribuce tedy dostane jeden dotaz za interval."""
+    # Rozprostření startu, ať čtyři workery nevyrazí na zámek v tutéž chvíli.
+    if _distribuce_stop.wait(5 + (os.getpid() % 10)):
+        return
+    while not _distribuce_stop.is_set():
+        try:
+            hodnoty = certdistribuce.nastaveni()
+            if hodnoty.get("zapnuto") and (hodnoty.get("url") or "").strip():
+                _distribuce_kolo()
+        except Exception:
+            logger.exception("Plánovač distribuce certifikátů narazil na chybu")
+        _distribuce_stop.wait(DISTRIBUCE_TIK_S)
+
+
+def _distribuce_start() -> None:
+    """Zajistí, že plánovač běží.
+
+    Vlákno běží i s vypnutou kontrolou a stav nastavení si čte při každém
+    probuzení – zapnutí z GUI se tak projeví ve všech workerech, ne jen v tom,
+    který požadavek obsloužil, a nevyžaduje restart služby."""
+    global _distribuce_vlakno
+    if _distribuce_vlakno and _distribuce_vlakno.is_alive():
+        return
+    _distribuce_stop.clear()
+    _distribuce_vlakno = _threading.Thread(
+        target=_distribuce_planovac, name="cert-distribuce", daemon=True)
+    _distribuce_vlakno.start()
+    hodnoty = certdistribuce.nastaveni()
+    if hodnoty.get("zapnuto") and (hodnoty.get("url") or "").strip():
+        logger.info("Distribuce certifikátů: kontrola každých %.1f h",
+                    float(hodnoty.get("intervalHodin") or 24))
+    else:
+        logger.info("Distribuce certifikátů: kontrola je vypnutá, "
+                    "plánovač čeká na zapnutí")
+
+
+def _distribuce_stop_planovac() -> None:
+    _distribuce_stop.set()
+    if _distribuce_vlakno and _distribuce_vlakno.is_alive():
+        _distribuce_vlakno.join(timeout=2)
+
+
+class DistribuceNastaveni(BaseModel):
+    """Nastavení distribuce. Nezadané položky se nemění, prázdné heslo
+    znamená „ponechat stávající“ (GUI heslo nikdy nedostane)."""
+
+    url: Optional[str] = Field(None, description="Adresa API distribuce "
+                                                 "(např. https://iris/api/ez/certificate)")
+    uzivatel: Optional[str] = Field(None, description="Jméno pro basic auth")
+    heslo: Optional[str] = Field(None, description="Heslo pro basic auth "
+                                                  "(prázdné = ponechat)")
+    smazatHeslo: Optional[bool] = Field(None, description="Zapomenout uložené heslo")
+    intervalHodin: Optional[float] = Field(None, description="Jak často se ptát "
+                                                            "(24 = jednou denně)")
+    zapnuto: Optional[bool] = Field(None, description="Zapnout periodickou kontrolu")
+    overovatTls: Optional[str] = Field(None, description="Ověřovat TLS serveru: "
+                                                        "1/0 nebo cesta k CA bundle")
+    timeout: Optional[float] = Field(None, description="Timeout volání (s)")
+    overitVolanim: Optional[bool] = Field(None, description="Po nasazení zkusit "
+                                                           "volání na bránu")
+    prostredi: Optional[str] = Field(None, description="Prostředí, pro které se "
+                                                      "certifikát nasazuje")
+
+    model_config = {"json_schema_extra": {"examples": [{
+        "url": "https://iris.example.local/api/ez/certificate",
+        "uzivatel": "jmeno",
+        "heslo": "tajne",
+        "intervalHodin": 24,
+        "zapnuto": True,
+        "overovatTls": "0",
+    }]}}
+
+
+def _distribuce_health() -> dict:
+    """Krátký stav pro /internal/health. Bez adresy a jména – health je
+    záměrně bez ochrany klíčem, takže do něj nastavení nepatří."""
+    try:
+        hodnoty = certdistribuce.nastaveni()
+        aktualni_stav = certdistribuce.stav()
+        vysledek = aktualni_stav.get("posledniVysledek") or {}
+        return {
+            "zapnuto": bool(hodnoty.get("zapnuto") and (hodnoty.get("url") or "").strip()),
+            "intervalHodin": hodnoty.get("intervalHodin"),
+            "planovacBezi": bool(_distribuce_vlakno and _distribuce_vlakno.is_alive()),
+            "posledniKontrola": aktualni_stav.get("posledniKontrola"),
+            "posledniAkce": vysledek.get("akce"),
+            "posledniChyba": aktualni_stav.get("posledniChyba"),
+        }
+    except Exception as exc:
+        return {"chyba": str(exc)[:200]}
+
+
+def _distribuce_prehled() -> dict:
+    """Nastavení (bez hesla) + stav poslední kontroly + co běží teď."""
+    hodnoty = certdistribuce.nastaveni()
+    env_key = (hodnoty.get("prostredi") or "PROD").upper()
+    aktivni = _distribuce_aktivni_popis(env_key)
+    ico, sluzba = cfg.cert_dist_ocekavane()
+    aktualni_stav = certdistribuce.stav()
+    return {
+        "nastaveni": certdistribuce.nastaveni_bez_hesla(hodnoty),
+        "filtr": {"ico": ico, "sluzba": sluzba},
+        "planovacBezi": bool(_distribuce_vlakno and _distribuce_vlakno.is_alive()),
+        "dalsiKontrolaZaS": round(certdistribuce.dalsi_kontrola_za(hodnoty, aktualni_stav)),
+        "stav": aktualni_stav,
+        "aktivniCertifikat": {k: aktivni.get(k) for k in
+                              ("subject", "serialNumber", "platnyOd", "platnyDo",
+                               "dnyDoExpirace", "zdroj", "cesta")} if aktivni else None,
+    }
+
+
+@internal_app.get(
+    "/v1/certifikat/distribuce",
+    tags=["certifikát"],
+    summary="Nastavení a stav automatické aktualizace certifikátu",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+async def internal_distribuce_stav():
+    """Vrátí nastavení distribuce (bez hesla), kdy proběhla poslední kontrola
+    a co je právě v provozu."""
+    return _distribuce_prehled()
+
+
+@internal_app.put(
+    "/v1/certifikat/distribuce",
+    tags=["certifikát"],
+    summary="Upravit nastavení automatické aktualizace certifikátu",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+def internal_distribuce_nastavit(req: DistribuceNastaveni):
+    """Uloží adresu, přihlášení a interval. Nastavení je společné pro všechny
+    workery (ukládá se do úložiště certifikátů), takže se projeví hned."""
+    try:
+        certdistribuce.uloz_nastaveni(req.model_dump(exclude_unset=True))
+    except certdistribuce.DistribuceChyba as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except OSError as e:
+        raise HTTPException(status_code=500,
+                            detail=f"Nastavení nelze uložit: {e}")
+    # Plánovač čte nastavení při každém probuzení, takže změnu převezme sám;
+    # tady se jen pojistíme, že v tomto workeru vůbec běží.
+    _distribuce_start()
+    return _distribuce_prehled()
+
+
+@internal_app.post(
+    "/v1/certifikat/distribuce/kontrola",
+    tags=["certifikát"],
+    summary="Zkontrolovat distribuci hned (a případně nasadit nový certifikát)",
+    dependencies=[Depends(_require_cert_api_key)],
+)
+def internal_distribuce_kontrola(jenZjistit: bool = False, vynutit: bool = False):
+    """Zeptá se distribuce bez ohledu na interval.
+
+    `jenZjistit=true` jen ohlásí, co by se stalo (nic se neukládá) – vhodné
+    pro ověření spojení a přihlášení. `vynutit=true` nasadí i certifikát,
+    který by jinak vyšel jako starší.
+
+    Endpoint je synchronní (``def``): volání distribuce i brány blokuje, takže
+    v korutině by zdrželo smyčku událostí."""
+    try:
+        zprava = _distribuce_kontrola(vynutit=vynutit, jen_zjistit=jenZjistit)
+    except certdistribuce.DistribuceChyba as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except CertChyba as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except NasazeniChyba as e:
+        raise HTTPException(status_code=e.status, detail=str(e))
+    if not jenZjistit:
+        _distribuce_zapis_vysledek(zprava)
+    return zprava
+
+
 app.mount("/internal", internal_app)
+
+
+# Endpointy pro GUI – stejné funkce, jen bez klíče interního API (GUI je
+# součástí téhož nástroje jako přepínání prostředí).
+@app.get("/api/cert-distribuce", tags=["certifikát"],
+         summary="Nastavení a stav automatické aktualizace certifikátu")
+async def api_distribuce_stav():
+    return _distribuce_prehled()
+
+
+@app.put("/api/cert-distribuce", tags=["certifikát"],
+         summary="Upravit nastavení automatické aktualizace certifikátu")
+def api_distribuce_nastavit(req: DistribuceNastaveni):
+    return internal_distribuce_nastavit(req)
+
+
+@app.post("/api/cert-distribuce/kontrola", tags=["certifikát"],
+          summary="Zkontrolovat distribuci hned")
+def api_distribuce_kontrola(jenZjistit: bool = False, vynutit: bool = False):
+    return internal_distribuce_kontrola(jenZjistit=jenZjistit, vynutit=vynutit)
 
 
 # ===========================================================================

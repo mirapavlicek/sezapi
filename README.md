@@ -544,6 +544,60 @@ vedle certifikátu a v odpovědích API se nikdy nevrací.
 Adresář úložiště určuje `SEZ_CERT_STORE_DIR`; naposledy převzatý certifikát má
 po restartu přednost před `SEZ_PROD_P12_PATH`.
 
+### Automatická aktualizace certifikátu z distribuce
+
+Místo čekání, až certifikát někdo ručně nahraje, se aplikace umí sama
+v intervalu (standardně **jednou denně**) zeptat distribučního API, jestli pro
+nás není nový certifikát, a novější si nasadit — bez restartu služby.
+
+Nastavuje se v GUI v sekci **EZCA Správa cert. → Automatická aktualizace**
+(adresa, jméno, heslo, interval, ověřování TLS) nebo přes API:
+
+```bash
+# nastavení (heslo se v odpovědích nikdy nevrací; prázdné = ponechat stávající)
+curl -X PUT http://localhost:8004/api/cert-distribuce \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://iris.example.local/api/ez/certificate",
+       "uzivatel":"jmeno","heslo":"…","intervalHodin":24,
+       "zapnuto":true,"overovatTls":"0"}'
+
+# co distribuce nabízí, bez jakékoli změny
+curl -X POST 'http://localhost:8004/api/cert-distribuce/kontrola?jenZjistit=true'
+
+# zkontrolovat a případně nasadit hned
+curl -X POST http://localhost:8004/api/cert-distribuce/kontrola
+```
+
+Totéž je na interním rozhraní pod `/internal/v1/certifikat/distribuce`
+(chráněné `X-Api-Key`). Výchozí hodnoty lze předvyplnit přes `SEZ_CERT_DIST_*`
+v `.env`; uložené nastavení je přepisuje a je společné pro všechny workery.
+
+Očekávaný formát odpovědi distribuce je pole záznamů s `pfx` (PKCS#12
+v base64), `password`, `serioveCislo`, `pfxHash`, `pfxSize`, `nazevSluzby`,
+`externiIdentifikator`, `stav`, `revokovany`, `platnostOd/Do` — viz
+`sez_api/certdistribuce.py`.
+
+Na co si dát pozor a co hlídá aplikace sama:
+
+- **Nasadí jen certifikát, který patří nám.** V subjektu musí být `CN` = název
+  služby a `organizationIdentifier` = IČO odvozené z `client_id`
+  (`00064203_NIS2` → IČO `00064203`, služba `NIS2`). Bez toho by přesměrování
+  distribuční adresy znamenalo nasazení cizího certifikátu.
+- **Kontroluje integritu** proti metadatům: sériové číslo, SHA‑1 odstisk
+  (`pfxHash`) a velikost PKCS#12.
+- **Nikdy nenasadí starší** certifikát, než jaký je v provozu, a certifikát
+  s ještě nezapočatou platností nechá čekat (pokud stávající platí).
+- **Při selhání se vrací zpět.** Po nasazení se podepíše JWT a volitelně se
+  zkusí volání brány; když to selže, automaticky se obnoví předchozí
+  certifikát a v provozu zůstane funkční stav.
+- **Ptá se jen jeden worker.** Aplikace běží ve více procesech, kontrolu drží
+  zámek v úložišti, takže distribuce dostane jeden dotaz za interval. Nasazený
+  certifikát převezmou ostatní workery podle změny úložiště.
+- **Hesla se nelogují ani nevracejí** — ani heslo k distribuci, ani k PKCS#12.
+
+Stav poslední kontroly hlásí `GET /api/cert-distribuce` a ve zkratce
+i `GET /internal/health` v poli `distribuce`.
+
 ## Struktura projektu
 
 ```

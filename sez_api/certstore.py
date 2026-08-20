@@ -67,6 +67,28 @@ def dekoduj_pfx(pfx_base64: str) -> bytes:
     return data
 
 
+def zapis_atomicky(cesta: Path, data: bytes, *, prava: int = 0o600) -> None:
+    """Zapíše soubor tak, aby jej běžící proces nikdy neviděl rozepsaný.
+
+    Zapíše se do temp souboru ve stejném adresáři, zahodí na disk a přesune
+    přes ``os.replace`` (na téže filesystémě atomické)."""
+    cesta.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(cesta.parent), prefix=".tmp-")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.chmod(tmp, prava)
+        os.replace(tmp, cesta)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def _kid_z_certifikatu(cert) -> str:
     """Fallback identifikátor klíče, když distribuce nepošle UID z EZCA."""
     try:
@@ -207,22 +229,7 @@ class CertStore:
 
     # --- zápis ------------------------------------------------------------
     def _zapis_atomicky(self, cesta: Path, data: bytes) -> None:
-        """Zapíše soubor tak, aby jej běžící proces nikdy neviděl rozepsaný."""
-        cesta.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=str(cesta.parent), prefix=".tmp-")
-        try:
-            with os.fdopen(fd, "wb") as f:
-                f.write(data)
-                f.flush()
-                os.fsync(f.fileno())
-            os.chmod(tmp, 0o600)
-            os.replace(tmp, cesta)
-        except BaseException:
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise
+        zapis_atomicky(cesta, data)
 
     def _zaloh(self) -> dict | None:
         """Odloží aktivní certifikát do historie. Vrací metadata zálohy."""

@@ -6616,6 +6616,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="sub-tab" data-panel="ezca-cert-stav-panel">Stav &amp; stažení</div>
         <div class="sub-tab" data-panel="ezca-cert-crl-panel">CRL &amp; chyby</div>
         <div class="sub-tab" data-panel="ezca-cert-health-panel">Health</div>
+        <div class="sub-tab" data-panel="ezca-cert-distribuce-panel" onclick="cdNacti()">&#128260; Automatická aktualizace</div>
       </div>
 
       <!-- Seznam & detail -->
@@ -6899,6 +6900,68 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
             <button class="btn btn-primary" onclick="ezcaCertDetailHealth()">🔬 Detail Health</button>
           </div>
           <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="ezcaCertHealthResult">-</div></div>
+        </div>
+      </div>
+
+      <!-- Automatická aktualizace certifikátu z centrální distribuce -->
+      <div class="sub-panel" id="ezca-cert-distribuce-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">&#128260; Automatická aktualizace certifikátu z centrální distribuce</span>
+            <span id="cdStavBadge" class="chip" style="background:var(--fg3);color:#fff">nezjištěno</span>
+          </div>
+          <p style="font-size:12px;color:var(--fg3);margin:2px 0 10px">
+            Aplikace se v zadaném intervalu sama zeptá distribučního API, jestli pro nás není nový certifikát,
+            a novější si <strong>sama nasadí bez restartu</strong>. Přijme jen certifikát, který patří nám
+            (shoda služby i IČO v subjektu) a má souhlasnou integritu (sériové číslo, odstisk, velikost);
+            starší nebo předčasný certifikát nikdy nenasadí. Když se s novým nepodaří sestavit klienta,
+            automaticky se vrátí předchozí.
+          </p>
+          <div class="form-row">
+            <div class="form-group" style="flex:2 1 380px"><label>Adresa API distribuce</label>
+              <input id="cdUrl" placeholder="https://iris.example.local/api/ez/certificate"></div>
+            <div class="form-group"><label>Uživatel</label><input id="cdUzivatel" placeholder="jméno pro basic auth"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Heslo <span style="color:var(--fg3);font-weight:400">(prázdné = ponechat)</span></label>
+              <input id="cdHeslo" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+            <div class="form-group"><label>Interval (hodiny)</label><input id="cdInterval" type="number" min="0.1" step="0.5" value="24"></div>
+            <div class="form-group"><label>Ověřovat TLS serveru</label>
+              <select id="cdTls">
+                <option value="1">Ano (běžné CA)</option>
+                <option value="0">Ne (interní certifikát)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Prostředí</label>
+              <select id="cdProstredi"><option value="PROD">PROD</option><option value="T2">T2</option></select>
+            </div>
+            <div class="form-group"><label>Periodická kontrola</label>
+              <select id="cdZapnuto"><option value="1">Zapnutá</option><option value="0">Vypnutá</option></select>
+            </div>
+            <div class="form-group"><label>Po nasazení zkusit volání na bránu</label>
+              <select id="cdOverit"><option value="1">Ano</option><option value="0">Ne</option></select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <button class="btn btn-primary" onclick="cdUlozit()">&#128190; Uložit nastavení</button>
+            <button class="btn" onclick="cdKontrola(true)">&#128269; Zkontrolovat (jen zjistit)</button>
+            <button class="btn btn-primary" onclick="cdKontrola(false)">&#9889; Zkontrolovat a nasadit</button>
+            <button class="btn" onclick="cdNacti()">&#8635; Obnovit stav</button>
+            <button class="btn btn-danger" onclick="cdKontrola(false, true)" title="Nasadí i certifikát, který by jinak vyšel jako starší nebo předčasný">Vynutit nasazení</button>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+            <div class="card" style="flex:1 1 300px;margin:0">
+              <div class="card-header"><span class="card-title">V provozu</span></div>
+              <div id="cdAktivni" class="nis-human">-</div>
+            </div>
+            <div class="card" style="flex:1 1 300px;margin:0">
+              <div class="card-header"><span class="card-title">Poslední kontrola</span></div>
+              <div id="cdPosledni" class="nis-human">-</div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:10px"><div class="card-header"><span class="card-title">Výsledek</span></div><div class="json-box" id="cdResult">Klikněte na „Obnovit stav".</div></div>
         </div>
       </div>
     </div>
@@ -16792,6 +16855,116 @@ async function ezcaCertHealth() {
 async function ezcaCertDetailHealth() {
   const r = await api('GET', '/api/ezca-cert/detail-health');
   _showJson('ezcaCertHealthResult', r);
+}
+
+// --- Automatická aktualizace certifikátu z centrální distribuce ---
+function _cdEsc(s) {
+  return String(s == null ? '-' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function _cdDatum(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return isNaN(d) ? String(iso) : d.toLocaleString('cs-CZ');
+}
+function _cdBadge(text, barva) {
+  const b = document.getElementById('cdStavBadge');
+  if (!b) return;
+  b.textContent = text;
+  b.style.background = barva;
+}
+function _cdRadek(popis, hodnota) {
+  return '<div><span style="color:var(--fg3)">' + popis + ':</span> ' + hodnota + '</div>';
+}
+function _cdVykresli(p) {
+  const n = p.nastaveni || {};
+  _setVal('cdUrl', n.url || '');
+  _setVal('cdUzivatel', n.uzivatel || '');
+  _setVal('cdInterval', n.intervalHodin != null ? n.intervalHodin : 24);
+  _setVal('cdTls', String(n.overovatTls) === '0' ? '0' : '1');
+  _setVal('cdProstredi', n.prostredi || 'PROD');
+  _setVal('cdZapnuto', n.zapnuto ? '1' : '0');
+  _setVal('cdOverit', n.overitVolanim === false ? '0' : '1');
+  const heslo = document.getElementById('cdHeslo');
+  if (heslo) heslo.placeholder = n.hesloNastaveno ? '•••••••• (uložené)' : 'není nastavené';
+
+  const c = p.aktivniCertifikat || {};
+  const dny = c.dnyDoExpirace;
+  const barvaDnu = dny == null ? 'var(--fg2)' : (dny < 14 ? '#dc2626' : (dny < 30 ? '#d97706' : '#16a34a'));
+  document.getElementById('cdAktivni').innerHTML = c.subject
+    ? _cdRadek('Subjekt', '<code>' + _cdEsc(c.subject) + '</code>')
+      + _cdRadek('Sériové číslo', '<code>' + _cdEsc(c.serialNumber) + '</code>')
+      + _cdRadek('Platí do', _cdEsc((c.platnyDo || '').slice(0, 10))
+        + ' <strong style="color:' + barvaDnu + '">(' + _cdEsc(dny) + ' dnů)</strong>')
+      + _cdRadek('Zdroj', _cdEsc(c.zdroj))
+      + _cdRadek('Filtr distribuce', 'služba <code>' + _cdEsc((p.filtr || {}).sluzba)
+        + '</code>, IČO <code>' + _cdEsc((p.filtr || {}).ico) + '</code>')
+    : '<span style="color:#d97706">Certifikát není k dispozici.</span>';
+
+  const s = p.stav || {};
+  const v = s.posledniVysledek || {};
+  let posledni = _cdRadek('Kdy', _cdDatum(s.posledniKontrola));
+  if (s.posledniChyba) {
+    posledni += _cdRadek('Výsledek', '<span style="color:#dc2626;font-weight:600">chyba: '
+      + _cdEsc(s.posledniChyba) + '</span>');
+  } else if (v.akce) {
+    posledni += _cdRadek('Výsledek', '<strong>' + _cdEsc(v.akce) + '</strong> – ' + _cdEsc(v.duvod));
+  }
+  if (s.posledniNasazeni) {
+    posledni += _cdRadek('Naposledy nasazeno', _cdDatum(s.posledniNasazeni.kdy));
+  }
+  const zbyva = p.dalsiKontrolaZaS;
+  posledni += _cdRadek('Další kontrola', p.nastaveni && p.nastaveni.zapnuto
+    ? (zbyva > 0 ? 'za ' + Math.round(zbyva / 3600) + ' h' : 'při nejbližším probuzení')
+    : 'periodická kontrola je vypnutá');
+  posledni += _cdRadek('Plánovač v tomto workeru', p.planovacBezi ? 'běží' : 'neběží');
+  document.getElementById('cdPosledni').innerHTML = posledni;
+
+  if (!n.url) _cdBadge('bez adresy', 'var(--fg3)');
+  else if (!n.zapnuto) _cdBadge('vypnutá', '#d97706');
+  else if (s.posledniChyba) _cdBadge('chyba kontroly', '#dc2626');
+  else _cdBadge('zapnutá', '#16a34a');
+}
+async function cdNacti() {
+  const r = await api('GET', '/api/cert-distribuce');
+  _showJson('cdResult', r);
+  if (r && r.nastaveni) _cdVykresli(r);
+  else _cdBadge('nezjištěno', 'var(--fg3)');
+}
+async function cdUlozit() {
+  const telo = {
+    url: (document.getElementById('cdUrl').value || '').trim(),
+    uzivatel: (document.getElementById('cdUzivatel').value || '').trim(),
+    heslo: document.getElementById('cdHeslo').value || '',
+    intervalHodin: parseFloat(document.getElementById('cdInterval').value || '24'),
+    zapnuto: document.getElementById('cdZapnuto').value === '1',
+    overovatTls: document.getElementById('cdTls').value,
+    prostredi: document.getElementById('cdProstredi').value,
+    overitVolanim: document.getElementById('cdOverit').value === '1'
+  };
+  const r = await api('PUT', '/api/cert-distribuce', telo);
+  _showJson('cdResult', r);
+  if (r && r.nastaveni) {
+    document.getElementById('cdHeslo').value = '';
+    _cdVykresli(r);
+    toast('Nastavení distribuce uloženo.');
+  } else {
+    toast('Nastavení se nepodařilo uložit: ' + ((r && r.detail) || 'neznámá chyba'), true);
+  }
+}
+async function cdKontrola(jenZjistit, vynutit) {
+  const out = document.getElementById('cdResult');
+  out.textContent = jenZjistit ? 'Zjišťuji, co distribuce nabízí…' : 'Kontroluji distribuci…';
+  const q = '?jenZjistit=' + (jenZjistit ? 'true' : 'false') + '&vynutit=' + (vynutit ? 'true' : 'false');
+  const r = await api('POST', '/api/cert-distribuce/kontrola' + q);
+  _showJson('cdResult', r);
+  if (r && r.detail) {
+    toast('Kontrola selhala: ' + r.detail, true);
+  } else if (r && r.nasazeno) {
+    toast('Nasazen nový certifikát – ' + (r.duvod || ''));
+  } else if (r && r.akce) {
+    toast('Kontrola hotová: ' + r.akce + ' – ' + (r.duvod || ''));
+  }
+  await cdNacti();
 }
 
 // --- Přihlášení / spojení s EZCA (JWT assertion = bearerAuth) ---

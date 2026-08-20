@@ -19,6 +19,13 @@ def env(key: str, default: str = "") -> str:
     return os.environ.get(key, default)
 
 
+def _env_bool(key: str, default: bool = True) -> bool:
+    val = os.environ.get(key)
+    if val is None:
+        return default
+    return val.strip().lower() in ("1", "true", "yes", "ano", "on")
+
+
 CLIENT_ID = env("SEZ_CLIENT_ID", "")
 P12_PATH = env("SEZ_P12_PATH", "")
 P12_PASSWORD = env("SEZ_P12_PASSWORD", "")
@@ -68,8 +75,44 @@ CERT_STORE_DIR = env("SEZ_CERT_STORE_DIR", "")
 # ztotožnění, proto se doporučuje vlastní klíč).
 CERT_API_KEY = env("SEZ_CERT_API_KEY", "")
 
+# ---------------------------------------------------------------------------
+# Automatická aktualizace certifikátu z centrální distribuce
+# ---------------------------------------------------------------------------
+# Aplikace se sama v daném intervalu ptá distribučního API (IRIS), jestli pro
+# nás není nový certifikát, a nový si sama nasadí. Hodnoty odsud jsou jen
+# VÝCHOZÍ – za běhu je přepisuje nastavení uložené v úložišti certifikátů
+# (soubor distribuce.json), které se edituje v GUI nebo přes API.
+CERT_DIST_URL = env("SEZ_CERT_DIST_URL", "")
+CERT_DIST_USER = env("SEZ_CERT_DIST_USER", "")
+CERT_DIST_PASSWORD = env("SEZ_CERT_DIST_PASSWORD", "")
+# Jak často se ptát (hodiny). 24 = jednou denně.
+CERT_DIST_INTERVAL_H = float(env("SEZ_CERT_DIST_INTERVAL_H", "24"))
+# Zapnutí periodické kontroly. Bez URL se nespustí ani při "1".
+CERT_DIST_ENABLED = _env_bool("SEZ_CERT_DIST_ENABLED", False)
+# Ověřování TLS certifikátu distribučního serveru: "1"/"0" nebo cesta k CA
+# bundle. Interní IRIS bývá podepsaný firemní CA, kterou systém nezná.
+CERT_DIST_VERIFY = env("SEZ_CERT_DIST_VERIFY", "1")
+# Timeout jednoho volání distribučního API (sekundy). PFX je v odpovědi
+# v base64, takže odpověď má i stovky kB.
+CERT_DIST_TIMEOUT = float(env("SEZ_CERT_DIST_TIMEOUT", "30"))
+# Po nasazení se ověří, že brána nový certifikát přijme (volání číselníku).
+CERT_DIST_OVERIT_VOLANIM = _env_bool("SEZ_CERT_DIST_OVERIT_VOLANIM", True)
+# Prostředí, pro které se certifikát z distribuce nasazuje.
+CERT_DIST_PROSTREDI = env("SEZ_CERT_DIST_PROSTREDI", "PROD")
+# Filtr, který záznam z distribuce je náš. Prázdné = odvodí se z client_id
+# ve tvaru "<ICO>_<sluzba>", tedy např. 00064203_NIS2 → ICO 00064203,
+# služba NIS2. Zabraňuje nasazení certifikátu jiné služby nebo subjektu.
+CERT_DIST_SLUZBA = env("SEZ_CERT_DIST_SLUZBA", "")
+CERT_DIST_ICO = env("SEZ_CERT_DIST_ICO", "")
+
 PROD_CLIENT_ID = env("SEZ_PROD_CLIENT_ID", "")
 PROD_P12_PATH = env("SEZ_PROD_P12_PATH", "")
+# Certifikát, od kterého se odvozuje adresář úložiště. Drží se zvlášť, protože
+# nasazení nového certifikátu přepisuje PROD_P12_PATH na cestu DO úložiště –
+# odvozování z aktuální hodnoty by úložiště po každém nasazení zanořilo
+# o úroveň hlouběji (certstore/certstore/…) a rozpadla by se historie,
+# rollback i sdílený stav mezi workery.
+CERT_STORE_ZAKLAD = PROD_P12_PATH
 PROD_P12_PASSWORD = env("SEZ_PROD_P12_PASSWORD", "")
 PROD_CERT_UID = env("SEZ_PROD_CERT_UID", "")
 PROD_GATEWAY = env("SEZ_PROD_GATEWAY", "")
@@ -95,13 +138,6 @@ PEER_URLS: list[str] = [
 #
 # DLP (Databáze léčivých přípravků) jsou VEŘEJNÁ otevřená data (opendata.sukl.cz),
 # napojují se reálně bez certifikátu.
-
-def _env_bool(key: str, default: bool = True) -> bool:
-    val = os.environ.get(key)
-    if val is None:
-        return default
-    return val.strip().lower() in ("1", "true", "yes", "ano", "on")
-
 
 SUKL_ENABLED = _env_bool("SUKL_ENABLED", True)
 SUKL_INTERFACE_VERSION = env("SUKL_INTERFACE_VERSION", "202501A")
@@ -131,18 +167,37 @@ def cert_store_dir() -> str:
     """Adresář s certifikáty převzatými z centrální distribuce.
 
     Bez explicitního `SEZ_CERT_STORE_DIR` se použije podadresář u produkčního
-    certifikátu (tam, kam je nasazení zvyklé sahat), jinak `data/certs`
-    v pracovním adresáři."""
+    certifikátu z konfigurace (tam, kam je nasazení zvyklé sahat), jinak
+    `data/certs` v pracovním adresáři. Odvozuje se ze `CERT_STORE_ZAKLAD`, ne
+    z aktuální `PROD_P12_PATH` – ta se nasazením přepisuje na cestu do
+    úložiště a adresář by se tím zanořoval."""
     if CERT_STORE_DIR:
         return CERT_STORE_DIR
-    if PROD_P12_PATH:
-        return str(Path(PROD_P12_PATH).expanduser().parent / "certstore")
+    if CERT_STORE_ZAKLAD:
+        return str(Path(CERT_STORE_ZAKLAD).expanduser().parent / "certstore")
     return str(Path.cwd() / "data" / "certs")
 
 
 def cert_api_key() -> str:
     """Klíč vyžadovaný pro API distribuce certifikátů."""
     return (CERT_API_KEY or INTERNAL_API_KEY or "").strip()
+
+
+def cert_dist_ocekavane() -> tuple:
+    """(ICO, služba), které musí mít záznam z distribuce, aby byl náš.
+
+    Odvozuje se z client_id ve tvaru ``<ICO>_<sluzba>`` (00064203_NIS2), pokud
+    nejsou obě části zadané ručně. Bez známého ICO i služby se filtr nepoužije
+    a rozhoduje jen shoda s certifikátem, který je právě v provozu."""
+    ico, sluzba = CERT_DIST_ICO.strip(), CERT_DIST_SLUZBA.strip()
+    if not (ico and sluzba):
+        creds = ENV_CREDENTIALS.get((CERT_DIST_PROSTREDI or "PROD").upper()) or {}
+        client_id = (creds.get("client_id") or "").strip()
+        if "_" in client_id:
+            odvozene_ico, _, odvozena_sluzba = client_id.partition("_")
+            ico = ico or odvozene_ico
+            sluzba = sluzba or odvozena_sluzba
+    return ico, sluzba
 
 
 def sukl_erecept_endpoint(env_key: str = "T2") -> str:
