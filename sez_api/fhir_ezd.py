@@ -76,6 +76,9 @@ EZD_KATEGORIE = {
         "nazev": "Pacientský souhrn",
         "ig": "hl7.fhir.cz.ps",
         "ig_verze": "0.0.1",
+        # CI build 2026-08-15 (závislosti: cz-core 1.0.0, eu.eps 1.0.0-ballot,
+        # uv.ips 2.0.1); constraints hlavičky beze změny
+        "ig_build": "2026-08-15",
         "ig_url": "https://build.fhir.org/ig/HL7-cz/ps/",
         "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 2",
         "bundle_profile": "https://hl7.cz/fhir/ps/StructureDefinition/cz-bundle-ps",
@@ -108,7 +111,7 @@ EZD_KATEGORIE = {
             {"slice": "sectionProceduresHx", "code": "47519-4", "title": "Historie výkonů"},
             {"slice": "sectionMedicalDevices", "code": "46264-8", "title": "Zdravotnické prostředky"},
             {"slice": "sectionAdvanceDirectives", "code": "42348-3", "title": "Dříve vyslovená přání"},
-            {"slice": "sectionAlerts", "code": "104605-1", "title": "Upozornění"},
+            {"slice": "sectionAlert", "code": "104605-1", "title": "Upozornění"},
             {"slice": "sectionFunctionalStatus", "code": "47420-5", "title": "Funkční stav"},
             {"slice": "sectionPregnancyHx", "code": "10162-6", "title": "Anamnéza gravidity"},
             {"slice": "sectionPatientStory", "code": "10164-2", "title": "Anamnéza dle pacienta"},
@@ -117,9 +120,13 @@ EZD_KATEGORIE = {
             {"slice": "sectionVitalSigns", "code": "8716-3", "title": "Vitální funkce"},
             {"slice": "sectionTravelHx", "code": "10182-4", "title": "Cestovní anamnéza"},
             {"slice": "sectionPatientHx", "code": "11329-0", "title": "Anamnéza"},
-            {"slice": "sectionPastProblems", "code": "11348-0", "title": "Dřívější problémy"},
+            # PS IG build 2026-08-15: sekce „Past Problems“ (11348-0) byla
+            # sloučena do sectionProblems – v cz-composition-ps už není.
             {"slice": "sectionAttachments", "code": "77599-9", "title": "Přílohy"},
         ],
+        # Dřívější názvy slice → aktuální (obsah se sloučí do cílové sekce)
+        "section_aliases": {"sectionPastProblems": "sectionProblems",
+                            "sectionAlerts": "sectionAlert"},
         # kód pro DÚ metadata (číselník medical-document-type)
         "du_typ_kod": "60591-5",
     },
@@ -434,7 +441,20 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
     }
 
     # Sekce: povinné vždy, volitelné jen s obsahem (viz docstring)
-    sekce = sekce or {}
+    sekce = dict(sekce or {})
+    # Přejmenované/sloučené sekce (např. PS: sectionPastProblems → sectionProblems)
+    for stary, novy in (meta.get("section_aliases") or {}).items():
+        if stary in sekce:
+            hodnota = sekce.pop(stary)
+            if hodnota in (None, "", [], ()):
+                continue
+            stav = sekce.get(novy)
+            if stav in (None, "", [], ()):
+                sekce[novy] = hodnota
+            else:
+                stav_l = list(stav) if isinstance(stav, (list, tuple)) else [stav]
+                hod_l = list(hodnota) if isinstance(hodnota, (list, tuple)) else [hodnota]
+                sekce[novy] = stav_l + hod_l
 
     def _obsah(slice_name: str) -> str | None:
         val = sekce.get(slice_name)

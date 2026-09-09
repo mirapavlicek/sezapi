@@ -1,15 +1,34 @@
 """
 FHIR Imaging Order ⇔ NCEZ /eZadanky bridge.
 
-Standard: HL7 Czech Imaging Order FHIR IG v0.1.0-ballot (FHIR R4 / 4.0.1)
+Standard: HL7 Czech Imaging Order FHIR IG v0.1.0 (FHIR R4 / 4.0.1)
    https://build.fhir.org/ig/HL7-cz/img-order/   (continuous CI build, draft)
    Kanonická báze IG: https://hl7.cz/fhir/img-order
 
-Závislosti IG (ověřeno 2026-06-02 ze sushi-config.yaml):
-   - hl7.fhir.cz.core            → 0.3.0  (STU1, trial-use, aktivní 2026-03-06)
-   - hl7.fhir.cz.terminology     → 0.2.0  (release, aktivní 2026-02-02, tranzitivně přes core)
+Závislosti IG (revize 2026-09-09, CI build 2026-08-28 „Updates before
+publication“; předchozí revize 2026-06-02 pracovala s cz-core 0.3.0):
+   - hl7.fhir.cz.core            → 1.0.0  (vydáno 2026-07-29; profily cz-patient-core,
+                                           cz-practitioner-core, cz-organization-core,
+                                           cz-coverage beze změny constraints)
+   - hl7.fhir.cz.terminology     → 0.3.0  (tranzitivně přes core)
    - hl7.fhir.eu.base            → 2.0.0
    - hl7.fhir.eu.extensions.r4   → 1.3.0
+   - hl7.fhir.eu.laboratory      → 2.0.0
+   - fhir.dicom                  → 2025.3.20250714
+
+Změny IG mezi 2. 6. a 28. 8. 2026 s dopadem na tento modul:
+   - Composition.type.coding 1..1 a coding.version = SNOMED CT CZ edice
+     (http://snomed.info/sct/11000279109) – reverzní builder doplňuje
+   - Composition.category je slice documentCategory (kód 57133-1 beze změny)
+   - sekce clinicalQuestion (18785-6, 1..*) odkazuje profil
+     cz-conditionClinicalQuestion (cz-conditionImage + code.text 1..1)
+   - přejmenování profilů z cz-core (CZ_MedicationStatementCore,
+     CZ_EncounterCore, BodyStructure-cz-core, CZ_PractitionerRoleCore
+     místo OrderPractitionerRoleCz)
+   - kanonické URL ValueSetů: imaging-procedures, cz-mobility-type,
+     cz-mobility-value, cz-diagnosis-condition (MKN-10 přes
+     https://uzis.cz/terminology/CodeSystem/mkn-10 + ORPHA)
+   - ServiceRequest.reasonCode slices mkn-10 / snomed / orphacode
 
 Profil hlavního dokumentu:  cz-bundleImageOrder        (Bundle, type=document)
 Profil Composition:         cz-compositionImageOrder
@@ -19,7 +38,7 @@ Profil Observation:         cz-bodyHeight, cz-bodyWeight, cz-observationImage, c
 Profil Coverage:            cz-coverage (z cz-core)
 
 ValueSety definované v IG: cz-modality(-vs), cz-imagingProcedureVs,
-   cz-diagnosisConditionVs (Mkn10_5), cz-imaging-mobilityType/Value,
+   cz-diagnosis-condition (MKN-10 + ORPHA), cz-mobility-type/-value,
    cz-observation-unit-height/weight, cz-vzp-odbornost.
    POZN.: cz-bodySite a cz-bodySiteQualifier NEJSOU v IG samostatné ValueSety –
    bodySite se váže na základní FHIR ValueSet body-site + BodyStructureCz.
@@ -68,16 +87,21 @@ SYS_MKN10_5 = "https://terminology.uzis.cz/CodeSystem/Mkn10_5"
 SYS_ORPHA = "http://www.orpha.net"
 SYS_UCUM = "http://unitsofmeasure.org"
 
-# IG identita + závislosti (ověřeno 2026-06-02 ze sushi-config.yaml)
-IG_VERSION = "0.1.0-ballot"
+# IG identita + závislosti (revize 2026-09-09 ze sushi-config.yaml a
+# ImplementationGuide CI buildu 2026-08-28)
+IG_VERSION = "0.1.0"
+IG_BUILD_DATE = "2026-08-28"
 IG_FHIR_VERSION = "4.0.1"
 IG_CANONICAL = "https://hl7.cz/fhir/img-order"
 IG_DEPENDENCIES = {
-    "hl7.fhir.cz.core": "0.3.0",
-    "hl7.fhir.cz.terminology": "0.2.0",
+    "hl7.fhir.cz.core": "1.0.0",
+    "hl7.fhir.cz.terminology": "0.3.0",
     "hl7.fhir.eu.base": "2.0.0",
     "hl7.fhir.eu.extensions.r4": "1.3.0",
+    "hl7.fhir.eu.laboratory": "2.0.0",
 }
+# SNOMED CT – česká národní edice (Composition.type.coding.version, IG od 8/2026)
+SCT_CZ_EDITION = "http://snomed.info/sct/11000279109"
 
 # Kanonická báze ValueSetů (NCEZ terminologie) a běhové TermX endpointy
 TERMINOLOGY_VS_BASE = "https://ncez.mzcr.cz/terminology/ValueSet"
@@ -88,6 +112,8 @@ PROFILE_BUNDLE = "https://hl7.cz/fhir/img-order/StructureDefinition/cz-bundleIma
 PROFILE_COMPOSITION = "https://hl7.cz/fhir/img-order/StructureDefinition/cz-compositionImageOrder"
 PROFILE_SR = "https://hl7.cz/fhir/img-order/StructureDefinition/cz-imagingOrderInformation"
 PROFILE_CONDITION = "https://hl7.cz/fhir/img-order/StructureDefinition/cz-conditionImage"
+# Sekce clinicalQuestion (1..*) odkazuje specializaci s povinným code.text
+PROFILE_CONDITION_CLINICAL_QUESTION = "https://hl7.cz/fhir/img-order/StructureDefinition/cz-conditionClinicalQuestion"
 PROFILE_PATIENT = "https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"
 PROFILE_PRACTITIONER = "https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"
 PROFILE_ORG = "https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"
@@ -176,7 +202,9 @@ VS_MODALITY = {
 
 VS_IMAGING_PROCEDURE = {
     "id": "cz-imagingProcedureVs",
-    "url": "https://ncez.mzcr.cz/terminology/ValueSet/cz-imaging-procedure-vs",
+    # IG build 2026-08-28 (id cz-imaging-procedure-vs) – kanonická URL změněna
+    "url": "https://ncez.mzcr.cz/terminology/ValueSet/imaging-procedures",
+    "url_alias": ["https://ncez.mzcr.cz/terminology/ValueSet/cz-imaging-procedure-vs"],
     "title": "Procedura zobrazovacího vyšetření (SNOMED CT)",
     "system": SYS_SNOMED,
     "ig": True,
@@ -276,7 +304,9 @@ VS_BODY_SITE = {
 
 VS_MOBILITY_TYPE = {
     "id": "cz-mobilityTypeVs",
-    "url": "https://ncez.mzcr.cz/terminology/ValueSet/cz-imaging-mobilityType",
+    # IG build 2026-08-28 (id cz-mobility-type) – kanonická URL změněna
+    "url": "https://ncez.mzcr.cz/terminology/ValueSet/cz-mobility-type",
+    "url_alias": ["https://ncez.mzcr.cz/terminology/ValueSet/cz-imaging-mobilityType"],
     "title": "Typ omezení mobility (SNOMED CT)",
     "system": SYS_SNOMED,
     "ig": True,
@@ -289,7 +319,9 @@ VS_MOBILITY_TYPE = {
 
 VS_MOBILITY_VALUE = {
     "id": "cz-mobilityValueVs",
-    "url": "https://ncez.mzcr.cz/terminology/ValueSet/cz-imaging-mobilityValue",
+    # IG build 2026-08-28 (id cz-mobility-value) – kanonická URL změněna
+    "url": "https://ncez.mzcr.cz/terminology/ValueSet/cz-mobility-value",
+    "url_alias": ["https://ncez.mzcr.cz/terminology/ValueSet/cz-imaging-mobilityValue"],
     "title": "Hodnota mobility / im/mobility (SNOMED CT)",
     "system": SYS_SNOMED,
     "ig": True,
@@ -566,6 +598,33 @@ class ImagingOrderBundleParser:
                 out.append(issue("warning", "informational",
                                  f"Practitioner/{pr.get('id')}: chybí identifier(system={SYS_KRZP})",
                                  "Practitioner.identifier"))
+        # Composition dle IG buildu 2026-08-28: type.coding 1..1 s version
+        # SNOMED CT CZ edice; sekce orderInformation a clinicalQuestion 1..*
+        if first.get("resourceType") == "Composition":
+            codings = ((first.get("type") or {}).get("coding") or [])
+            if len(codings) != 1:
+                out.append(issue("warning", "informational",
+                                 "Composition.type.coding má být přesně jeden kód (IG 8/2026)",
+                                 "Composition.type.coding"))
+            elif codings[0].get("version") != SCT_CZ_EDITION:
+                out.append(issue("warning", "informational",
+                                 f"Composition.type.coding.version má být {SCT_CZ_EDITION} "
+                                 "(SNOMED CT CZ edice, IG 8/2026)",
+                                 "Composition.type.coding.version"))
+            kody = {((sec.get("code") or {}).get("coding") or [{}])[0].get("code")
+                    for sec in first.get("section") or []}
+            for kod, nazev in ((LOINC_REQUESTED_IMAGING_INFO, "orderInformation"),
+                               (LOINC_CLINICAL_QUESTION, "clinicalQuestion")):
+                if kod not in kody:
+                    out.append(issue("warning", "informational",
+                                     f"Composition chybí povinná sekce {nazev} (LOINC {kod})",
+                                     "Composition.section"))
+        for sr in self._by_type.get("ServiceRequest", []):
+            if not sr.get("identifier"):
+                out.append(issue("warning", "informational",
+                                 f"ServiceRequest/{sr.get('id')}: identifier je v profilu "
+                                 "cz-imagingOrderInformation povinný (1..*)",
+                                 "ServiceRequest.identifier"))
         if strict and any(i["severity"] == "error" for i in out):
             raise FhirValidationError(out)
         return out
@@ -874,14 +933,17 @@ class EZadankaToImagingOrder:
         codings = duvod.get("coding") or []
 
         condition_resource = None
-        if codings:
+        if codings or duvod.get("text"):
+            # Sekce clinicalQuestion vyžaduje cz-conditionClinicalQuestion
+            # (cz-conditionImage + code.text 1..1); text doplníme z display kódu.
+            text = duvod.get("text") or (codings[0].get("display") if codings else "") or "Klinická otázka"
             condition_resource = {
                 "resourceType": "Condition",
                 "id": condition_id,
-                "meta": {"profile": [PROFILE_CONDITION]},
+                "meta": {"profile": [PROFILE_CONDITION_CLINICAL_QUESTION]},
                 "code": {
                     "coding": codings,
-                    "text": duvod.get("text") or "",
+                    "text": text,
                 },
                 "subject": {"reference": f"urn:uuid:{patient_id}"},
             }
@@ -890,6 +952,9 @@ class EZadankaToImagingOrder:
             "resourceType": "ServiceRequest",
             "id": sr_id,
             "meta": {"profile": [PROFILE_SR]},
+            # identifier je v cz-imagingOrderInformation povinný (1..*)
+            "identifier": [{"system": "urn:ietf:rfc:3986",
+                            "value": f"urn:uuid:{zasilka.get('id') or z.get('id') or sr_id}"}],
             "status": "active",
             "intent": "order",
             "priority": urgent_kod if urgent_kod in FHIR_PRIORITY_TO_URGENTNOST else "routine",
@@ -916,7 +981,9 @@ class EZadankaToImagingOrder:
             "id": comp_id,
             "meta": {"profile": [PROFILE_COMPOSITION]},
             "status": "final",
-            "type": {"coding": [{"system": SYS_SNOMED, "code": SCT_COMPOSITION_TYPE_IMG_ORDER}]},
+            # IG 8/2026: type.coding 1..1 s version = SNOMED CT CZ edice
+            "type": {"coding": [{"system": SYS_SNOMED, "version": SCT_CZ_EDITION,
+                                 "code": SCT_COMPOSITION_TYPE_IMG_ORDER}]},
             "category": [{"coding": [{"system": SYS_LOINC, "code": LOINC_CATEGORY_IMG_ORDER}]}],
             "subject": {"reference": f"urn:uuid:{patient_id}"},
             "date": z.get("datumVytvoreni") or now,
@@ -928,6 +995,19 @@ class EZadankaToImagingOrder:
                 "entry": [{"reference": f"urn:uuid:{sr_id}"}],
             }],
         }
+        # Sekce clinicalQuestion je v cz-compositionImageOrder povinná (1..*);
+        # bez Condition musí mít alespoň emptyReason (FHIR cmp-1).
+        clinical_section = {
+            "title": "Clinical question",
+            "code": {"coding": [{"system": SYS_LOINC, "code": LOINC_CLINICAL_QUESTION}]},
+        }
+        if condition_resource:
+            clinical_section["entry"] = [{"reference": f"urn:uuid:{condition_id}"}]
+        else:
+            clinical_section["emptyReason"] = {"coding": [{
+                "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
+                "code": "unavailable"}]}
+        composition["section"].append(clinical_section)
 
         patient = {
             "resourceType": "Patient",
