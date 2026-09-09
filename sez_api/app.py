@@ -2214,6 +2214,22 @@ def _ez_sim_transition(zid, action, extras=None):
     return rec, None
 
 
+def _ez_sim_strankuj(items, paging):
+    """Stránkování jako reálné eŽádanky: stránky číslované od 1, odpověď
+    s poli ``zadanky``/``pageNumber``/``pageCount``/``totalCount``.
+    ``items`` se nechává jako alias pro starší klienty."""
+    page = int(paging["page"]) if paging.get("page") is not None else 1
+    size = int(paging.get("size") or 10)
+    if page < 1:
+        raise ValueError("Parametr 'Číslo stránky' musí být větší než nula.")
+    total = len(items)
+    strana = items[(page - 1) * size:page * size]
+    page_count = (total + size - 1) // size if size > 0 else 0
+    return {"zadanky": strana, "items": strana, "pageNumber": page,
+            "nextPage": page + 1 if page < page_count else None,
+            "pageCount": page_count, "pageSize": size, "totalCount": total}
+
+
 def _ez_sim_search(body):
     items = list(_ez_sim_store.values())
     pac = body.get("pacient")
@@ -2234,12 +2250,7 @@ def _ez_sim_search(body):
                  or ft in (z.get("instrukceProPacienta") or "").lower()]
     if typ:
         items = [z for z in items if any(m.get("kod") == typ for m in z.get("metodaData", []))]
-    paging = body.get("strankovani", {})
-    page = paging.get("page", 0)
-    size = paging.get("size", 10)
-    total = len(items)
-    items = items[page * size:(page + 1) * size]
-    return {"items": items, "totalCount": total, "page": page, "size": size}
+    return _ez_sim_strankuj(items, body.get("strankovani") or {})
 
 
 def _ez_sim_search_aktivni(body):
@@ -2247,12 +2258,7 @@ def _ez_sim_search_aktivni(body):
     rid = body.get("rid")
     if rid:
         items = [z for z in items if z["zasilka"].get("pacient") == rid]
-    paging = body.get("strankovani", {})
-    page = paging.get("page", 0)
-    size = paging.get("size", 10)
-    total = len(items)
-    items = items[page * size:(page + 1) * size]
-    return {"items": items, "totalCount": total, "page": page, "size": size}
+    return _ez_sim_strankuj(items, body.get("strankovani") or {})
 
 
 def _ez_sim_seed():
@@ -2358,14 +2364,20 @@ async def ez_token():
 async def ez_vyhledej(request: Request):
     body = await request.json()
     if _ez_sim_mode:
-        return _ez_sim_resp(_ez_sim_search(body))
+        try:
+            return _ez_sim_resp(_ez_sim_search(body))
+        except ValueError as e:
+            return _ez_sim_err(str(e), "E01001")
     return timed_call(_modules["ez"].vyhledej_zadanku, body)
 
 @app.post("/api/ezadanky/vyhledej-aktivni")
 async def ez_vyhledej_aktivni(request: Request):
     body = await request.json()
     if _ez_sim_mode:
-        return _ez_sim_resp(_ez_sim_search_aktivni(body))
+        try:
+            return _ez_sim_resp(_ez_sim_search_aktivni(body))
+        except ValueError as e:
+            return _ez_sim_err(str(e), "E01001")
     return timed_call(_modules["ez"].vyhledej_aktivni, body)
 
 @app.get("/api/ezadanky/zadanka/{zadanka_id}")

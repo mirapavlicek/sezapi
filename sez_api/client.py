@@ -797,17 +797,42 @@ class KRP:
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/uni",
                            self._envelope(ucel, data))
 
+    @staticmethod
+    def _datum_historie(datum) -> str:
+        """Datum pro historii pojištění / registrujících lékařů.
+
+        Ve v3 je ``zadostData.datum`` povinné ("Pole Datum je povinné") a brána
+        přijímá jen ``YYYY-MM-DD`` nebo ISO čas v UTC se ``Z``; lokální
+        posun (``+02:00``) i čas bez zóny odmítá jako "Chybný formát data
+        a času" (ověřeno na PROD 9. 9. 2026). Bez zadání se bere dnešek,
+        zadané datum se převede na přijímaný tvar."""
+        from datetime import date, datetime, timezone
+        if not datum:
+            return date.today().isoformat()
+        if isinstance(datum, datetime):
+            if datum.tzinfo is None:
+                return datum.date().isoformat()
+            return datum.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        if isinstance(datum, date):
+            return datum.isoformat()
+        text = str(datum).strip()
+        if len(text) == 10:
+            return text
+        try:
+            dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return text
+        if dt.tzinfo is None:
+            return dt.date().isoformat()
+        return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     def historie_pojisteni(self, rid, datum=None, ucel="LECBA"):
-        data = {"rid": rid}
-        if datum:
-            data["datum"] = datum
+        data = {"rid": rid, "datum": self._datum_historie(datum)}
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/historie_pojisteni",
                            self._envelope(ucel, data))
 
     def historie_registrujicich_lekaru(self, rid, datum=None, ucel="LECBA"):
-        data = {"rid": rid}
-        if datum:
-            data["datum"] = datum
+        data = {"rid": rid, "datum": self._datum_historie(datum)}
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/historie_registrujicich_lekaru",
                            self._envelope(ucel, data))
 
@@ -3229,11 +3254,27 @@ class KRPv3:
     def hledat_aifoulozenka(self, body):
         return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/aifoulozenka", body)
 
+    @staticmethod
+    def _s_datem(body):
+        """``zadostData.datum`` je u historie povinné – doplní dnešek
+        a zadané datum převede na tvar, který brána přijímá (viz
+        KRP._datum_historie)."""
+        if not isinstance(body, dict):
+            return body
+        data = body.get("zadostData")
+        if not isinstance(data, dict):
+            return body
+        body = dict(body)
+        body["zadostData"] = {**data, "datum": KRP._datum_historie(data.get("datum"))}
+        return body
+
     def historie_pojisteni(self, body):
-        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/historie_pojisteni", body)
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/historie_pojisteni",
+                           self._s_datem(body))
 
     def historie_lekaru(self, body):
-        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/historie_registrujicich_lekaru", body)
+        return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/historie_registrujicich_lekaru",
+                           self._s_datem(body))
 
     def mapovani_rid(self, body):
         return self.c.post(f"{self.BASE}/api/v3/pacient/hledat/mapovani_rid", body)

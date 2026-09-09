@@ -3111,7 +3111,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="form-group"><label>Metoda</label><input id="ezSrcMetoda" placeholder="např. LAB"></div>
           </div>
           <div style="display:grid;grid-template-columns:60px 60px auto;gap:12px;margin-top:8px;align-items:end">
-            <div class="form-group"><label>Stránka</label><input type="number" id="ezSrcPage" value="0" min="0"></div>
+            <div class="form-group"><label>Stránka</label><input type="number" id="ezSrcPage" value="1" min="1"></div>
             <div class="form-group"><label>Velikost</label><input type="number" id="ezSrcSize" value="10" min="1" max="100"></div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-primary" onclick="ezSearch()">Vyhledat</button>
@@ -3323,7 +3323,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             </select>
             <button class="btn btn-primary" onclick="ezSendRaw()">Odeslat</button>
           </div>
-          <textarea id="ezBody" rows="8" placeholder='{"strankovani":{"page":0,"size":10}}' style="font-family:var(--mono);font-size:11px"></textarea>
+          <textarea id="ezBody" rows="8" placeholder='{"strankovani":{"page":1,"size":10}}' style="font-family:var(--mono);font-size:11px"></textarea>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Odpověď</span></div><div class="json-box" id="ezRawResult">-</div></div>
       </div>
@@ -7660,10 +7660,21 @@ function nisRefreshAll(){
 function _nisCount(payload){
   if(payload==null) return 0;
   if(Array.isArray(payload)) return payload.length;
-  for(const k of ['items','zaznamy','data','obsah','content','results','list','polozky']){
-    if(Array.isArray(payload[k])) return payload[k].length;
+  if(typeof payload!=='object') return 0;
+  // Stránkované odpovědi (DÚ, eŽádanky) nesou celkový počet – ten má přednost
+  // před délkou jedné stránky.
+  for(const k of ['totalCount','celkem','pocetCelkem','total']){
+    if(typeof payload[k]==='number') return payload[k];
   }
-  return (typeof payload==='object' && Object.keys(payload).length) ? 1 : 0;
+  // KRP v3 balí data do odpovedData; DÚ vrací pole `zasilka`, eŽádanky `zadanky`.
+  for(const k of ['odpovedData','zasilka','zasilky','zadanky','items','zaznamy','data','obsah','content','results','list','polozky']){
+    if(Array.isArray(payload[k])) return payload[k].length;
+    if(payload[k] && typeof payload[k]==='object' && !Array.isArray(payload[k])){
+      const vnorene = _nisCount(payload[k]);
+      if(k==='odpovedData') return vnorene;
+    }
+  }
+  return Object.keys(payload).length ? 1 : 0;
 }
 function _nisErr(r){ return !r || r.status>=400 || r.error; }
 function _nisErrHtml(r){ return '<span class="nis-pill no">chyba '+((r&&r.status)||'')+'</span> <span style="color:var(--fg3)">'+_nisEsc((r&&r.error)||'nedostupné')+'</span>'; }
@@ -7706,7 +7717,7 @@ async function _nisLoadMeds(){
 async function _nisLoadEz(){
   const el = document.getElementById('nisTileEz');
   el.innerHTML = '<span class="nis-loading">Načítám aktivní eŽádanky…</span>';
-  const r = await api('POST','/api/ezadanky/vyhledej-aktivni',{rid:nisPatient.rid, strankovani:{page:0,size:10}});
+  const r = await api('POST','/api/ezadanky/vyhledej-aktivni',{rid:nisPatient.rid, strankovani:{page:1,size:10}});
   if(_nisErr(r)){ el.innerHTML = _nisErrHtml(r); return; }
   const n = _nisCount(r.data);
   let html = '<div class="nis-line"><span class="lk">Aktivní žádanky</span><span class="lv"><span class="nis-pill '+(n>0?'ok':'muted')+'">'+n+'</span></span></div>';
@@ -7972,7 +7983,7 @@ async function _nisReadSzz(body){
   body.innerHTML = h;
 }
 async function _nisReadEz(body){
-  const r = await api('POST','/api/ezadanky/vyhledej-aktivni',{rid:nisPatient.rid, strankovani:{page:0,size:25}});
+  const r = await api('POST','/api/ezadanky/vyhledej-aktivni',{rid:nisPatient.rid, strankovani:{page:1,size:25}});
   let h = _nisSectionHuman('Aktivní eŽádanky (počet: '+(_nisErr(r)?'?':_nisCount(r.data))+')', r);
   h += _nisEmbedBtns('<button class="btn btn-outline btn-sm" onclick="nisEmbed(\'ez\')">Otevřít plný modul eŽádanky</button>'+
     '<button class="btn btn-outline btn-sm" onclick="nisEmbed(\'img-order\')">FHIR Img Order</button>');
@@ -12166,7 +12177,8 @@ const EZ_STAVY = {'0':'Nová','1':'Přijatá','2':'Vyřízená','3':'Stornovaná
 const EZ_STAV_COLORS = {'0':'var(--accent)','1':'var(--green)','2':'#0550ae','3':'var(--red)','4':'var(--orange)','5':'#8250df'};
 
 function ezBuildSearchBody() {
-  const body = {strankovani:{page:parseInt(document.getElementById('ezSrcPage').value)||0, size:parseInt(document.getElementById('ezSrcSize').value)||10}};
+  // eŽádanky číslují stránky od 1 (0 → E01001 „Číslo stránky musí být větší než nula").
+  const body = {strankovani:{page:Math.max(1, parseInt(document.getElementById('ezSrcPage').value)||1), size:parseInt(document.getElementById('ezSrcSize').value)||10}};
   const pac = document.getElementById('ezSrcPacient').value.trim();
   const aut = document.getElementById('ezSrcAutor').value.trim();
   const prij = document.getElementById('ezSrcPrijemce').value.trim();
@@ -12202,7 +12214,7 @@ async function ezSearchAktivni() {
   const body = {};
   const pac = document.getElementById('ezSrcPacient').value.trim();
   if (pac) body.rid = pac;
-  body.strankovani = {page:parseInt(document.getElementById('ezSrcPage').value)||0, size:parseInt(document.getElementById('ezSrcSize').value)||10};
+  body.strankovani = {page:Math.max(1, parseInt(document.getElementById('ezSrcPage').value)||1), size:parseInt(document.getElementById('ezSrcSize').value)||10};
   const data = await api('POST', '/api/ezadanky/vyhledej-aktivni', body);
   showResult('ezResult', data);
   ezRenderSearchCards(data);

@@ -300,3 +300,80 @@ def test_ps_sekce_past_problems_se_slouci_do_problems():
     problemy = sekce["11450-4"]["text"]["div"]
     assert "Hypertenze" in problemy and "Apendektomie 2001" in problemy
     assert "104605-1" in sekce and "Kardiostimulátor" in sekce["104605-1"]["text"]["div"]
+
+
+# --------------------------------------------------------------------------- #
+# KRP v3 – historie pojištění / lékařů vyžaduje datum (PROD 9. 9. 2026)
+# --------------------------------------------------------------------------- #
+
+def test_krp_historie_doplni_dnesni_datum():
+    """Brána v3 odmítá historii bez ``zadostData.datum`` („Pole Datum je
+    povinné"); bez parametru se posílá dnešek ve tvaru YYYY-MM-DD."""
+    from datetime import date
+
+    c = _Zaznam()
+    krp = KRP(c)
+    r = krp.historie_pojisteni("2667873559")
+    assert r["path"] == "/krp/api/v3/pacient/hledat/historie_pojisteni"
+    assert r["body"]["zadostData"] == {"rid": "2667873559", "datum": date.today().isoformat()}
+    r = krp.historie_registrujicich_lekaru("2667873559")
+    assert r["body"]["zadostData"]["datum"] == date.today().isoformat()
+
+
+@pytest.mark.parametrize("vstup, ocekavano", [
+    ("2026-09-09", "2026-09-09"),
+    ("2026-09-09T00:00:00Z", "2026-09-09T00:00:00Z"),
+    # lokální posun brána odmítá („Chybný formát data a času") → převod na UTC
+    ("2026-09-09T12:00:00+02:00", "2026-09-09T10:00:00Z"),
+    # čas bez zóny brána odmítá → jen datum
+    ("2026-09-09T00:00:00", "2026-09-09"),
+])
+def test_krp_historie_normalizuje_datum(vstup, ocekavano):
+    assert KRP._datum_historie(vstup) == ocekavano
+
+
+def test_krpv3_historie_doplni_datum_do_obalky():
+    """Panel KRP v3 v GUI posílá hotovou obálku jen s rid – adaptér datum
+    doplní, zadané datum zachová (normalizované)."""
+    from datetime import date
+
+    c = _Zaznam()
+    k3 = KRPv3(c)
+    r = k3.historie_pojisteni({"zadostInfo": {"ucel": "LECBA"}, "zadostData": {"rid": "1"}})
+    assert r["body"]["zadostData"] == {"rid": "1", "datum": date.today().isoformat()}
+    r = k3.historie_lekaru({"zadostData": {"rid": "1", "datum": "2026-01-01T00:00:00+01:00"}})
+    assert r["body"]["zadostData"]["datum"] == "2025-12-31T23:00:00Z"
+
+
+# --------------------------------------------------------------------------- #
+# eŽádanky – stránky číslované od 1 (E01001), GUI přehled pacienta
+# --------------------------------------------------------------------------- #
+
+def test_ez_simulator_strankuje_od_jedne_jako_realne_api():
+    from sez_api.app import _ez_sim_strankuj
+
+    polozky = [{"id": str(i)} for i in range(5)]
+    r = _ez_sim_strankuj(polozky, {"page": 1, "size": 2})
+    assert [z["id"] for z in r["zadanky"]] == ["0", "1"]
+    assert r["pageNumber"] == 1 and r["nextPage"] == 2 and r["pageCount"] == 3
+    assert r["totalCount"] == 5 and r["items"] == r["zadanky"]
+    r = _ez_sim_strankuj(polozky, {"page": 3, "size": 2})
+    assert [z["id"] for z in r["zadanky"]] == ["4"] and r["nextPage"] is None
+    with pytest.raises(ValueError):
+        _ez_sim_strankuj(polozky, {"page": 0, "size": 2})
+
+
+def test_gui_prehled_pacienta_neposila_stranku_nula():
+    """Regrese: přehled pacienta volal VyhledejAktivniZadanku s page 0 →
+    HTTP 400 E01001 a dlaždice ukazovala „chyba 400"."""
+    import pathlib
+    import re
+
+    html = pathlib.Path("sez_api/templates/index.html").read_text(encoding="utf-8")
+    volani = re.findall(r"vyhledej-aktivni'[^\n]*strankovani:\{page:(\d+)", html)
+    assert volani and all(p == "1" for p in volani), volani
+    assert 'id="ezSrcPage" value="1" min="1"' in html
+    # DÚ vrací pole `zasilka`, eŽádanky `zadanky` + totalCount – počítadlo je zná
+    # (dřív se prázdná stránkovaná odpověď počítala jako 1 zásilka)
+    pocitadlo = html[html.index("function _nisCount("):html.index("function _nisErr(")]
+    assert "'totalCount'" in pocitadlo and "'zasilka'" in pocitadlo and "'zadanky'" in pocitadlo
