@@ -692,3 +692,14 @@ def test_cli_stahnout(falesny, tmp_path, monkeypatch, capsys):
     index = kr.nacti_registr(soubor)
     assert index["prostredi"] == "PROD" and index["paralelismus"] == 3
     assert set(index["kraje"]) == {"19", "60"}
+
+
+def test_krpzs_registr_dir_je_absolutni(monkeypatch, tmp_path):
+    from sez_api import config as cfg
+    monkeypatch.setattr(cfg, "KRPZS_REGISTR_DIR", "")
+    monkeypatch.setattr(cfg, "CERT_STORE_DIR", "")
+    monkeypatch.setattr(cfg, "CERT_STORE_ZAKLAD", "homolka.pfx")
+    monkeypatch.chdir(tmp_path)
+    assert cfg.krpzs_registr_dir() == str(tmp_path.resolve() / "krpzs")
+    monkeypatch.setattr(cfg, "KRPZS_REGISTR_DIR", "/var/lib/sezapi/krpzs")
+    assert cfg.krpzs_registr_dir() == "/var/lib/sezapi/krpzs"

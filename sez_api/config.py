@@ -195,7 +195,9 @@ def krpzs_registr_dir() -> str:
     """Adresář s lokálním indexem registru poskytovatelů."""
     if KRPZS_REGISTR_DIR:
         return KRPZS_REGISTR_DIR
-    return str(Path(cert_store_dir()).parent / "krpzs")
+    # resolve(): cesta k certifikátu v .env bývá relativní k pracovnímu
+    # adresáři služby – index má mít jednoznačnou absolutní cestu.
+    return str(Path(cert_store_dir()).resolve().parent / "krpzs")
 
 
 def cert_api_key() -> str:
