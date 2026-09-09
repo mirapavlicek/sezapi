@@ -230,7 +230,7 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 
-__version__ = "2.32.0"
+__version__ = "2.33.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

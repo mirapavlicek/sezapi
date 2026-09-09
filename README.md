@@ -598,6 +598,57 @@ Na co si dát pozor a co hlídá aplikace sama:
 Stav poslední kontroly hlásí `GET /api/cert-distribuce` a ve zkratce
 i `GET /internal/health` v poli `distribuce`.
 
+### Fulltext v registru poskytovatelů (lokální index KRPZS)
+
+KRPZS umí hledat jen podle **IČO**, **přesného názvu** (bez ohledu na velikost
+písmen, ale s diakritikou – „Homolka" ani „Fakultní nemocnice Motol" nic
+nenajdou) a **kraje**. Fulltext proto dělá aplikace sama nad lokálním indexem,
+který se staví hromadným stažením registru (`sez_api/krpzs_registr.py`):
+
+1. výpisy všech 14 krajů (`hledat/misto`, paralelně, ~40 s) – obsahují jen
+   IČO, místa poskytování a kontakty, **ne název**; navíc i historické záznamy
+   (zaniklá/zrušená oprávnění), které `hledat/ico` už nevrátí (~55 % výpisu);
+2. detail podle IČO (`hledat/ico`) pro aktivní poskytovatele – paralelně,
+   každé vlákno s vlastním klientem; z odpovědi (i stovky kB) se ukládá jen
+   kompaktní záznam: název, stav, sídlo, kontakty, kraje a obce míst
+   poskytování, kódy oborů/forem/druhů péče, počet míst a lůžek.
+
+```bash
+# stažení (výchozí prostředí PROD, 16 souběžných dotazů, jen aktivní IČO)
+python -m sez_api.krpzs_registr stahnout --env PROD -p 16
+# zkušební běh: jen Praha a 200 IČO
+python -m sez_api.krpzs_registr stahnout --kraj 19 --limit 200 -o /tmp/registr.json
+
+# fulltext nad indexem (bez diakritiky, všechna slova musí sedět)
+python -m sez_api.krpzs_registr hledat homolka
+python -m sez_api.krpzs_registr hledat nemocnice --kraj 60 --obor 101
+```
+
+Totéž přes API běžící služby (stahování běží na pozadí, průběh je společný pro
+všechny workery):
+
+```bash
+curl -X POST http://localhost:8004/api/krpzs/registr/stahnout \
+  -H 'Content-Type: application/json' -d '{"paralelismus":16,"jenAktivni":true}'
+curl http://localhost:8004/api/krpzs/registr/stav
+curl 'http://localhost:8004/api/krpzs/registr/hledat?q=homolka'
+curl 'http://localhost:8004/api/krpzs/registr/hledat?q=&kraj=60&obor=101'
+curl -X POST http://localhost:8004/api/krpzs/registr/zastavit
+```
+
+Index je JSON v `SEZ_KRPZS_REGISTR_DIR` (výchozí adresář `krpzs` vedle
+úložiště certifikátů), soubor `registr_<PROSTŘEDÍ>.json`; záznam nese
+`detail` (zda je z `hledat/ico`), `aktivni` a `stavZaznamu`
+(`Platny` / `Nenalezen` / `Chyba` / `Nedotazano`).
+
+Paralelismus a zátěž brány (měřeno na ostré bráně, září 2026): propustnost
+`hledat/ico` roste do **~16 souběžných dotazů (~6/s)**, pak už jen roste
+latence – při 64 vláknech trval každý dotaz ~20 s a propustnost klesla na
+3/s. Strop je proto 32 a výchozí 16. Po dobu stahování jsou pomalejší
+i ostatní volání téhož klienta (GUI), stažení ~29 000 aktivních IČO trvá
+řádově 1,5–2,5 h. HTTP 429 se opakuje s pauzou (respektuje `Retry-After`),
+přerušený přenos velkých výpisů (`ChunkedEncodingError`) se opakuje až 3×.
+
 ## Struktura projektu
 
 ```
@@ -612,6 +663,9 @@ sez-api-python/
 │   ├── config.py           # Konfigurace z .env / proměnných prostředí
 │   ├── app.py              # FastAPI backend (webové rozhraní)
 │   ├── cli.py              # CLI vstupní bod (sez-api příkaz)
+│   ├── certstore.py        # Úložiště certifikátů (nasazení, historie, rollback)
+│   ├── certdistribuce.py   # Automatická aktualizace certifikátu z distribuce
+│   ├── krpzs_registr.py    # Hromadné stažení KRPZS + lokální fulltext
 │   └── templates/
 │       └── index.html      # SPA frontend (dark theme)
 ├── tests/

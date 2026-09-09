@@ -76,6 +76,16 @@ CERT_STORE_DIR = env("SEZ_CERT_STORE_DIR", "")
 CERT_API_KEY = env("SEZ_CERT_API_KEY", "")
 
 # ---------------------------------------------------------------------------
+# Lokální index registru poskytovatelů (KRPZS)
+# ---------------------------------------------------------------------------
+# KRPZS neumí fulltext – index se staví hromadným stažením (výpisy krajů +
+# detail podle IČO, paralelně) a ukládá se jako JSON do tohoto adresáře.
+# Prázdné = adresář `krpzs` vedle úložiště certifikátů.
+KRPZS_REGISTR_DIR = env("SEZ_KRPZS_REGISTR_DIR", "")
+# Výchozí počet souběžných dotazů hledat/ico při stahování z GUI/API.
+KRPZS_REGISTR_PARALELISMUS = int(env("SEZ_KRPZS_REGISTR_PARALELISMUS", "16"))
+
+# ---------------------------------------------------------------------------
 # Automatická aktualizace certifikátu z centrální distribuce
 # ---------------------------------------------------------------------------
 # Aplikace se sama v daném intervalu ptá distribučního API (IRIS), jestli pro
@@ -176,6 +186,13 @@ def cert_store_dir() -> str:
     if CERT_STORE_ZAKLAD:
         return str(Path(CERT_STORE_ZAKLAD).expanduser().parent / "certstore")
     return str(Path.cwd() / "data" / "certs")
+
+
+def krpzs_registr_dir() -> str:
+    """Adresář s lokálním indexem registru poskytovatelů."""
+    if KRPZS_REGISTR_DIR:
+        return KRPZS_REGISTR_DIR
+    return str(Path(cert_store_dir()).parent / "krpzs")
 
 
 def cert_api_key() -> str:

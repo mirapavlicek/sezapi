@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager, contextmanager
@@ -38,6 +39,7 @@ from sez_api.client import (
 )
 from sez_api.certstore import CertChyba, CertStore, dekoduj_pfx, zkontroluj_pfx
 from sez_api import certdistribuce
+from sez_api import krpzs_registr
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_ezd as _fhir_ezd
 from sez_api import ncpeh as _ncpeh_mod
@@ -1096,6 +1098,240 @@ async def krpzs_notifikace_zalozit(request: Request):
 async def krpzs_notifikace_zrusit(request: Request):
     body = await request.json()
     return timed_call(_modules["krpzs"].notifikace_zrusit_odber, body.get("data", {}))
+
+
+# ---------------------------------------------------------------------------
+# KRPZS – lokální index registru (fulltext)
+# ---------------------------------------------------------------------------
+# KRPZS umí hledat jen podle IČO, přesného názvu a kraje. Fulltext se proto
+# dělá nad lokálním indexem, který se staví hromadným stažením (viz
+# sez_api.krpzs_registr). Stahování běží ve vlákně jednoho workeru; průběh se
+# průběžně zapisuje do souboru, aby ho viděly i ostatní workery (GUI se
+# ptá kteréhokoli z nich).
+
+
+_registr_prubeh: Optional[krpzs_registr.Prubeh] = None
+_registr_vlakno: Optional[threading.Thread] = None
+_registr_stop = threading.Event()
+_registr_lock = threading.Lock()
+_registr_cache: dict = {"cesta": None, "otisk": None, "index": None}
+# Průběh z jiného workeru se považuje za živý, pokud je soubor čerstvý.
+REGISTR_PRUBEH_CERSTVY_S = 20
+
+
+def _registr_env() -> str:
+    return (SEZConfig.ENVIRONMENT or "PROD").upper()
+
+
+def _registr_soubor(env_key: str | None = None) -> Path:
+    return krpzs_registr.vychozi_soubor(env_key or _registr_env())
+
+
+def _registr_prubeh_soubor(env_key: str | None = None) -> Path:
+    return _registr_soubor(env_key).with_suffix(".prubeh.json")
+
+
+def _registr_zapis_prubeh(prubeh: "krpzs_registr.Prubeh", env_key: str) -> None:
+    try:
+        data = json.dumps(prubeh.snapshot(), ensure_ascii=False).encode("utf-8")
+        from sez_api.certstore import zapis_atomicky
+        zapis_atomicky(_registr_prubeh_soubor(env_key), data, prava=0o644)
+    except Exception:
+        logger.debug("Zápis průběhu registru selhal", exc_info=True)
+
+
+def _registr_cizi_prubeh(env_key: str) -> dict | None:
+    """Průběh zapsaný (jiným) workerem; None, když soubor není."""
+    cesta = _registr_prubeh_soubor(env_key)
+    try:
+        st = cesta.stat()
+        with open(cesta, encoding="utf-8") as f:
+            snap = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if snap.get("bezi") and (time.time() - st.st_mtime) > REGISTR_PRUBEH_CERSTVY_S:
+        # Worker, který stahoval, už neběží (restart) – průběh je mrtvý.
+        snap["bezi"] = False
+        snap["faze"] = "přerušeno"
+        snap["zprava"] = "Stahování skončilo bez výsledku (služba byla restartována)."
+    return snap
+
+
+def _registr_bezi_zde() -> bool:
+    return bool(_registr_vlakno and _registr_vlakno.is_alive())
+
+
+def _registr_stav(env_key: str) -> dict:
+    if _registr_bezi_zde():
+        prubeh = _registr_prubeh.snapshot()
+    else:
+        prubeh = _registr_cizi_prubeh(env_key) or (
+            _registr_prubeh.snapshot() if _registr_prubeh else None)
+    soubor = _registr_soubor(env_key)
+    info = {"cesta": str(soubor), "existuje": soubor.exists()}
+    if info["existuje"]:
+        try:
+            st = soubor.stat()
+            info["velikostMB"] = round(st.st_size / 1e6, 1)
+            info["zmeneno"] = datetime.fromtimestamp(st.st_mtime).astimezone().isoformat(timespec="seconds")
+            index = _registr_index(env_key)
+            if index:
+                info.update({k: index.get(k) for k in (
+                    "stazeno", "prostredi", "trvaniS", "paralelismus", "jenAktivni",
+                    "pocetIcoVypis", "pocetIcoAktivnich", "pocetDotazano",
+                    "pocetNalezeno", "pocetNenalezeno", "pocetChyb", "pocet429")})
+                info["kraje"] = index.get("kraje")
+        except Exception as exc:
+            info["chyba"] = str(exc)
+    return {"prostredi": env_key, "prubeh": prubeh, "index": info,
+            "kraje": krpzs_registr.KRAJE,
+            "maxParalelismus": krpzs_registr.MAX_PARALELISMUS,
+            "vychoziParalelismus": cfg.KRPZS_REGISTR_PARALELISMUS}
+
+
+def _registr_index(env_key: str) -> dict | None:
+    """Index ze souboru, v paměti podle otisku souboru (velikost + mtime)."""
+    soubor = _registr_soubor(env_key)
+    try:
+        st = soubor.stat()
+    except OSError:
+        return None
+    otisk = (str(soubor), st.st_size, st.st_mtime_ns)
+    with _registr_lock:
+        if _registr_cache["otisk"] == otisk:
+            return _registr_cache["index"]
+    index = krpzs_registr.nacti_registr(soubor)
+    with _registr_lock:
+        _registr_cache.update(cesta=str(soubor), otisk=otisk, index=index)
+    return index
+
+
+def _registr_spust(auth, env_key: str, *, paralelismus: int, jen_aktivni: bool,
+                   kraje: list | None, limit: int | None) -> dict:
+    """Spustí stahování na pozadí (jen jedno najednou napříč workery)."""
+    global _registr_prubeh, _registr_vlakno
+    if _registr_bezi_zde():
+        raise HTTPException(409, "Stahování registru už běží.")
+    cizi = _registr_cizi_prubeh(env_key)
+    if cizi and cizi.get("bezi"):
+        raise HTTPException(409, "Stahování registru už běží (jiný worker).")
+    prubeh = krpzs_registr.Prubeh()
+    _registr_prubeh = prubeh
+    _registr_stop.clear()
+    tovarna = krpzs_registr.tovarna_klientu(auth)
+    vystup = _registr_soubor(env_key)
+
+    def beh():
+        hlasic_stop = threading.Event()
+
+        def hlasic():
+            while not hlasic_stop.wait(2):
+                _registr_zapis_prubeh(prubeh, env_key)
+
+        h = threading.Thread(target=hlasic, name="krpzs-registr-prubeh", daemon=True)
+        _registr_zapis_prubeh(prubeh, env_key)
+        h.start()
+        try:
+            krpzs_registr.stahni_registr(
+                tovarna, paralelismus=paralelismus, jen_aktivni=jen_aktivni,
+                kraje=kraje, limit=limit, vystup=vystup, prostredi=env_key,
+                prubeh=prubeh, stop=_registr_stop)
+            logger.info("Registr KRPZS (%s) stažen do %s", env_key, vystup)
+        except krpzs_registr.Zastaveno:
+            logger.info("Stahování registru KRPZS zastaveno")
+        except Exception:
+            logger.exception("Stahování registru KRPZS selhalo")
+        finally:
+            hlasic_stop.set()
+            h.join(timeout=3)
+            _registr_zapis_prubeh(prubeh, env_key)
+
+    _registr_vlakno = threading.Thread(target=beh, name="krpzs-registr", daemon=True)
+    _registr_vlakno.start()
+    _registr_zapis_prubeh(prubeh, env_key)
+    return prubeh.snapshot()
+
+
+@app.get("/api/krpzs/registr/stav")
+async def krpzs_registr_stav():
+    """Stav lokálního indexu registru a průběh případného stahování."""
+    return JSONResponse(await asyncio.to_thread(_registr_stav, _registr_env()))
+
+
+@app.post("/api/krpzs/registr/stahnout")
+async def krpzs_registr_stahnout(request: Request):
+    """Spustí hromadné stažení registru na pozadí.
+
+    Tělo (vše nepovinné): ``paralelismus`` (1–64), ``jenAktivni`` (výchozí
+    true), ``kraje`` (seznam kódů), ``limit`` (max. IČO pro zkušební běh)."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    body = body if isinstance(body, dict) else {}
+    if not _auth:
+        raise HTTPException(503, "Klient není připojen – nejdřív nahrajte certifikát.")
+    try:
+        paralelismus = int(body.get("paralelismus") or cfg.KRPZS_REGISTR_PARALELISMUS)
+    except (TypeError, ValueError):
+        raise HTTPException(400, "paralelismus musí být celé číslo")
+    paralelismus = max(1, min(paralelismus, krpzs_registr.MAX_PARALELISMUS))
+    kraje = body.get("kraje") or None
+    if kraje is not None:
+        if not isinstance(kraje, list):
+            raise HTTPException(400, "kraje musí být seznam kódů")
+        kraje = [str(k).strip() for k in kraje if str(k).strip()]
+        nezname = [k for k in kraje if k not in krpzs_registr.KRAJE]
+        if nezname:
+            raise HTTPException(400, f"Neznámé kódy krajů: {', '.join(nezname)}")
+        kraje = kraje or None
+    limit = body.get("limit")
+    if limit not in (None, "", 0):
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            raise HTTPException(400, "limit musí být celé číslo")
+        if limit <= 0:
+            limit = None
+    else:
+        limit = None
+    jen_aktivni = body.get("jenAktivni", True)
+    if isinstance(jen_aktivni, str):
+        jen_aktivni = jen_aktivni.strip().lower() not in ("0", "false", "ne", "")
+    snap = _registr_spust(_auth, _registr_env(), paralelismus=paralelismus,
+                          jen_aktivni=bool(jen_aktivni), kraje=kraje, limit=limit)
+    return JSONResponse({"ok": True, "prubeh": snap,
+                         "parametry": {"paralelismus": paralelismus,
+                                       "jenAktivni": bool(jen_aktivni),
+                                       "kraje": kraje, "limit": limit}})
+
+
+@app.post("/api/krpzs/registr/zastavit")
+async def krpzs_registr_zastavit():
+    """Zastaví běžící stahování (v tomto workeru)."""
+    if not _registr_bezi_zde():
+        return JSONResponse({"ok": False, "zprava": "V tomto workeru nic neběží."})
+    _registr_stop.set()
+    return JSONResponse({"ok": True, "zprava": "Zastavuji – rozběhnuté dotazy se dokončí."})
+
+
+@app.get("/api/krpzs/registr/hledat")
+async def krpzs_registr_hledat(q: str = "", kraj: str = "", obor: str = "",
+                               obec: str = "", limit: int = 50):
+    """Fulltext nad lokálním indexem (název, IČO, obec sídla; bez diakritiky)."""
+    env_key = _registr_env()
+    index = await asyncio.to_thread(_registr_index, env_key)
+    if not index:
+        return JSONResponse({"status": 404, "error": "Lokální index registru zatím "
+                             "neexistuje – spusťte stažení.", "vysledky": []})
+    if not q.strip() and not (kraj or obor or obec):
+        return JSONResponse({"status": 400, "error": "Zadejte hledaný text.", "vysledky": []})
+    limit = max(1, min(int(limit or 50), 500))
+    vysledky = krpzs_registr.hledat(index, q, kraj=kraj or None, obor=obor or None,
+                                    obec=obec or None, limit=limit)
+    return JSONResponse({"status": 200, "stazeno": index.get("stazeno"),
+                         "pocetVIndexu": index.get("pocetNalezeno"),
+                         "pocet": len(vysledky), "vysledky": vysledky})
 
 
 # ---------------------------------------------------------------------------

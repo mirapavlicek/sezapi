@@ -294,6 +294,10 @@ class SEZClient:
     # se svým vlastním timeoutem) si ho na instanci klienta snižuje.
     DEFAULT_TIMEOUT = 30
     TOKEN_ERROR_CODES = {"E01060", "E01061", "E01062", "E01050"}
+    # Stavové kódy >= 400, které se nelogují jako chyba (např. 404 při
+    # hromadném dotazování registru, kde je "nenalezen" očekávaná odpověď).
+    # Nastavuje se na instanci.
+    TICHE_STAVY: frozenset = frozenset()
 
     def __init__(self, auth: SEZAuth):
         self.auth = auth
@@ -614,7 +618,7 @@ class SEZClient:
         except Exception:
             self.last_response = resp.text
 
-        if resp.status_code >= 400:
+        if resp.status_code >= 400 and resp.status_code not in self.TICHE_STAVY:
             logger.error("HTTP %d %s: %s", resp.status_code, path, resp.text[:500])
 
         return resp
