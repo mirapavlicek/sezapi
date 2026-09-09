@@ -210,7 +210,8 @@ def test_tabulka_verzi_api_je_aktualizovana():
     assert "Revize 19. 8. 2026" in html
     # SZZ v3 a vypnuté KRP v1 jsou změny s dopadem na integraci.
     assert "v3.0.0" in html and "NOVÁ VERZE" in html
-    assert "v1 VYPNUTO" in html
+    # Od revize 9. 9. 2026: k 15. 9. 2026 je vypnuto v1 i v2.
+    assert "v1 + v2 VYPNUTO k 15. 9. 2026" in html
     assert "SEZ_INTERNAL_KRP_VERZE" in html
     # Verze služeb dle novinek z července a srpna.
     assert "v1.11.20" in html      # DÚ i eŽádanky

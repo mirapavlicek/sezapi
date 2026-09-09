@@ -15,7 +15,7 @@ Podporované služby:
   - Zprávy eZD (builder dokumentů dle HL7 CZ IG – 5 typů: pacientský
       souhrn, propouštěcí zpráva, zpráva z obrazového vyšetření, zpráva
       o výjezdu ZZS, laboratorní zpráva; katalog sekcí, ukázky, L1 validace)
-  - FHIR Imaging Order (HL7-cz img-order IG v0.1.0-ballot, R4 → /eZadanky bridge)
+  - FHIR Imaging Order (HL7-cz img-order IG v0.1.0, CI build 2026-08-28, R4 → /eZadanky bridge)
       • závislosti: cz-core 0.3.0, cz-terminology 0.2.0, eu.base 2.0.0
       • taxonomie (ValueSets) napojené na živý TermX (public mirror) –
         cz-modality, cz-imagingProcedureVs, mkn-10 (Mkn10_5), mobility;
@@ -63,6 +63,45 @@ ObjectScript, který tutéž zprávu sestaví, zvaliduje dle L1 a uloží do DÚ
 třídu SEZ.EZD.Builder (Sestav / Validuj / ZasilkaProDU / SestavAOdesli,
 zná všech 5 kategorií vč. povinných i volitelných sekcí).
 API: /api/zpravy/iris-kod, /api/zpravy/iris-builder.
+
+Revize NCEZ zdrojů 2026-09-09:
+- KRP: NCEZ oznámil 27. 8. 2026, že k 15. 9. 2026 VYPÍNÁ API KRP pro PZS
+  verze v1 i v2 (dosud bylo vypnuto jen v1). Hlavní rozhraní /api/krp/*
+  (třída KRP) dosud volalo /krp/api/v2 – nyní je verze parametrem
+  (SEZ_KRP_VERZE, výchozí v3; tělo požadavků je u v2 a v3 shodné, liší se
+  jen prefix cesty). Ve v3.0.0 není endpoint ztotoznihromadne/vykonani –
+  klient ho pro v3 odmítne s vysvětlením. Opravena chyba poolu interního
+  ztotožnění, který při rozšíření tvořil klienta v2 bez ohledu na
+  nastavenou verzi. IRIS třída SEZ.API.KRP (Parameter APIVERZE), IROP
+  TestRunner a generátor IRIS kódu přepnuty na v3.
+- KRP duplicitní pacient: 21. 8. rollback úpravy z 30. 7. (T2 i PROD opět
+  vrací až 5 pacientů, změna přijde až ve V4). Pole jednoznacne/upozorneni
+  se odvozují z počtu kandidátů, takže fungují pro obě varianty.
+- API endpointy (aktualizace 31. 8. 2026): User-Agent je opět „doporučený
+  od 1. 9. 2026, POVINNÝ od 1. 1. 2027" (červencové znění uvádělo
+  povinnost už od 1. 9.). Klient hlavičku posílá vždy; texty sjednoceny.
+- HL7 CZ img-order IG (CI build 28. 8. 2026 „Updates before publication",
+  závislost cz-core 1.0.0 z 29. 7.): Composition.type.coding 1..1 s version
+  SNOMED CT CZ edice (sct/11000279109), category jako slice
+  documentCategory, sekce clinicalQuestion → profil
+  cz-conditionClinicalQuestion (code.text 1..1), přejmenované profily
+  z cz-core a nové kanonické URL ValueSetů (imaging-procedures,
+  cz-mobility-type/-value, cz-diagnosis-condition). Reverzní builder
+  doplňuje version, povinnou sekci clinicalQuestion (emptyReason bez
+  diagnózy) a ServiceRequest.identifier (v profilu 1..*, dosud chybělo);
+  validace na ně upozorňuje. Profily cz-core používané builderem
+  (patient/practitioner/organization-core, cz-coverage) mají v 1.0.0
+  shodné constraints.
+- HL7 CZ PS IG (CI build 15. 8. 2026): sekce Past Problems (11348-0)
+  sloučena do sectionProblems, slice přejmenován na sectionAlert; builder
+  eZD staré názvy přijímá a obsah slučuje.
+- Bez dopadu: SZZ PROD 24. 8. (Přehled prevence – výpočet nároku, stavy
+  AVAILABLE/COMPLETED/NONAVAILABLE, NRHZS přes CENDAL – portálová část,
+  v API pro PZS beze změny), KRP 21. 8. opravy AISV/CUD, KRP 31. 8. API
+  pro zdravotní pojišťovny, eŽádanky (odkazy), Autentizace (typo). PROD
+  katalog apio (EZCA Validace v1.0.0, Terminologie v1.1.0) bitově shodný
+  se snapshoty; SÚKL DLP balíček DLP20260827 (autodetekce funguje). T2
+  gateway z tohoto prostředí nedostupná (geo-IP).
 
 Revize NCEZ zdrojů 2026-08-19:
 - SZZ má NOVOU verzi API 3.0.0 (Standard EZ SZZ 3.0 zveřejněný 29. 7. 2026,

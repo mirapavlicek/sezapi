@@ -6,7 +6,7 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 
 | Služba | Popis |
 |--------|-------|
-| **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla |
+| **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla (**API v3**; NCEZ vypnul v1 k 14. 8. 2026 a v1 i v2 vypíná k 15. 9. 2026) |
 | **DÚ** | Dočasné úložiště -- ukládání, vyhledávání a stahování zdravotnických zásilek |
 | **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1, v2.0.1 a **v3.0.0** dle Standardu EZ SZZ 3.0) |
 | **ELP** | Elektronické posudky -- vyhledávání a správa lékařských posudků |
@@ -199,6 +199,8 @@ Volitelné proměnné:
 | `SEZ_CERT_API_KEY` | (`SEZ_INTERNAL_API_KEY`) | Klíč pro API distribuce certifikátů |
 | `SEZ_INTERNAL_API_KEY` | (bez ochrany) | Klíč vyžadovaný interním API `/internal` |
 | `SEZ_GATEWAY` | `https://gwy-ext-sec-t2.csez.cz` | URL API Gateway |
+| `SEZ_KRP_VERZE` | `v3` | Verze API KRP pro hlavní rozhraní `/api/krp/*` (v1 i v2 jsou k 15. 9. 2026 vypnuty; `v2` jen pro ladění) |
+| `SEZ_INTERNAL_KRP_VERZE` | (`SEZ_KRP_VERZE`) | Verze API KRP pro interní ztotožnění |
 | `SEZ_HOST` | `0.0.0.0` | Adresa webového serveru |
 | `SEZ_PORT` | `8000` | Port webového serveru |
 
@@ -467,9 +469,11 @@ Rozhraní pro navazující systémy (NIS), oddělené od webového UI. Swagger:
 ### Ztotožnění pacienta → RID
 
 `POST /internal/v1/ztotozneni` (dávkově `/v1/ztotozneni/davka`). Volá se
-**KRP API v3** – verze v1 byla 14. 8. 2026 vypnuta a NCEZ ukončuje provoz
-i podporu v2. Návrat na v2 umožňuje `SEZ_INTERNAL_KRP_VERZE=v2`; použitou
-verzi vrací `GET /internal/health` v poli `krpVerze`.
+**KRP API v3** – verze v1 byla 14. 8. 2026 vypnuta a **k 15. 9. 2026 NCEZ
+vypíná v1 i v2** (oznámení 27. 8. 2026). Návrat na v2 (jen pro ladění do
+15. 9.) umožňuje `SEZ_INTERNAL_KRP_VERZE=v2`; použitou verzi vrací
+`GET /internal/health` v poli `krpVerze`. Pool klientů pro souběžné
+ztotožnění používá stejnou verzi jako první klient.
 
 Metody KRP se zkoušejí od nejpřesnější, dokud pacient není nalezen; při úspěchu
 žádné volání navíc neodejde. Podporuje i **rodné číslo bez jména** (univerzální hledání).

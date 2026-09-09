@@ -121,24 +121,24 @@ Method RunTech1() As %Status
         Write !!, "=== TS-TECH-1: Připojení ke KRP ==="
         Set body = ..KrpZadost({"rid": (..Rid)})
         Do ..Krok("TS-TECH-1", "Vyhledání dle RID", "POST",
-            "/krp/api/v2/pacient/hledat/rid", body, , .resp)
+            "/krp/api/v3/pacient/hledat/rid", body, , .resp)
 
         Set jmeno = "MRAKOMOROVÁ", prijmeni = "MRAČENA", rc = "7161264528"
         Do ..Krok("TS-TECH-1", "Vyhledání dle jméno + RC", "POST",
-            "/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc",
+            "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc",
             ..KrpZadost({"jmeno": (jmeno), "prijmeni": (prijmeni), "rodneCislo": (rc)}), , .resp)
         Do ..Krok("TS-TECH-1", "Vyhledání dle jméno + datum narození", "POST",
-            "/krp/api/v2/pacient/hledat/jmeno_prijmeni_datum_narozeni",
+            "/krp/api/v3/pacient/hledat/jmeno_prijmeni_datum_narozeni",
             ..KrpZadost({"jmeno": (jmeno), "prijmeni": (prijmeni),
                           "datumNarozeni": "1971-11-26", "statniObcanstvi": "CZ"}), , .resp)
         Do ..Krok("TS-TECH-1", "Vyhledání dle jméno + číslo pojištěnce", "POST",
-            "/krp/api/v2/pacient/hledat/jmeno_prijmeni_cp",
+            "/krp/api/v3/pacient/hledat/jmeno_prijmeni_cp",
             ..KrpZadost({"jmeno": (jmeno), "prijmeni": (prijmeni), "cisloPojistence": (rc)}), , .resp)
         Do ..Krok("TS-TECH-1", "Vyhledání cizince dle ČP", "POST",
-            "/krp/api/v2/pacient/hledat/cizinec_cp",
+            "/krp/api/v3/pacient/hledat/cizinec_cp",
             ..KrpZadost({"cisloPojistence": (rc), "statniObcanstvi": "CZ"}), , .resp)
         Do ..Krok("TS-TECH-1", "Vyhledání dle dokladu", "POST",
-            "/krp/api/v2/pacient/hledat/doklady",
+            "/krp/api/v3/pacient/hledat/doklady",
             ..KrpZadost({"cislo": "123456789", "typDokladu": "ID", "stat": "CZ"}), , .resp)
     } Catch ex {
         Set sc = ex.AsStatus()
