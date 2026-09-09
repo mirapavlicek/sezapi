@@ -70,6 +70,9 @@ _client: SEZClient | None = None
 _modules: dict = {}
 _connected = False
 _cert_info: dict = {}
+# Otisk úložiště, se kterým byl postaven aktuální klient. Podle jeho změny se
+# pozná, že certifikát vyměnil jiný worker (distribuce nebo nasazení přes API).
+_cert_stamp: tuple = ()
 
 
 def _save_env_state(env_key: str):
@@ -102,10 +105,42 @@ def _sync_env_if_needed():
         return
     _last_sync_check = now
     desired = _load_env_state()
-    if not desired or desired == SEZConfig.ENVIRONMENT:
+    if desired and desired != SEZConfig.ENVIRONMENT:
+        creds = _credentials_pro(desired)
+        if not creds.get("p12_path"):
+            return
+        try:
+            _init_client(
+                client_id=creds["client_id"],
+                p12_path=creds["p12_path"],
+                p12_password=creds["p12_password"],
+                cert_uid=creds["cert_uid"],
+                env_key=desired,
+            )
+            logger.info("Worker synchronizován na prostředí %s", desired)
+        except Exception as e:
+            logger.warning("Sync env selhala: %s", e)
         return
-    creds = cfg.ENV_CREDENTIALS.get(desired, {})
+    _prevezmi_vymeneny_certifikat()
+
+
+def _prevezmi_vymeneny_certifikat():
+    """Přestaví klienta, když certifikát v úložišti vyměnil jiný worker.
+
+    Klient hlavního rozhraní se staví jednou (při startu nebo při přepnutí
+    prostředí), takže bez této kontroly by si držel starý certifikát, dokud by
+    se služba nerestartovala – i po jeho expiraci. Interní API řeší totéž
+    v `_internal_modules`; tady je to pro webové rozhraní."""
+    global _cert_stamp
+    if _client is None:
+        return
+    env_key = SEZConfig.ENVIRONMENT
+    stamp = _cert_store_stamp(env_key)
+    if stamp == _cert_stamp:
+        return
+    creds = _credentials_pro(env_key)
     if not creds.get("p12_path"):
+        _cert_stamp = stamp
         return
     try:
         _init_client(
@@ -113,17 +148,20 @@ def _sync_env_if_needed():
             p12_path=creds["p12_path"],
             p12_password=creds["p12_password"],
             cert_uid=creds["cert_uid"],
-            env_key=desired,
+            env_key=env_key,
         )
-        logger.info("Worker synchronizován na prostředí %s", desired)
+        logger.info("Certifikát v úložišti se změnil, hlavní rozhraní ho přebírá "
+                    "(platnost do %s)", _cert_info.get("valid_to"))
     except Exception as e:
-        logger.warning("Sync env selhala: %s", e)
+        # Ať se přestavení nezkouší na každý požadavek dokola.
+        _cert_stamp = stamp
+        logger.warning("Nový certifikát z úložiště nelze použít: %s", e)
 
 
 def _init_client(client_id: str, p12_path: str, p12_password: str,
                  cert_uid: str, env_key: str | None = None):
     """Create (or recreate) auth, client and all service modules."""
-    global _auth, _client, _modules, _connected, _cert_info
+    global _auth, _client, _modules, _connected, _cert_info, _cert_stamp
 
     if _auth:
         _auth.cleanup()
@@ -137,6 +175,14 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
         env_info = SEZ_ENVIRONMENTS.get(SEZConfig.ENVIRONMENT)
         if env_info:
             SEZConfig.TOKEN_AUDIENCE = env_info["jsu_audience"]
+
+    # Certifikát z úložiště (z distribuce nebo nasazený přes API) má přednost
+    # před cestou z konfigurace. Bez toho by hlavní rozhraní jelo dál na
+    # certifikátu z .env, i když interní API už používá nový – a po expiraci
+    # toho starého by volání brány padala na SSLV3_ALERT_CERTIFICATE_EXPIRED.
+    client_id, p12_path, p12_password, cert_uid = _s_certifikatem_z_uloziste(
+        SEZConfig.ENVIRONMENT, client_id, p12_path, p12_password, cert_uid)
+    _cert_stamp = _cert_store_stamp(SEZConfig.ENVIRONMENT)
 
     _auth = SEZAuth(
         client_id=client_id,
@@ -155,6 +201,9 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
         "kid": cert_uid,
         "client_id": client_id,
         "pfx_path": p12_path,
+        # Odkud certifikát pochází – z úložiště (distribuce / nasazení přes
+        # API), nebo z cesty v .env.
+        "zdroj": "distribuce" if _cert_stamp else "konfigurace",
     }
 
     _modules["krp"] = KRP(_client)
@@ -485,7 +534,7 @@ async def env_switch(req: EnvSwitchRequest, request: Request):
         )
 
     if not already_on_target:
-        creds = cfg.ENV_CREDENTIALS.get(req.env, {})
+        creds = _credentials_pro(req.env)
         if not creds.get("p12_path"):
             return JSONResponse(
                 {"ok": False, "error": f"Prostředí {req.env}: chybí certifikát (SEZ_PROD_P12_PATH)"},
@@ -9103,16 +9152,27 @@ def _credentials_pro(env_key: str) -> dict:
     má přednost před cestou z konfigurace, takže po restartu poběží ten
     naposledy převzatý."""
     creds = dict(cfg.ENV_CREDENTIALS.get(env_key) or {})
-    store = _cert_store(env_key)
-    if store.existuje():
-        meta = store.metadata()
-        creds["p12_path"] = str(store.pfx_path)
-        creds["p12_password"] = store.heslo()
-        if meta.get("clientId"):
-            creds["client_id"] = meta["clientId"]
-        if meta.get("certUid"):
-            creds["cert_uid"] = meta["certUid"]
+    (creds["client_id"], creds["p12_path"],
+     creds["p12_password"], creds["cert_uid"]) = _s_certifikatem_z_uloziste(
+        env_key, creds.get("client_id", ""), creds.get("p12_path", ""),
+        creds.get("p12_password", ""), creds.get("cert_uid", ""))
     return creds
+
+
+def _s_certifikatem_z_uloziste(env_key: str, client_id: str, p12_path: str,
+                               p12_password: str, cert_uid: str) -> tuple:
+    """Přebije údaje z konfigurace certifikátem z úložiště, pokud tam je.
+
+    Úložiště je jediný zdroj pravdy o tom, který certifikát je v provozu –
+    používá ho interní API i hlavní rozhraní, aby se po výměně nerozešly."""
+    store = _cert_store(env_key)
+    if not store.existuje():
+        return client_id, p12_path, p12_password, cert_uid
+    meta = store.metadata()
+    return (meta.get("clientId") or client_id,
+            str(store.pfx_path),
+            store.heslo(),
+            meta.get("certUid") or cert_uid)
 
 
 def _build_internal_prod() -> dict:

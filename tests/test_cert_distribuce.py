@@ -433,6 +433,75 @@ def test_kolo_respektuje_interval(prostredi, monkeypatch):
     assert _distribuce_kolo()["akce"] == "preskoceno"
 
 
+@pytest.fixture
+def hlavni_klient():
+    """Postavení klienta hlavního rozhraní mění modulové globály i třídní stav
+    SEZConfig. Bez obnovení by další testy v sadě hlásily funkční spojení
+    a čekané 503 „bez připojení" by nedostaly."""
+    from sez_api import app as app_mod
+
+    globaly = {k: getattr(app_mod, k) for k in
+               ("_auth", "_client", "_connected", "_cert_info", "_cert_stamp")}
+    moduly = dict(app_mod._modules)
+    konfig = {k: getattr(app_mod.SEZConfig, k) for k in
+              ("ENVIRONMENT", "GATEWAY", "TOKEN_AUDIENCE")}
+    yield app_mod
+    if app_mod._auth is not None and app_mod._auth is not globaly["_auth"]:
+        app_mod._auth.cleanup()
+    for klic, hodnota in globaly.items():
+        setattr(app_mod, klic, hodnota)
+    app_mod._modules.clear()
+    app_mod._modules.update(moduly)
+    for klic, hodnota in konfig.items():
+        setattr(app_mod.SEZConfig, klic, hodnota)
+
+
+def test_hlavni_rozhrani_pouzije_certifikat_z_uloziste(prostredi, hlavni_klient):
+    """Regrese: hlavní rozhraní bralo certifikát z .env, i když v úložišti už
+    byl nový z distribuce. Po expiraci toho starého padala volání brány na
+    SSLV3_ALERT_CERTIFICATE_EXPIRED, zatímco interní API jelo v pořádku."""
+    app_mod = hlavni_klient
+
+    cesta_env = prostredi.parent / "z-env.pfx"
+    cesta_env.parent.mkdir(parents=True, exist_ok=True)
+    cesta_env.write_bytes(_vyrob_pfx(platny_do_dnu=1))
+
+    novy = _vyrob_pfx(platny_do_dnu=90)
+    CertStore(prostredi, "PROD").uloz(novy, "tajne", popis=_popis(novy))
+
+    app_mod._init_client("00064203_NIS2", str(cesta_env), "tajne", "",
+                         env_key="PROD")
+
+    assert app_mod._cert_info["zdroj"] == "distribuce"
+    assert app_mod._cert_info["pfx_path"].endswith("prod.p12")
+    _, cert, _ = pkcs12.load_key_and_certificates(novy, b"tajne")
+    assert app_mod._cert_info["serial"] == hex(cert.serial_number), \
+        "hlavní rozhraní má jet na certifikátu z úložiště, ne na tom z .env"
+
+
+def test_hlavni_rozhrani_prevezme_vymeneny_certifikat(prostredi, hlavni_klient):
+    """Klient hlavního rozhraní se staví jednou, takže výměnu certifikátu
+    jiným workerem musí poznat podle otisku úložiště – jinak by na starém
+    certifikátu jel až do restartu služby."""
+    app_mod = hlavni_klient
+
+    stary = _vyrob_pfx(platny_do_dnu=5)
+    store = CertStore(prostredi, "PROD")
+    store.uloz(stary, "tajne", popis=_popis(stary))
+    app_mod._init_client("00064203_NIS2", "", "", "", env_key="PROD")
+    puvodni_serial = app_mod._cert_info["serial"]
+
+    novy = _vyrob_pfx(platny_do_dnu=90)
+    store.uloz(novy, "tajne", popis=_popis(novy))
+
+    app_mod._last_sync_check = 0.0
+    app_mod._sync_env_if_needed()
+
+    _, cert, _ = pkcs12.load_key_and_certificates(novy, b"tajne")
+    assert app_mod._cert_info["serial"] == hex(cert.serial_number)
+    assert app_mod._cert_info["serial"] != puvodni_serial
+
+
 def test_planovac_bezi_i_s_vypnutou_kontrolou(prostredi):
     """Vlákno musí běžet i při vypnuté kontrole – nastavení se čte při každém
     probuzení, takže zapnutí z GUI se projeví ve všech workerech bez restartu.
