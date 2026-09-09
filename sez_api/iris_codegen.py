@@ -204,7 +204,7 @@ def gen_client_class(package: str, service_name: str, endpoints: list[dict]) -> 
         'Property Prostredi As %String(VALUELIST = ",Test,Prod") [ InitialExpression = "Test" ];',
         '',
         '/// Hlavička User-Agent dle SEZ API: <aplikace>/<verze> (Test|Prod; výrobceSW).',
-        '/// POVINNÁ od 1. 9. 2026 – bez ní brána volání odmítne.',
+        '/// Doporučená od 1. 9. 2026, POVINNÁ od 1. 1. 2027 (API endpointy, 31. 8. 2026) – posílat vždy.',
         'Method UserAgent() As %String',
         '{',
         '    Return ..AppName _ "/" _ ..AppVersion _ " (" _ ..Prostredi _ "; " _ ..Vendor _ ")"',
@@ -474,13 +474,13 @@ def gen_rest_dispatch(package: str, service_name: str, endpoints: list[dict]) ->
 
 SERVICE_META = {
     "krp": {
-        "name": "KRP", "description": "Kmenový registr pacientů",
-        "base_path": "/krp/api/v2",
+        "name": "KRP", "description": "Kmenový registr pacientů (API v3 – v1 a v2 vypnuty k 15. 9. 2026)",
+        "base_path": "/krp/api/v3",
         "endpoints": [
-            {"method": "POST", "path": "/krp/api/v2/pacient/hledat/rid",
+            {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid",
              "name": "HledatRid", "description": "Vyhledání pacienta dle RID",
              "body_sample": {"rid": "1234567890"}},
-            {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc",
+            {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc",
              "name": "HledatJmenoRc", "description": "Vyhledání dle jména/příjmení/RČ",
              "body_sample": {"jmeno": "Jan", "prijmeni": "Novák", "rodneCislo": "8001011234"}},
         ],

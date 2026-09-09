@@ -40,10 +40,13 @@ WORKERS = int(env("SEZ_WORKERS", "1"))
 INTERNAL_API_KEY = env("SEZ_INTERNAL_API_KEY", "")
 # Prostředí, proti kterému interní API ztotožňuje (default produkce).
 INTERNAL_ENV = env("SEZ_INTERNAL_ENV", "PROD")
-# Verze API KRP použitá pro ztotožnění. NCEZ vypnul v1 (14. 8. 2026) a dle
-# plánu ukončuje provoz i podporu v2, proto se standardně volá v3.
-# Hodnota "v2" vrátí dřívější chování.
-INTERNAL_KRP_VERZE = env("SEZ_INTERNAL_KRP_VERZE", "v3").strip().lower()
+# Verze API KRP. NCEZ vypnul v1 k 14. 8. 2026 a k 15. 9. 2026 vypíná v1 i v2
+# (Novinky EZ, 27. 8. 2026) – jediná provozovaná verze je v3.
+#   SEZ_KRP_VERZE          – hlavní rozhraní (/api/krp/…), výchozí v3
+#   SEZ_INTERNAL_KRP_VERZE – interní ztotožnění, výchozí v3
+# Hodnota "v2" je jen pro ladění; po 15. 9. 2026 brána v2 odmítá.
+KRP_VERZE = env("SEZ_KRP_VERZE", "v3").strip().lower() or "v3"
+INTERNAL_KRP_VERZE = env("SEZ_INTERNAL_KRP_VERZE", KRP_VERZE).strip().lower() or "v3"
 
 # Interní API je synchronní – volající (NIS) mívá timeout kolem 5 s, takže
 # výchozí nastavení klienta (30s timeout, 4 pokusy s backoffem až 5 s) je pro
@@ -305,7 +308,8 @@ def uzis_mode(env_key: str = "T2") -> str:
 # incidentů. Výchozí stav vypnuto – zapnout lze SEZ_SEND_TRACEPARENT=true.
 SEZ_SEND_TRACEPARENT = _env_bool("SEZ_SEND_TRACEPARENT", False)
 
-# Název aplikace a výrobce SW pro hlavičku User-Agent (POVINNÁ od 1. 9. 2026;
+# Název aplikace a výrobce SW pro hlavičku User-Agent (doporučená od 1. 9. 2026,
+# POVINNÁ od 1. 1. 2027 dle „API endpointy“ z 31. 8. 2026; klient ji posílá vždy;
 # formát: název-aplikace/verze (Test|Prod; výrobceSW[; další informace])).
 SEZ_APP_NAME = env("SEZ_APP_NAME", "sez-api")
 SEZ_VENDOR = env("SEZ_VENDOR", "Krajska zdravotni a.s.")

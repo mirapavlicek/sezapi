@@ -68,9 +68,9 @@ class _FakeClient:
 # --- HTTP hlavičky dle API endpointy (aktualizace 17. 7. 2026) ---------------
 
 def test_user_agent_dle_pozadovaneho_formatu():
-    """API endpointy (21. 7. 2026): User-Agent 'název-aplikace/verze
-    (prostředí; výrobceSW)' – POVINNÝ od 1. 9. 2026; prostředí musí být
-    hodnota 'Test' nebo 'Prod'."""
+    """API endpointy (31. 8. 2026): User-Agent 'název-aplikace/verze
+    (prostředí; výrobceSW)' – doporučený od 1. 9. 2026, POVINNÝ od
+    1. 1. 2027; prostředí musí být hodnota 'Test' nebo 'Prod'."""
     import re
     from sez_api.client import SEZClient
     ua = SEZClient.user_agent()

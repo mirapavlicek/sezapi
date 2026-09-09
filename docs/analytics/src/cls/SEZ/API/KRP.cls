@@ -1,5 +1,7 @@
-/// Kmenový registr pacientů – KRP PZS API v2.0.0
+/// Kmenový registr pacientů – KRP PZS API v3 (cesty i tělo shodné s v2, jen prefix /api/v3)
 /// Base URL: /krp
+/// NCEZ vypnul v1 k 14. 8. 2026 a k 15. 9. 2026 vypíná v1 i v2 (Novinky EZ, 27. 8. 2026);
+/// jediná provozovaná verze je v3 – viz Parameter APIVERZE.
 Class SEZ.API.KRP Extends %RegisteredObject
 {
 
@@ -8,6 +10,9 @@ Property Client As SEZ.API.HttpClient [ Required ];
 Property Config As SEZ.API.Config [ Required ];
 
 Parameter BASEPATH = "/krp";
+
+/// Verze API KRP pro PZS (v1 a v2 vypnuty k 15. 9. 2026)
+Parameter APIVERZE = "v3";
 
 Method %OnNew(pConfig As SEZ.API.Config) As %Status
 {
@@ -25,7 +30,7 @@ Method HledatPodleRID(pRid As %String, pUcel As %String = "LECBA", Output pRespo
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"rid": (pRid)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/rid", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/rid", body, .pResponse)
 }
 
 /// Univerzální vyhledání pacienta
@@ -33,7 +38,7 @@ Method HledatUni(pData As %DynamicObject, pUcel As %String = "LECBA", Output pRe
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = pData
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/uni", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/uni", body, .pResponse)
 }
 
 /// Vyhledání podle jména, příjmení a rodného čísla
@@ -41,7 +46,7 @@ Method HledatJmenoPrijmeniRC(pJmeno As %String, pPrijmeni As %String, pRC As %St
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"jmeno": (pJmeno), "prijmeni": (pPrijmeni), "rodneCislo": (pRC)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/jmeno_prijmeni_rc", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/jmeno_prijmeni_rc", body, .pResponse)
 }
 
 /// Vyhledání podle jména, příjmení a data narození
@@ -49,7 +54,7 @@ Method HledatJmenoPrijmeniDN(pJmeno As %String, pPrijmeni As %String, pDatumNaro
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"jmeno": (pJmeno), "prijmeni": (pPrijmeni), "datumNarozeni": (pDatumNarozeni)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/jmeno_prijmeni_datum_narozeni", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/jmeno_prijmeni_datum_narozeni", body, .pResponse)
 }
 
 /// Vyhledání podle dokladu
@@ -57,7 +62,7 @@ Method HledatPodleDokladu(pCisloDokladu As %String, pTypDokladu As %String, pUce
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"doklad": {"cislo": (pCisloDokladu), "typDokladu": (pTypDokladu)}}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/doklady", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/doklady", body, .pResponse)
 }
 
 /// Vyhledání cizince podle čísla pojištěnce
@@ -65,7 +70,7 @@ Method HledatCizinecCP(pCisloPojistence As %String, pUcel As %String = "LECBA", 
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"cisloPojistence": (pCisloPojistence)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/cizinec_cp", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/cizinec_cp", body, .pResponse)
 }
 
 /// Vyhledání podle NIA BSI
@@ -73,7 +78,7 @@ Method HledatNiaBsi(pNiaBsi As %String, pUcel As %String = "LECBA", Output pResp
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"niaBsi": (pNiaBsi)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/niabsi", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/niabsi", body, .pResponse)
 }
 
 /// Historie pojištění pacienta
@@ -81,7 +86,7 @@ Method HledatHistoriePojisteni(pRid As %String, pUcel As %String = "LECBA", Outp
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"rid": (pRid)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/historie_pojisteni", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/historie_pojisteni", body, .pResponse)
 }
 
 /// Historie registrujících lékařů
@@ -89,7 +94,7 @@ Method HledatHistorieRegistrujicichLekaru(pRid As %String, pUcel As %String = "L
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"rid": (pRid)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/historie_registrujicich_lekaru", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/historie_registrujicich_lekaru", body, .pResponse)
 }
 
 /// Mapování RID
@@ -97,7 +102,7 @@ Method HledatMapovaniRID(pRid As %String, pUcel As %String = "LECBA", Output pRe
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"rid": (pRid)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/hledat/mapovani_rid", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/hledat/mapovani_rid", body, .pResponse)
 }
 
 // ==========================================================================
@@ -109,7 +114,7 @@ Method ZalozitPacienta(pPacientData As %DynamicObject, pUcel As %String = "LECBA
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = pPacientData
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/zalozit/pacient", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/zalozit/pacient", body, .pResponse)
 }
 
 /// Změna údajů pacienta
@@ -119,7 +124,7 @@ Method ZmenitPacienta(pRid As %String, pZmeny As %DynamicObject, pUcel As %Strin
     Set zmenyData = pZmeny.%FromJSON(pZmeny.%ToJSON())
     Set zmenyData.rid = pRid
     Set body.zadostData = zmenyData
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/zmenit/pacient", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/zmenit/pacient", body, .pResponse)
 }
 
 /// Generování dočasného RID
@@ -127,7 +132,7 @@ Method GenerujDocasnyRID(pPacientData As %DynamicObject, pUcel As %String = "LEC
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = pPacientData
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/generovat/docasny_rid", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/generovat/docasny_rid", body, .pResponse)
 }
 
 /// Přiřazení dočasného RID
@@ -135,7 +140,7 @@ Method PriraditDocasnyRID(pDocasnyRid As %String, pSkutecnyRid As %String, pUcel
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"docasnyRid": (pDocasnyRid), "skutecnyRid": (pSkutecnyRid)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/priradit/docasny_rid", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/priradit/docasny_rid", body, .pResponse)
 }
 
 /// Reklamace údajů
@@ -143,7 +148,7 @@ Method ReklamujUdaj(pReklamaceData As %DynamicObject, pUcel As %String = "LECBA"
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = pReklamaceData
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/reklamuj/udaj", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/reklamuj/udaj", body, .pResponse)
 }
 
 /// Sloučení pacientů
@@ -151,7 +156,7 @@ Method SlouceniPacientu(pNavrhSlouceni As %DynamicObject, pUcel As %String = "LE
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = pNavrhSlouceni
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/slouceni/zadost", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/slouceni/zadost", body, .pResponse)
 }
 
 /// Rozdělení pacienta
@@ -159,7 +164,7 @@ Method RozdeleniPacienta(pNavrhRozdeleni As %DynamicObject, pUcel As %String = "
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = pNavrhRozdeleni
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/rozdeleni/zadost", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/rozdeleni/zadost", body, .pResponse)
 }
 
 /// Žádost o zrušení záznamu
@@ -167,7 +172,7 @@ Method ZruseniZadost(pRid As %String, pUcel As %String = "LECBA", Output pRespon
 {
     Set body = ..BuildRequest(pUcel)
     Set body.zadostData = {"rid": (pRid)}
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/pacient/zruseni/zadost", body, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/pacient/zruseni/zadost", body, .pResponse)
 }
 
 // ==========================================================================
@@ -177,19 +182,19 @@ Method ZruseniZadost(pRid As %String, pUcel As %String = "LECBA", Output pRespon
 /// Založení odběru notifikací o změnách pacienta
 Method ZalozitOdberNotifikaci(pOdber As %DynamicObject, Output pResponse As %DynamicObject) As %Status
 {
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/notifikace/zalozit/odber", pOdber, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/notifikace/zalozit/odber", pOdber, .pResponse)
 }
 
 /// Zrušení odběru notifikací
 Method ZrusitOdberNotifikaci(pOdber As %DynamicObject, Output pResponse As %DynamicObject) As %Status
 {
-    Quit ..Client.Delete(..#BASEPATH_"/api/v2/notifikace/zrusit/odber", pOdber, .pResponse)
+    Quit ..Client.Delete(..#BASEPATH_"/api/"_..#APIVERZE_"/notifikace/zrusit/odber", pOdber, .pResponse)
 }
 
 /// Vyhledání odběrů notifikací
 Method VyhledatOdberyNotifikaci(pKriteria As %DynamicObject, Output pResponse As %DynamicObject) As %Status
 {
-    Quit ..Client.Post(..#BASEPATH_"/api/v2/notifikace/vyhledat/odber", pKriteria, .pResponse)
+    Quit ..Client.Post(..#BASEPATH_"/api/"_..#APIVERZE_"/notifikace/vyhledat/odber", pKriteria, .pResponse)
 }
 
 // ==========================================================================

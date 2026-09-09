@@ -206,7 +206,9 @@ def _init_client(client_id: str, p12_path: str, p12_password: str,
         "zdroj": "distribuce" if _cert_stamp else "konfigurace",
     }
 
-    _modules["krp"] = KRP(_client)
+    # KRP: v1 vypnuto 14. 8. 2026, v1 i v2 se vypínají k 15. 9. 2026 – hlavní
+    # rozhraní proto jede na v3 (SEZ_KRP_VERZE).
+    _modules["krp"] = KRP(_client, verze=cfg.KRP_VERZE)
     _modules["krp3"] = KRPv3(_client)
     _modules["krzp"] = KRZP(_client)
     _modules["krpzs"] = KRPZS(_client)
@@ -3371,40 +3373,40 @@ async def debug_jwt():
             "KRP": {
                 "name": "Kmenový registr pacientů",
                 "base": "/krp",
-                "version": "v2.0.2",
+                "version": "v3.0.x (v1 vypnuto 14. 8. 2026, v1 i v2 vypnuto k 15. 9. 2026)",
                 "endpoints": [
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/rid", "desc": "Vyhledání pacienta podle RID"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_rc", "desc": "Vyhledání podle jména a RČ"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_datum_narozeni", "desc": "Vyhledání podle jména a data narození"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/jmeno_prijmeni_cp", "desc": "Vyhledání podle jména a čísla pojištěnce"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/cizinec_cp", "desc": "Vyhledání cizince podle čísla pojištěnce"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/doklady", "desc": "Vyhledání podle dokladů"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/niabsi", "desc": "Vyhledání podle NIABSI"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/aifoulozenka", "desc": "Vyhledání podle AIFA uloženky"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/uni", "desc": "Univerzální vyhledávání"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/mapovani_rid", "desc": "Mapování RID (aktuální ↔ historické)"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/historie_pojisteni", "desc": "Historie pojištění"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID)"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/priradit/docasny_rid", "desc": "Přiřazení DRID ke skutečnému RID"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec)"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/zmenit/pacient", "desc": "Změna údajů pacienta"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/reklamuj/udaj", "desc": "Reklamace údaje pacienta"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/slouceni/zadost", "desc": "Žádost o sloučení pacientů"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/rozdeleni/zadost", "desc": "Žádost o rozdělení pacientů"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/zruseni/zadost", "desc": "Zrušení žádosti"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění — výsledky"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vysledky/soubor", "desc": "Hromadné ztotožnění — výsledky (CSV soubor)"},
-                    {"method": "POST", "path": "/krp/api/v2/ciselnik/country_service_context", "desc": "Číselník CountryServiceContext"},
-                    {"method": "POST", "path": "/krp/api/v2/ciselnik/druh_dokladu", "desc": "Číselník druhů dokladů"},
-                    {"method": "POST", "path": "/krp/api/v2/ciselnik/pohlavi", "desc": "Číselník pohlaví"},
-                    {"method": "POST", "path": "/krp/api/v2/ciselnik/stat", "desc": "Číselník států"},
-                    {"method": "POST", "path": "/krp/api/v2/ciselnik/zdravotni_pojistovna", "desc": "Číselník zdravotních pojišťoven"},
-                    {"method": "POST", "path": "/krp/api/v2/notifikace/vyhledat/odber", "desc": "Vyhledat odběry notifikací"},
-                    {"method": "POST", "path": "/krp/api/v2/notifikace/zalozit/odber", "desc": "Založit odběr notifikací"},
-                    {"method": "DELETE", "path": "/krp/api/v2/notifikace/zrusit/odber", "desc": "Zrušit odběr notifikací"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid", "desc": "Vyhledání pacienta podle RID"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc", "desc": "Vyhledání podle jména a RČ"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_datum_narozeni", "desc": "Vyhledání podle jména a data narození"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_cp", "desc": "Vyhledání podle jména a čísla pojištěnce"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/cizinec_cp", "desc": "Vyhledání cizince podle čísla pojištěnce"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/doklady", "desc": "Vyhledání podle dokladů"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/niabsi", "desc": "Vyhledání podle NIABSI"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/aifoulozenka", "desc": "Vyhledání podle AIFA uloženky"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/uni", "desc": "Univerzální vyhledávání"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/mapovani_rid", "desc": "Mapování RID (aktuální ↔ historické)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_pojisteni", "desc": "Historie pojištění"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/priradit/docasny_rid", "desc": "Přiřazení DRID ke skutečnému RID"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zmenit/pacient", "desc": "Změna údajů pacienta"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/reklamuj/udaj", "desc": "Reklamace údaje pacienta"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/slouceni/zadost", "desc": "Žádost o sloučení pacientů"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/rozdeleni/zadost", "desc": "Žádost o rozdělení pacientů"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zruseni/zadost", "desc": "Zrušení žádosti"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání (jen v2, ve v3.0.0 endpoint není; v2 vypnuto k 15. 9. 2026)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění — výsledky"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky/soubor", "desc": "Hromadné ztotožnění — výsledky (CSV soubor)"},
+                    {"method": "POST", "path": "/krp/api/v3/ciselnik/country_service_context", "desc": "Číselník CountryServiceContext"},
+                    {"method": "POST", "path": "/krp/api/v3/ciselnik/druh_dokladu", "desc": "Číselník druhů dokladů"},
+                    {"method": "POST", "path": "/krp/api/v3/ciselnik/pohlavi", "desc": "Číselník pohlaví"},
+                    {"method": "POST", "path": "/krp/api/v3/ciselnik/stat", "desc": "Číselník států"},
+                    {"method": "POST", "path": "/krp/api/v3/ciselnik/zdravotni_pojistovna", "desc": "Číselník zdravotních pojišťoven"},
+                    {"method": "POST", "path": "/krp/api/v3/notifikace/vyhledat/odber", "desc": "Vyhledat odběry notifikací"},
+                    {"method": "POST", "path": "/krp/api/v3/notifikace/zalozit/odber", "desc": "Založit odběr notifikací"},
+                    {"method": "DELETE", "path": "/krp/api/v3/notifikace/zrusit/odber", "desc": "Zrušit odběr notifikací"},
                 ],
             },
             "KRZP": {
@@ -9213,9 +9215,9 @@ def _build_internal_prod() -> dict:
     store = _cert_store(env_key)
     platny_do = cert.not_valid_after_utc
     return {
-        # KRP v1 je od 14. 8. 2026 vypnuté a provoz v2 se ukončuje, proto
-        # ztotožnění standardně jede na v3 (adaptér doplní obálku zadostInfo).
-        "krp": KRP(client) if krp_verze == "v2" else KRPZtotozneniV3(client),
+        # KRP v1 je od 14. 8. 2026 vypnuté a k 15. 9. 2026 se vypíná v1 i v2,
+        # proto ztotožnění standardně jede na v3.
+        "krp": _novy_krp_klient(client, krp_verze),
         "krpVerze": krp_verze,
         "auth": auth,
         "client": client,
@@ -9276,7 +9278,10 @@ def _zapujc_krp():
             else:
                 krp = False
         if krp is None:
-            krp = KRP(_novy_interni_client(mods["auth"]))
+            # Rozšíření poolu musí použít stejnou verzi KRP jako první klient
+            # (dříve se tu natvrdo tvořil klient v2).
+            krp = _novy_krp_klient(_novy_interni_client(mods["auth"]),
+                                   mods.get("krpVerze"))
         else:
             # Pool je vyčerpaný – počkáme na uvolnění, ať KRP nezahltíme.
             krp = pool.get()
@@ -9288,6 +9293,14 @@ def _zapujc_krp():
         except Exception:
             pass
         pool.put(krp)
+
+
+def _novy_krp_klient(client: SEZClient, krp_verze: str | None):
+    """KRP klient pro ztotožnění v požadované verzi API (výchozí v3)."""
+    verze = (krp_verze or cfg.INTERNAL_KRP_VERZE or "v3").lower()
+    if verze == "v2":
+        return KRP(client, verze="v2")
+    return KRPZtotozneniV3(client)
 
 
 def _novy_interni_client(auth) -> SEZClient:
@@ -9440,7 +9453,10 @@ class ZtotozneniResponse(BaseModel):
         False, description="True = KRP vrátil právě jednoho pacienta s RID. "
                            "False při více kandidátech (duplicita v KRP) – RID "
                            "je pak jen prvním z nich a je nutné rozhodnout, "
-                           "který pacient je správný.")
+                           "který pacient je správný. KRP po rollbacku z "
+                           "21. 8. 2026 opět vrací až 5 vyhledaných pacientů "
+                           "(úprava odložena do V4), vyhodnocení jde z počtu "
+                           "kandidátů, takže platí pro obě varianty odpovědi.")
     upozorneni: Optional[str] = Field(
         None, description="Upozornění k výsledku (např. nalezeno více "
                           "pacientů), které není chybou volání.")
@@ -9716,8 +9732,10 @@ def internal_ztotozneni(req: ZtotozneniRequest):
 
     primary = next((k for k in kandidati if k.rid), None)
     s_rid = [k for k in kandidati if k.rid]
-    # KRP od 30. 7. 2026 upravil návratový objekt při vyhledání duplicitního
-    # pacienta – více kandidátů znamená, že výsledek není jednoznačný a RID
+    # KRP 30. 7. 2026 upravil návratový objekt při vyhledání duplicitního
+    # pacienta a 21. 8. 2026 provedl rollback (T2 i PROD opět vrací až 5
+    # pacientů; úprava přijde až ve V4). Vyhodnocení je proto záměrně jen
+    # z počtu kandidátů: více kandidátů = výsledek není jednoznačný a RID
     # nelze použít bez rozhodnutí, který pacient je správný.
     jednoznacne = len(s_rid) == 1
     upozorneni = None
