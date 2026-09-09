@@ -127,6 +127,9 @@ class SEZConfig:
     ASSERTION_VALIDITY_SECONDS = 300
     ASSERTION_NBF_SKEW_SECONDS = 60
     ENVIRONMENT = "T2"
+    # Verze API KRP pro PZS. K 15. 9. 2026 NCEZ vypíná v1 i v2 (Novinky EZ,
+    # 27. 8. 2026); jediná provozovaná verze je v3.
+    KRP_VERZE = os.environ.get("SEZ_KRP_VERZE", "v3").strip().lower() or "v3"
 
     @classmethod
     def switch_environment(cls, env_key: str) -> bool:
@@ -332,8 +335,10 @@ class SEZClient:
         """User-Agent dle požadavku API endpointy (aktualizace 21. 7. 2026):
         formát ``název-aplikace/verze (prostředí; výrobceSW[; poznámka])``,
         kde prostředí musí být hodnota **Test** nebo **Prod** (nikoli
-        T2/PROD). POVINNÉ od 1. 9. 2026 (dřívější znění uvádělo
-        1. 1. 2027); RFC 9110 §10.1.5.
+        T2/PROD). Dle znění stránky „API endpointy“ z 31. 8. 2026 je hlavička
+        doporučená od 1. 9. 2026 a POVINNÁ od 1. 1. 2027 (červencové znění
+        uvádělo povinnost už od 1. 9. 2026 – NCEZ termín vrátil zpět);
+        klient ji posílá vždy. RFC 9110 §10.1.5.
 
         Název aplikace, výrobce i volitelnou poznámku lze přenastavit přes
         SEZ_APP_NAME / SEZ_VENDOR / SEZ_UA_NOTE."""
@@ -450,10 +455,10 @@ class SEZClient:
             return {}
 
     def _headers(self, extra: dict = None) -> dict:
-        # X-Correlation-Id: doporučené od 1. 9. 2026, POVINNÉ od 1. 1. 2027
-        # (UUID v4+, max 128 znaků); User-Agent POVINNÝ už od 1. 9. 2026
-        # (viz user_agent()). Zdroj: API endpointy (Manuál EZ pro PZS),
-        # aktualizace 21. 7. 2026.
+        # X-Correlation-Id i User-Agent: doporučené od 1. 9. 2026, POVINNÉ
+        # od 1. 1. 2027 (UUID v4+, max 128 znaků; formát UA viz user_agent()).
+        # Zdroj: API endpointy (Manuál EZ pro PZS), aktualizace 31. 8. 2026
+        # (znění z 21. 7. uvádělo UA povinný už od 1. 9. 2026).
         h = {
             "Authorization": f"Bearer {self.auth.build_assertion()}",
             "Content-Type": "application/json",
@@ -677,10 +682,26 @@ class SEZClient:
 # ---------------------------------------------------------------------------
 
 class KRP:
-    BASE = "/krp"
+    """KRP – Kmenový registr pacientů (rozhraní pro PZS).
 
-    def __init__(self, client: SEZClient):
+    Cesty i tělo požadavků jsou u v2 a v3 shodné (liší se jen prefix
+    ``/api/v2`` vs. ``/api/v3``; v3 navíc nemá ``ztotoznihromadne/vykonani``),
+    proto třída pouze parametrizuje verzi. NCEZ vypnul v1 k 14. 8. 2026 a
+    **v1 i v2 vypíná k 15. 9. 2026** (Novinky EZ, 27. 8. 2026) – výchozí je
+    proto ``v3``; starší verzi vrátí ``SEZ_KRP_VERZE=v2`` nebo parametr
+    ``verze`` (jen pro ladění, po 15. 9. 2026 vrací brána chybu)."""
+
+    BASE = "/krp"
+    VYPNUTI_V2 = "2026-09-15"
+    VERZE = "v3"  # výchozí; instance ji může přepsat (viz __init__)
+
+    def __init__(self, client: SEZClient, verze: str | None = None):
         self.c = client
+        v = (verze or getattr(client.config, "KRP_VERZE", None) or "v3")
+        v = str(v).strip().lower()
+        if not v.startswith("v"):
+            v = "v" + v
+        self.VERZE = v
 
     def _envelope(self, ucel, data):
         from datetime import date
@@ -701,55 +722,55 @@ class KRP:
     KRP_CISELNIKY = ["pohlavi", "stat", "druh_dokladu", "zdravotni_pojistovna", "country_service_context"]
 
     def ciselnik(self, nazev_ciselniku, ucel="LECBA"):
-        """KRP v2.0.2: POST /api/v2/ciselnik/{nazev} – načtení číselníku."""
+        """KRP v2/v3: POST /api/{verze}/ciselnik/{nazev} – načtení číselníku."""
         return self.c.post(
-            f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
+            f"{self.BASE}/api/{self.VERZE}/ciselnik/{nazev_ciselniku}",
             {"zadostInfo": {"datum": self._now(), "ucel": ucel,
                             "zadostId": str(uuid.uuid4())}},
         )
 
     def hledat_rid(self, rid, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/rid", self._envelope(ucel, {"rid": rid}))
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/rid", self._envelope(ucel, {"rid": rid}))
 
     def hledat_jmeno_rc(self, jmeno, prijmeni, rc, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/jmeno_prijmeni_rc",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/jmeno_prijmeni_rc",
                            self._envelope(ucel, {"jmeno": jmeno, "prijmeni": prijmeni, "rodneCislo": rc}))
 
     def generovat_docasny_rid(self, pocet: int = 1, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/generovat/docasny_rid",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/generovat/docasny_rid",
                            self._envelope(ucel, {"pocet": pocet}))
 
     def priradit_docasny_rid(self, docasny_rid: str, rid: str, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/priradit/docasny_rid",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/priradit/docasny_rid",
                            self._envelope(ucel, {"docasnyRID": docasny_rid, "rid": rid}))
 
     def mapovani_rid(self, rid: str, jen_aktualni: bool = False, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/mapovani_rid",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/mapovani_rid",
                            self._envelope(ucel, {"rid": rid, "jenAktualni": jen_aktualni}))
 
     def hledat_jmeno_dn(self, jmeno, prijmeni, datum_narozeni, statni_obcanstvi=None, ucel="LECBA"):
         data = {"jmeno": jmeno, "prijmeni": prijmeni, "datumNarozeni": datum_narozeni}
         if statni_obcanstvi:
             data["statniObcanstvi"] = statni_obcanstvi
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/jmeno_prijmeni_datum_narozeni",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/jmeno_prijmeni_datum_narozeni",
                            self._envelope(ucel, data))
 
     def hledat_jmeno_cp(self, jmeno, prijmeni, cislo_pojistence, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/jmeno_prijmeni_cp",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/jmeno_prijmeni_cp",
                            self._envelope(ucel, {"jmeno": jmeno, "prijmeni": prijmeni, "cisloPojistence": cislo_pojistence}))
 
     def hledat_cizinec_cp(self, cislo_pojistence, statni_obcanstvi=None, ucel="LECBA"):
         data = {"cisloPojistence": cislo_pojistence}
         if statni_obcanstvi:
             data["statniObcanstvi"] = statni_obcanstvi
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/cizinec_cp",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/cizinec_cp",
                            self._envelope(ucel, data))
 
     def hledat_doklady(self, cislo, typ_dokladu, stat=None, ucel="LECBA"):
         data = {"cislo": cislo, "typDokladu": typ_dokladu}
         if stat:
             data["stat"] = stat
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/doklady",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/doklady",
                            self._envelope(ucel, data))
 
     def hledat_aifoulozenka(self, aifo=None, ulozka_id=None, ulozka_ref=None, ucel="LECBA"):
@@ -760,53 +781,53 @@ class KRP:
             data["ulozkaId"] = ulozka_id
         if ulozka_ref is not None:
             data["ulozkaRef"] = ulozka_ref
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/aifoulozenka",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/aifoulozenka",
                            self._envelope(ucel, data))
 
     def hledat_niabsi(self, niabsi, ucel="LECBA"):
         body = {"niabsi": niabsi, "zadostInfo": {"datum": self._now(), "ucel": ucel}}
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/niabsi", body)
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/niabsi", body)
 
     def hledat_uni(self, ucel="LECBA", **kwargs):
         data = {k: v for k, v in kwargs.items() if v is not None}
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/uni",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/uni",
                            self._envelope(ucel, data))
 
     def historie_pojisteni(self, rid, datum=None, ucel="LECBA"):
         data = {"rid": rid}
         if datum:
             data["datum"] = datum
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/historie_pojisteni",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/historie_pojisteni",
                            self._envelope(ucel, data))
 
     def historie_registrujicich_lekaru(self, rid, datum=None, ucel="LECBA"):
         data = {"rid": rid}
         if datum:
             data["datum"] = datum
-        return self.c.post(f"{self.BASE}/api/v2/pacient/hledat/historie_registrujicich_lekaru",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/historie_registrujicich_lekaru",
                            self._envelope(ucel, data))
 
     def zalozit_pacienta(self, pacient_data, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/zalozit/pacient",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/zalozit/pacient",
                            self._envelope(ucel, pacient_data))
 
     def zmenit_pacienta(self, pacient_data, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/zmenit/pacient",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/zmenit/pacient",
                            self._envelope(ucel, pacient_data))
 
     def reklamuj_udaj(self, reklamace_data, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/reklamuj/udaj",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/reklamuj/udaj",
                            self._envelope(ucel, reklamace_data))
 
     def slouceni_zadost(self, rid_cilovy, rid_slucovany, ucel="LECBA"):
         data = {"ridCilovehoSlucujicihoPacienta": rid_cilovy,
                 "ridSlucovanehoPacienta": rid_slucovany}
-        return self.c.post(f"{self.BASE}/api/v2/pacient/slouceni/zadost",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/slouceni/zadost",
                            self._envelope(ucel, data))
 
     def rozdeleni_zadost(self, rid, novy_pacient1, novy_pacient2, ucel="LECBA"):
         data = {"rid": rid, "novyPacient1": novy_pacient1, "novyPacient2": novy_pacient2}
-        return self.c.post(f"{self.BASE}/api/v2/pacient/rozdeleni/zadost",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/rozdeleni/zadost",
                            {"data": data, "zadostInfo": {"datum": self._now(), "ucel": ucel}})
 
     def zruseni_zadost(self, rid, ulozka_id=None, ulozka_ref=None, ucel="LECBA"):
@@ -815,7 +836,7 @@ class KRP:
             data["ulozkaId"] = ulozka_id
         if ulozka_ref is not None:
             data["ulozkaRef"] = ulozka_ref
-        return self.c.post(f"{self.BASE}/api/v2/pacient/zruseni/zadost",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/zruseni/zadost",
                            self._envelope(ucel, data))
 
     def ztotozneni_zadost(self, file_bytes: bytes, filename: str = "ztotozneni.csv",
@@ -833,7 +854,7 @@ class KRP:
         xml_text = self.to_davka_xml(raw)
         out_name = base + ".xml"
 
-        url = self.c.config.GATEWAY + f"{self.BASE}/api/v2/pacient/ztotoznihromadne/zadost"
+        url = self.c.config.GATEWAY + f"{self.BASE}/api/{self.VERZE}/pacient/ztotoznihromadne/zadost"
         assertion = self.c.auth.build_assertion()
         headers = {
             "Authorization": f"Bearer {assertion}",
@@ -861,19 +882,25 @@ class KRP:
     def ztotozneni_vykonani(self, id_zadosti, ucel="LECBA"):
         """POZOR: endpoint /ztotoznihromadne/vykonani NENÍ v dokumentaci API KRP
         pro PZS (wiki uvádí jen HromadneZtotozni + VyhledejVysledekHromadnehoZtotozneni);
-        ve swaggeru má odpověď schéma s příponou „Interní". Pro PZS flow není
-        potřeba – zpracování dávky spouští KRP automaticky po podání žádosti."""
-        return self.c.post(f"{self.BASE}/api/v2/pacient/ztotoznihromadne/vykonani",
+        ve swaggeru v2 má odpověď schéma s příponou „Interní" a **ve v3.0.0 už
+        vůbec není** (brána vrátí 404). Pro PZS flow není potřeba – zpracování
+        dávky spouští KRP automaticky po podání žádosti."""
+        if self.VERZE != "v2":
+            raise NotImplementedError(
+                f"KRP {self.VERZE} endpoint ztotoznihromadne/vykonani nemá – dávku "
+                "zpracovává automaticky po podání žádosti, stav sledujte přes "
+                "ztotozneni_stav()/ztotozneni_vysledky().")
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/ztotoznihromadne/vykonani",
                            self._envelope(ucel, {"idZadosti": id_zadosti}))
 
     def ztotozneni_vysledky(self, id_zadosti, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/pacient/ztotoznihromadne/vysledky",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/ztotoznihromadne/vysledky",
                            self._envelope(ucel, {"idZadosti": id_zadosti}))
 
     def ztotozneni_vysledky_soubor(self, id_zadosti, ucel="LECBA"):
         """Stažení výsledků jako souboru (base64Data). Nedokumentované chování:
         base64Data je ZIP archiv obsahující KRP_ZTOTOZNENI_<id>.JSON."""
-        return self.c.post(f"{self.BASE}/api/v2/pacient/ztotoznihromadne/vysledky/soubor",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/ztotoznihromadne/vysledky/soubor",
                            self._envelope(ucel, {"idZadosti": id_zadosti}))
 
     def ztotozneni_stav(self, id_zadosti, ucel="LECBA") -> dict:
@@ -1307,11 +1334,11 @@ class KRP:
             data["subjektId"] = subjekt_id
         if subjekt_typ:
             data["subjektTyp"] = subjekt_typ
-        return self.c.post(f"{self.BASE}/api/v2/notifikace/vyhledat/odber",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/vyhledat/odber",
                            self._envelope(ucel, data))
 
     def notifikace_zalozit(self, nastaveni, ucel="LECBA"):
-        return self.c.post(f"{self.BASE}/api/v2/notifikace/zalozit/odber",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/zalozit/odber",
                            self._envelope(ucel, nastaveni))
 
     def notifikace_zrusit(self, id_subskripce=None, subjekt_id=None, ucel="LECBA"):
@@ -1320,7 +1347,7 @@ class KRP:
             data["idSubskripce"] = id_subskripce
         if subjekt_id:
             data["subjektId"] = subjekt_id
-        return self.c.delete(f"{self.BASE}/api/v2/notifikace/zrusit/odber",
+        return self.c.delete(f"{self.BASE}/api/{self.VERZE}/notifikace/zrusit/odber",
                              self._envelope(ucel, data))
 
 

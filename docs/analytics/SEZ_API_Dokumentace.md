@@ -676,8 +676,14 @@ Každý endpoint existuje i v async variantě (`/api/signasync/document` atd.).
 ## 7. KRP PZS – Kmenový registr pacientů
 
 **Base URL:** `/krp`
-**OpenAPI:** 3.0.1 | **Verze:** v2.0.0
+**OpenAPI:** 3.0.1 | **Verze:** v2.0.0 (popis níže) – **provozovaná verze je v3** (`/krp/api/v3/…`)
 **Kontakt:** SLE01 – Kmenové registry, `csez@mzd.gov.cz`
+
+> **Upozornění (Novinky EZ, 27. 8. 2026):** NCEZ vypnul API KRP pro PZS v1 k 14. 8. 2026
+> a **k 15. 9. 2026 vypíná v1 i v2**. Cesty a tělo požadavků jsou u v2 a v3 shodné (liší se
+> jen prefix `/api/v3`; ve v3.0.0 není `ztotoznihromadne/vykonani`), proto níže uvedené
+> příklady platí i pro v3 po nahrazení prefixu. Klient v tomto repozitáři volá v3
+> (`SEZ_KRP_VERZE`, IRIS `SEZ.API.KRP` Parameter `APIVERZE`).
 
 ### Endpointy – Pacient (výběr)
 
