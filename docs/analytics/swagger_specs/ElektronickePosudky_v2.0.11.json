@@ -1,0 +1,2268 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Elektronicke posudky",
+    "description": "  Interní API systému ELP (Elektronické lékařské posudky) – určeno pro Národní portál, EZKartu a interní aplikace.\n\n  <details>\n      <summary><strong>Verze 2.0.11</strong></summary>\n      <br />\n      <p><strong>Změny:</strong></p>\n      <ul>\n          <li>Zapnuti validace PZS k vystavení posudků (kontrola na odbornost).</li>\n          <li>Uložení kontextu dat k době založení posudku (číslo dokladu, adresa, název poskytovatele atd. se zobrazuji dle stavu platnosti v době založení posudků, nezobrazuje se jejich aktuální stav dle registrů).</li>\n      </ul>\n  </details>\n\n  <details>\n      <summary><strong>Verze 2.0.10</strong></summary>\n      <br />\n      <p><strong>Změny:</strong></p>\n      <ul>\n          <li>Vypnutí validace pro vyplnění data platnosti posudku.</li>\n      </ul>\n  </details>\n\n  <details>\n      <summary><strong>Verze 2.0.9</strong></summary>\n      <br />\n      <p><strong>Změny:</strong></p>\n      <ul>\n          <li>Doplněn nový interní endpoint pro offline validaci posudku podle množiny zadaných informací. Offline validace vrací stavové informace, zda byl posudek nalezen a zda je platný a textový popis platnosti posudku.</li>\n      </ul>\n  </details>\n\n  <details>\n      <summary><strong>Verze 2.0.8</strong></summary>\n      <br />\n      <p><strong>Změny:</strong></p>\n      <ul>\n          <li>Doplněn nový interní endpoint pro online validaci posudku podle jednoznačného identifikátoru (GUID). Online validace vrací výhradně stavové informace, zda byl posudek nalezen a zda je platný.</li>\n      </ul>\n  </details>\n\n  <details>\n      <summary><strong>Verze 2.0.7</strong></summary>\n      <br />\n      <p><strong>Změny:</strong></p>\n      <ul>\n          <li>Doplněny validační kontroly pro datum vystavení posudku (nesmí být v budoucnosti a může být maximálně 3 dny zpětně).</li>\n          <li>Doplněny validační kontroly pro datum platnosti posudku (nesmí být v minulosti, nesmí být menší než datum vystavení a může být maximálně 100 let od data vystavení).</li>\n          <li>Doplněna validační kontrola pro osoby starší 70 let – datum platnosti posudku musí být uvedeno a může být maximálně 2 roky od data vystavení.</li>\n          <li>Doplněna validační kontrola formátu datových položek typu datum.</li>\n          <li>Doplněna validační kontrola délky doplňujícího textu (max. 300 znaků).</li>\n          <li>Doplněna validační kontrola vazby mezi skupinou posudku a skupinami ŘO.</li>\n          <li>Doplněna validační kontrola, že každá podmínka způsobilosti musí být přiřazena alespoň k jedné skupině ŘO.</li>\n          <li>Doplněna validační kontrola pro výsledek „způsobilý s podmínkou“ – musí být uveden alespoň jeden harmonizovaný nebo národní kód.</li>\n          <li>Doplněna validační kontrola typu akce – typ akce musí odpovídat volané operaci.</li>\n          <li>Doplněna validační kontrola, že zneplatnění posudku může provést pouze poskytovatel zdravotních služeb, který posudek vystavil.</li>\n          <li>Doplněna validační kontrola pro stažení PDF – PDF lze stáhnout pouze pro platný posudek (platný stav i datum).</li>\n          <li>Zpřesněny a sjednoceny validační chybové hlášky včetně lokalizace.</li>\n      </ul>\n  </details>\n\n  <details>\n      <summary><strong>Verze 2.0.6</strong></summary>\n      <br />\n      <p><strong>Změny:</strong></p>\n      <ul>\n          <li>U API pro zneplatnění a zpochybnění se v případě uvedení národních kódů nevracela skupina RO, pro kterou bylo omezení zadáno.</li>\n          <li>U API pro zobrazení detailu posudku se v případě uvedení národních kódů nevracela skupina RO, pro kterou bylo omezení zadáno.</li>\n          <li>U API pro vyhledání posudku se v případě uvedení národních kódů nevracela informace o národním kódu (kód) a skupina RO, pro kterou bylo omezení zadáno.</li>\n      </ul>\n  </details>",
+    "version": "v2.0.11"
+  },
+  "servers": [
+    {
+      "url": "/elektronickePosudky"
+    }
+  ],
+  "paths": {
+    "/api/v2/ciselniky": {
+      "get": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "summary": "Vrátí seznam všech číselníků evidovaných v systému ELP.",
+        "description": "Tato operace načte kompletní seznam číselníků dostupných v systému Elektronických lékařských posudků (ELP).\r\nKaždý číselník obsahuje základní identifikaci (kód, verzi, platnost) a lokalizované překlady názvu a popisu.",
+        "parameters": [
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "12d93adf-2054-4cc6-8580-60890c4dbcb2"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Úspěch – seznam všech číselníků byl úspěšně načten.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CiselnikDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neplatný požadavek – chybí povinné parametry nebo obsahuje neplatná data.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "cc4fdc67-f733-4cdb-9ffc-bbcf684367d3",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Neautorizovaný přístup – chybí nebo je neplatný přístupový token.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "b6d86613-8db2-4332-ae18-60c490efdeab"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Zakázáno – volající uživatel nemá oprávnění k zobrazení číselníků.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "ef7bcd52-595e-4dc2-b5e2-7575361f6aa3"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Timeout – požadavek trval příliš dlouho a byl ukončen.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "5a6f513c-2032-4064-8b17-711845fc2405"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Interní chyba serveru – došlo k neočekávané výjimce při zpracování požadavku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "ad3929fa-769b-4cb5-9a55-89284e78acd2",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/ciselniky/{kod}/polozky": {
+      "get": {
+        "tags": [
+          "Ciselniky"
+        ],
+        "summary": "Vrátí seznam všech položek daného číselníku podle jeho kódu.",
+        "description": "Tato operace načte všechny položky číselníku identifikovaného parametrem `kod`.\r\n\r\nKaždá položka obsahuje svůj kód, případně hierarchický vztah (rodičovský prvek),\r\na lokalizované překlady názvu a popisu.\r\n\r\nVýstup je vhodný pro klientské aplikace, které potřebují dynamicky zobrazovat hodnoty\r\njednotlivých číselníků (např. typy akcí, zdravotní omezení apod.).",
+        "parameters": [
+          {
+            "name": "kod",
+            "in": "path",
+            "description": "Kód číselníku, jehož položky se mají načíst (např. „AKCE-RO“).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "604003c2-cc02-4d11-a28f-358ca07d928a"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Úspěch – seznam položek číselníku byl úspěšně načten.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CiselnikPolozkaDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neplatný požadavek – chybí povinný parametr nebo obsahuje neplatnou hodnotu.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "1d01afdd-a5f7-4c57-b2e8-43d6841f6d77",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Neautorizovaný přístup – chybí nebo je neplatný přístupový token.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "668710aa-377b-4e00-a4aa-f03a318e5ea3"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Zakázáno – volající uživatel nemá oprávnění k zobrazení položek číselníku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "bf7235da-d0b3-4439-875a-c0ab791863ff"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Timeout – požadavek trval příliš dlouho a byl ukončen.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "10be469f-187f-4aa9-84d4-ef87f5879b15"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Interní chyba serveru – došlo k neočekávané chybě při zpracování požadavku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "21897841-43c3-42ec-b179-d36f7ded3944",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni/{id}/zneplatnit": {
+      "patch": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Zneplatní (invaliduje) lékařský posudek pro řidičské oprávnění podle jeho jednoznačného identifikátoru.",
+        "description": "Endpoint provede označení posudku jako <b>zneplatněného</b>.\r\nOperace nemění ani nemaže původní data, pouze aktualizuje stav posudku\r\n(např. přechod do stavu `ZNEPLATNENY` v číselníku stavů posudků).\r\n            \r\nTypickým důvodem zneplatnění je uživatelská akce při chybně vystaveném\r\nnebo duplicitním posudku.\r\n            \r\nPokud posudek s daným identifikátorem neexistuje, vrátí odpověď `404 Not Found`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Jednoznačný identifikátor posudku (GUID).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "deb9262e-7ea0-4662-98c6-4a23620e9b51"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag předchozí verze záznamu (pro ochranu proti přepsání). Povinné pro PATCH, PUT a DELETE.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "AAAAAAAAB+8="
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Posudek byl úspěšně zneplatněn a vrácen v aktuálním stavu.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosudekRoDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neplatný požadavek (např. nevalidní formát GUID nebo neplatný stav).",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "bb0fb7ec-9c65-4930-9acf-c930d388d5b9",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Uživatel není autentizován (chybí nebo je neplatný token).",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "ca000e54-6c4a-4413-8ff8-8631de2bc60f"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Uživatel nemá oprávnění ke zneplatnění tohoto posudku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "e791e760-52b1-43b2-9409-6e5142f0257e"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Posudek s daným identifikátorem nebyl nalezen.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/not-found",
+                  "title": "Zdroj nebyl nalezen",
+                  "status": 404,
+                  "detail": "Požadovaný posudek nebyl nalezen.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "994ceb57-b739-4721-8c97-cc3da8383fa1"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Požadavek vypršel z důvodu překročení časového limitu.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "c52f0669-1ea9-4fe9-9e79-285f48063a7d"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Došlo ke konfliktu při zneplatnění (např. posudek je již uzavřen nebo zneplatněn).",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/conflict",
+                  "title": "Konflikt dat",
+                  "status": 409,
+                  "detail": "Došlo ke konfliktu – záznam již existuje nebo byl mezitím změněn.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "551984b3-737a-4cdb-9bea-ecabd9550e9a"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Došlo k interní chybě serveru.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "5fa1c25a-34b6-4c28-a88f-26eace33e4ef",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni/{id}": {
+      "get": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Načte detail lékařského posudku pro řidičské oprávnění podle jeho jednoznačného identifikátoru.",
+        "description": "Endpoint vrací kompletní strukturu posudku.\r\n            \r\nPokud posudek s daným identifikátorem neexistuje, vrátí odpověď `404 Not Found`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Jednoznačný identifikátor posudku (GUID).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "50dff10a-3bf5-4bc3-a2b6-6cfa8e170805"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Posudek byl nalezen a úspěšně vrácen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosudekRoDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neplatný požadavek (např. špatný formát GUID).",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "d94729ff-40c5-4285-907d-c2cca5e4a527",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Uživatel není autentizován (chybí nebo je neplatný token).",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "533db2eb-2873-4926-b430-d9665afeae41"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Uživatel nemá oprávnění přistupovat k tomuto záznamu.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "d1ce4c96-be6b-4db9-84a4-2152d7340b32"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Posudek s daným identifikátorem nebyl nalezen.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/not-found",
+                  "title": "Zdroj nebyl nalezen",
+                  "status": 404,
+                  "detail": "Požadovaný posudek nebyl nalezen.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "f06f8314-233e-4e40-aeea-8015a7fdc87e"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Požadavek vypršel z důvodu překročení časového limitu.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "9eb32e2a-c596-44e9-b749-c55e141207e2"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Došlo k interní chybě serveru.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "f4eca3d8-8f24-44f3-9a04-b0f3ce7973b5",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni": {
+      "post": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Uloží nový posudek řidičského oprávnění.",
+        "description": "Slouží k založení nového lékařského posudku pro řidičské oprávnění.",
+        "parameters": [
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "a3148ac2-ad6f-496e-b3eb-9f1ed8f49dc5"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Vstupní data posudku",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosudekRoCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Posudek byl úspěšně uložen. Vrací detail nového záznamu.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosudekRoCreateResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Požadavek je neplatný nebo nelze zpracovat.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "f6741846-f705-405d-a310-75d8b1bf9f24",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chybí nebo je neplatný přístupový token.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "677f2dbb-3241-4186-bd5c-f46cb04480f4"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Lékař nemá oprávnění k vystavení tohoto typu posudku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "a62256e2-5e31-482c-9237-f644a4437d46"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Požadavek trval příliš dlouho.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "739f5f52-aaf3-455b-8dd1-c37c2041a349"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Došlo k neočekávané chybě při zpracování požadavku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "74fa0d51-298c-4899-854e-fd982f363326",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Stáhne PDF podobu posudku podle jeho identifikátoru.",
+        "description": "Endpoint vrací binární PDF soubor s hlavičkou `Content-Disposition`,\r\nkterý může být zobrazen nebo uložen v rámci portálu.\r\nPokud PDF není k dispozici, vrací chybu `404 Not Found`.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Jednoznačný identifikátor posudku (GUID).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "531037c5-7a86-4876-9854-3622b74a0753"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF soubor posudku byl nalezen a vrácen.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Požadavek je neplatný nebo obsahuje chybné údaje.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "5703427e-8d3e-4005-bcda-3d9bfa4c3049",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chybí nebo je neplatný přístupový token.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "5364c398-bb0f-446e-9a35-a4d728b47c6d"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Uživatel nemá oprávnění ke stažení pdf.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "9df8bba5-62ed-44fb-bde8-a21f1c2bec86"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Posudek nebo PDF soubor nebyl nalezen.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/not-found",
+                  "title": "Zdroj nebyl nalezen",
+                  "status": 404,
+                  "detail": "Požadovaný posudek nebyl nalezen.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "56f695ad-12de-4e65-983e-0ea2883b61ec"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Požadavek byl zrušen nebo vypršel časový limit.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "d6bf148a-4338-4018-a500-a1adf3b10a12"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Došlo k interní chybě serveru.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "747fe267-d056-4652-b99d-a3aecebdc31f",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni/vyhledat": {
+      "post": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Vrátí stránkovaný seznam posudků pro řidičské oprávnění,\r\nvolitelně filtrován podle RID, data vystavení, stavu a dalších parametrů.",
+        "description": "Endpoint implementuje filtrování, řazení a stránkování dle EZ integračního standardu.",
+        "parameters": [
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "f9cc80d2-a1d0-4272-8f34-50076cc85b42"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosudkyRoSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosudekRoDetailDtoPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "ebed3640-dc3a-4b9d-a8a1-07a709633a0c",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "3c76295c-c112-490c-89a8-e1cf918424d6"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "5df3b7dd-29ad-49dc-9a11-746045378176"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Request Timeout",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "669f8754-3e99-4e5d-b702-1ca3b184138d"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "28496e18-fcb7-44b2-b6d0-7a15c632dcfa",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni/{id}/historie": {
+      "get": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Načte historii změn lékařského posudku ŘO na základě jeho identifikátoru.",
+        "description": "Historie obsahuje jednotlivé operace provedené nad posudkem, jako je\r\nvytvoření, aktualizace nebo zneplatnění.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Jedinečný identifikátor posudku ŘO, jehož historii vracíme.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "a1e98e0d-c0ad-4115-8540-8755c98472df"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosudekRoHistorieDetailDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "96ce93bb-ba5c-4dd9-a29f-a38ca694237f",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "e87b6ae5-f598-4186-81be-469d7ec18b86"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "280a153e-5c82-4499-a464-ebf4aafe1907"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Request Timeout",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "5b3496ac-e0b1-40d7-936d-b1b98f131221"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "01dd72ed-4b30-486f-95d5-f8768cf3327c",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/posudky/ridicskeOpravneni/zalozeni/opravneni": {
+      "post": {
+        "tags": [
+          "Ridicske opravneni"
+        ],
+        "summary": "Ověří, zda je zdravotnický pracovník oprávněn založit posudek řidičského oprávnění.",
+        "description": "Slouží k ověření oprávnění pracovníka (KRZP ID) pod konkrétním poskytovatelem (IČO)\r\nk založení nového lékařského posudku.",
+        "parameters": [
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
+            "schema": {
+              "type": "string",
+              "example": "7056ef00-28a2-4bb1-ba15-ec8aa16164db"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "description": "Preferovaný jazyk odpovědi (např. cs, en, de).",
+            "schema": {
+              "type": "string",
+              "example": "cs"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Vstupní data obsahující IČO a KRZP ID pracovníka.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosudekRoOpravneniRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vrací true nebo false podle oprávnění pracovníka.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosudekRoOpravneniResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Požadavek je neplatný nebo nelze zpracovat.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/validation",
+                  "title": "Neplatný vstupní parametr",
+                  "status": 400,
+                  "detail": "Některé položky vstupu neprošly validací.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "57b92010-ad69-42c7-85ec-8d095e302f69",
+                  "errors": [
+                    {
+                      "field": "rid",
+                      "message": "Hodnota RID musí mít 10 znaků."
+                    },
+                    {
+                      "field": "druhProhlidky",
+                      "message": "Neplatná hodnota číselníku."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chybí nebo je neplatný přístupový token.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/unauthorized",
+                  "title": "Neautorizováno",
+                  "status": 401,
+                  "detail": "Chybí nebo je neplatný přístupový token.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "57994758-4da2-4f77-b28b-aaac50029510"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přístup k ověření oprávnění není povolen.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/forbidden",
+                  "title": "Zakázaná operace",
+                  "status": 403,
+                  "detail": "Uživatel nemá oprávnění k této akci.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "4bdefc2d-17e0-434e-a69f-db9cfef2b9f8"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Požadavek trval příliš dlouho.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/request-timeout",
+                  "title": "Časový limit vypršel",
+                  "status": 408,
+                  "detail": "Server čekal příliš dlouho na odpověď klienta.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "e23cc938-07ea-4e9a-a8a9-b6d6105be0e5"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Došlo k neočekávané chybě při zpracování požadavku.",
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "type": "https://api.elp.cz/errors/internal",
+                  "title": "Neočekávaná chyba serveru",
+                  "status": 500,
+                  "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
+                  "instance": "/api/v1/posudky/ridicskeOpravneni",
+                  "correlationId": "4d0fb21d-fb1b-4e8e-94aa-bb055c0dc207",
+                  "errors": [
+                    {
+                      "field": "exception.type",
+                      "message": "System.NullReferenceException"
+                    },
+                    {
+                      "field": "exception.message",
+                      "message": "Object reference not set to an instance of an object."
+                    },
+                    {
+                      "field": "stacktrace",
+                      "message": "ELP.API.Internal.Controllers.PosudekController.Create (line 85)"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CiselnikDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "verze": {
+            "type": "string",
+            "nullable": true
+          },
+          "platnostOd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "termx": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "termxId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termxUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "preklady": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TranslationDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CiselnikPolozkaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "verze": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodicId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "preklady": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TranslationDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CiselnikPolozkaWithTranslationsDto": {
+        "type": "object",
+        "properties": {
+          "ciselnikKod": {
+            "type": "string",
+            "nullable": true
+          },
+          "ciselnikVerze": {
+            "type": "string",
+            "nullable": true
+          },
+          "polozkaKod": {
+            "type": "string",
+            "nullable": true
+          },
+          "preklady": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TranslationDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PacientDto": {
+        "required": [
+          "rid"
+        ],
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumNarozeni": {
+            "type": "string",
+            "format": "date"
+          },
+          "adresa": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "doklad": {
+            "type": "string",
+            "nullable": true
+          },
+          "pohlavi": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PoskytovatelZdravotnickychSluzebDetailDto": {
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "adresa": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoCiselnikPolozkaCreateDto": {
+        "type": "object",
+        "properties": {
+          "kod": {
+            "type": "string",
+            "nullable": true
+          },
+          "verze": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoCreateDto": {
+        "required": [
+          "datumVystaveni",
+          "druhPosudku",
+          "druhProhlidky",
+          "krzpId",
+          "rid",
+          "stavPosudku",
+          "typAkce",
+          "zpusobilosti"
+        ],
+        "type": "object",
+        "properties": {
+          "rid": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
+          "krzpId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "typAkce": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "stavPosudku": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "druhProhlidky": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "druhPosudku": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "datumVystaveni": {
+            "type": "string",
+            "format": "date"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "opakovanyPosudekId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "zpusobilosti": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoZpusobilostCreateDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoCreateResultDto": {
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "$ref": "#/components/schemas/PosudekRoHlavickaDetailDto"
+          },
+          "zpusobilosti": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoSkupinaZpusobilostDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pacient": {
+            "$ref": "#/components/schemas/PacientDto"
+          },
+          "zdravotnickyPracovnik": {
+            "$ref": "#/components/schemas/ZdravotnickyPracovnikDetailDto"
+          },
+          "poskytovatelZdravotnickychSluzeb": {
+            "$ref": "#/components/schemas/PoskytovatelZdravotnickychSluzebDetailDto"
+          },
+          "odbornostLekare": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "stavPosudku": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "druhProhlidky": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "druhPosudku": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "vysledek": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "skupinaZadatelRidic": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "datumVystaveni": {
+            "type": "string",
+            "format": "date"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "skupinyRidicskehoOpravneni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoSkupinaDetailDto"
+            },
+            "nullable": true
+          },
+          "harmonizovaneKody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoHarmonizovanyKodDetailDto"
+            },
+            "nullable": true
+          },
+          "narodniKody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoNarodniKodDetailDto"
+            },
+            "nullable": true
+          },
+          "verzeZaznamu": {
+            "type": "string",
+            "nullable": true
+          },
+          "pdfArchiveComponentId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoDetailDtoPageResponse": {
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoDetailDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoHarmonizovanyKodCreateDto": {
+        "required": [
+          "harmonizovanyKod"
+        ],
+        "type": "object",
+        "properties": {
+          "harmonizovanyKod": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "skupinaRo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+            },
+            "nullable": true
+          },
+          "upresneniText": {
+            "maxLength": 300,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoHarmonizovanyKodDetailDto": {
+        "type": "object",
+        "properties": {
+          "harmonizovanyKod": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "skupinaRo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+            },
+            "nullable": true
+          },
+          "upresneniKod": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "upresneniText": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoHistorieDetailDto": {
+        "type": "object",
+        "properties": {
+          "typOperace": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "datumOperace": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lekar": {
+            "$ref": "#/components/schemas/ZdravotnickyPracovnikDetailDto"
+          },
+          "poskytovatel": {
+            "$ref": "#/components/schemas/PoskytovatelZdravotnickychSluzebDetailDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoHlavickaDetailDto": {
+        "type": "object",
+        "properties": {
+          "pacient": {
+            "$ref": "#/components/schemas/PacientDto"
+          },
+          "zdravotnickyPracovnik": {
+            "$ref": "#/components/schemas/ZdravotnickyPracovnikDetailDto"
+          },
+          "poskytovatelZdravotnickychSluzeb": {
+            "$ref": "#/components/schemas/PoskytovatelZdravotnickychSluzebDetailDto"
+          },
+          "odbornostLekare": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "stavPosudku": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "druhProhlidky": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "druhPosudku": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "datumVystaveni": {
+            "type": "string",
+            "format": "date"
+          },
+          "platnostDo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoNarodniKodCreateDto": {
+        "required": [
+          "narodniKod",
+          "skupinaRo"
+        ],
+        "type": "object",
+        "properties": {
+          "narodniKod": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "skupinaRo": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "upresneniText": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoNarodniKodDetailDto": {
+        "type": "object",
+        "properties": {
+          "narodniKod": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "skupinaRo": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "upresneniText": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoOpravneniRequestDto": {
+        "type": "object",
+        "properties": {
+          "ico": {
+            "type": "string",
+            "nullable": true
+          },
+          "krzpId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoOpravneniResponseDto": {
+        "type": "object",
+        "properties": {
+          "opravneni": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoSkupinaCreateDto": {
+        "required": [
+          "skupinaRo"
+        ],
+        "type": "object",
+        "properties": {
+          "skupinaRo": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoSkupinaDetailDto": {
+        "type": "object",
+        "properties": {
+          "skupinaRo": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoSkupinaZpusobilostDto": {
+        "type": "object",
+        "properties": {
+          "posudekId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "skupinaZadateleRidic": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "skupinyRidicskehoOpravneni": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoSkupinaDetailDto"
+            },
+            "nullable": true
+          },
+          "vysledek": {
+            "$ref": "#/components/schemas/CiselnikPolozkaWithTranslationsDto"
+          },
+          "harmonizovaneKody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoHarmonizovanyKodDetailDto"
+            },
+            "nullable": true
+          },
+          "narodniKody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoNarodniKodDetailDto"
+            },
+            "nullable": true
+          },
+          "verzeZaznamu": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudekRoZpusobilostCreateDto": {
+        "required": [
+          "skupinaZadateleRidic",
+          "skupinyRidicskehoOpravneni",
+          "vysledek"
+        ],
+        "type": "object",
+        "properties": {
+          "skupinaZadateleRidic": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "skupinyRidicskehoOpravneni": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoSkupinaCreateDto"
+            }
+          },
+          "vysledek": {
+            "$ref": "#/components/schemas/PosudekRoCiselnikPolozkaCreateDto"
+          },
+          "harmonizovaneKody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoHarmonizovanyKodCreateDto"
+            },
+            "nullable": true
+          },
+          "narodniKody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosudekRoNarodniKodCreateDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PosudkyRoSearchRequest": {
+        "type": "object",
+        "properties": {
+          "rid": {
+            "type": "string",
+            "nullable": true
+          },
+          "datumOd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "jenPlatne": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "stavPosudku": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "fulltext": {
+            "type": "string",
+            "nullable": true
+          },
+          "ico": {
+            "type": "string",
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetailsBase": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetailsExtended": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProblemFieldError"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemFieldError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TranslationDto": {
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "type": "string",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZdravotnickyPracovnikDetailDto": {
+        "required": [
+          "krzpId"
+        ],
+        "type": "object",
+        "properties": {
+          "krzpId": {
+            "type": "string",
+            "nullable": true
+          },
+          "titulPred": {
+            "type": "string",
+            "nullable": true
+          },
+          "jmeno": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijmeni": {
+            "type": "string",
+            "nullable": true
+          },
+          "titulZa": {
+            "type": "string",
+            "nullable": true
+          },
+          "odbornost": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Ciselniky",
+      "description": "Externí API pro číselníky systému ELP."
+    },
+    {
+      "name": "Ridicske opravneni",
+      "description": "Externí API pro správu lékařských posudků pro řidičská oprávnění."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "resourceType" : "ServiceRequest",
+  "id" : "5ab3e344-4d0c-4786-bab2-7dd0d7b60cd9",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/img-order/StructureDefinition/cz-imagingOrderInformation"]
+  },
+  "language" : "en",
+  "text" : {
+    "status" : "additional",
+    "div" : "<div xml:lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">RTG Požadované vyšetření: Kyčel pravý</div>"
+  },
+  "identifier" : [{
+    "system" : "http://hospital.org/ris-order",
+    "value" : "6609024"
+  }],
+  "status" : "active",
+  "intent" : "order",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "363679005",
+      "display" : "Imaging"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "168537006",
+      "display" : "Plain X-ray"
+    }]
+  },
+  "orderDetail" : [{
+    "coding" : [{
+      "system" : "http://dicom.nema.org/resources/ontology/DCM",
+      "code" : "DX",
+      "display" : "Digital Radiography"
+    }]
+  }],
+  "subject" : {
+    "reference" : "urn:uuid:dd800c46-f71a-4628-b457-6ccaa27dd6bc"
+  },
+  "authoredOn" : "2025-05-20T12:02:00+01:00",
+  "requester" : {
+    "reference" : "urn:uuid:984dcf34-1924-45a8-8ec5-3d100b67d9be"
+  },
+  "performer" : [{
+    "reference" : "urn:uuid:e33c93c6-3dd0-4595-9f15-63b9302861d1"
+  }],
+  "reasonReference" : [{
+    "reference" : "urn:uuid:8ca719d9-da84-4bc0-a7da-860eac1347ce"
+  }],
+  "insurance" : [{
+    "reference" : "urn:uuid:92fcdc96-95c0-4cc9-9857-afee3bed913c"
+  }],
+  "supportingInfo" : [{
+    "reference" : "urn:uuid:e0861d9f-4b04-465f-b15b-cb01e3a8b677"
+  },
+  {
+    "reference" : "urn:uuid:4a38a57a-fdfe-48df-802c-8d7e8e3e1a3b"
+  },
+  {
+    "reference" : "urn:uuid:d70a725d-baa9-4553-a670-2609b0c0219f"
+  }],
+  "bodySite" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "287579007",
+      "display" : "Right hip"
+    }]
+  }]
+}

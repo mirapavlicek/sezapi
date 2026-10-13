@@ -207,7 +207,11 @@ def test_api_validovat_vlastni_json():
     assert bad["valid"] is False and bad["errors"]
 
 
-def test_api_odeslat_du_bez_pripojeni():
+def test_api_odeslat_du_bez_pripojeni(monkeypatch):
+    # Offline sada nesmí záviset na platném certifikátu v .env (jinak by test
+    # skutečně odeslal zásilku do DÚ na T2) – odpojení vynutíme.
+    import sez_api.app as app_mod
+    monkeypatch.setattr(app_mod, "_connected", False)
     r = _client().post("/api/zpravy/odeslat-du", json={"kategorie": "vyjezd-zzs"})
     assert r.status_code == 503
 

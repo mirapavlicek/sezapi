@@ -128,7 +128,11 @@ def test_api_povinne_scenare():
     assert "444/2024" in ezd["vyjezd-zzs"]["legislativa"]
 
 
-def test_api_protokol_bez_pripojeni_503():
+def test_api_protokol_bez_pripojeni_503(monkeypatch):
+    # Nezávisle na tom, zda jiný test (TestClient se startup eventem) připojil
+    # klienta k T2 – protokol se nesmí spustit živě.
+    import sez_api.app as app_mod
+    monkeypatch.setattr(app_mod, "_connected", False)
     r = _client().post("/api/irop/protokol", json={})
     assert r.status_code == 503
 

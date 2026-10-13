@@ -1,0 +1,728 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "BundleFTCopdHomeCare",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/BundleOrderCz"]
+  },
+  "language" : "cs",
+  "identifier" : {
+    "system" : "https://example.org/fhir/Document",
+    "value" : "FTCOPD-2026-0001"
+  },
+  "type" : "document",
+  "timestamp" : "2026-09-04T10:20:00+02:00",
+  "entry" : [{
+    "fullUrl" : "https://example.org/fhir/Composition/FTCompositionCopdHomeCare",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "FTCompositionCopdHomeCare",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/ft-order-composition-cz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_FTCompositionCopdHomeCare\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition FTCompositionCopdHomeCare</b></p><a name=\"FTCompositionCopdHomeCare\"> </a><a name=\"hcFTCompositionCopdHomeCare\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-ft-order-composition-cz.html\">Composition: FT-order (Zadanka fyzioterapie) (CZ)</a></p></div><p><b>identifier</b>: 6a77187d-7e74-4fce-b604-bad9b2840202</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57154-7}\">žádanka o fyzioterapii</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-04 10:20:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-PractitionerRole-Pulmonologist.html\">MUDr. Jana Novakova (https://ncez.mzcr.cz/fhir/sid/krzp#100000002): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice U Javoru, a.s. - pneumologicka ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345695)</a></p><p><b>title</b>: Respirační fyzioterapie u pacienta s CHOPN</p></div>"
+      },
+      "identifier" : {
+        "value" : "6a77187d-7e74-4fce-b604-bad9b2840202"
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57154-7"
+        }],
+        "text" : "žádanka o fyzioterapii"
+      },
+      "category" : [{
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }]
+      }],
+      "subject" : {
+        "reference" : "Patient/Patient-FTCopdHomeCare"
+      },
+      "date" : "2026-09-04T10:20:00+02:00",
+      "author" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Pulmonologist"
+      }],
+      "title" : "Respirační fyzioterapie u pacienta s CHOPN",
+      "section" : [{
+        "title" : "Requested physiotherapy procedures",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "57154-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Požadována fyzioterapie hrudníku a respirační expanzní cvičení v domácím prostředí pacienta: deset procedur, dvakrát týdně.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "ServiceRequest/FTServiceRequest-CopdChestPhysiotherapy"
+        }]
+      },
+      {
+        "title" : "Clinical indication and question",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "104720-8"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\">CHOPN u imobilního pacienta na dlouhodobé domácí oxygenoterapii. Požadováno deset procedur dvakrát týdně v domácím prostředí pacienta.</div>"
+        }
+      },
+      {
+        "title" : "Cíle terapie",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "61146-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Zlepšení odkašlávání a nácvik dechových technik v domácím prostředí.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Goal/Goal-FTCopdRespiratory"
+        }]
+      },
+      {
+        "title" : "coverage",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "87520-3"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Zdravotní pojišťovna: 111.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Coverage/Coverage-FTCopdHomeCare"
+        }]
+      },
+      {
+        "title" : "Podpůrné klinické informace",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "55752-0"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Hodnocení mobility ze dne 4. září 2026: pacient dokáže vstát.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Observation/Observation-FTCopdMobility"
+        }]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Patient/Patient-FTCopdHomeCare",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "Patient-FTCopdHomeCare",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Patient_Patient-FTCopdHomeCare\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient Patient-FTCopdHomeCare</b></p><a name=\"Patient-FTCopdHomeCare\"> </a><a name=\"hcPatient-FTCopdHomeCare\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-patient-core.html\">Patient (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Josef Kratochvil  Male, DoB: 1947-11-03 ( https://ncez.mzcr.cz/fhir/sid/rcis#4711031234)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/rid</code>/1000000102\u00a0(use:\u00a0official)</li><li><code>https://ncez.mzcr.cz/fhir/sid/cpoj</code>/1114711031234</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420777222333\">+420777222333</a></li><li><a href=\"mailto:josef.kratochvil@example.cz\">josef.kratochvil@example.cz</a></li><li>Javorová 12, 100 00 Praha 10(home)</li><li>U Parku 6, 100 00 Praha 10(work)</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Language spoken\">Language:</td><td colspan=\"3\"><span title=\"Codes:{urn:ietf:bcp:47 cs}\">čeština</span> (preferred)</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Patient Links\">Links:</td><td colspan=\"3\"><ul><li>General Practitioner: <a href=\"PractitionerRole-PractitionerRole-FTGeneralPractitioner.html\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></li><li>Managing Organization: <a href=\"Organization-af2b3114-e872-43b9-9875-cceb39122f7f.html\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The registered place of birth of the patient. A sytem may use the address.text if they don't store the birthPlace address in discrete elements.\"><a href=\"http://hl7.org/fhir/extensions/5.3.0/StructureDefinition-patient-birthPlace.html\">Patient Birth Place</a></td><td colspan=\"3\">Pardubice CZ </td></tr><tr><td style=\"background-color: #f3f5da\" title=\"This extension allows the registration of the registering healthcare provider and its category/specialty (general practitioner for children and youth, general practitioner for adults, dentist, gynecologist).\">Registering provider:</td><td colspan=\"3\"><ul><li>value: <a href=\"PractitionerRole-PractitionerRole-FTGeneralPractitioner.html\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></li><li>category: <span title=\"Codes:{http://snomed.info/sct 700232004}\">služba - všeobecná lékařská péče</span></li></ul></td></tr></table></div>"
+      },
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
+        "valueAddress" : {
+          "city" : "Pardubice",
+          "country" : "CZ",
+          "_country" : {
+            "extension" : [{
+              "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+              "valueCoding" : {
+                "system" : "urn:iso:std:iso:3166",
+                "code" : "CZ",
+                "display" : "Czechia"
+              }
+            }]
+          }
+        }
+      },
+      {
+        "extension" : [{
+          "url" : "value",
+          "valueReference" : {
+            "reference" : "PractitionerRole/PractitionerRole-FTGeneralPractitioner"
+          }
+        },
+        {
+          "url" : "category",
+          "valueCodeableConcept" : {
+            "coding" : [{
+              "system" : "http://snomed.info/sct",
+              "version" : "http://snomed.info/sct/11000279109",
+              "code" : "700232004",
+              "display" : "služba - všeobecná lékařská péče"
+            }]
+          }
+        }],
+        "url" : "https://hl7.cz/fhir/core/StructureDefinition/registering-provider-cz"
+      }],
+      "identifier" : [{
+        "use" : "official",
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rid",
+        "value" : "1000000102"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rcis",
+        "value" : "4711031234"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/cpoj",
+        "value" : "1114711031234"
+      }],
+      "name" : [{
+        "family" : "Kratochvil",
+        "given" : ["Josef"]
+      }],
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420777222333",
+        "use" : "mobile"
+      },
+      {
+        "system" : "email",
+        "value" : "josef.kratochvil@example.cz"
+      }],
+      "gender" : "male",
+      "birthDate" : "1947-11-03",
+      "address" : [{
+        "use" : "home",
+        "type" : "physical",
+        "text" : "Javorová 12, 100 00 Praha 10",
+        "line" : ["Javorová 12"],
+        "city" : "Praha 10",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      },
+      {
+        "use" : "work",
+        "type" : "physical",
+        "text" : "U Parku 6, 100 00 Praha 10",
+        "line" : ["U Parku 6"],
+        "city" : "Praha 10",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }],
+      "communication" : [{
+        "language" : {
+          "coding" : [{
+            "system" : "urn:ietf:bcp:47",
+            "code" : "cs",
+            "display" : "Czech"
+          }],
+          "text" : "čeština"
+        },
+        "preferred" : true
+      }],
+      "generalPractitioner" : [{
+        "reference" : "PractitionerRole/PractitionerRole-FTGeneralPractitioner"
+      }],
+      "managingOrganization" : {
+        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a</b></p><a name=\"a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><a name=\"hca81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000001"
+      }],
+      "name" : [{
+        "text" : "MUDr. Ivan Andel",
+        "family" : "Andel",
+        "given" : ["Ivan"]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/PractitionerRole/PractitionerRole-FTGeneralPractitioner",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "PractitionerRole-FTGeneralPractitioner",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-FTGeneralPractitioner\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-FTGeneralPractitioner</b></p><a name=\"PractitionerRole-FTGeneralPractitioner\"> </a><a name=\"hcPractitionerRole-FTGeneralPractitioner\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a.html\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-af2b3114-e872-43b9-9875-cceb39122f7f.html\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 001}\">Všeobecné praktické lékařství</span></td></tr></table></div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a"
+      },
+      "organization" : {
+        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "001",
+          "display" : "Pracoviště praktického lékaře pro dospělé"
+        }],
+        "text" : "Všeobecné praktické lékařství"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "af2b3114-e872-43b9-9875-cceb39122f7f",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization af2b3114-e872-43b9-9875-cceb39122f7f</b></p><a name=\"af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><a name=\"hcaf2b3114-e872-43b9-9875-cceb39122f7f\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001352</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123457\">+420800123457</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001352"
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123457",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ"
+            }
+          }]
+        }
+      }],
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Practitioner/Practitioner-Pulmonologist",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "Practitioner-Pulmonologist",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_Practitioner-Pulmonologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-Pulmonologist</b></p><a name=\"Practitioner-Pulmonologist\"> </a><a name=\"hcPractitioner-Pulmonologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Jana Novakova (https://ncez.mzcr.cz/fhir/sid/krzp#100000002)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000002"
+      }],
+      "name" : [{
+        "text" : "MUDr. Jana Novakova",
+        "family" : "Novakova",
+        "given" : ["Jana"]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/PractitionerRole/PractitionerRole-Pulmonologist",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "PractitionerRole-Pulmonologist",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-Pulmonologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Pulmonologist</b></p><a name=\"PractitionerRole-Pulmonologist\"> </a><a name=\"hcPractitionerRole-Pulmonologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Jana Novakova (https://ncez.mzcr.cz/fhir/sid/krzp#100000002): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice U Javoru, a.s. - pneumologicka ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345695)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-Practitioner-Pulmonologist.html\">MUDr. Jana Novakova (https://ncez.mzcr.cz/fhir/sid/krzp#100000002)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-Organization-PulmonologyClinic.html\">Nemocnice U Javoru, a.s. - pneumologicka ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345695)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 205}\">Pneumologie a ftizeologie</span></td></tr></table></div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/Practitioner-Pulmonologist"
+      },
+      "organization" : {
+        "reference" : "Organization/Organization-PulmonologyClinic"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "205",
+          "display" : "Pracoviště tuberkulózy a respiračních nemocí"
+        }],
+        "text" : "Pneumologie a ftizeologie"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-PulmonologyProvider",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-PulmonologyProvider",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-PulmonologyProvider\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-PulmonologyProvider</b></p><a name=\"Organization-PulmonologyProvider\"> </a><a name=\"hcOrganization-PulmonologyProvider\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice U Javoru, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000002)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345695</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42002000</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krpzs",
+        "value" : "100000002"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345695"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42002000"
+      }],
+      "type" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
+          "code" : "102",
+          "display" : "Nemocnice"
+        }]
+      }],
+      "name" : "Nemocnice U Javoru, a.s."
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-PulmonologyClinic",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-PulmonologyClinic",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-PulmonologyClinic\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-PulmonologyClinic</b></p><a name=\"Organization-PulmonologyClinic\"> </a><a name=\"hcOrganization-PulmonologyClinic\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice U Javoru, a.s. - pneumologicka ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345695)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-Organization-PulmonologyProvider.html\">Nemocnice U Javoru, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42002000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42002352</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345695"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42002000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42002352"
+      }],
+      "name" : "Nemocnice U Javoru, a.s. - pneumologicka ambulance",
+      "partOf" : {
+        "reference" : "Organization/Organization-PulmonologyProvider",
+        "display" : "Nemocnice U Javoru, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-Insurance111",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-Insurance111",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/kp",
+        "value" : "111"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345687"
+      }],
+      "name" : "Zdravotni pojistovna Modra reka"
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Coverage/Coverage-FTCopdHomeCare",
+    "resource" : {
+      "resourceType" : "Coverage",
+      "id" : "Coverage-FTCopdHomeCare",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_Coverage-FTCopdHomeCare\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage Coverage-FTCopdHomeCare</b></p><a name=\"Coverage-FTCopdHomeCare\"> </a><a name=\"hcCoverage-FTCopdHomeCare\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>identifier</b>: <code>https://ncez.mzcr.cz/fhir/sid/pojistovna</code>/111</p><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>beneficiary</b>: <a href=\"Patient-Patient-FTCopdHomeCare.html\">Josef Kratochvil  Male, DoB: 1947-11-03 ( https://ncez.mzcr.cz/fhir/sid/rcis#4711031234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/pojistovna",
+        "value" : "111"
+      }],
+      "status" : "active",
+      "type" : {
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code" : "HIP"
+        }]
+      },
+      "beneficiary" : {
+        "reference" : "Patient/Patient-FTCopdHomeCare"
+      },
+      "payor" : [{
+        "reference" : "Organization/Organization-Insurance111"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Condition/Condition-FTCopd",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "Condition-FTCopd",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_Condition-FTCopd\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition Condition-FTCopd</b></p><a name=\"Condition-FTCopd\"> </a><a name=\"hcCondition-FTCopd\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 J449}\">Chronická obstrukční plicní nemoc, NS</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTCopdHomeCare.html\">Josef Kratochvil  Male, DoB: 1947-11-03 ( https://ncez.mzcr.cz/fhir/sid/rcis#4711031234)</a></p></div>"
+      },
+      "code" : {
+        "coding" : [{
+          "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
+          "code" : "J449",
+          "display" : "Chronická obstrukční plicní nemoc NS"
+        }],
+        "text" : "Chronická obstrukční plicní nemoc, NS"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTCopdHomeCare"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/ServiceRequest/FTServiceRequest-CopdChestPhysiotherapy",
+    "resource" : {
+      "resourceType" : "ServiceRequest",
+      "id" : "FTServiceRequest-CopdChestPhysiotherapy",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/FTServiceRequestCz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_FTServiceRequest-CopdChestPhysiotherapy\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest FTServiceRequest-CopdChestPhysiotherapy</b></p><a name=\"FTServiceRequest-CopdChestPhysiotherapy\"> </a><a name=\"hcFTServiceRequest-CopdChestPhysiotherapy\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-FTServiceRequestCz.html\">FT (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/6a77187d-7e74-4fce-b604-bad9b2840201</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 34431008}, {http://snomed.info/sct 229286000}\">Fyzioterapie hrudníku a respirační expanzní cvičení</span></p><p><b>quantity</b>: 10 procedur</p><p><b>subject</b>: <a href=\"Patient-Patient-FTCopdHomeCare.html\">Josef Kratochvil  Male, DoB: 1947-11-03 ( https://ncez.mzcr.cz/fhir/sid/rcis#4711031234)</a></p><p><b>occurrence</b>: 2 per 1 week</p><p><b>authoredOn</b>: 2026-09-04 10:15:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-Pulmonologist.html\">MUDr. Jana Novakova (https://ncez.mzcr.cz/fhir/sid/krzp#100000002): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice U Javoru, a.s. - pneumologicka ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345695)</a></p><p><b>locationCode</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-RoleCode PTRES}\">Domácí prostředí pacienta</span></p><p><b>reasonReference</b>: <a href=\"Condition-Condition-FTCopd.html\">Condition Chronická obstrukční plicní nemoc, NS</a></p><p><b>insurance</b>: <a href=\"Coverage-Coverage-FTCopdHomeCare.html\">Coverage: identifier = https://ncez.mzcr.cz/fhir/sid/pojistovna#111; status = active; type = health insurance plan policy</a></p><p><b>supportingInfo</b>: <a href=\"Goal-Goal-FTCopdRespiratory.html\">Goal: lifecycleStatus = active; description = Zlepšení odkašlávání a nácvik dechových technik v domácím prostředí</a></p><p><b>note</b>: </p><blockquote><div><p>Pacient je imobilní a používá dlouhodobou domácí oxygenoterapii. Terapie se provádí v místě pobytu pacienta.</p>\n</div></blockquote></div>"
+      },
+      "identifier" : [{
+        "system" : "urn:ietf:rfc:4122",
+        "value" : "6a77187d-7e74-4fce-b604-bad9b2840201"
+      }],
+      "status" : "active",
+      "intent" : "order",
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "34431008",
+          "display" : "fyzioterapie hrudníku"
+        },
+        {
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "229286000",
+          "display" : "dýchací cvičení na rozvoj hrudníku"
+        }],
+        "text" : "Fyzioterapie hrudníku a respirační expanzní cvičení"
+      },
+      "quantityQuantity" : {
+        "value" : 10,
+        "unit" : "procedur"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTCopdHomeCare"
+      },
+      "occurrenceTiming" : {
+        "repeat" : {
+          "frequency" : 2,
+          "period" : 1,
+          "periodUnit" : "wk"
+        }
+      },
+      "authoredOn" : "2026-09-04T10:15:00+02:00",
+      "requester" : {
+        "reference" : "PractitionerRole/PractitionerRole-Pulmonologist"
+      },
+      "locationCode" : [{
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+          "code" : "PTRES",
+          "display" : "Patient's Residence"
+        }],
+        "text" : "Domácí prostředí pacienta"
+      }],
+      "reasonReference" : [{
+        "reference" : "Condition/Condition-FTCopd"
+      }],
+      "insurance" : [{
+        "reference" : "Coverage/Coverage-FTCopdHomeCare"
+      }],
+      "supportingInfo" : [{
+        "reference" : "Goal/Goal-FTCopdRespiratory"
+      }],
+      "note" : [{
+        "text" : "Pacient je imobilní a používá dlouhodobou domácí oxygenoterapii. Terapie se provádí v místě pobytu pacienta."
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Observation/Observation-FTCopdMobility",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "Observation-FTCopdMobility",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-patient-mobility"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Observation_Observation-FTCopdMobility\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Observation Observation-FTCopdMobility</b></p><a name=\"Observation-FTCopdMobility\"> </a><a name=\"hcObservation-FTCopdMobility\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-patient-mobility.html\">Patient mobility: General Order (CZ)</a></p></div><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category activity}\">Activity</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 282870005}\">Ability to stand up</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTCopdHomeCare.html\">Josef Kratochvil  Male, DoB: 1947-11-03 ( https://ncez.mzcr.cz/fhir/sid/rcis#4711031234)</a></p><p><b>effective</b>: 2026-09-04 10:00:00+0200</p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-Pulmonologist.html\">MUDr. Jana Novakova (https://ncez.mzcr.cz/fhir/sid/krzp#100000002): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice U Javoru, a.s. - pneumologicka ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345695)</a></p><p><b>value</b>: <span title=\"Codes:{http://snomed.info/sct 282873007}\">dokáže vstát</span></p></div>"
+      },
+      "status" : "final",
+      "category" : [{
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code" : "activity",
+          "display" : "Activity"
+        }]
+      }],
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "282870005",
+          "display" : "Ability to stand up"
+        }]
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTCopdHomeCare"
+      },
+      "effectiveDateTime" : "2026-09-04T10:00:00+02:00",
+      "performer" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Pulmonologist"
+      }],
+      "valueCodeableConcept" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "282873007",
+          "display" : "dokáže vstát"
+        }]
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Goal/Goal-FTCopdRespiratory",
+    "resource" : {
+      "resourceType" : "Goal",
+      "id" : "Goal-FTCopdRespiratory",
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Goal_Goal-FTCopdRespiratory\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Goal Goal-FTCopdRespiratory</b></p><a name=\"Goal-FTCopdRespiratory\"> </a><a name=\"hcGoal-FTCopdRespiratory\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p></div><p><b>lifecycleStatus</b>: Active</p><p><b>description</b>: <span title=\"Codes:\">Zlepšení odkašlávání a nácvik dechových technik v domácím prostředí</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTCopdHomeCare.html\">Josef Kratochvil  Male, DoB: 1947-11-03 ( https://ncez.mzcr.cz/fhir/sid/rcis#4711031234)</a></p></div>"
+      },
+      "lifecycleStatus" : "active",
+      "description" : {
+        "text" : "Zlepšení odkašlávání a nácvik dechových technik v domácím prostředí"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTCopdHomeCare"
+      }
+    }
+  }]
+}

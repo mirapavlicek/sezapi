@@ -1,0 +1,658 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "BundleHospitalAdmissionRecommendationExample",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/BundleOrderCz"]
+  },
+  "language" : "cs",
+  "identifier" : {
+    "system" : "urn:ietf:rfc:4122",
+    "value" : "3ec722c6-0a48-4c79-9fb1-c8529d81b3cf"
+  },
+  "type" : "document",
+  "timestamp" : "2026-09-03T10:05:00+02:00",
+  "entry" : [{
+    "fullUrl" : "https://example.org/fhir/Composition/HospitalAdmissionCompositionExample",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "HospitalAdmissionCompositionExample",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/k-order-composition-cz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_HospitalAdmissionCompositionExample\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition HospitalAdmissionCompositionExample</b></p><a name=\"HospitalAdmissionCompositionExample\"> </a><a name=\"hcHospitalAdmissionCompositionExample\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-k-order-composition-cz.html\">Composition: K-order (Zadanka) (CZ)</a></p></div><p><b>identifier</b>: 8d16bc92-afdc-4198-b14c-6aef6a8c8b15</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-03 10:05:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>title</b>: Doporučení k hospitalizaci</p></div>"
+      },
+      "identifier" : {
+        "value" : "8d16bc92-afdc-4198-b14c-6aef6a8c8b15"
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }]
+      },
+      "category" : [{
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }]
+      }],
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "date" : "2026-09-03T10:05:00+02:00",
+      "author" : [{
+        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+      }],
+      "title" : "Doporučení k hospitalizaci",
+      "section" : [{
+        "title" : "Requested orderInformation",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "57133-1"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Doporučeno přijetí k hospitalizaci za účelem došetření zhoršení renálních funkcí. Současně požadováno konziliární vyšetření.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "ServiceRequest/HospitalAdmissionServiceRequest-Example"
+        },
+        {
+          "reference" : "ServiceRequest/HospitalAdmissionConsultation-Example"
+        }]
+      },
+      {
+        "title" : "Clinical indication and question",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "104720-8"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\">Žádáno konziliární vyšetření při zhoršení renálních funkcí. Současně doporučeno přijetí k hospitalizaci za účelem došetření.</div>"
+        }
+      },
+      {
+        "title" : "coverage",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "87520-3"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Číslo pojištěnce: 8506151234.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Coverage/KOrderCoverage-Example"
+        }]
+      },
+      {
+        "title" : "Podpůrné klinické informace",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "55752-0"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Chronické onemocnění ledvin ve stadiu 4. Laboratorní výsledky ze dne 28. srpna 2026: eGFR 24 ml/min/1,73 m²; kreatinin v séru 245 µmol/l.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Observation/Observation-eGFRExample"
+        },
+        {
+          "reference" : "Observation/Observation-CreatinineExample"
+        },
+        {
+          "reference" : "Condition/NephrologyCondition-CKDStage4"
+        }]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/ServiceRequest/HospitalAdmissionServiceRequest-Example",
+    "resource" : {
+      "resourceType" : "ServiceRequest",
+      "id" : "HospitalAdmissionServiceRequest-Example",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/KOrderServiceRequestCz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_HospitalAdmissionServiceRequest-Example\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest HospitalAdmissionServiceRequest-Example</b></p><a name=\"HospitalAdmissionServiceRequest-Example\"> </a><a name=\"hcHospitalAdmissionServiceRequest-Example\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-KOrderServiceRequestCz.html\">K-order (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/b58b90d6-6354-4aa1-b57a-814e74dc2a59</p><p><b>status</b>: Active</p><p><b>intent</b>: Proposal</p><p><b>code</b>: <span title=\"Codes:\">Přijetí k hospitalizaci</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>authoredOn</b>: 2026-09-03 10:00:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>performer</b>: <a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</a></p><p><b>reasonCode</b>: <span title=\"Codes:\">Došetření zhoršení renálních funkcí za hospitalizace.</span></p><p><b>reasonReference</b>: <a href=\"Condition-NephrologyCondition-CKDStage4.html\">Condition Chronicke onemocneni ledvin, stadium 4</a></p><p><b>insurance</b>: <a href=\"Coverage-KOrderCoverage-Example.html\">Coverage: status = active; type = health insurance plan policy; subscriberId = 8506151234</a></p><p><b>supportingInfo</b>: </p><ul><li><a href=\"Observation-Observation-eGFRExample.html\">Observation eGFR podle kreatininu (CKD-EPI), vztaženo na 1,73 m²</a></li><li><a href=\"Observation-Observation-CreatinineExample.html\">Observation Kreatinin v séru – látková koncentrace</a></li></ul></div>"
+      },
+      "identifier" : [{
+        "system" : "urn:ietf:rfc:4122",
+        "value" : "b58b90d6-6354-4aa1-b57a-814e74dc2a59"
+      }],
+      "status" : "active",
+      "intent" : "proposal",
+      "code" : {
+        "text" : "Přijetí k hospitalizaci"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "authoredOn" : "2026-09-03T10:00:00+02:00",
+      "requester" : {
+        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+      },
+      "performer" : [{
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169"
+      }],
+      "reasonCode" : [{
+        "text" : "Došetření zhoršení renálních funkcí za hospitalizace."
+      }],
+      "reasonReference" : [{
+        "reference" : "Condition/NephrologyCondition-CKDStage4"
+      }],
+      "insurance" : [{
+        "reference" : "Coverage/KOrderCoverage-Example"
+      }],
+      "supportingInfo" : [{
+        "reference" : "Observation/Observation-eGFRExample"
+      },
+      {
+        "reference" : "Observation/Observation-CreatinineExample"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/ServiceRequest/HospitalAdmissionConsultation-Example",
+    "resource" : {
+      "resourceType" : "ServiceRequest",
+      "id" : "HospitalAdmissionConsultation-Example",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/KOrderServiceRequestCz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_HospitalAdmissionConsultation-Example\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest HospitalAdmissionConsultation-Example</b></p><a name=\"HospitalAdmissionConsultation-Example\"> </a><a name=\"hcHospitalAdmissionConsultation-Example\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-KOrderServiceRequestCz.html\">K-order (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/726785fc-1274-44db-a9e8-a460ad4f6376</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 185387006}\">Konziliární vyšetření při zhoršení renálních funkcí</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>authoredOn</b>: 2026-09-03 10:00:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>performer</b>: <a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</a></p><p><b>reasonReference</b>: <a href=\"Condition-NephrologyCondition-CKDStage4.html\">Condition Chronicke onemocneni ledvin, stadium 4</a></p><p><b>insurance</b>: <a href=\"Coverage-KOrderCoverage-Example.html\">Coverage: status = active; type = health insurance plan policy; subscriberId = 8506151234</a></p><p><b>supportingInfo</b>: </p><ul><li><a href=\"Observation-Observation-eGFRExample.html\">Observation eGFR podle kreatininu (CKD-EPI), vztaženo na 1,73 m²</a></li><li><a href=\"Observation-Observation-CreatinineExample.html\">Observation Kreatinin v séru – látková koncentrace</a></li></ul></div>"
+      },
+      "identifier" : [{
+        "system" : "urn:ietf:rfc:4122",
+        "value" : "726785fc-1274-44db-a9e8-a460ad4f6376"
+      }],
+      "status" : "active",
+      "intent" : "order",
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "185387006",
+          "display" : "konzultace s novým pacientem"
+        }],
+        "text" : "Konziliární vyšetření při zhoršení renálních funkcí"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "authoredOn" : "2026-09-03T10:00:00+02:00",
+      "requester" : {
+        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+      },
+      "performer" : [{
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169"
+      }],
+      "reasonReference" : [{
+        "reference" : "Condition/NephrologyCondition-CKDStage4"
+      }],
+      "insurance" : [{
+        "reference" : "Coverage/KOrderCoverage-Example"
+      }],
+      "supportingInfo" : [{
+        "reference" : "Observation/Observation-eGFRExample"
+      },
+      {
+        "reference" : "Observation/Observation-CreatinineExample"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "48a9d440-4194-42c1-87ad-b5a39020a4d0",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Patient_48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient 48a9d440-4194-42c1-87ad-b5a39020a4d0</b></p><a name=\"48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><a name=\"hc48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-patient-core.html\">Patient (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/rid</code>/1597778923\u00a0(use:\u00a0official)</li><li><code>https://ncez.mzcr.cz/fhir/sid/cpoj</code>/1118506151234</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420777111222\">+420777111222</a></li><li><a href=\"mailto:novak@example.com\">novak@example.com</a></li><li>Pavlovova 1424/11, 568 02 Svitavy - Predmesti(home)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "use" : "official",
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rid",
+        "value" : "1597778923"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rcis",
+        "value" : "8506151234"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/cpoj",
+        "value" : "1118506151234"
+      }],
+      "name" : [{
+        "text" : "Ing. Petr Novak, Ph.D.",
+        "family" : "Novak",
+        "given" : ["Petr",
+        "Pavel"]
+      }],
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420777111222"
+      },
+      {
+        "system" : "email",
+        "value" : "novak@example.com"
+      }],
+      "gender" : "male",
+      "birthDate" : "1985-06-15",
+      "address" : [{
+        "use" : "home",
+        "text" : "Pavlovova 1424/11, 568 02 Svitavy - Predmesti",
+        "line" : ["Pavlovova 1424/11"],
+        "city" : "Svitavy - Predmesti",
+        "postalCode" : "56802",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a</b></p><a name=\"a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><a name=\"hca81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000001"
+      }],
+      "name" : [{
+        "text" : "MUDr. Ivan Andel",
+        "family" : "Andel",
+        "given" : ["Ivan"]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "2b7e9637-5018-4542-9faf-d5abdee7b849",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xml:lang=\"cs\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\"><a name=\"PractitionerRole_2b7e9637-5018-4542-9faf-d5abdee7b849\"> </a>MUDr. Ivan Andel, vseobecny prakticky lekar</div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+        "display" : "MUDr. Ivan Andel"
+      },
+      "organization" : {
+        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+        "display" : "Ordinace praktickeho lekare"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "001",
+          "display" : "Pracoviště praktického lékaře pro dospělé"
+        }],
+        "text" : "Vseobecne prakticke lekarstvi"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169</b></p><a name=\"ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><a name=\"hcace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345679</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123456\">+420800123456</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krpzs",
+        "value" : "100000001"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      }],
+      "type" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
+          "code" : "102",
+          "display" : "Nemocnice"
+        }]
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s.",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123456",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "af2b3114-e872-43b9-9875-cceb39122f7f",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization af2b3114-e872-43b9-9875-cceb39122f7f</b></p><a name=\"af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><a name=\"hcaf2b3114-e872-43b9-9875-cceb39122f7f\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001352</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123457\">+420800123457</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001352"
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123457",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ"
+            }
+          }]
+        }
+      }],
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-Insurance111",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-Insurance111",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/kp",
+        "value" : "111"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345687"
+      }],
+      "name" : "Zdravotni pojistovna Modra reka"
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Coverage/KOrderCoverage-Example",
+    "resource" : {
+      "resourceType" : "Coverage",
+      "id" : "KOrderCoverage-Example",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_KOrderCoverage-Example\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage KOrderCoverage-Example</b></p><a name=\"KOrderCoverage-Example\"> </a><a name=\"hcKOrderCoverage-Example\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>subscriberId</b>: 8506151234</p><p><b>beneficiary</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
+      },
+      "status" : "active",
+      "type" : {
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code" : "HIP"
+        }]
+      },
+      "subscriberId" : "8506151234",
+      "beneficiary" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "payor" : [{
+        "reference" : "Organization/Organization-Insurance111"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Condition/NephrologyCondition-CKDStage4",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "NephrologyCondition-CKDStage4",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_NephrologyCondition-CKDStage4\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition NephrologyCondition-CKDStage4</b></p><a name=\"NephrologyCondition-CKDStage4\"> </a><a name=\"hcNephrologyCondition-CKDStage4\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 N184}\">Chronicke onemocneni ledvin, stadium 4</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p></div>"
+      },
+      "code" : {
+        "coding" : [{
+          "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
+          "code" : "N184",
+          "display" : "Chronické onemocnění ledvin, stadium 4"
+        }],
+        "text" : "Chronicke onemocneni ledvin, stadium 4"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Observation/Observation-eGFRExample",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "Observation-eGFRExample",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/medicalTestResult-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Observation_Observation-eGFRExample\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Observation Observation-eGFRExample</b></p><a name=\"Observation-eGFRExample\"> </a><a name=\"hcObservation-eGFRExample\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-medicalTestResult-cz-core.html\">Observation: Medical Test Result (CZ core)</a></p></div><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category laboratory}\">Laboratory</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 62238-1}\">eGFR podle kreatininu (CKD-EPI), vztaženo na 1,73 m²</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>effective</b>: 2026-08-28 08:30:00+0200</p><p><b>performer</b>: <a href=\"Organization-Organization-OrderLaboratory.html\">Laboratoř Nemocnice Pod Lipou</a></p><p><b>value</b>: 24 mL/min/1.73 m2<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codemL/min/(173.10*-2.m2) = 'mL/min/(173.10*-2.m2)')</span></p></div>"
+      },
+      "status" : "final",
+      "category" : [{
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code" : "laboratory",
+          "display" : "Laboratory"
+        }]
+      }],
+      "code" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "62238-1"
+        }],
+        "text" : "eGFR podle kreatininu (CKD-EPI), vztaženo na 1,73 m²"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "effectiveDateTime" : "2026-08-28T08:30:00+02:00",
+      "performer" : [{
+        "reference" : "Organization/Organization-OrderLaboratory",
+        "display" : "Laboratoř Nemocnice Pod Lipou"
+      }],
+      "valueQuantity" : {
+        "value" : 24,
+        "unit" : "mL/min/1.73 m2",
+        "system" : "http://unitsofmeasure.org",
+        "code" : "mL/min/(173.10*-2.m2)"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Observation/Observation-CreatinineExample",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "Observation-CreatinineExample",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/medicalTestResult-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Observation_Observation-CreatinineExample\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Observation Observation-CreatinineExample</b></p><a name=\"Observation-CreatinineExample\"> </a><a name=\"hcObservation-CreatinineExample\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-medicalTestResult-cz-core.html\">Observation: Medical Test Result (CZ core)</a></p></div><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category laboratory}\">Laboratory</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 14682-9}\">Kreatinin v séru – látková koncentrace</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>effective</b>: 2026-08-28 08:30:00+0200</p><p><b>performer</b>: <a href=\"Organization-Organization-OrderLaboratory.html\">Laboratoř Nemocnice Pod Lipou</a></p><p><b>value</b>: 245 umol/L<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codeumol/L = 'umol/L')</span></p></div>"
+      },
+      "status" : "final",
+      "category" : [{
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code" : "laboratory",
+          "display" : "Laboratory"
+        }]
+      }],
+      "code" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "14682-9"
+        }],
+        "text" : "Kreatinin v séru – látková koncentrace"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "effectiveDateTime" : "2026-08-28T08:30:00+02:00",
+      "performer" : [{
+        "reference" : "Organization/Organization-OrderLaboratory",
+        "display" : "Laboratoř Nemocnice Pod Lipou"
+      }],
+      "valueQuantity" : {
+        "value" : 245,
+        "unit" : "umol/L",
+        "system" : "http://unitsofmeasure.org",
+        "code" : "umol/L"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-OrderLaboratory",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-OrderLaboratory",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-OrderLaboratory\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-OrderLaboratory</b></p><a name=\"Organization-OrderLaboratory\"> </a><a name=\"hcOrganization-OrderLaboratory\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Laboratoř Nemocnice Pod Lipou (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001355</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001355"
+      }],
+      "name" : "Laboratoř Nemocnice Pod Lipou",
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  }]
+}

@@ -67,31 +67,37 @@ Certifikát musí být registrován v EZCA II. Pro testovací prostředí:
 
 | Parametr | Hodnota |
 |----------|---------|
-| Název | krajska zdravotni verejny test |
-| client_id | `25488627_KrajskaZdravotniVerejnyTest` |
-| UID (kid) | `85cf28c4-c190-406f-bc96-f92ad25b3202` |
+| Název (CN) | krajska zdravotni verejny test 04 (platný 7. 10. 2026 – 7. 1. 2027) |
+| client_id | `25488627_KrajskaZdravotniVerejnyTest04` |
+| Sériové číslo | `210000031878A0744CF8664AE2000000000318` |
 | IČO | 25488627 |
 | PZS | Krajská zdravotní, a.s. |
+
+> NCEZ certifikát obměňuje zhruba čtvrtletně (předchozí: „test 03“ do
+> 13. 10. 2026, „test 02“ do 16. 7. 2026, původní „verejny test“ s UID
+> `85cf28c4-…` do 21. 4. 2026). Aktuální soubor je přílohou stránky
+> „Autentizace k API gateway“; client_id = `<IČO>_<PascalCase(CN)>`.
 
 ### JWT assertion – hlavička (header)
 
 ```json
 {
   "alg": "RS256",
-  "kid": "85cf28c4-c190-406f-bc96-f92ad25b3202",
+  "kid": "<identifikátor klíče certifikátu>",
   "typ": "JWT"
 }
 ```
 
 - `alg` – RS256 (RSA + SHA-256)
-- `kid` – **UID certifikátu** z EZCA II (GUID)
+- `kid` – identifikátor veřejného klíče certifikátu; klient použije UID
+  z EZCA II, je-li zadané, jinak SubjectKeyIdentifier certifikátu
 
 ### JWT assertion – payload (claims)
 
 ```json
 {
-  "iss": "25488627_KrajskaZdravotniVerejnyTest",
-  "sub": "25488627_KrajskaZdravotniVerejnyTest",
+  "iss": "25488627_KrajskaZdravotniVerejnyTest04",
+  "sub": "25488627_KrajskaZdravotniVerejnyTest04",
   "aud": "https://jsuint-auth-t2.csez.cz/connect/token",
   "jti": "3f91f203-3b2c-4c8e-bb7e-2e9326c4dd87",
   "iat": 1771522256,
@@ -591,9 +597,58 @@ PosudekRoCreateDto
 ## 5. E-žádanky (SEZ)
 
 **Base URL:** `/eZadanky`
-**OpenAPI:** 3.0.4 | **Verze:** v1.0.0
+**Aktuální verze (13. 10. 2026):** **v2.0.0** (Standard eŽádanka 2.0, T2 od 25. 9. 2026, platné od 1. 10. 2026) | v1.11.25 **deprecated**
+**Swaggery:** `swagger_specs/Ezadanky_v2.0.0.json`, `swagger_specs/Ezadanky_v1.11.25.json`
 
-### Endpointy – životní cyklus žádanky
+### API v2.0.0 – hlavička + FHIR Bundle (revize 13. 10. 2026)
+
+Zdroj: Manuál EZ pro PZS → API eŽádanky (7. 10. 2026). Verze 2 mění datovou
+větu i tvar REST rozhraní; popis v1 níže zůstává pro přechodné období.
+
+| Operace | Metoda a cesta | Tělo / poznámka |
+|---------|----------------|-----------------|
+| ulozitZadanku | `POST /api/v2/zadanka` | `{hlavicka: HlavickaVstup, fhirBundle: Bundle(document)}` → **201** + `hlavicka` (`id`, `kod`, `verzeZaznamu`) |
+| vyhledatZadanky | `POST /api/v2/zadanka/vyhledat` | filtr pacient/autor/prijemce/poskytovatel/datumOd/datumDo/kod/id/stav/typZadanky/priorita/metoda[]/uzavrena, `strankovani.page` **od 0**; vrací `nalezeneZaznamy[] = {hlavicka, udajeProPrijeti}` |
+| vyhledatAktivniZadanky | `POST /api/v2/zadanka/vyhledatAktivni` | alespoň jedno z `id`, `rid`, `kodZadanky`; žádanky ve stavu Nová |
+| nacistZadanku | `POST /api/v2/zadanka/{id}/nacist` | `{kodZadanky?, cisloDokladu?}` → `{hlavicka, fhirBundle?}` (Bundle jen pro žadatele/příjemce nebo s kódem) |
+| prijmoutZadanku | `PATCH /api/v2/zadanka/{id}/prijmout` | **If-Match: verzeZaznamu**; `{kodZadanky?, cisloDokladu?, datumPlanovanehoVysetreni?}` |
+| vratitZadankuDoObehu | `PATCH /api/v2/zadanka/{id}/vratitDoObehu` | If-Match; `{duvodVraceniZadanky:{kod}, duvodVraceniUpresneni?}` (číselník duvod-vraceni) |
+| zaznacitNeproveditelnostZadanky | `PATCH /api/v2/zadanka/{id}/zaznacitNeproveditelnost` | If-Match; `{duvodNeproveditelnostiZadanky:{kod}, …, kodZadanky?}` (duvod-odmitnuti) |
+| stornovatZadanku | `PATCH /api/v2/zadanka/{id}/stornovat` | If-Match; `{duvodStornaZadanky:{kod}, duvodStornaUpresneni?}` (duvod-storna) |
+| vyriditZadanku | `PATCH /api/v2/zadanka/{id}/vyridit` | If-Match; `{zpusobVyrizeniZadanky:{kod}, vysledek: Zasilka (≥1 dokument), datumSkutecneRealizaceVysetreni, zaslatVysledekPacientovi?, zaslatVysledekPraktikovi?}` |
+| ~~UpravZadanku~~ | – | **zrušeno**; náhradou storno + nová žádanka (`nadrizenaZadankaId`) |
+
+`HlavickaVstup`: `typZadanky.kod` (referralorder-types: Z = `721964003`,
+K = `57133-1`, FT = `57154-7`), `zadatel {poskytovatel IČO, autor krzpId,
+zdravotnickyPracovnik krzpId}`, `pacient` RID, volitelně `adresat` IČO,
+`dodatecnyPrijemce[]`, `nadrizenaZadankaId`. `HlavickaVystup` navíc nese
+`id`, `verzeZaznamu`, `kod`, `stav`, `podrizeneZadanky`, `zasilkyVysledku`,
+`zpusobVyrizeni` a časová razítka všech přechodů. Nesoulad If-Match = HTTP 409;
+`User-Agent` je povinný. Klient: `EZadankyV2`, backend `/api/ezadanky/v2/*`,
+IRIS `SEZ.API.EZadanky.V2*`.
+
+**Typy žádanky a FHIR obsah (ověřeno živě na T2 13. 10. 2026, všechny tři typy
+201 → storno z kostry i z oficiálních vzorů IG):**
+
+| Typ | `Composition.type` | IG / profily | Vzory (`sez_api/fhir_*_examples`) |
+|-----|--------------------|--------------|------------------------------------|
+| Z zobrazovací | SNOMED `721964003` | `hl7.fhir.cz.img-order` (build 9. 10. 2026) – `cz-bundle-imaging-order`, `cz-servicerequest-imaging-order` | `Bundle-BundleKralikRTG` |
+| K konziliární | LOINC `57133-1` | HL7 CZ Order IG `hl7.fhir.cz.order` 1.0.0 – `BundleOrderCz`, `k-order-composition-cz`, `KOrderServiceRequestCz` | 4 vzory `BundleKOrder*`, `BundleDermatologyUrgent*`, `BundleNephrologyHandover*`, `BundleHospitalAdmissionRecommendation*` |
+| FT fyzioterapie | LOINC `57154-7` | tentýž Order IG – `ft-order-composition-cz`, `FTServiceRequestCz` | 4 vzory `BundleFT*` |
+
+Pravidla brány společná všem typům (hlášená jako `E00024` / `E01001` / `E01002`):
+reference jen přesnou shodou s `entry.fullUrl` (urn:uuid), `hlavicka.pacient` =
+RID Patient (Composition.subject), `zadatel.autor` = KRZP Practitioner
+(Composition.author, i přes PractitionerRole), `zadatel.poskytovatel` = IČO
+Organization v `Composition.custodian` (musí mít IČP), `adresat` = IČO právě
+jedné provádějící Organization ze `ServiceRequest.performer`, adresát ≠
+poskytovatel, `priority` jen `routine | stat`, operace příjemce jen jiným PZS
+(intramurální žádanky brána neeviduje). Python: `sez_api.fhir_order`
+(`kostra`, `kostra_z`, `to_v2`, `pripravit`, `analyzuj`, `katalog_typu`),
+REST `GET /api/ezadanky/v2/typy`, `GET /api/ezadanky/v2/vzory[/{name}?pripravit=1]`,
+`POST /api/ezadanky/v2/kostra`, `POST /api/ezadanky/v2/pripravit`.
+
+### Endpointy – životní cyklus žádanky (v1 – deprecated od 1. 10. 2026)
 
 | Metoda | Cesta | Popis | Stav žádanky |
 |--------|-------|-------|-------------|
@@ -979,8 +1034,10 @@ operací (POST / `vyhledat` / PUT / PATCH `zneplatnit`, `zpochybnit`,
   plic, karcinomu prostaty a aneurysmatu abdominální aorty (číselníky
   `szz-ucast-karcinom-plic`, `szz-ucast-karcinom-prostaty`,
   `szz-ucast-ve-screeningu-aaa`) a `obvodPasu`.
-- Souhrn `POST /api/v3/zdravotniZaznamy/vyhledat` – prevence i screeningy
-  pacienta jedním dotazem.
+- Souhrn prevencí i screeningů pacienta: swagger 3.0.5 (13. 10. 2026) cestu
+  `/api/v3/zdravotniZaznamy/vyhledat` **neobsahuje** – souhrn tvoří dvě
+  operace `POST /api/v3/prevence/vyhledat` a `POST /api/v3/screeningy/vyhledat`
+  (shodné tělo `rid, jenPlatne, sort, order, page, size`), klient je skládá.
 
 **Rozsahy hodnot** (příloha Validace ve SZZ v3.0):
 

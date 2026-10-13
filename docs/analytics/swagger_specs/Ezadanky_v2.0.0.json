@@ -1,0 +1,2393 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "eZadanky",
+    "description": "Externí API systému eŽádanky – určeno pro PZS.\r\n<p>\r\n<a href=\"https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/56000561/e+danky\" target=\"_blank\">\r\nManuál eŽádanky\r\n</a>\r\n</p>\r\n<details>\r\n<summary><strong>Verze 2.0.0</strong></summary>\r\n<p><strong>Změny oproti V1:</strong></p>\r\n<ul>\r\n<li>Datová věta žádanky je systémová hlavička a FHIR Bundle podle českého implementačního průvodce. Strukturovaná DTO ZadankaZ, ZadankaK a ZadankaFt byla z kontraktu odstraněna.</li>\r\n<li>Tělo žádanky se předává v atributu <strong>fhirBundle</strong> přímo jako FHIR Bundle. Ve V1 se vkládalo jako soubor v Base64 uvnitř zásilky.</li>\r\n<li>REST cesty byly převedeny z akčních názvů na zdroj <strong>zadanka</strong> se slovesnými podzdroji, s major cestou <strong>/api/v2</strong>. Identifikátor žádanky se předává jako path parametr.</li>\r\n<li>Verze záznamu se u procesních operací předává v hlavičce <strong>If-Match</strong>. Atribut <strong>verzeRadku</strong> byl ze vstupu odstraněn a na výstupu přejmenován na <strong>verzeZaznamu</strong>. Tutéž hodnotu vrací i hlavička <strong>ETag</strong>.</li>\r\n<li>Detaily z kmenových registrů již nejsou součástí odpovědi.</li>\r\n<li>Procesní operace vracejí systémovou hlavičku žádanky, uložení vrací HTTP 201.</li>\r\n<li>Hlavička <strong>User-Agent</strong> je povinná, atribut <strong>ispzs</strong> byl odstraněn.</li>\r\n<li>Při vyřízení je výsledná zásilka s nejméně jedním dokumentem povinná u všech způsobů vyřízení. Vzniklé zásilky vrací hlavička v poli <strong>zasilkyVysledku</strong>.</li>\r\n<li>Příchozí FHIR Bundle je validován proti implementačnímu průvodci a páruje se se systémovou hlavičkou.</li>\r\n</ul>\r\n</details>\r\n",
+    "version": "v2.0.0"
+  },
+  "servers": [
+    {
+      "url": "/eZadanky"
+    }
+  ],
+  "paths": {
+    "/api/v2/zadanka": {
+      "post": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Uložení žádanky",
+        "description": "<p>Vytvoří novou žádanku. Datová věta se skládá ze dvou částí — systémové hlavičky s identifikátory a směrováním, a FHIR Bundle typu <code>document</code>, který nese veškerý klinický obsah. Bundle se přenáší jako JSON objekt.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<ul>\r\n  <li><code>hlavicka</code> — povinná, jen systémové údaje a identifikátory osob.</li>\r\n  <li><code>fhirBundle</code> — povinný, tělo žádanky dle IG odpovídajícího typu žádanky. Nese i údaje jako IČP žadatele, odbornost autora, urgentnost, způsob úhrady a pojišťovnu — ty se proto v hlavičce neposílají.</li>\r\n</ul>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>FHIR Bundle musí být validní vůči IG pro daný typ žádanky. Aktuálně podporované jsou — žádanka o zobrazovací vyšetření (Z), konziliární žádanka (K) a žádanka o fyzioterapii (FT).</li>\r\n  <li>Identifikátory v hlavičce musí odpovídat obsahu bundlu. Při nesouladu je volání odmítnuto a žádanka se neuloží.</li>\r\n  <li>Adresátem ani dodatečným příjemcem nemůže být jiný subjekt než PZS.</li>\r\n  <li>Volající PZS vystupuje v roli žadatele — <code>zadatel.poskytovatel</code>.</li>\r\n  <li>Úprava žádanky se v tomto rozhraní neprovádí. Bundle je neměnný. Náhradou je storno a vystavení nové žádanky.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Sestavte FHIR Bundle dle IG pro daný typ žádanky.</li>\r\n  <li>Vyplňte hlavičku tak, aby identifikátory odpovídaly obsahu bundlu.</li>\r\n  <li>Pošlete <code>POST /api/v2/zadanka</code>.</li>\r\n  <li>Odpověď obsahuje hlavičku vytvořené žádanky — včetně <code>id</code> a <code>verzeZaznamu</code> pro navazující operace a osmimístného <code>kod</code>.</li>\r\n</ol>",
+        "operationId": "ulozitZadanku",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UlozZadankuV2Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Žádanka vytvořena",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UlozZadankuV2Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační/validační chyba.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/{id}/nacist": {
+      "post": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Načtení žádanky (hlavička + FHIR bundle dle oprávnění)",
+        "description": "<p>Načte detail žádanky — hlavičku a uložený FHIR Bundle. Bundle se vrací tak, jak byl uložen, v průběhu životního cyklu eŽádanky je neměnný. Rozsah vrácených dat závisí na tom, zda volající subjekt prokáže přístup k žádance.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<ul>\r\n  <li><code>id</code> — povinný identifikátor žádanky (path parametr).</li>\r\n  <li><code>kodZadanky</code> — zpřístupní kód žádanky a FHIR Bundle i volajícímu, který není jejím žadatelem ani příjemcem.</li>\r\n  <li><code>cisloDokladu</code> — alternativa ke <code>kodZadanky</code> se stejným účinkem.</li>\r\n</ul>\r\n<p>Tělo požadavku je nepovinné — je-li volající žadatelem nebo příjemcem žádanky, stačí zavolat službu s identifikátorem v cestě.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Je-li volající žadatelem nebo příjemcem žádanky, vrací se kompletní data včetně kódu žádanky a FHIR Bundle.</li>\r\n  <li>Není-li volající žadatelem ani příjemcem, ale uvede <code>kodZadanky</code> nebo <code>cisloDokladu</code>, vrací se rovněž kompletní data.</li>\r\n  <li>Není-li splněna žádná z uvedených podmínek, je z odpovědi odstraněn kód žádanky a <code>fhirBundle</code> je <code>null</code>.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Zavolejte <code>POST /api/v2/zadanka/{id}/nacist</code> s identifikátorem žádanky.</li>\r\n  <li>Z odpovědi převezměte <code>verzeZaznamu</code> — předává se v hlavičce <code>If-Match</code> u všech navazujících procesních operací.</li>\r\n  <li>Nemáte-li k žádance přímý přístup, předejte <code>kodZadanky</code> nebo <code>cisloDokladu</code> — v odpovědi dostanete kompletní data žádanky.</li>\r\n</ol>",
+        "operationId": "nacistZadanku",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NactiZadankuV2Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NactiZadankuV2Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Žádanka nenalezena",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/vyhledat": {
+      "post": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Načtení seznamu hlaviček žádanek, na které má volající oprávnění.",
+        "description": "<p>Vrátí stránkovaný seznam žádanek přístupných volajícímu subjektu. Každý záznam obsahuje hlavičku žádanky a minimální množinu údajů pro rozhodnutí o přijetí — FHIR Bundle součástí odpovědi není.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Filtry lze kombinovat — výsledek je průnik všech zadaných podmínek.</li>\r\n  <li>Služba vrací pouze žádanky, u kterých má volající PZS roli žadatele nebo příjemce.</li>\r\n  <li><code>strankovani</code> je nepovinné. Bez jeho uvedení se vrátí první stránka, stránky se číslují od 0.</li>\r\n  <li>Pokud <code>nextPage</code> v odpovědi chybí nebo je <code>null</code>, byla vrácena poslední stránka.</li>\r\n  <li>Kód žádanky se vrací jen tehdy, je-li volající jejím žadatelem nebo příjemcem.</li>\r\n  <li>Pro získání FHIR Bundle použijte <code>nacistZadanku</code>.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Sestavte filtr s požadovanými kritérii.</li>\r\n  <li>Nastavte <code>strankovani</code> (<code>page</code>, <code>size</code>) dle potřeby.</li>\r\n  <li>Pošlete <code>POST /api/v2/zadanka/vyhledat</code>.</li>\r\n  <li>Procházejte výsledky po stránkách — opakujte s <code>page nextPage</code>, dokud <code>nextPage</code> není <code>null</code>.</li>\r\n</ol>",
+        "operationId": "vyhledatZadanky",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyhledejZadankuRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VyhledejZadankuV2Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/vyhledatAktivni": {
+      "post": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Načtení seznamu žádanek ve stavu 'Nová' dle údajů pacienta nebo žádanky",
+        "description": "<p>Vyhledá aktivní žádanky pacienta podle RID pacienta — slouží k získání základních dat žádanky v případech, kdy volající nemá implicitní oprávnění z role žadatele nebo příjemce (typicky při příjmu pacienta na pracovišti). Lze využít také k získání přehledu základních údajů pro konkrétní žádanku - při zadání kódu žádanky nebo systémového identifikátoru.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Musí být zadán alespoň jeden filtrační parametr - <code>id</code>, <code>rid</code> nebo <code>kodZadanky</code>.</li>\r\n  <li>Služba vrací pouze žádanky v aktivním stavu, tj. ve stavu Nová.</li>\r\n  <li>Služba může vrátit více výsledků, zejména při vyhledávání podle <code>rid</code>.</li>\r\n  <li>Není-li zadán <code>kodZadanky</code>, kód žádanky se v odpovědi nevrací.</li>\r\n  <li>FHIR Bundle není součástí odpovědi nikdy — pro jeho získání použijte <code>nacistZadanku</code>.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Uveďte RID pacienta.</li>\r\n  <li>Pošlete <code>POST /api/v2/zadanka/vyhledatAktivni</code>.</li>\r\n  <li>Z odpovědi získáte hlavičky aktivních žádanek a údaje pro jejich přijetí. Získané <code>id</code> a <code>verzeZaznamu</code> lze použít k navazujícím operacím, například k přijetí žádanky.</li>\r\n</ol>",
+        "operationId": "vyhledatAktivniZadanky",
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyhledejAktivniZadankuRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VyhledejZadankuV2Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/{id}/prijmout": {
+      "patch": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Přijetí žádanky adresátem/příjemcem",
+        "description": "<p>Přijme žádanku — změní její stav na <em>Přijatá</em> a zaznamená datum přijetí. Slouží k potvrzení, že adresát žádanku převzal ke zpracování.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Přijmout lze pouze žádanku ve stavu Nová. Pokus o přijetí v jiném stavu je odmítnut.</li>\r\n  <li>Žádanku může přijmout její adresát — IČO volajícího odpovídá adresátovi žádanky. Pokud IČO nesouhlasí, musí být vyplněn <code>kodZadanky</code> nebo <code>cisloDokladu</code>, ty prokazují oprávnění k přijetí.</li>\r\n  <li>Je-li žádanka neadresná, musí být vyplněn <code>kodZadanky</code> nebo <code>cisloDokladu</code>. Volající se stane novým adresátem žádanky.</li>\r\n  <li>Volitelně lze uvést <code>datumPlanovanehoVysetreni</code> — doplní se do hlavičky žádanky.</li>\r\n  <li>Hlavička <code>If-Match</code> musí obsahovat <code>verzeZaznamu</code> z předchozího čtení nebo operace. Při neshodě s aktuální verzí je volání odmítnuto s kódem 409.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Získejte identifikátor žádanky a aktuální <code>verzeZaznamu</code>, například voláním <code>vyhledatAktivniZadanky</code>.</li>\r\n  <li>Pošlete <code>PATCH /api/v2/zadanka/{id}/prijmout</code>.</li>\r\n  <li>Odpověď obsahuje aktuální hlavičku žádanky po přijetí — nový stav, <code>verzeZaznamu</code> a datum přijetí.</li>\r\n</ol>",
+        "operationId": "prijmoutZadanku",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Verze záznamu z předchozího čtení nebo operace, převzatá z atributu verzeZaznamu. Při neshodě s aktuální verzí je volání odmítnuto.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrijmiZadankuV2Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadankaOperaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Žádanka nenalezena",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Neshoda verze záznamu",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/{id}/stornovat": {
+      "patch": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Storno žádanky",
+        "description": "<p>Stornuje existující žádanku. Storno je nevratná operace — žádanka přejde do stavu <em>Stornována</em> a nelze ji obnovit. Storno je zároveň náhradou za úpravu žádanky, která se v tomto rozhraní neprovádí — opravená žádanka se vystaví jako nová.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Žádanku může stornovat pouze její žadatel (PZS).</li>\r\n  <li>Stornovat lze pouze žádanku ve stavu Nová. Pokus o storno v jiném stavu je odmítnut.</li>\r\n  <li>Hlavička <code>If-Match</code> musí obsahovat <code>verzeZaznamu</code> z předchozího čtení nebo operace. Při neshodě s aktuální verzí je volání odmítnuto s kódem 409.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Získejte identifikátor žádanky a aktuální <code>verzeZaznamu</code>, například voláním <code>nacistZadanku</code>.</li>\r\n  <li>Vyplňte <code>duvodStornaZadanky</code> z příslušného číselníku, případně upřesněte v <code>duvodStornaUpresneni</code>.</li>\r\n  <li>Pošlete <code>PATCH /api/v2/zadanka/{id}/stornovat</code>.</li>\r\n  <li>Odpověď obsahuje aktuální hlavičku žádanky po stornu — nový stav, <code>verzeZaznamu</code> a datum storna.</li>\r\n</ol>",
+        "operationId": "stornovatZadanku",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Verze záznamu z předchozího čtení nebo operace, převzatá z atributu verzeZaznamu. Při neshodě s aktuální verzí je volání odmítnuto.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StornujZadankuV2Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadankaOperaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Žádanka nenalezena",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Neshoda verze záznamu",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/{id}/zaznacitNeproveditelnost": {
+      "patch": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Zaznamenání neproveditelnosti žádanky",
+        "description": "<p>Zaznamená, že žádanku nebylo možné provést — například pokud obsahuje neúplné nebo chybné klinické údaje.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Operaci může provést adresát žádanky — IČO volajícího odpovídá adresátovi žádanky. Pokud IČO nesouhlasí, musí být vyplněn <code>kodZadanky</code>.</li>\r\n  <li>Neproveditelnost lze zaznačit pouze tehdy, není-li žádanka ve stavu Stornovaná, Vyřízená nebo Neproveditelná.</li>\r\n  <li>Hlavička <code>If-Match</code> musí obsahovat <code>verzeZaznamu</code> z předchozího čtení nebo operace. Při neshodě s aktuální verzí je volání odmítnuto s kódem 409.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Získejte identifikátor žádanky a aktuální <code>verzeZaznamu</code>, například voláním <code>nacistZadanku</code>.</li>\r\n  <li>Vyplňte <code>duvodNeproveditelnostiZadanky</code> z příslušného číselníku, případně upřesněte v <code>duvodNeproveditelnostiUpresneni</code>.</li>\r\n  <li>Pošlete <code>PATCH /api/v2/zadanka/{id}/zaznacitNeproveditelnost</code>.</li>\r\n  <li>Odpověď obsahuje aktuální hlavičku žádanky — nový stav, <code>verzeZaznamu</code> a datum zaznačení neproveditelnosti.</li>\r\n</ol>",
+        "operationId": "zaznacitNeproveditelnostZadanky",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Verze záznamu z předchozího čtení nebo operace, převzatá z atributu verzeZaznamu. Při neshodě s aktuální verzí je volání odmítnuto.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZaznacNeproveditelnostZadankyV2Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadankaOperaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Žádanka nenalezena",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Neshoda verze záznamu",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/{id}/vratitDoObehu": {
+      "patch": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Vrácení žádanky do oběhu",
+        "description": "<p>Vrátí přijatou žádanku zpět do oběhu — změní její stav na <em>Nová</em> a odebere adresáta. Žádanka se tak stane neadresnou.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Vrátit do oběhu může pouze aktuální adresát žádanky — IČO volajícího musí odpovídat adresátovi žádanky.</li>\r\n  <li>Vrátit do oběhu lze pouze žádanku ve stavu Přijatá.</li>\r\n  <li>Po vrácení je adresát žádanky odstraněn — žádanka se stane neadresnou.</li>\r\n  <li>Hlavička <code>If-Match</code> musí obsahovat <code>verzeZaznamu</code> z předchozího čtení nebo operace. Při neshodě s aktuální verzí je volání odmítnuto s kódem 409.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Získejte identifikátor žádanky a aktuální <code>verzeZaznamu</code>, například voláním <code>nacistZadanku</code>.</li>\r\n  <li>Vyplňte <code>duvodVraceniZadanky</code> z příslušného číselníku, případně upřesněte v <code>duvodVraceniUpresneni</code>.</li>\r\n  <li>Pošlete <code>PATCH /api/v2/zadanka/{id}/vratitDoObehu</code>.</li>\r\n  <li>Odpověď obsahuje aktuální hlavičku žádanky — nový stav, <code>verzeZaznamu</code> a datum vrácení do oběhu.</li>\r\n</ol>",
+        "operationId": "vratitZadankuDoObehu",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Verze záznamu z předchozího čtení nebo operace, převzatá z atributu verzeZaznamu. Při neshodě s aktuální verzí je volání odmítnuto.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VratZadankuDoObehuV2Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadankaOperaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Žádanka nenalezena",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Neshoda verze záznamu",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/zadanka/{id}/vyridit": {
+      "patch": {
+        "tags": [
+          "eZadanky"
+        ],
+        "summary": "Vyřízení žádanky",
+        "description": "<p>Vyřídí přijatou žádanku — uzavře její životní cyklus změnou stavu na <em>Vyřízená</em>. Výsledná zásilka se ukládá do Dočasného úložiště vždy. Způsob vyřízení popisuje, jakou cestou se výsledek dostal k žadateli.</p>\r\n<p><strong>Atributy requestu (bližší popis)</strong></p>\r\n<ul>\r\n  <li><code>vysledek</code> — data zásilky s výsledkem vyšetření. Systém z nich zásilku v Dočasném úložišti sám založí a rozešle, adresáta proto neuvádějte.</li>\r\n</ul>\r\n<p>Popis a validační pravidla jednotlivých položek jsou uvedeny u příslušných polí v request body.</p>\r\n<p><strong>Důležitá pravidla</strong></p>\r\n<ul>\r\n  <li>Žádanku může vyřídit pouze její aktuální příjemce — IČO volajícího musí odpovídat příjemci žádanky (tj. údaj <code>adresat</code> v systémové hlavičce).</li>\r\n  <li>Objekt <code>vysledek</code> se vyplňuje vždy, u všech způsobů vyřízení, a musí obsahovat nejméně jeden dokument. Výsledná zásilka se do Dočasného úložiště ukládá i tehdy, byl-li výsledek žadateli předán jinou cestou.</li>\r\n  <li>Výsledná zásilka se automaticky odešle žadateli žádanky a dodatečným příjemcům zvoleným při jejím vytvoření, adresát se proto v zásilce neuvádí.</li>\r\n  <li>Podle příznaků <code>zaslatVysledekPacientovi</code> a <code>zaslatVysledekPraktikovi</code> je zásilka odeslána také pacientovi a jeho praktickému lékaři.</li>\r\n  <li>Hlavička <code>If-Match</code> musí obsahovat <code>verzeZaznamu</code> z předchozího čtení nebo operace. Při neshodě s aktuální verzí je volání odmítnuto s kódem 409.</li>\r\n</ul>\r\n<p><strong>Typické použití</strong></p>\r\n<ol>\r\n  <li>Získejte identifikátor žádanky a aktuální <code>verzeZaznamu</code>, například voláním <code>nacistZadanku</code>.</li>\r\n  <li>Zvolte <code>zpusobVyrizeniZadanky</code> z číselníku a vyplňte objekt <code>vysledek</code> s nejméně jedním dokumentem.</li>\r\n  <li>Pošlete <code>PATCH /api/v2/zadanka/{id}/vyridit</code>.</li>\r\n  <li>Odpověď obsahuje aktuální hlavičku žádanky — nový stav, <code>verzeZaznamu</code>, datum vyřízení a pole <code>zasilkyVysledku</code> s identifikátory založených zásilek.</li>\r\n</ol>",
+        "operationId": "vyriditZadanku",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "Verze záznamu z předchozího čtení nebo operace, převzatá z atributu verzeZaznamu. Při neshodě s aktuální verzí je volání odmítnuto.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "default": "cs"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "description": "Identifikace volajícího systému ve tvaru `název-aplikace/verze (prostředí; výrobceSW; další informace)`. Prostředí = `Test` nebo `Prod`. Hodnota `výrobceSW` a další informace jsou volitelné.",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "type": "string",
+              "example": "MojeAplikace/1.2.3 (Test; VýrobceXYZ)"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VyridZadankuV2Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadankaOperaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Aplikační chyba",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chyba autorizace vůči systému eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Přistupující subjekt nemá právo na volanou službu eŽádanek",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Žádanka nenalezena",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Neshoda verze záznamu",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Nefunkční stav služby",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Dokument": {
+        "title": "Dokument",
+        "required": [
+          "hash",
+          "nazev",
+          "pacient",
+          "typ"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string",
+            "description": "Krátký název dokumentu."
+          },
+          "typ": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Typ dokumentu (např. \"Lékařská zpráva\", \"Laboratorní výsledek\")."
+          },
+          "popis": {
+            "type": "string",
+            "description": "Popis obsahu dokumentu.",
+            "nullable": true
+          },
+          "jazyk": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Jazyk dokumentu zásilky dle číselníku \"languages\"."
+          },
+          "klasifikace": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Klasifikace zásilky či dokumentu dle číselníku \"document-category\"."
+          },
+          "duvernost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Úroveň důvěrnosti dokumentu dle číselníku \"v3-Confidentiality\"."
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Kód označující formát dokumentu dle číselníku \"format-code\". Očekává se, že zde uvedená hodnota bude odpovídat vkládanému Base64 obsahu (soubor.soubor)."
+          },
+          "mime": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Upřesnění mime type dokumentu, pokud je uveden formát \"MimeType specifikovaný\", dle číselníku \"media-type\". Očekává se, že zde uvedená hodnota bude odpovídat vkládanému Base64 obsahu (soubor.soubor)."
+          },
+          "autor": {
+            "type": "string",
+            "description": "ID uživatele, který dokument vytvořil. Vazba na KRZP.",
+            "nullable": true
+          },
+          "poskytovatel": {
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče. Vazba na KRPZS.",
+            "nullable": true
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID), ke kterému se dokument vztahuje. Vazba na KRP."
+          },
+          "hash": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Kontrolní hash dokumentu pro ověření integrity (SHA-256)."
+          },
+          "soubor": {
+            "$ref": "#/components/schemas/Soubor"
+          },
+          "slozka": {
+            "$ref": "#/components/schemas/Slozka"
+          },
+          "vazanyDokument": {
+            "type": "string",
+            "description": "Odkazy na další související dokumenty (například předchozí verze, dodatky).",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Dokument výsledné zásilky předávané při vyřízení žádanky — metadata a obsah souboru. Netýká se těla samotné žádanky."
+      },
+      "ErrorItemResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Kód chyby",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "description": "Položka, u které došlo k chybě",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Parametry pro vyvolání chyby",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Zpráva chyby",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Položka chyby pro všeobecnou návratovou třídu pro chybu"
+      },
+      "ErrorsResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorItemResponse"
+            },
+            "description": "Seznam nalezených chyb",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data při vyvolání chyby se seznamem chyb"
+      },
+      "FhirBundle": {
+        "title": "FhirBundle",
+        "required": [
+          "resourceType",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "resourceType": {
+            "enum": [
+              "Bundle"
+            ],
+            "type": "string",
+            "description": "Typ FHIR resource — pro žádanku vždy \"Bundle\"."
+          },
+          "type": {
+            "enum": [
+              "document"
+            ],
+            "type": "string",
+            "description": "FHIR Bundle.type — pro eŽádanky vždy \"document\"."
+          },
+          "entry": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Položky bundle. Obsah a jejich strukturu určuje IG daného typu žádanky, ne toto schéma."
+          }
+        },
+        "description": "FHIR Bundle typu \"document\" dle IG. Pro žádanky Z (obrazové) platí [img-order](https://build.fhir.org/ig/HL7-cz/img-order/index-cs.html), pro žádanky K a FT platí [k-order](https://build.fhir.org/ig/HL7-cz/k-order/en/index-cs.html). Obsah validuje IG, ne toto schéma."
+      },
+      "HlavickaVstup": {
+        "title": "HlavickaVstup",
+        "required": [
+          "pacient",
+          "typZadanky",
+          "zadatel"
+        ],
+        "type": "object",
+        "properties": {
+          "typZadanky": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuRequest"
+              }
+            ],
+            "description": "Položka číselníku referralorder-types (stačí kód)."
+          },
+          "zadatel": {
+            "$ref": "#/components/schemas/Zadatel"
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "RID pacienta"
+          },
+          "adresat": {
+            "type": "string",
+            "description": "IČO PZS příjemce (typ adresáta = vždy PZS)",
+            "nullable": true
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IČO dalších PZS, kterým má systém automaticky doručit výsledek při vyřízení žádanky, bez ohledu na zvolený způsob vyřízení. Nepovinné, příjemcem nemůže být jiný typ subjektu než PZS.",
+            "nullable": true
+          },
+          "nadrizenaZadankaId": {
+            "type": "string",
+            "description": "Odkaz na nadřízenou žádanku (id), na kterou tato žádanka navazuje. Nepovinné, uvedená žádanka musí existovat.",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Datová věta systémové hlavičky pro uložení žádanky."
+      },
+      "HlavickaVystup": {
+        "title": "HlavickaVystup",
+        "required": [
+          "datumVytvoreni",
+          "id",
+          "pacient",
+          "stav",
+          "typZadanky",
+          "verzeZaznamu",
+          "zadatel"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky.",
+            "format": "uuid"
+          },
+          "verzeZaznamu": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Verze záznamu pro optimistické zamykání. Předává se v hlavičce If-Match u navazujících procesních operací."
+          },
+          "kod": {
+            "type": "string",
+            "description": "Kód žádanky — vrací se, jen je-li volající žadatelem nebo příjemcem žádanky, nebo při zadání kodZadanky/cisloDokladu.",
+            "nullable": true
+          },
+          "stav": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselniku"
+              }
+            ],
+            "description": "Aktuální stav žádanky (číselník \"stav-zadanky\")."
+          },
+          "nadrizenaZadankaId": {
+            "type": "string",
+            "description": "Odkaz na nadřízenou žádanku, na kterou tato žádanka navazuje.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "podrizeneZadanky": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Seznam ID podřízených žádanek, tj. žádanek, které navazují na tuto žádanku. Plní se pouze ve službě nacistZadanku a v procesních službách — ve výsledcích vyhledatZadanky, vyhledatAktivniZadanky a ulozitZadanku je vždy prázdný. Dopočet podřízených žádanek je samostatný dotaz na každý záznam, proto se ve stránkovaných výsledcích neprovádí.",
+            "nullable": true
+          },
+          "zasilkyVysledku": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Seznam ID zásilek, které vznikly při vyřízení žádanky — výsledná zásilka pro žadatele a její kopie pro dodatečné příjemce, praktického lékaře a pacienta. Seznam se nefiltruje podle volajícího, obsahuje tedy i zásilky adresované jiným příjemcům. Jejich obsah je v Dočasném úložišti přístupný pouze jejich adresátovi. Prázdný u žádanky, která dosud nebyla vyřízena. Plní se pouze ve službě nacistZadanku a v procesních službách — ve výsledcích vyhledatZadanky, vyhledatAktivniZadanky a ulozitZadanku je vždy prázdný.",
+            "nullable": true
+          },
+          "zpusobVyrizeni": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselniku"
+              }
+            ],
+            "description": "Způsob vyřízení žádanky (číselník \"zpusob-vyrizeni\").",
+            "nullable": true
+          },
+          "zpusobVyrizeniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Textové upřesnění způsobu vyřízení.",
+            "nullable": true
+          },
+          "datumExpirace": {
+            "type": "string",
+            "description": "Datum a čas, do kdy je žádanka platná.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoPrijeti": {
+            "type": "string",
+            "description": "Datum a čas posledního přijetí žádanky. Žádanka může být přijata opakovaně, byla-li mezitím vrácena do oběhu.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumStorna": {
+            "type": "string",
+            "description": "Datum a čas storna žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumZaznaceniNeproveditelnosti": {
+            "type": "string",
+            "description": "Datum a čas, kdy byla žádanka označena za neproveditelnou.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPoslednihoVraceniDoObehu": {
+            "type": "string",
+            "description": "Datum a čas posledního vrácení žádanky do oběhu.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumVyrizeni": {
+            "type": "string",
+            "description": "Datum a čas vyřízení žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Datum plánovaného vyšetření uvedené při přijetí žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Datum, kdy bylo vyšetření skutečně provedeno. Uvedeno při vyřízení žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dodatecnyPrijemce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IČO dalších PZS, kterým je systémem automaticky doručena výsledná zásilka při vyřízení žádanky, bez ohledu na zvolený způsob vyřízení.",
+            "nullable": true
+          },
+          "typZadanky": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselniku"
+              }
+            ],
+            "description": "Typ žádanky (číselník \"referralorder-types\")."
+          },
+          "zadatel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Zadatel"
+              }
+            ],
+            "description": "Strana žadatele — vystavující PZS a osoby, které žádanku sepsaly a podepsaly."
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "RID"
+          },
+          "adresat": {
+            "type": "string",
+            "description": "IČO PZS, kterému je žádanka adresována. Je-li prázdné, jde o neadresnou žádanku. Po přijetí je vyplněno hodnotou IČO konkrétního příjemce.",
+            "nullable": true
+          },
+          "datumVytvoreni": {
+            "type": "string",
+            "description": "Datum a čas vytvoření žádanky.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Systémová hlavička žádanky na výstupu. K údajům zadaným při vytvoření doplňuje to, co spravuje systém — identifikátor, stav, verzi řádku, datumy životního cyklu a další uvedené údaje. Nenese klinický obsah."
+      },
+      "NactiZadankuV2Request": {
+        "title": "NactiZadankuV2Request",
+        "type": "object",
+        "properties": {
+          "kodZadanky": {
+            "type": "string",
+            "description": "Kód žádanky — zpřístupní FHIR Bundle i volajícímu, který není jejím žadatelem ani příjemcem.",
+            "nullable": true
+          },
+          "cisloDokladu": {
+            "type": "string",
+            "description": "Číslo dokladu — alternativní způsob zpřístupnění kódu žádanky a FHIR Bundle volajícímu, který není žadatelem ani příjemcem žádanky.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Přístupové údaje pro načtení žádanky. Je-li volající žadatelem nebo příjemcem žádanky, vrací se kód žádanky i FHIR Bundle automaticky. V ostatních případech se tato citlivá data vrací pouze po doplnění dalšího údaje — zadáním kodZadanky nebo cisloDokladu. Identifikátor žádanky se předává v cestě URL, tělo požadavku je proto volitelné."
+      },
+      "NactiZadankuV2Response": {
+        "title": "NactiZadankuV2Response",
+        "required": [
+          "hlavicka"
+        ],
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HlavickaVystup"
+              }
+            ],
+            "description": "Systémová hlavička žádanky."
+          },
+          "fhirBundle": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FhirBundle"
+              }
+            ],
+            "description": "FHIR Bundle typu \"document\" s tělem žádanky. Vrací se pouze tehdy, je-li volající žadatelem nebo příjemcem žádanky, nebo prokáže-li její znalost zadáním kodZadanky či cisloDokladu, jinak je null.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Detail žádanky — hlavička a uložený FHIR Bundle. Bundle se vrací tak, jak byl uložen, a pouze tehdy, má-li k němu volající oprávnění, jinak je null."
+      },
+      "PolozkaCiselniku": {
+        "title": "PolozkaCiselniku",
+        "required": [
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "ciselnikKod": {
+            "type": "string",
+            "description": "Kód číselníku, ze kterého položka pochází.",
+            "nullable": true
+          },
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód položky číselníku."
+          },
+          "verze": {
+            "type": "string",
+            "description": "Verze číselníku.",
+            "nullable": true
+          },
+          "nazev": {
+            "type": "string",
+            "description": "Název položky určený k zobrazení uživateli.",
+            "nullable": true
+          },
+          "popis": {
+            "type": "string",
+            "description": "Doplňující popis položky.",
+            "nullable": true
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Příznak, zda je položka číselníku aktuálně platná."
+          },
+          "nabizetVNpez": {
+            "type": "boolean",
+            "description": "Příznak, zda je položka číselníku nabízena v rámci výběru na portálu NPEZ."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Položka číselníku na výstupu — kód a jeho kontext, tj. kód číselníku, verze, název, popis a příznaky platnosti."
+      },
+      "PolozkaCiselnikuRequest": {
+        "title": "PolozkaCiselnikuRequest",
+        "required": [
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód položky číselníku"
+          },
+          "verze": {
+            "type": "string",
+            "description": "Verze číselníku",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odkaz na položku číselníku na vstupu žádankových služeb. Posílá se pouze kód, případně verze — kód číselníku se neuvádí, systém si ho dosazuje sám."
+      },
+      "PolozkaCiselnikuZasilka": {
+        "title": "PolozkaCiselnikuZasilka",
+        "required": [
+          "kod"
+        ],
+        "type": "object",
+        "properties": {
+          "ciselnikKod": {
+            "type": "string",
+            "description": "Kód číselníku, ze kterého položka pochází.",
+            "nullable": true
+          },
+          "kod": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Kód položky číselníku."
+          },
+          "verze": {
+            "type": "string",
+            "description": "Verze číselníku.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odkaz na položku číselníku u polí zásilky a dokumentu předávaných při vyřízení žádanky. Zachovává strukturu Dočasného úložiště."
+      },
+      "PrijmiZadankuV2Request": {
+        "title": "PrijmiZadankuV2Request",
+        "type": "object",
+        "properties": {
+          "cisloDokladu": {
+            "type": "string",
+            "description": "Číslo dokladu — umožní přijetí i volajícímu, který není žadatelem ani příjemcem žádanky.",
+            "nullable": true
+          },
+          "kodZadanky": {
+            "type": "string",
+            "description": "Kód žádanky — umožní přijetí i volajícímu, který není žadatelem ani příjemcem žádanky.",
+            "nullable": true
+          },
+          "datumPlanovanehoVysetreni": {
+            "type": "string",
+            "description": "Datum plánovaného vyšetření, doplněné při přijetí.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní objekt pro přijetí žádanky adresátem/příjemcem."
+      },
+      "Slozka": {
+        "title": "Slozka",
+        "required": [
+          "nazev"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID zásilky pro seskupení dokumentu do jednotné složky.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název složky."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Logické zařazení dokumentu ve výsledné zásilce — umožňuje seskupit více dokumentů pod jeden název."
+      },
+      "Soubor": {
+        "title": "Soubor",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID souboru (pokud je odkazováno na soubor již existující v DÚ).",
+            "format": "uuid",
+            "nullable": true
+          },
+          "soubor": {
+            "type": "string",
+            "description": "Base64 vypočtený z obsahu vkládaného souboru.",
+            "nullable": true
+          },
+          "cesta": {
+            "type": "string",
+            "description": "Cesta na externí úložiště.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Obsah souboru dokumentu v Base64, nebo odkaz na soubor, který v Dočasném úložišti již existuje."
+      },
+      "StornujZadankuV2Request": {
+        "title": "StornujZadankuV2Request",
+        "required": [
+          "duvodStornaZadanky"
+        ],
+        "type": "object",
+        "properties": {
+          "duvodStornaZadanky": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuRequest"
+              }
+            ],
+            "description": "Důvod storna žádanky (položka číselníku duvod-storna, posílá se kód)."
+          },
+          "duvodStornaUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Volitelné upřesnění důvodu storna.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní objekt pro storno žádanky."
+      },
+      "Strankovani": {
+        "title": "Strankovani",
+        "type": "object",
+        "properties": {
+          "page": {
+            "minimum": 0,
+            "type": "integer",
+            "description": "Požadované číslo stránky. Stránky se číslují od 0. Nepovinné — bez uvedení se vrátí první stránka (0).",
+            "format": "int32",
+            "default": 0
+          },
+          "size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "description": "Požadovaný počet záznamů na stránce. Nepovinné — bez uvedení se vrátí celá sada až do maximální povolené velikosti stránky.",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifikace stránkování"
+      },
+      "UdajeProPrijeti": {
+        "title": "UdajeProPrijeti",
+        "required": [
+          "samoplatce",
+          "urgentnost"
+        ],
+        "type": "object",
+        "properties": {
+          "urgentnost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselniku"
+              }
+            ],
+            "description": "Priorita žádanky (číselník: \"request-priority-cz\")"
+          },
+          "samoplatce": {
+            "type": "boolean",
+            "description": "Informace o tom, zda je osoba samoplátcem."
+          },
+          "popisOmezeniMobility": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Textové pole pro upřesnění omezení mobility pacienta.",
+            "nullable": true
+          },
+          "instrukceProPacienta": {
+            "type": "string",
+            "description": "Instrukce pro pacienta.",
+            "nullable": true
+          },
+          "pacientPojistovna": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselniku"
+              }
+            ],
+            "description": "Pojišťovna pacienta (číselník: \"cz-healthinsurancecompanycode-vs\") uvedená při vytvoření žádanky.",
+            "nullable": true
+          },
+          "metodaData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolozkaCiselniku"
+            },
+            "description": "Metoda konkrétní žádanky. Data se liší dle typu žádanky. Pro typ žádanka o zobrazovací vyšetření (Z) jsou uvedeny položky z číselníku \"cz-modality\".",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výstupní projekce minimální množiny údajů odvozených při uložení žádanky automaticky z validovaného FHIR Bundlu. Slouží oprávněnému příjemci k rozhodnutí o přijetí žádanky a objednání pacienta."
+      },
+      "UlozZadankuV2Request": {
+        "title": "UlozZadankuV2Request",
+        "required": [
+          "fhirBundle",
+          "hlavicka"
+        ],
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HlavickaVstup"
+              }
+            ],
+            "description": "Systémová hlavička žádanky — identifikátory osob a subjektů, směrování a další systémové údaje."
+          },
+          "fhirBundle": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FhirBundle"
+              }
+            ],
+            "description": "FHIR Bundle typu \"document\" obsahující tělo žádanky, sestavený dle IG odpovídajícího typu žádanky (Z = img-order, K/FT = k-order). Nese klinický obsah i údaje jako IČP žadatele, odbornost a další."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní objekt pro uložení žádanky — systémová hlavička a FHIR Bundle. Klinický obsah nese výhradně fhirBundle."
+      },
+      "UlozZadankuV2Response": {
+        "title": "UlozZadankuV2Response",
+        "required": [
+          "hlavicka"
+        ],
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HlavickaVystup"
+              }
+            ],
+            "description": "Hlavička vytvořené žádanky. Obsahuje id, verzeZaznamu i osmimístný kód žádanky."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Odpověď služby ulozitZadanku — hlavička vytvořené žádanky. Kód žádanky se vrací, protože volající je jejím žadatelem."
+      },
+      "VratZadankuDoObehuV2Request": {
+        "title": "VratZadankuDoObehuV2Request",
+        "required": [
+          "duvodVraceniZadanky"
+        ],
+        "type": "object",
+        "properties": {
+          "duvodVraceniZadanky": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuRequest"
+              }
+            ],
+            "description": "Důvod vrácení žádanky do oběhu (položka číselníku duvod-vraceni, posílá se kód)."
+          },
+          "duvodVraceniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Volitelné upřesnění důvodu vrácení.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní objekt pro vrácení žádanky do oběhu."
+      },
+      "VyhledejAktivniZadankuRequest": {
+        "title": "VyhledejAktivniZadankuRequest",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "rid": {
+            "type": "string",
+            "description": "RID - Identifikátor pacienta, kterému seznam náleží.",
+            "nullable": true
+          },
+          "kodZadanky": {
+            "type": "string",
+            "description": "Kódové označení žádanky.",
+            "nullable": true
+          },
+          "strankovani": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Strankovani"
+              }
+            ],
+            "description": "Specifikace stránkování."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Požadavek pro filtraci aktivních žádanek"
+      },
+      "VyhledejZadankuRequest": {
+        "title": "VyhledejZadankuIntRequest",
+        "type": "object",
+        "properties": {
+          "pacient": {
+            "type": "string",
+            "description": "RID — identifikátor pacienta, kterému seznam náleží.",
+            "nullable": true
+          },
+          "autor": {
+            "type": "string",
+            "description": "Identifikátor autora žádanky, který ji vytvořil.",
+            "nullable": true
+          },
+          "prijemce": {
+            "type": "string",
+            "description": "Identifikátor příjemce žádanky.",
+            "nullable": true
+          },
+          "poskytovatel": {
+            "type": "string",
+            "description": "Identifikátor poskytovatele, který žádanku vytvořil.",
+            "nullable": true
+          },
+          "datumOd": {
+            "type": "string",
+            "description": "Datumové ohraničení nejstaršího data vytvoření žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "datumDo": {
+            "type": "string",
+            "description": "Datumové ohraničení nejmladšího data vytvoření žádanky.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "kod": {
+            "type": "string",
+            "description": "Kód žádanky.",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "description": "Identifikátor žádanky.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "strankovani": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Strankovani"
+              }
+            ],
+            "description": "Specifikace stránkování."
+          },
+          "stav": {
+            "type": "string",
+            "description": "Vyhledávaný stav žádanky — kód z číselníku stav-zadanky (posílá se pouze kod, bez ciselnikKod).",
+            "nullable": true
+          },
+          "typZadanky": {
+            "type": "string",
+            "description": "Vyhledávaný typ žádanky — kód z číselníku referralorder-types (posílá se pouze kod).",
+            "nullable": true
+          },
+          "priorita": {
+            "type": "string",
+            "description": "Vyhledávaná priorita žádanky — kód z číselníku request-priority-cz (posílá se pouze kod).",
+            "nullable": true
+          },
+          "metoda": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Seznam vyhledávaných metod žádanky.",
+            "nullable": true
+          },
+          "uzavrena": {
+            "type": "boolean",
+            "description": "Pouze uzavřené žádanky.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filtr pro vyhledání žádanek. Všechna pole jsou nepovinná, zadané podmínky se kombinují — výsledkem je jejich průnik."
+      },
+      "VyhledejZadankuV2Response": {
+        "title": "VyhledejZadankuV2Response",
+        "required": [
+          "nalezeneZaznamy",
+          "pageCount",
+          "pageNumber",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "pageNumber": {
+            "type": "integer",
+            "description": "Reprezentuje číslo aktuální stránky.",
+            "format": "int32"
+          },
+          "nextPage": {
+            "type": "integer",
+            "description": "Reprezentuje číslo další stránky. Pokud je aktuální stránka zároveň poslední stránkou seznamu, pak tento parametr není uveden nebo je uveden s hodnotou null.",
+            "format": "int32",
+            "nullable": true
+          },
+          "pageCount": {
+            "type": "integer",
+            "description": "Reprezentuje celkový počet stránek dotazu.",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Počet záznamů na stránku (dle stránkování v požadavku).",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Celkový počet žádanek nalezený dle zadaných parametrů.",
+            "format": "int64",
+            "nullable": true
+          },
+          "pocetNeprectenych": {
+            "type": "integer",
+            "description": "Počet nepřečtených záznamů.",
+            "format": "int64",
+            "nullable": true
+          },
+          "nalezeneZaznamy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VyhledejZadankuZaznamDto"
+            },
+            "description": "Seznam nalezených záznamů — každý nalezený záznam = hlavička žádanky + údaje pro přijetí, nikoli FHIR Bundle s tělem žádanky."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Návratová data pro vyhledání žádanek"
+      },
+      "VyhledejZadankuZaznamDto": {
+        "title": "VyhledejZadankuZaznamDto",
+        "required": [
+          "hlavicka",
+          "udajeProPrijeti"
+        ],
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "$ref": "#/components/schemas/HlavickaVystup"
+          },
+          "udajeProPrijeti": {
+            "$ref": "#/components/schemas/UdajeProPrijeti"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Jeden nalezený záznam — hlavička žádanky a údaje potřebné k rozhodnutí o jejím přijetí. FHIR Bundle součástí záznamu není."
+      },
+      "VyridZadankuV2Request": {
+        "title": "VyridZadankuV2Request",
+        "required": [
+          "datumSkutecneRealizaceVysetreni",
+          "vysledek",
+          "zpusobVyrizeniZadanky"
+        ],
+        "type": "object",
+        "properties": {
+          "zpusobVyrizeniZadanky": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuRequest"
+              }
+            ],
+            "description": "Způsob, jakým byl výsledek předán žadateli (položka číselníku zpusob-vyrizeni, posílá se kód). Výsledná zásilka se do Dočasného úložiště ukládá vždy, bez ohledu na zvolený způsob, protože je elektronickým záznamem výsledku. Kód 1 znamená, že výsledek byl žadateli předán právě touto zásilkou. Kódy 2, 3 a 4 znamenají, že byl žadateli předán také mimo systém — v papírové podobě, jinou elektronickou nebo jinou fyzickou cestou."
+          },
+          "zpusobVyrizeniUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Volitelné textové upřesnění způsobu vyřízení.",
+            "nullable": true
+          },
+          "vysledek": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Zasilka"
+              }
+            ],
+            "description": "Data zásilky s výsledkem vyšetření. Uvádí se vždy, u všech způsobů vyřízení, protože výsledek se ukládá do Dočasného úložiště i tehdy, byl-li žadateli předán jinou cestou. Systém z nich založí výslednou zásilku, rozešle ji žadateli a dodatečným příjemcům a podle příznaků zaslatVysledekPraktikovi a zaslatVysledekPacientovi také praktickému lékaři pacienta a pacientovi. Adresáta neuvádějte, doplňuje ho systém."
+          },
+          "datumSkutecneRealizaceVysetreni": {
+            "type": "string",
+            "description": "Datum skutečné realizace vyšetření.",
+            "format": "date-time"
+          },
+          "zaslatVysledekPacientovi": {
+            "type": "boolean",
+            "description": "Je-li true, výsledná zásilka je automaticky odeslána také pacientovi.",
+            "default": false
+          },
+          "zaslatVysledekPraktikovi": {
+            "type": "boolean",
+            "description": "Je-li true, výsledná zásilka je automaticky odeslána také praktickému lékaři pacienta.",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní objekt pro vyřízení žádanky."
+      },
+      "ZadankaOperaceResponse": {
+        "title": "ZadankaOperaceResponse",
+        "required": [
+          "hlavicka"
+        ],
+        "type": "object",
+        "properties": {
+          "hlavicka": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HlavickaVystup"
+              }
+            ],
+            "description": "Aktuální hlavička žádanky po provedení operace."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Výsledek procesní operace nad žádankou — aktuální hlavička žádanky po provedení operace\r\n(nový stav, verzeZaznamu a odpovídající datumy). FHIR Bundle se nevrací (přechodem se nemění)."
+      },
+      "Zadatel": {
+        "title": "Zadatel",
+        "required": [
+          "autor",
+          "poskytovatel",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "IČO PZS žadatele."
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "krzpId – osoba, která žádanku sepsala (např. sestra)."
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "krzpId – osoba, která žádanku podepsala (lékař)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Strana žadatele — PZS, který žádanku vystavuje, osoba, která ji sepsala, a osoba, která ji podepsala. Všechny tři identifikátory se ověřují proti kmenovým registrům."
+      },
+      "Zasilka": {
+        "title": "Zasilka",
+        "required": [
+          "autor",
+          "dokument",
+          "nazev",
+          "pacient",
+          "poskytovatel",
+          "typ",
+          "zdravotnickyPracovnik"
+        ],
+        "type": "object",
+        "properties": {
+          "nazev": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "Název zásilky pro referenci."
+          },
+          "typ": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Typ zásilky (např. \"Lékařská zpráva\", \"Radiologický snímek\")."
+          },
+          "popis": {
+            "maxLength": 999,
+            "type": "string",
+            "description": "Podrobnější popis obsahu Zásilky.",
+            "nullable": true
+          },
+          "klasifikace": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Klasifikace zásilky či dokumentu dle číselníku \"document-category\"."
+          },
+          "odbornost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuZasilka"
+              }
+            ],
+            "description": "Specializace odesílatele (např. \"Kardiologie\", \"Radiologie\")."
+          },
+          "autor": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID uživatele, který zásilku vytvořil. Vazba na KRZP."
+          },
+          "zdravotnickyPracovnik": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického pracovníka souvisejícího s dokumentem. Vazba na KRZP."
+          },
+          "poskytovatel": {
+            "minLength": 1,
+            "type": "string",
+            "description": "ID zdravotnického zařízení nebo poskytovatele péče. Vazba na KRPZS."
+          },
+          "pacient": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Globálně unikátní identifikátor pacienta (RID), ke kterému se zásilka vztahuje. Vazba na KRP."
+          },
+          "dokument": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dokument"
+            },
+            "description": "Dokumenty zásilky. Musí být uveden nejméně jeden — zásilka s výsledkem nesmí být prázdná."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Data zásilky s výsledkem. Systém z nich automaticky založí zásilku v Dočasném úložišti a odešle ji žadateli žádanky a dodatečným příjemcům zvoleným při vytvoření žádanky. Adresát se proto neuvádí."
+      },
+      "ZaznacNeproveditelnostZadankyV2Request": {
+        "title": "ZaznacNeproveditelnostZadankyV2Request",
+        "required": [
+          "duvodNeproveditelnostiZadanky"
+        ],
+        "type": "object",
+        "properties": {
+          "duvodNeproveditelnostiZadanky": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolozkaCiselnikuRequest"
+              }
+            ],
+            "description": "Důvod neproveditelnosti žádanky (položka číselníku duvod-odmitnuti, posílá se kód)."
+          },
+          "duvodNeproveditelnostiUpresneni": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Volitelné upřesnění důvodu neproveditelnosti.",
+            "nullable": true
+          },
+          "kodZadanky": {
+            "type": "string",
+            "description": "Kód žádanky — umožní operaci i volajícímu, který není žadatelem ani příjemcem žádanky.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Vstupní objekt pro zaznamenání neproveditelnosti žádanky."
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "description": "Zadejde `Assertion Token (JWT)`",
+        "type": "http",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

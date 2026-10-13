@@ -1,0 +1,649 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "BundleFTPediatricPosture",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/BundleOrderCz"]
+  },
+  "language" : "cs",
+  "identifier" : {
+    "system" : "https://hl7.cz/fhir/order/sid/document",
+    "value" : "FTPED-2026-0001"
+  },
+  "type" : "document",
+  "timestamp" : "2026-09-04T11:05:00+02:00",
+  "entry" : [{
+    "fullUrl" : "https://example.org/fhir/Composition/FTCompositionPediatricPosture",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "FTCompositionPediatricPosture",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/ft-order-composition-cz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_FTCompositionPediatricPosture\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition FTCompositionPediatricPosture</b></p><a name=\"FTCompositionPediatricPosture\"> </a><a name=\"hcFTCompositionPediatricPosture\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-ft-order-composition-cz.html\">Composition: FT-order (Zadanka fyzioterapie) (CZ)</a></p></div><p><b>identifier</b>: 6a77187d-7e74-4fce-b604-bad9b2840302</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57154-7}\">žádanka o fyzioterapii</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-04 11:05:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-PractitionerRole-Pediatrician.html\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>title</b>: Fyzioterapie při vadném držení těla</p></div>"
+      },
+      "identifier" : {
+        "value" : "6a77187d-7e74-4fce-b604-bad9b2840302"
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57154-7"
+        }],
+        "text" : "žádanka o fyzioterapii"
+      },
+      "category" : [{
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }]
+      }],
+      "subject" : {
+        "reference" : "Patient/Patient-FTPediatricPosture"
+      },
+      "date" : "2026-09-04T11:05:00+02:00",
+      "author" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Pediatrician"
+      }],
+      "title" : "Fyzioterapie při vadném držení těla",
+      "section" : [{
+        "title" : "Requested physiotherapy procedures",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "57154-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Požadována fyzioterapie při vadném držení těla a začínající skolióze. Konkrétní výkony ani jejich počet nejsou určeny; rozsah péče navrhne fyzioterapeut.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "ServiceRequest/FTServiceRequest-PediatricGeneralPhysiotherapy"
+        }]
+      },
+      {
+        "title" : "Clinical indication and question",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "104720-8"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\">Vadné držení těla a začínající skolióza. Konkrétní výkony ani jejich počet nejsou určeny; rozsah péče navrhne fyzioterapeut.</div>"
+        }
+      },
+      {
+        "title" : "Cíle terapie",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "61146-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Nácvik správného držení těla a stabilizačních cvičení.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Goal/Goal-FTPediatricPosture"
+        }]
+      },
+      {
+        "title" : "coverage",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "87520-3"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Zdravotní pojišťovna: 111.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Coverage/Coverage-FTPediatricPosture"
+        }]
+      },
+      {
+        "title" : "Podpůrné klinické informace",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "55752-0"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Začínající skolióza u dětského pacienta.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Condition/Condition-FTPediatricScoliosis"
+        }]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Patient/Patient-FTPediatricPosture",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "Patient-FTPediatricPosture",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Patient_Patient-FTPediatricPosture\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient Patient-FTPediatricPosture</b></p><a name=\"Patient-FTPediatricPosture\"> </a><a name=\"hcPatient-FTPediatricPosture\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-patient-core.html\">Patient (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Anna Svobodova  Female, DoB: 2016-02-14 ( https://ncez.mzcr.cz/fhir/sid/rcis#1652141234)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/rid</code>/1000000103\u00a0(use:\u00a0official)</li><li><code>https://ncez.mzcr.cz/fhir/sid/cpoj</code>/1111652141234</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420777333445\">+420777333445</a></li><li>Školní 8, 602 00 Brno(home)</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Language spoken\">Language:</td><td colspan=\"3\"><span title=\"Codes:{urn:ietf:bcp:47 cs}\">čeština</span> (preferred)</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Nominated Contact: matka\">matka:</td><td colspan=\"3\"><ul><li>Lucie Svobodova </li><li>Školní 8, 602 00 Brno(home)</li><li><a href=\"tel:+420777333444\">+420777333444</a></li><li><a href=\"mailto:lucie.svobodova@example.cz\">lucie.svobodova@example.cz</a></li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Patient Links\">Links:</td><td colspan=\"3\"><ul><li>General Practitioner: <a href=\"PractitionerRole-PractitionerRole-Pediatrician.html\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></li><li>Managing Organization: <a href=\"Organization-Organization-PediatricsClinic.html\">Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The registered place of birth of the patient. A sytem may use the address.text if they don't store the birthPlace address in discrete elements.\"><a href=\"http://hl7.org/fhir/extensions/5.3.0/StructureDefinition-patient-birthPlace.html\">Patient Birth Place</a></td><td colspan=\"3\">Brno CZ </td></tr><tr><td style=\"background-color: #f3f5da\" title=\"This extension allows the registration of the registering healthcare provider and its category/specialty (general practitioner for children and youth, general practitioner for adults, dentist, gynecologist).\">Registering provider:</td><td colspan=\"3\"><ul><li>value: <a href=\"PractitionerRole-PractitionerRole-Pediatrician.html\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></li><li>category: <span title=\"Codes:{http://snomed.info/sct 700232004}\">služba - všeobecná lékařská péče</span></li></ul></td></tr></table></div>"
+      },
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
+        "valueAddress" : {
+          "city" : "Brno",
+          "country" : "CZ",
+          "_country" : {
+            "extension" : [{
+              "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+              "valueCoding" : {
+                "system" : "urn:iso:std:iso:3166",
+                "code" : "CZ",
+                "display" : "Czechia"
+              }
+            }]
+          }
+        }
+      },
+      {
+        "extension" : [{
+          "url" : "value",
+          "valueReference" : {
+            "reference" : "PractitionerRole/PractitionerRole-Pediatrician"
+          }
+        },
+        {
+          "url" : "category",
+          "valueCodeableConcept" : {
+            "coding" : [{
+              "system" : "http://snomed.info/sct",
+              "version" : "http://snomed.info/sct/11000279109",
+              "code" : "700232004",
+              "display" : "služba - všeobecná lékařská péče"
+            }]
+          }
+        }],
+        "url" : "https://hl7.cz/fhir/core/StructureDefinition/registering-provider-cz"
+      }],
+      "identifier" : [{
+        "use" : "official",
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rid",
+        "value" : "1000000103"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rcis",
+        "value" : "1652141234"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/cpoj",
+        "value" : "1111652141234"
+      }],
+      "name" : [{
+        "family" : "Svobodova",
+        "given" : ["Anna"]
+      }],
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420777333445",
+        "use" : "mobile"
+      }],
+      "gender" : "female",
+      "birthDate" : "2016-02-14",
+      "address" : [{
+        "use" : "home",
+        "type" : "physical",
+        "text" : "Školní 8, 602 00 Brno",
+        "line" : ["Školní 8"],
+        "city" : "Brno",
+        "postalCode" : "60200",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }],
+      "contact" : [{
+        "extension" : [{
+          "url" : "http://hl7.org/fhir/StructureDefinition/patient-relatedPerson",
+          "valueReference" : {
+            "reference" : "RelatedPerson/RelatedPerson-FTPediatricMother"
+          }
+        }],
+        "relationship" : [{
+          "coding" : [{
+            "system" : "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+            "code" : "MTH"
+          }],
+          "text" : "matka"
+        }],
+        "name" : {
+          "family" : "Svobodova",
+          "given" : ["Lucie"]
+        },
+        "telecom" : [{
+          "system" : "phone",
+          "value" : "+420777333444",
+          "use" : "mobile"
+        },
+        {
+          "system" : "email",
+          "value" : "lucie.svobodova@example.cz"
+        }],
+        "address" : {
+          "use" : "home",
+          "type" : "physical",
+          "text" : "Školní 8, 602 00 Brno",
+          "line" : ["Školní 8"],
+          "city" : "Brno",
+          "postalCode" : "60200",
+          "country" : "CZ",
+          "_country" : {
+            "extension" : [{
+              "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+              "valueCoding" : {
+                "system" : "urn:iso:std:iso:3166",
+                "code" : "CZ",
+                "display" : "Czechia"
+              }
+            }]
+          }
+        }
+      }],
+      "communication" : [{
+        "language" : {
+          "coding" : [{
+            "system" : "urn:ietf:bcp:47",
+            "code" : "cs",
+            "display" : "Czech"
+          }],
+          "text" : "čeština"
+        },
+        "preferred" : true
+      }],
+      "generalPractitioner" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Pediatrician"
+      }],
+      "managingOrganization" : {
+        "reference" : "Organization/Organization-PediatricsClinic"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/RelatedPerson/RelatedPerson-FTPediatricMother",
+    "resource" : {
+      "resourceType" : "RelatedPerson",
+      "id" : "RelatedPerson-FTPediatricMother",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-relatedPerson-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xml:lang=\"cs\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\"><a name=\"RelatedPerson_RelatedPerson-FTPediatricMother\"> </a><p>Lucie Svobodová, matka nezletilé pacientky Anny Svobodové a kontaktní osoba pro fyzioterapii. Telefon: +420777333444, e-mail: lucie.svobodova@example.cz.</p></div>"
+      },
+      "active" : true,
+      "patient" : {
+        "reference" : "Patient/Patient-FTPediatricPosture"
+      },
+      "relationship" : [{
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+          "code" : "MTH"
+        }],
+        "text" : "matka"
+      }],
+      "name" : [{
+        "use" : "official",
+        "family" : "Svobodova",
+        "given" : ["Lucie"]
+      }],
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420777333444",
+        "use" : "mobile"
+      },
+      {
+        "system" : "email",
+        "value" : "lucie.svobodova@example.cz"
+      }],
+      "gender" : "female",
+      "address" : [{
+        "use" : "home",
+        "type" : "physical",
+        "text" : "Školní 8, 602 00 Brno",
+        "line" : ["Školní 8"],
+        "city" : "Brno",
+        "postalCode" : "60200",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Practitioner/Practitioner-Pediatrician",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "Practitioner-Pediatrician",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_Practitioner-Pediatrician\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-Pediatrician</b></p><a name=\"Practitioner-Pediatrician\"> </a><a name=\"hcPractitioner-Pediatrician\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000011"
+      }],
+      "name" : [{
+        "family" : "Malikova",
+        "given" : ["Petra"],
+        "prefix" : ["MUDr."]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/PractitionerRole/PractitionerRole-Pediatrician",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "PractitionerRole-Pediatrician",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-Pediatrician\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Pediatrician</b></p><a name=\"PractitionerRole-Pediatrician\"> </a><a name=\"hcPractitionerRole-Pediatrician\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-Practitioner-Pediatrician.html\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-Organization-PediatricsClinic.html\">Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 002}\">Praktické lékařství pro děti a dorost</span></td></tr></table></div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/Practitioner-Pediatrician"
+      },
+      "organization" : {
+        "reference" : "Organization/Organization-PediatricsClinic"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "002",
+          "display" : "Pracoviště praktického lékaře pro děti a dorost"
+        }],
+        "text" : "Praktické lékařství pro děti a dorost"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-PediatricsClinic",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-PediatricsClinic",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-PediatricsClinic\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-PediatricsClinic</b></p><a name=\"Organization-PediatricsClinic\"> </a><a name=\"hcOrganization-PediatricsClinic\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001357</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001357"
+      }],
+      "name" : "Nemocnice Pod Lipou - dětská ambulance",
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169</b></p><a name=\"ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><a name=\"hcace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345679</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123456\">+420800123456</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krpzs",
+        "value" : "100000001"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      }],
+      "type" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
+          "code" : "102",
+          "display" : "Nemocnice"
+        }]
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s.",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123456",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-Insurance111",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-Insurance111",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/kp",
+        "value" : "111"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345687"
+      }],
+      "name" : "Zdravotni pojistovna Modra reka"
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Coverage/Coverage-FTPediatricPosture",
+    "resource" : {
+      "resourceType" : "Coverage",
+      "id" : "Coverage-FTPediatricPosture",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_Coverage-FTPediatricPosture\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage Coverage-FTPediatricPosture</b></p><a name=\"Coverage-FTPediatricPosture\"> </a><a name=\"hcCoverage-FTPediatricPosture\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>identifier</b>: <code>https://ncez.mzcr.cz/fhir/sid/pojistovna</code>/111</p><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>beneficiary</b>: <a href=\"Patient-Patient-FTPediatricPosture.html\">Anna Svobodova  Female, DoB: 2016-02-14 ( https://ncez.mzcr.cz/fhir/sid/rcis#1652141234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/pojistovna",
+        "value" : "111"
+      }],
+      "status" : "active",
+      "type" : {
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code" : "HIP"
+        }]
+      },
+      "beneficiary" : {
+        "reference" : "Patient/Patient-FTPediatricPosture"
+      },
+      "payor" : [{
+        "reference" : "Organization/Organization-Insurance111"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Condition/Condition-FTPediatricScoliosis",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "Condition-FTPediatricScoliosis",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_Condition-FTPediatricScoliosis\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition Condition-FTPediatricScoliosis</b></p><a name=\"Condition-FTPediatricScoliosis\"> </a><a name=\"hcCondition-FTPediatricScoliosis\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 M419}\">Skolióza, NS; vadné držení těla</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTPediatricPosture.html\">Anna Svobodova  Female, DoB: 2016-02-14 ( https://ncez.mzcr.cz/fhir/sid/rcis#1652141234)</a></p></div>"
+      },
+      "code" : {
+        "coding" : [{
+          "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
+          "code" : "M419",
+          "display" : "Skolióza NS"
+        }],
+        "text" : "Skolióza, NS; vadné držení těla"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTPediatricPosture"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/ServiceRequest/FTServiceRequest-PediatricGeneralPhysiotherapy",
+    "resource" : {
+      "resourceType" : "ServiceRequest",
+      "id" : "FTServiceRequest-PediatricGeneralPhysiotherapy",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/FTServiceRequestCz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_FTServiceRequest-PediatricGeneralPhysiotherapy\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest FTServiceRequest-PediatricGeneralPhysiotherapy</b></p><a name=\"FTServiceRequest-PediatricGeneralPhysiotherapy\"> </a><a name=\"hcFTServiceRequest-PediatricGeneralPhysiotherapy\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-FTServiceRequestCz.html\">FT (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/6a77187d-7e74-4fce-b604-bad9b2840301</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 91251008}\">fyzioterapeutický zákrok</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTPediatricPosture.html\">Anna Svobodova  Female, DoB: 2016-02-14 ( https://ncez.mzcr.cz/fhir/sid/rcis#1652141234)</a></p><p><b>authoredOn</b>: 2026-09-04 11:00:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-Pediatrician.html\">Petra Malikova (https://ncez.mzcr.cz/fhir/sid/krzp#100000011): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - dětská ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>reasonReference</b>: <a href=\"Condition-Condition-FTPediatricScoliosis.html\">Condition Skolióza, NS; vadné držení těla</a></p><p><b>insurance</b>: <a href=\"Coverage-Coverage-FTPediatricPosture.html\">Coverage: identifier = https://ncez.mzcr.cz/fhir/sid/pojistovna#111; status = active; type = health insurance plan policy</a></p><p><b>supportingInfo</b>: <a href=\"Goal-Goal-FTPediatricPosture.html\">Goal: lifecycleStatus = active; description = Nácvik správného držení těla a stabilizačních cvičení</a></p><p><b>note</b>: </p><blockquote><div><p>Konkrétní fyzioterapeutické výkony a rozsah péče navrhne fyzioterapeut.</p>\n</div></blockquote></div>"
+      },
+      "identifier" : [{
+        "system" : "urn:ietf:rfc:4122",
+        "value" : "6a77187d-7e74-4fce-b604-bad9b2840301"
+      }],
+      "status" : "active",
+      "intent" : "order",
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "91251008",
+          "display" : "fyzioterapeutický zákrok"
+        }]
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTPediatricPosture"
+      },
+      "authoredOn" : "2026-09-04T11:00:00+02:00",
+      "requester" : {
+        "reference" : "PractitionerRole/PractitionerRole-Pediatrician"
+      },
+      "reasonReference" : [{
+        "reference" : "Condition/Condition-FTPediatricScoliosis"
+      }],
+      "insurance" : [{
+        "reference" : "Coverage/Coverage-FTPediatricPosture"
+      }],
+      "supportingInfo" : [{
+        "reference" : "Goal/Goal-FTPediatricPosture"
+      }],
+      "note" : [{
+        "text" : "Konkrétní fyzioterapeutické výkony a rozsah péče navrhne fyzioterapeut."
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Goal/Goal-FTPediatricPosture",
+    "resource" : {
+      "resourceType" : "Goal",
+      "id" : "Goal-FTPediatricPosture",
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Goal_Goal-FTPediatricPosture\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Goal Goal-FTPediatricPosture</b></p><a name=\"Goal-FTPediatricPosture\"> </a><a name=\"hcGoal-FTPediatricPosture\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p></div><p><b>lifecycleStatus</b>: Active</p><p><b>description</b>: <span title=\"Codes:\">Nácvik správného držení těla a stabilizačních cvičení</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTPediatricPosture.html\">Anna Svobodova  Female, DoB: 2016-02-14 ( https://ncez.mzcr.cz/fhir/sid/rcis#1652141234)</a></p></div>"
+      },
+      "lifecycleStatus" : "active",
+      "description" : {
+        "text" : "Nácvik správného držení těla a stabilizačních cvičení"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTPediatricPosture"
+      }
+    }
+  }]
+}

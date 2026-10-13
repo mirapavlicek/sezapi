@@ -7,10 +7,11 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 | Služba | Popis |
 |--------|-------|
 | **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla (**API v3**; NCEZ vypnul v1 k 14. 8. 2026 a v1 i v2 vypíná k 15. 9. 2026) |
+| **KRZP / KRPZS** | Kmenové registry zdravotnických pracovníků a poskytovatelů (KRZP v2.0.7 a **nová v3.0.4** – přepínač `SEZ_KRZP_VERZE`; KRPZS v2.0.4) |
 | **DÚ** | Dočasné úložiště -- ukládání, vyhledávání a stahování zdravotnických zásilek |
-| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1, v2.0.1 a **v3.0.0** dle Standardu EZ SZZ 3.0) |
+| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1.0.9, v2.0.7 a **v3.0.5** dle Standardu EZ SZZ 3.0) |
 | **ELP** | Elektronické posudky -- vyhledávání a správa lékařských posudků |
-| **eŽádanky** | Elektronické žádanky mezi poskytovateli |
+| **eŽádanky** | Elektronické žádanky mezi poskytovateli (**API v2.0.0** dle Standardu eŽádanka 2.0 – systémová hlavička + FHIR Bundle, platné od 1. 10. 2026; v1.11.25 deprecated) |
 | **Notifikace** | Notifikační služba -- kanály, šablony, zdroje |
 | **SÚKL / eRecept** | eRecept / CÚER -- lékový záznam pacienta (LZP), předpis, výdej, doplatky a limit pojištěnce, ePoukaz, eOčkování (režim SIMULACE bez registrace u SÚKL) |
 | **SÚKL / DLP** | Databáze léčivých přípravků -- vyhledávání léků podle názvu, kódu SÚKL nebo ATC (veřejná otevřená data) |
@@ -437,7 +438,10 @@ Co je nového proti v2:
 - **Položka `samoplatce`** (boolean, výchozí `false`) u všech preventivních
   i screeningových vyšetření a **`genotypyHpvTestu`** u HPV screeningu.
 - **Souhrnné vyhledání** prevencí i screeningů jedním dotazem
-  (`POST /api/szz3/zdravotni-zaznamy/vyhledat`).
+  (`POST /api/szz3/zdravotni-zaznamy/vyhledat`). Pozn. (revize 13. 10. 2026):
+  swagger SZZ 3.0.5 cestu `/zdravotniZaznamy/vyhledat` nemá – klient souhrn
+  skládá ze skutečných operací `POST /api/v3/prevence/vyhledat` a
+  `POST /api/v3/screeningy/vyhledat` (odpověď `{"prevence": …, "screeningy": …}`).
 - **Rozsahy hodnot** z přílohy Validace SZZ 3.0 (například NT-proBNP
   0–100 000, výška 10–300 cm a váha 0–400 kg na tři desetinná místa, hladina
   TOKS 0–500 µg/g, BBPS celé číslo 0–9, volné texty do 300 znaků).
@@ -459,6 +463,142 @@ curl -X POST http://localhost:8000/api/szz3/zkontrolovat \
 
 Jde o klientskou pojistku proti zjevně chybné hodnotě, ne o náhradu serverové
 validace.
+
+## eŽádanky v2.0.0 (Standard eŽádanka 2.0)
+
+Revize NCEZ zdrojů 13. 10. 2026 (Manuál EZ pro PZS → API eŽádanky): na bráně
+je od 25. 9. 2026 (T2) nasazena verze **2.0.0** eŽádanek, platná od 1. 10. 2026.
+Verze **1.11.25 je deprecated** a zůstává jen po přechodnou dobu. Klient ji
+obsluhuje třídou `EZadankyV2` a endpointy `/api/ezadanky/v2/…`; třída `EZadanky`
+(v1) a `/api/ezadanky/…` zůstávají pro stávající integrace.
+
+Co se změnilo proti v1:
+
+- **Datová věta** = systémová hlavička `hlavicka` (`typZadanky`, `zadatel`
+  {`poskytovatel`, `autor`, `zdravotnickyPracovnik`}, `pacient`, `adresat`,
+  `dodatecnyPrijemce`, `nadrizenaZadankaId`) + **FHIR Bundle** typu `document`
+  (`fhirBundle`) sestavený dle HL7 CZ IG (Z = img-order, K/FT = k-order).
+  Strukturovaná DTO `zadankaZ/K/Ft`, `ispzs` i detailní data z registrů zmizely.
+- **Zdrojové cesty** `/eZadanky/api/v2/zadanka[/{id}/<operace>]`, identifikátor
+  žádanky je v cestě.
+- **Optimistické zamykání** přes hlavičku `If-Match` = `verzeZaznamu`
+  (vrací se i v `ETag`); nesoulad = HTTP 409. Uložení vrací **201** a hlavičku
+  s `id`, `kod` a `verzeZaznamu`.
+- **UpravZadanku neexistuje** – náhradou je storno a nová žádanka.
+- Vyřízení vyžaduje **zásilku s nejméně jedním dokumentem** u všech způsobů
+  vyřízení; vzniklé zásilky vrací `hlavicka.zasilkyVysledku`.
+- Stránkování **od 0** (v1 od 1); hlavička `User-Agent` je povinná.
+- Typy žádanky podle číselníku `referralorder-types`: Z = `721964003`
+  (SNOMED), K = `57133-1`, FT = `57154-7` (LOINC).
+
+```python
+from sez_api import SEZClient, EZadankyV2
+
+ez = EZadankyV2(client)
+hl = EZadankyV2.sestav_hlavicku(typ_zadanky="Z", pacient="<RID>",
+                                poskytovatel="<IČO>", autor="<KRZP>", adresat="<IČO příjemce>")
+r = ez.uloz(hl, fhir_bundle)                      # POST /api/v2/zadanka → 201
+verze = EZadankyV2.verze_zaznamu(r)               # hlavicka.verzeZaznamu / ETag
+r = ez.prijmout(zadanka_id, verze, kod_zadanky="…")   # PATCH … If-Match: <verze>
+```
+
+Server navíc kontroluje **konzistenci hlavičky s Bundle** (ověřeno živě na T2
+13. 10. 2026 – celý cyklus uložení 201 → načtení → 409 při špatném If-Match →
+storno prošel):
+
+| Pravidlo | Kde v Bundle | Chyba brány |
+|---|---|---|
+| Reference se párují **jen přesnou shodou s `entry.fullUrl`** | používejte `urn:uuid:` jako fullUrl i v referencích; relativní `Patient/1` při absolutním fullUrl server nenajde | `E00024` „… neodpovídá … ve FHIR Bundle“ (hlásí se jako nesoulad RID/KRZP/IČO) |
+| `pacient` = RID Patient | `Composition.subject` → Patient (`identifier` `sid/rid`) | `E00024` „RID pacienta v hlavičce neodpovídá pacientovi…“ |
+| `zadatel.autor` = KRZP Practitioner | `Composition.author` → Practitioner, nebo PractitionerRole → `practitioner` (`sid/krzp`) | `E00024` „KRZP autora…“ |
+| `zadatel.poskytovatel` = IČO Organization žadatele | `Composition.custodian` → Organization (`identifier` `sid/ico`); `PractitionerRole.organization` server **nepoužívá** | `E00024` „IČO žadatele v hlavičce neodpovídá poskytovateli ve FHIR Bundle“ |
+| Organization žadatele musí mít **IČP** | tatáž Organization, `identifier` `sid/icp` | `E01002` „Identifikační číslo zařízení žadatele musí být zadáno“ |
+| `adresat` = IČO **právě jedné** provádějící Organization | `ServiceRequest.performer` → Organization (přímo nebo přes PractitionerRole) | `E00024` „neobsahuje provádějícího poskytovatele…“ / „více než jednoho…“ |
+| adresát ≠ poskytovatel | – | `E01001` „systém je určen pro komunikaci mezi PZS“ |
+| `ServiceRequest.priority` jen `routine` \| `stat` | ValueSet `request-priority-cz` (ne `urgent`/`asap` z FHIR core) | `E01001` |
+| přijmout / vrátit do oběhu / neproveditelnost / vyřídit smí jen **jiný PZS** než žadatel | – | `E01001` „Systém není určen pro evidenci intramurálních žádanek“ |
+
+`EZadankyV2.zkontroluj_pozadavek()` tato pravidla hlídá předem (shodně se
+serverem – přesná shoda fullUrl, RID, KRZP, custodian, IČP, performer, priorita),
+`ImagingOrderToEZadanka.to_v2()` odvodí poskytovatele z custodian a adresáta
+z performer Organization (parametr `icp=` doplní IČP), a tlačítko „Propsat
+hlavičku do Bundle“ v GUI (endpoint `/api/ezadanky/v2/pripravit`) doplní
+urn:uuid reference, custodian, IČP i provádějící Organization.
+Pozor: oficiální vzor IG `Bundle-BundleKralikRTG` (build 9. 10. 2026, v repu
+aktualizován) odkazuje `performer` na Device – adresnou žádanku z něj brána
+přijme až po doplnění provádějící Organization.
+
+### Všechny typy žádanek: Z, K, FT (modul `sez_api.fhir_order`)
+
+Manuál EZ pro PZS definuje tři typy eŽádanky; všechny tři prošly 13. 10. 2026
+živě na T2 celým cyklem uložení (201) → načtení → storno, a to jak z minimální
+kostry, tak z oficiálních vzorů IG:
+
+| Typ | `Composition.type` | Specifikace | IG a profily | Vzory v balíčku |
+|---|---|---|---|---|
+| **Z** zobrazovací | SNOMED `721964003` | FS Z 2.0 | `hl7.fhir.cz.img-order` (build 9. 10. 2026): `cz-bundle-imaging-order`, `cz-composition-imaging-order`, `cz-servicerequest-imaging-order` | `Bundle-BundleKralikRTG` |
+| **K** konziliární | LOINC `57133-1` | FS K 7.0 | **HL7 CZ Order IG** `hl7.fhir.cz.order` 1.0.0 (`https://hl7.cz/fhir/order`): `BundleOrderCz`, `k-order-composition-cz`, `KOrderServiceRequestCz` | `BundleKOrderExample`, `BundleDermatologyUrgentExample`, `BundleNephrologyHandoverExample`, `BundleHospitalAdmissionRecommendationExample` |
+| **FT** fyzioterapie | LOINC `57154-7` | FS FT 7.0 | tentýž Order IG: `ft-order-composition-cz`, `FTServiceRequestCz` (navíc `quantity[x]`, sekce *goals* 61146-7) | `BundleFTExample`, `BundleFTHipRehabilitation`, `BundleFTCopdHomeCare`, `BundleFTPediatricPosture` |
+
+K a FT sdílejí jeden IG (`Composition.category` = 57133-1 u obou, povinné
+sekce *orderInformation* 57133-1 / 57154-7 a *coverage* 87520-3, `Composition.identifier`
+1..1, `ServiceRequest.identifier` 1..*, `requester` → PractitionerRole, `insurance`
+→ `cz-coverage-order`, klinická otázka `cz-clinicalQuestion`). Vzory IG odkazují
+relativně (`Patient/1`) při absolutním fullUrl a nemají `custodian` – přímo je
+brána odmítne (E00024); `fhir_order.pripravit()` je normalizuje. Vzor
+`BundleDermatologyUrgentExample` má `priority: urgent`, který brána nepřijme
+(request-priority-cz = routine | stat).
+
+```python
+from sez_api import fhir_order, EZadankyV2
+
+# minimální validní Bundle K / FT / Z + hlavička (stejný tvar prošel na T2)
+b = fhir_order.kostra("FT", pacient="<RID>", poskytovatel="<IČO>", autor="<KRZP>",
+                      icp="<IČP>", adresat="<IČO příjemce>", pocet_procedur=10,
+                      diagnoza={"code": "M545", "display": "Bolest dolní části zad"})
+telo = fhir_order.to_v2(b)                     # {"hlavicka": …, "fhirBundle": …}
+assert EZadankyV2.zkontroluj_pozadavek(telo) == []
+
+# libovolný Bundle (např. vzor IG) připravit podle pravidel brány
+vzor = fhir_order.load_example("Bundle-BundleKOrderExample.json")
+telo = fhir_order.to_v2(vzor, icp="<IČP>", pacient="<RID>", poskytovatel="<IČO>",
+                        autor="<KRZP>", adresat="<IČO příjemce>")
+print(fhir_order.analyzuj(telo["fhirBundle"]))   # typ, pacient, autor, zadatel, performer, reference
+```
+
+REST: `GET /api/ezadanky/v2/typy` (katalog typů, profilů, vzorů a pravidel
+brány), `GET /api/ezadanky/v2/vzory[/{name}?pripravit=1&pacient=…&icp=…]`,
+`POST /api/ezadanky/v2/kostra` (`{typ, pacient, poskytovatel, autor, icp,
+adresat, textPozadavku, vykony, diagnoza, klinickaOtazka, pojistovna, priorita,
+pocetProcedur}`), `POST /api/ezadanky/v2/pripravit` (`{hlavicka, fhirBundle,
+icp}` → `{hlavicka, fhirBundle, zmeny, vyhrady, analyza}`). V GUI (záložka
+eŽádanky v2 → Nová žádanka) volí typ přepínač Z/K/FT, výběr vzoru IG nabízí
+všech 9 vzorů, „Kostra dle typu“ sestaví Bundle z hlavičky a polí požadavek /
+výkon / diagnóza / priorita, „Propsat hlavičku do Bundle“ připraví libovolný
+vložený Bundle. Operace příjemce lze s jedním certifikátem projít jen v
+simulátoru (brána odmítá intramurální žádanky).
+
+Převod služeb v1 → v2, číselníky TermX, typy žádanek i pravidla brány vrací
+`GET /api/ezadanky/v2/katalog`; tělo požadavku lze před odesláním ověřit přes
+`POST /api/ezadanky/v2/zkontroluj` (vrací i `analyza` Bundle). V uživatelském
+rozhraní má sekce eŽádanky novou záložku **eŽádanky v2** (vyhledání, detail
+s FHIR Bundle, nová žádanka hlavička + Bundle pro Z/K/FT, workflow s If-Match,
+diagnostika a katalog); simulační režim obsluhuje obě verze. FHIR most img-order (`/api/img-order/*`) ukládá a čte
+žádanky výchozí ve v2 (Bundle beze ztráty), `?api=v1` vrátí původní lossy
+mapování; výchozí verzi určuje `SEZ_EZADANKY_VERZE`.
+
+KRZP publikuje vedle v2.0.7 novou **v3.0.4** se shodnými cestami (jen opravené
+pole `ztotozenaOsoba → ztotoznenaOsoba`); verzi volí `KRZP(client, verze="v3")`
+nebo `SEZ_KRZP_VERZE`.
+
+### Testovací certifikát T2
+
+NCEZ obměňuje veřejný testovací certifikát Krajské zdravotní čtvrtletně.
+Od 7. 10. 2026 platí **„krajska zdravotni verejny test 04“**
+(`SEZ_CLIENT_ID=25488627_KrajskaZdravotniVerejnyTest04`, platnost do
+7. 1. 2027); „test 03“ skončil 13. 10. 2026. Nový `.pfx` a heslo zveřejňuje
+stránka „Autentizace k API gateway“ v Manuálu EZ pro PZS. `SEZ_CERT_UID`
+nechte prázdné – `kid` se odvodí z certifikátu.
 
 ## Interní API (`/internal`)
 

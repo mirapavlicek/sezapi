@@ -1,0 +1,619 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "BundleDermatologyUrgentExample",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/BundleOrderCz"]
+  },
+  "language" : "cs",
+  "identifier" : {
+    "system" : "https://hospital.example.cz/korder",
+    "value" : "KORD-DERM-2026-0001"
+  },
+  "type" : "document",
+  "timestamp" : "2026-09-02T09:15:00+02:00",
+  "entry" : [{
+    "fullUrl" : "https://example.cz/fhir/Composition/DermatologyCompositionExample",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "DermatologyCompositionExample",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/k-order-composition-cz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_DermatologyCompositionExample\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition DermatologyCompositionExample</b></p><a name=\"DermatologyCompositionExample\"> </a><a name=\"hcDermatologyCompositionExample\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-k-order-composition-cz.html\">Composition: K-order (Zadanka) (CZ)</a></p></div><p><b>identifier</b>: KORD-DERM-COMP-2026-0001</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">žádanka o vyšetření</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-02 09:15:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>title</b>: Urgentni dermatologicka zadanka pro pigmentovy utvar</p></div>"
+      },
+      "identifier" : {
+        "value" : "KORD-DERM-COMP-2026-0001"
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }],
+        "text" : "žádanka o vyšetření"
+      },
+      "category" : [{
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }]
+      }],
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "date" : "2026-09-02T09:15:00+02:00",
+      "author" : [{
+        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+      }],
+      "title" : "Urgentni dermatologicka zadanka pro pigmentovy utvar",
+      "section" : [{
+        "title" : "Requested orderInformation",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "57133-1"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Požadováno urgentní dermatologické konziliární vyšetření v pigmentové poradně pro rychle se měnící pigmentový útvar na zádech.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "ServiceRequest/DermatologyServiceRequest-Urgent"
+        }]
+      },
+      {
+        "title" : "Podpůrné klinické informace",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "55752-0"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Rychle se měnící pigmentový útvar na zádech se změnou velikosti a pigmentace. Diferenciální diagnóza: novotvar nejistého nebo neznámého chování kůže.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Condition/DermatologyCondition-PigmentedLesion"
+        }]
+      },
+      {
+        "title" : "coverage",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "87520-3"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Číslo pojištěnce: 8506151234.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Coverage/KOrderCoverage-Example"
+        }]
+      },
+      {
+        "title" : "Attachments",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "55107-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Přiložena klinická fotografie pigmentového útvaru na zádech s označením lokalizace, pořízená dne 2. září 2026.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "DocumentReference/DermatologyLesionPhoto"
+        }]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "48a9d440-4194-42c1-87ad-b5a39020a4d0",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Patient_48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient 48a9d440-4194-42c1-87ad-b5a39020a4d0</b></p><a name=\"48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><a name=\"hc48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-patient-core.html\">Patient (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/rid</code>/1597778923\u00a0(use:\u00a0official)</li><li><code>https://ncez.mzcr.cz/fhir/sid/cpoj</code>/1118506151234</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420777111222\">+420777111222</a></li><li><a href=\"mailto:novak@example.com\">novak@example.com</a></li><li>Pavlovova 1424/11, 568 02 Svitavy - Predmesti(home)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "use" : "official",
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rid",
+        "value" : "1597778923"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rcis",
+        "value" : "8506151234"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/cpoj",
+        "value" : "1118506151234"
+      }],
+      "name" : [{
+        "text" : "Ing. Petr Novak, Ph.D.",
+        "family" : "Novak",
+        "given" : ["Petr",
+        "Pavel"]
+      }],
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420777111222"
+      },
+      {
+        "system" : "email",
+        "value" : "novak@example.com"
+      }],
+      "gender" : "male",
+      "birthDate" : "1985-06-15",
+      "address" : [{
+        "use" : "home",
+        "text" : "Pavlovova 1424/11, 568 02 Svitavy - Predmesti",
+        "line" : ["Pavlovova 1424/11"],
+        "city" : "Svitavy - Predmesti",
+        "postalCode" : "56802",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a</b></p><a name=\"a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><a name=\"hca81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000001"
+      }],
+      "name" : [{
+        "text" : "MUDr. Ivan Andel",
+        "family" : "Andel",
+        "given" : ["Ivan"]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "2b7e9637-5018-4542-9faf-d5abdee7b849",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xml:lang=\"cs\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\"><a name=\"PractitionerRole_2b7e9637-5018-4542-9faf-d5abdee7b849\"> </a>MUDr. Ivan Andel, vseobecny prakticky lekar</div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+        "display" : "MUDr. Ivan Andel"
+      },
+      "organization" : {
+        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+        "display" : "Ordinace praktickeho lekare"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "001",
+          "display" : "Pracoviště praktického lékaře pro dospělé"
+        }],
+        "text" : "Vseobecne prakticke lekarstvi"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169</b></p><a name=\"ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><a name=\"hcace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345679</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123456\">+420800123456</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krpzs",
+        "value" : "100000001"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      }],
+      "type" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
+          "code" : "102",
+          "display" : "Nemocnice"
+        }]
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s.",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123456",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "af2b3114-e872-43b9-9875-cceb39122f7f",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization af2b3114-e872-43b9-9875-cceb39122f7f</b></p><a name=\"af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><a name=\"hcaf2b3114-e872-43b9-9875-cceb39122f7f\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001352</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123457\">+420800123457</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001352"
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123457",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ"
+            }
+          }]
+        }
+      }],
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Organization/Organization-Insurance111",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-Insurance111",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/kp",
+        "value" : "111"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345687"
+      }],
+      "name" : "Zdravotni pojistovna Modra reka"
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Coverage/KOrderCoverage-Example",
+    "resource" : {
+      "resourceType" : "Coverage",
+      "id" : "KOrderCoverage-Example",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_KOrderCoverage-Example\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage KOrderCoverage-Example</b></p><a name=\"KOrderCoverage-Example\"> </a><a name=\"hcKOrderCoverage-Example\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>subscriberId</b>: 8506151234</p><p><b>beneficiary</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
+      },
+      "status" : "active",
+      "type" : {
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code" : "HIP"
+        }]
+      },
+      "subscriberId" : "8506151234",
+      "beneficiary" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "payor" : [{
+        "reference" : "Organization/Organization-Insurance111"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Condition/DermatologyCondition-PigmentedLesion",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "DermatologyCondition-PigmentedLesion",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_DermatologyCondition-PigmentedLesion\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition DermatologyCondition-PigmentedLesion</b></p><a name=\"DermatologyCondition-PigmentedLesion\"> </a><a name=\"hcDermatologyCondition-PigmentedLesion\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status differential}\">Differential</span></p><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 D485}\">Rychle se měnící pigmentový útvar na zádech</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p></div>"
+      },
+      "verificationStatus" : {
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+          "code" : "differential"
+        }]
+      },
+      "code" : {
+        "coding" : [{
+          "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
+          "code" : "D485",
+          "display" : "Novotvar NNCH - kůže"
+        }],
+        "text" : "Rychle se měnící pigmentový útvar na zádech"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Practitioner/Practitioner-Dermatologist",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "Practitioner-Dermatologist",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_Practitioner-Dermatologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-Dermatologist</b></p><a name=\"Practitioner-Dermatologist\"> </a><a name=\"hcPractitioner-Dermatologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000003"
+      }],
+      "name" : [{
+        "text" : "MUDr. Eva Cerná",
+        "family" : "Cerna",
+        "given" : ["Eva"]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/PractitionerRole/PractitionerRole-Dermatologist",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "PractitionerRole-Dermatologist",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-Dermatologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Dermatologist</b></p><a name=\"PractitionerRole-Dermatologist\"> </a><a name=\"hcPractitionerRole-Dermatologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-Practitioner-Dermatologist.html\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-Organization-DermatologyClinic.html\">Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 404}\">Dermatovenerologie</span></td></tr></table></div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/Practitioner-Dermatologist"
+      },
+      "organization" : {
+        "reference" : "Organization/Organization-DermatologyClinic"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "404",
+          "display" : "Pracoviště dermatovenerologie"
+        }],
+        "text" : "Dermatovenerologie"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/Organization/Organization-DermatologyClinic",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-DermatologyClinic",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-DermatologyClinic\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-DermatologyClinic</b></p><a name=\"Organization-DermatologyClinic\"> </a><a name=\"hcOrganization-DermatologyClinic\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001353</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001353"
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s. - pigmentova poradna",
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/ServiceRequest/DermatologyServiceRequest-Urgent",
+    "resource" : {
+      "resourceType" : "ServiceRequest",
+      "id" : "DermatologyServiceRequest-Urgent",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/KOrderServiceRequestCz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_DermatologyServiceRequest-Urgent\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest DermatologyServiceRequest-Urgent</b></p><a name=\"DermatologyServiceRequest-Urgent\"> </a><a name=\"hcDermatologyServiceRequest-Urgent\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-KOrderServiceRequestCz.html\">K-order (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/KORD-DERM-2026-0001</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>priority</b>: Urgent</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 185387006}\">Urgentni dermatologicke konziliarni vysetreni</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>authoredOn</b>: 2026-09-02 09:10:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-Dermatologist.html\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>reasonReference</b>: <a href=\"Condition-DermatologyCondition-PigmentedLesion.html\">Condition Rychle se měnící pigmentový útvar na zádech</a></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 77568009}\">Kuže zad</span></p><p><b>note</b>: </p><blockquote><div><p>Rychla zmena velikosti a pigmentace; prilozena fotodokumentace s oznacenim lokalizace.</p>\n</div></blockquote></div>"
+      },
+      "identifier" : [{
+        "system" : "urn:ietf:rfc:4122",
+        "value" : "KORD-DERM-2026-0001"
+      }],
+      "status" : "active",
+      "intent" : "order",
+      "priority" : "urgent",
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "185387006",
+          "display" : "konzultace s novým pacientem"
+        }],
+        "text" : "Urgentni dermatologicke konziliarni vysetreni"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "authoredOn" : "2026-09-02T09:10:00+02:00",
+      "requester" : {
+        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+      },
+      "performer" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Dermatologist"
+      }],
+      "reasonReference" : [{
+        "reference" : "Condition/DermatologyCondition-PigmentedLesion"
+      }],
+      "bodySite" : [{
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "code" : "77568009"
+        }],
+        "text" : "Kuže zad"
+      }],
+      "note" : [{
+        "text" : "Rychla zmena velikosti a pigmentace; prilozena fotodokumentace s oznacenim lokalizace."
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.cz/fhir/DocumentReference/DermatologyLesionPhoto",
+    "resource" : {
+      "resourceType" : "DocumentReference",
+      "id" : "DermatologyLesionPhoto",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-attachment"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"DocumentReference_DermatologyLesionPhoto\"> </a><p class=\"res-header-id\"><b>Generated Narrative: DocumentReference DermatologyLesionPhoto</b></p><a name=\"DermatologyLesionPhoto\"> </a><a name=\"hcDermatologyLesionPhoto\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-attachment.html\">Attachment (CZ core)</a></p></div><p><b>status</b>: Current</p><p><b>type</b>: <span title=\"Codes:\">Klinicka fotodokumentace pigmentoveho utvaru</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><blockquote><p><b>content</b></p><h3>Attachments</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>ContentType</b></td><td><b>Url</b></td><td><b>Title</b></td><td><b>Creation</b></td></tr><tr><td style=\"display: none\">*</td><td>image/jpeg</td><td><a href=\"https://example.cz/fhir/Binary/dermatology-lesion-photo\">https://example.cz/fhir/Binary/dermatology-lesion-photo</a></td><td>Pigmentovy utvar na zadech - klinicka fotografie</td><td>2026-09-02 09:05:00+0200</td></tr></table></blockquote><h3>Contexts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Related</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"ServiceRequest-DermatologyServiceRequest-Urgent.html\">ServiceRequest Urgentni dermatologicke konziliarni vysetreni</a></td></tr></table></div>"
+      },
+      "status" : "current",
+      "type" : {
+        "text" : "Klinicka fotodokumentace pigmentoveho utvaru"
+      },
+      "subject" : {
+        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+      },
+      "content" : [{
+        "attachment" : {
+          "contentType" : "image/jpeg",
+          "url" : "https://example.cz/fhir/Binary/dermatology-lesion-photo",
+          "title" : "Pigmentovy utvar na zadech - klinicka fotografie",
+          "creation" : "2026-09-02T09:05:00+02:00"
+        }
+      }],
+      "context" : {
+        "related" : [{
+          "reference" : "ServiceRequest/DermatologyServiceRequest-Urgent"
+        }]
+      }
+    }
+  }]
+}

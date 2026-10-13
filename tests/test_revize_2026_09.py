@@ -249,7 +249,12 @@ def test_img_order_clinical_question_bez_diagnozy_ma_empty_reason():
 
 
 def test_img_order_validace_upozorni_na_stary_tvar():
-    """Bundle bez version/sekce clinicalQuestion/identifier → varování (ne chyba)."""
+    """Bundle bez version/sekce clinicalQuestion/insurance → varování (ne chyba).
+
+    Revize 13. 10. 2026: IG build 2026-10-09 (cz-imagingOrderInformation 1.0.0)
+    má ``ServiceRequest.identifier`` 0..* – chybějící identifier už se nehlásí;
+    povinné je ``insurance`` 1..* (cz-coverage-order).
+    """
     from sez_api.fhir_imgorder import EZadankaToImagingOrder, ImagingOrderBundleParser
 
     b = EZadankaToImagingOrder(_ncez_zadanka()).to_bundle()
@@ -259,11 +264,13 @@ def test_img_order_validace_upozorni_na_stary_tvar():
                        if s["code"]["coding"][0]["code"] != "18785-6"]
     sr = next(e["resource"] for e in b["entry"] if e["resource"]["resourceType"] == "ServiceRequest")
     sr.pop("identifier")
+    sr.pop("insurance", None)
     issues = ImagingOrderBundleParser(b).validate()
     texty = [str(i) for i in issues]
     assert any("type.coding.version" in t for t in texty)
     assert any("clinicalQuestion" in t for t in texty)
-    assert any("identifier" in t and "ServiceRequest" in t for t in texty)
+    assert not any("identifier je v profilu" in t for t in texty)
+    assert any("insurance" in t and "ServiceRequest" in t for t in texty)
     assert all(i["severity"] != "error" for i in issues)
 
 

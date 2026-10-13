@@ -64,6 +64,42 @@ třídu SEZ.EZD.Builder (Sestav / Validuj / ZasilkaProDU / SestavAOdesli,
 zná všech 5 kategorií vč. povinných i volitelných sekcí).
 API: /api/zpravy/iris-kod, /api/zpravy/iris-builder.
 
+Revize NCEZ zdrojů 2026-10-13 (Manuál EZ pro PZS, 20 swaggerů z brány T2):
+eŽádanky API v2.0.0 (Standard eŽádanka 2.0; T2 od 25. 9., platné od 1. 10.
+2026, v1.11.25 deprecated) – datová věta = systémová hlavička + FHIR Bundle
+(document), zdrojové cesty /api/v2/zadanka[/{id}/<operace>], If-Match =
+verzeZaznamu (409), uložení 201, bez UpravZadanku, vyřízení se zásilkou,
+stránkování od 0. Klient EZadankyV2 (sestav_hlavicku, zkontroluj_pozadavek,
+verze_zaznamu, prevod_z_v1, diagnose), backend /api/ezadanky/v2/* vč.
+katalogu a simulátoru, GUI záložka „eŽádanky v2“, FHIR most img-order
+ukládá/čte ve v2 (ImagingOrderToEZadanka.to_v2, reverz z fhirBundle),
+IRIS SEZ.API.EZadanky metody V2*. Všechny tři typy žádanky (Z img-order,
+K a FT společný HL7 CZ Order IG hl7.fhir.cz.order 1.0.0) ověřeny živě na T2
+(kostry i 9 vzorů IG, 201 → storno): modul fhir_order (TYPY, kostra, kostra_z,
+to_v2, pripravit, normalizuj_reference, analyzuj, katalog_typu, vzory IG),
+endpointy /api/ezadanky/v2/{typy,vzory,kostra,pripravit}, GUI výběr typu a
+vzoru; zkontroluj_pozadavek zrcadlí pravidla brány (přesná shoda fullUrl,
+RID, KRZP, custodian + IČP, performer, priorita routine|stat, intramurální
+operace). KRZP: nová v3.0.4 vedle v2.0.7 –
+KRZP(verze=…)/SEZ_KRZP_VERZE, normalizuj_odpoved (ztotozenaOsoba ↔
+ztotoznenaOsoba). SZZv3.zdravotni_zaznamy_vyhledat skládá
+/prevence/vyhledat + /screeningy/vyhledat (cesta /zdravotniZaznamy/vyhledat
+ve swaggeru 3.0.5 není). Verze na T2: DÚ 1.11.27, ELP 1.0.7/2.0.11/3.0.3,
+EZCA2 1.0.7 + Správa 1.0.8, KRP 2.0.6/3.0.6, KRPZS 2.0.4, Notifikace 1.0.9,
+RO 1.0.7, SZZ 1.0.9/2.0.7/3.0.5, TermX 1.0.5. Testovací certifikát T2
+vyměněn za „krajska zdravotni verejny test 04“ (client_id
+25488627_KrajskaZdravotniVerejnyTest04, platnost do 7. 1. 2027).
+Živě ověřeno na T2 (v2 uložení 201 → nacist → 409 při špatném If-Match →
+storno; KRZP v3 a SZZ v3 prevence/screeningy 200). Brána kontroluje
+konzistenci hlavičky s Bundle: zadatel.poskytovatel = IČO Organization v
+Composition.custodian (E00024), tato Organization musí mít IČP (E01002),
+adresat = IČO právě jedné provádějící Organization ze ServiceRequest.performer
+(E00024) a adresát ≠ poskytovatel (E01001) – hlídá zkontroluj_pozadavek,
+to_v2(icp=…) a GUI „Propsat hlavičku do Bundle“. Příklad IG img-order
+Bundle-BundleKralikRTG aktualizován na build 9. 10. 2026 (custodian,
+requester → PractitionerRole, SR.identifier 0..*, insurance 1..*,
+cz-coverage-order); reverzní generátor Bundle tomu odpovídá.
+
 Revize NCEZ zdrojů 2026-09-09:
 - KRP: NCEZ oznámil 27. 8. 2026, že k 15. 9. 2026 VYPÍNÁ API KRP pro PZS
   verze v1 i v2 (dosud bylo vypnuto jen v1). Hlavní rozhraní /api/krp/*
@@ -256,6 +292,7 @@ from sez_api.client import (
     ELPv2,
     ELPv3,
     EZadanky,
+    EZadankyV2,
     Notifikace,
     EZCA2,
     EZCA2SpravaCertifikatu,
@@ -268,8 +305,9 @@ from sez_api.client import (
     UZIS,
     UZISObsazenostLuzek,
 )
+from sez_api import fhir_order  # noqa: E402  (typy Z/K/FT, kostry, příprava Bundle)
 
-__version__ = "2.33.0"
+__version__ = "2.35.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
@@ -292,6 +330,8 @@ __all__ = [
     "ELPv2",
     "ELPv3",
     "EZadanky",
+    "EZadankyV2",
+    "fhir_order",
     "Notifikace",
     "EZCA2",
     "EZCA2SpravaCertifikatu",

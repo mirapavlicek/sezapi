@@ -2,7 +2,7 @@
   "openapi": "3.0.4",
   "info": {
     "title": "Elektronicke posudky",
-    "description": "Externí API systému ELP (Elektronické lékařské posudky) – určeno pro PZS.",
+    "description": "Interní API systému ELP (Elektronické lékařské posudky) – určeno pro Národní portál, EZKartu a interní aplikace.",
     "version": "v1.0.7"
   },
   "servers": [
@@ -25,7 +25,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "15f6a6ce-4061-47a0-bb75-9b5c9492def2"
+              "example": "d6ed323b-8538-4752-9c50-1d663a71e4fe"
             }
           },
           {
@@ -62,7 +62,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "40f715e2-90ea-4fae-96df-a427fe75415e",
+                  "correlationId": "7ec69f59-bbc4-4ddc-afc2-749ca132ba18",
                   "errors": [
                     {
                       "field": "rid",
@@ -87,7 +87,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "e37b6587-549c-4a6f-b7e8-5d4deb52bff6"
+                  "correlationId": "3fc81e97-f2a8-46a1-bf84-6748656539a3"
                 }
               }
             }
@@ -102,7 +102,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "be49fc0d-c35e-411f-b375-f12c5c5f18b9"
+                  "correlationId": "c4c2057f-f64b-458b-bae3-8a13ad4fd08a"
                 }
               }
             }
@@ -117,7 +117,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "002c3e8d-a905-4d89-b3cf-30edab5b13f4"
+                  "correlationId": "d580863e-7d2b-4ec0-86f7-be41cda7275f"
                 }
               }
             }
@@ -132,7 +132,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "4c52d470-096f-4f37-b687-180966e2cfb6",
+                  "correlationId": "31d89c72-d0ac-40f4-a79c-f4fe16bbcf02",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -177,7 +177,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "b7f1a38b-abb9-47b2-be83-652082695795"
+              "example": "24228240-7243-405a-964b-31a1931e5161"
             }
           },
           {
@@ -214,7 +214,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "11fa8b34-aa6c-476f-bb78-b0d68cea8c09",
+                  "correlationId": "7961e8d5-9b2b-4061-9c22-5ed37221626f",
                   "errors": [
                     {
                       "field": "rid",
@@ -239,7 +239,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "7789a1da-7cef-4393-9a20-3b479d5a6b98"
+                  "correlationId": "5300220c-a0a3-496c-8072-c3919e61ccac"
                 }
               }
             }
@@ -254,7 +254,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "b8795951-6bcb-4ab9-9da0-749118bb87fb"
+                  "correlationId": "f2ed84ae-c9d4-4707-b9f2-2412d08da256"
                 }
               }
             }
@@ -269,7 +269,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "02b4877d-5947-458e-a3a3-2fd9f088e1c1"
+                  "correlationId": "0b17c1dd-5267-41cf-a01e-c5a67b6cc3ce"
                 }
               }
             }
@@ -284,7 +284,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "fe2ece2a-6d00-4194-a554-db0276b3114b",
+                  "correlationId": "ec807d74-2df8-4fe2-aecd-5a0c33fd37e4",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -330,7 +330,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "273b6579-209c-49b7-9f51-2826f4e04234"
+              "example": "876feada-9bf2-4627-9156-d3e4d9708468"
             }
           },
           {
@@ -374,7 +374,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "5bd26853-dc5f-4594-bb0f-a9638bea1a50",
+                  "correlationId": "b611bde3-d992-4c21-ab69-7ee59aa11735",
                   "errors": [
                     {
                       "field": "rid",
@@ -399,7 +399,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "49fd6785-5f43-4832-ad3f-3cdd91850b4f"
+                  "correlationId": "80c44bba-c136-4f10-8c23-f6726edf595e"
                 }
               }
             }
@@ -414,7 +414,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "6d0b013a-125a-4e8b-80c9-453583cc162b"
+                  "correlationId": "454f4828-6b1c-43fb-8093-2475e5dfc61f"
                 }
               }
             }
@@ -429,7 +429,7 @@
                   "status": 404,
                   "detail": "Požadovaný posudek nebyl nalezen.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "ba70be8c-cf40-4425-a8e0-599b9b37c71b"
+                  "correlationId": "529a1042-5cf6-473d-a539-31185eede9fd"
                 }
               }
             }
@@ -444,7 +444,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "4a6685d9-4c6b-4fa7-9ead-cba35fc79a90"
+                  "correlationId": "fb422fb6-58fe-4868-8cbd-fb9b06901dde"
                 }
               }
             }
@@ -459,7 +459,7 @@
                   "status": 409,
                   "detail": "Došlo ke konfliktu – záznam již existuje nebo byl mezitím změněn.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "a4754ccb-51ae-479e-8e8c-8f23e3d5bf00"
+                  "correlationId": "cfe5768e-72af-49e7-a951-c0f55a39e77f"
                 }
               }
             }
@@ -474,7 +474,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "003b16cc-ddb1-4a6f-b504-ad2a580010ce",
+                  "correlationId": "02a5c240-015e-452e-b951-9c6ca5858a95",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -520,7 +520,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "1bb7871e-2071-44ad-9714-d0e8f1aa0693"
+              "example": "16972579-aadf-400d-add1-002af62f5334"
             }
           },
           {
@@ -554,7 +554,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "3e712774-100c-46ab-b58b-949010041729",
+                  "correlationId": "f8b2d0d6-e7de-431a-b7a0-4e47028451d6",
                   "errors": [
                     {
                       "field": "rid",
@@ -579,7 +579,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "037d2a2f-ab23-4219-a93f-42a7aa26dfba"
+                  "correlationId": "041144ae-2306-4910-b1ca-359adc7b38b8"
                 }
               }
             }
@@ -594,7 +594,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "4cb3ecca-78e1-46b2-bc7a-2fa1d822b958"
+                  "correlationId": "daeee2a0-67aa-4b31-81af-19e7797b35d3"
                 }
               }
             }
@@ -609,7 +609,7 @@
                   "status": 404,
                   "detail": "Požadovaný posudek nebyl nalezen.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "4c18269d-dc9b-46df-9cf5-4bce0272cae9"
+                  "correlationId": "c80a43d7-1012-47c8-bb36-07e0d071dba5"
                 }
               }
             }
@@ -624,7 +624,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "356ae820-d435-458e-ba11-a44169959ae6"
+                  "correlationId": "508118f3-d786-4b72-a357-d6f1ceb6027a"
                 }
               }
             }
@@ -639,7 +639,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "b6a5a819-c504-4949-aeca-b59770904d23",
+                  "correlationId": "95f471df-a2e2-4d86-b7a7-c9009b495819",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -675,7 +675,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "29d29104-c3c8-43d4-b577-55a79d05cea1"
+              "example": "3b8257c1-1642-4fc0-a5b7-8df957eb80f4"
             }
           },
           {
@@ -719,7 +719,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "9e465f20-50b4-4ed2-ba87-8e7fddc03714",
+                  "correlationId": "f05a0688-38ce-4dd3-8a33-fefe2376dd15",
                   "errors": [
                     {
                       "field": "rid",
@@ -744,7 +744,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "e4a2ce63-06de-4957-852a-9da2d2676b78"
+                  "correlationId": "aebb96f2-36b4-4461-8211-2f98999eba9c"
                 }
               }
             }
@@ -759,7 +759,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "38af8ea4-0b13-4919-9e5e-378c0ea8d6b4"
+                  "correlationId": "493d93d4-8272-4f43-bf2d-5a1da9bcf3ec"
                 }
               }
             }
@@ -774,7 +774,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "0ee5893a-5715-4301-9c3a-eeede6a3bdde"
+                  "correlationId": "77ae1417-7e63-422d-8b7b-a5c52b6e97d7"
                 }
               }
             }
@@ -789,7 +789,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "ffc6c1a9-43e4-428e-96f0-040d3164c116",
+                  "correlationId": "7745f98c-c210-44b7-8f9d-dc66e168d8c5",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -906,7 +906,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "faf10e2d-0642-4b54-93c4-508493d83b13"
+              "example": "80a32a0e-3e9a-4afd-bd04-5d1d2c7e5704"
             }
           },
           {
@@ -940,7 +940,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "63c31607-1b6d-4ceb-a509-75fcd91d30a7",
+                  "correlationId": "c984a4ec-bd85-4ada-bc59-9eaa3d09b33c",
                   "errors": [
                     {
                       "field": "rid",
@@ -965,7 +965,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "5e4de197-6219-4965-81e2-3dee26c0ccac"
+                  "correlationId": "9e3b3a76-aaf9-4e85-b741-43dad7ef8322"
                 }
               }
             }
@@ -980,7 +980,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "e4a701e6-a029-4416-9f61-ac248d003f29"
+                  "correlationId": "f897f59f-a753-4d7f-acd0-d08912ec4f5c"
                 }
               }
             }
@@ -995,7 +995,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "cce5ba23-9b8d-4b69-9b0c-dfe27dac47a0"
+                  "correlationId": "01c2e960-bbbd-4971-88d1-c2d31abc67fb"
                 }
               }
             }
@@ -1010,7 +1010,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "b1fd13ba-c7da-4044-b6e5-94db6c7a121c",
+                  "correlationId": "ecab3a2c-ba76-4509-bd11-fc7d79af9447",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -1057,7 +1057,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "708914fa-2ac5-4e06-8301-9c7e6c70851b"
+              "example": "5455650c-9a25-455e-b2b7-3f946f3d4a85"
             }
           },
           {
@@ -1092,7 +1092,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "59472e2e-c63e-4485-b44d-f92970d546e7",
+                  "correlationId": "009479f1-0a76-47d1-9b53-7c9d1622680f",
                   "errors": [
                     {
                       "field": "rid",
@@ -1117,7 +1117,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "1dbec04a-8b60-40ea-bedb-01146d6d0373"
+                  "correlationId": "c6590a36-4ecf-4ac6-b542-6e4933001523"
                 }
               }
             }
@@ -1132,7 +1132,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "86214bd1-6a64-4c60-8bff-981689126b7f"
+                  "correlationId": "06b944fa-1dbe-4b9c-ae84-d7c571522530"
                 }
               }
             }
@@ -1147,7 +1147,7 @@
                   "status": 404,
                   "detail": "Požadovaný posudek nebyl nalezen.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "f0e2e00b-d72a-4054-a67e-0c308c4ff27a"
+                  "correlationId": "b730212b-0afe-46ed-a8aa-25f9d96b2ffc"
                 }
               }
             }
@@ -1162,7 +1162,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "9e96ca97-e58c-4053-a15e-3a798aa48785"
+                  "correlationId": "d61be0f8-943d-4a96-89e4-690b7d3305b5"
                 }
               }
             }
@@ -1177,7 +1177,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "fb2d5901-a126-47a9-a1a8-ea30b46af4a1",
+                  "correlationId": "fdff70d3-ac8c-4c68-92a7-4c98f3830cca",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -1223,7 +1223,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "645c1d42-0c18-466d-832a-5f1fc2bbab6d"
+              "example": "965a257b-710c-458c-97c2-c45ca0b71819"
             }
           },
           {
@@ -1258,7 +1258,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "ee6de887-6c6c-4d8f-ab82-c2a6b2462bfe",
+                  "correlationId": "2d92fe1c-3e8c-4f47-8d33-465c65f1db2e",
                   "errors": [
                     {
                       "field": "rid",
@@ -1283,7 +1283,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "354c82c2-a747-414c-843b-b3d7571128a4"
+                  "correlationId": "2bfc4545-13b5-44c2-bea0-c786daf89389"
                 }
               }
             }
@@ -1298,7 +1298,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "24e673ab-3114-4cd1-bdf3-a5280796b482"
+                  "correlationId": "1d6a67d3-1587-4e74-b8ba-12e0b1664d96"
                 }
               }
             }
@@ -1313,7 +1313,7 @@
                   "status": 404,
                   "detail": "Požadovaný posudek nebyl nalezen.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "5754c5db-2fe9-4c25-bd17-cb5592ad41b5"
+                  "correlationId": "1ed95e07-83e2-488e-9f51-9ff1512b5b08"
                 }
               }
             }
@@ -1328,7 +1328,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "f0e40f93-dd79-4af8-b141-06d5545db325"
+                  "correlationId": "7f9c33ef-db71-41f9-a962-e5f7cb63e39c"
                 }
               }
             }
@@ -1343,7 +1343,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "6a06d6be-5130-4810-9e4a-efb36e192e7e",
+                  "correlationId": "5d1676ae-84ff-4223-a290-52b11e0bdf72",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -1379,7 +1379,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "429a3925-4cb2-4808-851a-2acf04581345"
+              "example": "8e921e79-48ec-4764-9ad6-b433aada7b69"
             }
           },
           {
@@ -1422,7 +1422,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "4a4de1ee-517c-4b31-90bd-dc9e5531307f",
+                  "correlationId": "c49d519a-dff1-4e8c-a596-60dedeaeee05",
                   "errors": [
                     {
                       "field": "rid",
@@ -1447,7 +1447,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "513c3938-6410-4eda-ba8f-fc452bcb16b6"
+                  "correlationId": "0373dc68-1450-42e1-97b1-674d16751027"
                 }
               }
             }
@@ -1462,7 +1462,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "8f6e4157-7bca-4b8d-bca6-66a6bd9f6c48"
+                  "correlationId": "a31a7188-8de2-4faf-851b-003fd36e2f72"
                 }
               }
             }
@@ -1477,7 +1477,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "ff6f0db0-72c9-44d4-9120-14419ad5cfd2"
+                  "correlationId": "6891abc8-fc25-49b7-a8e3-e5204b8c0211"
                 }
               }
             }
@@ -1492,7 +1492,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "9c668c20-940b-4b5f-9eca-136495846814",
+                  "correlationId": "2390c65a-509b-499a-b36c-5afc39c81fc4",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -1538,7 +1538,7 @@
             "description": "Unikátní identifikátor požadavku pro trasování mezi systémy.",
             "schema": {
               "type": "string",
-              "example": "8c15869d-e866-4079-b2e6-2d0b81084def"
+              "example": "3315a1cc-18cd-4c1b-a4d4-b3151dd591ba"
             }
           },
           {
@@ -1575,7 +1575,7 @@
                   "status": 400,
                   "detail": "Některé položky vstupu neprošly validací.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "e1b796ea-0838-4d12-b397-904d5c9d7281",
+                  "correlationId": "fac616dd-556c-4558-a705-c912721675a1",
                   "errors": [
                     {
                       "field": "rid",
@@ -1600,7 +1600,7 @@
                   "status": 401,
                   "detail": "Chybí nebo je neplatný přístupový token.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "56e94b0b-4d70-4b2c-8c29-f749b8a18217"
+                  "correlationId": "e2a80f5d-67a6-45f8-9d59-2c4738d11104"
                 }
               }
             }
@@ -1615,7 +1615,7 @@
                   "status": 403,
                   "detail": "Uživatel nemá oprávnění k této akci.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "5855b11a-e057-41ed-9c5d-3709bca081f8"
+                  "correlationId": "561763d7-5d1d-436f-a709-455b820d2d42"
                 }
               }
             }
@@ -1630,7 +1630,7 @@
                   "status": 408,
                   "detail": "Server čekal příliš dlouho na odpověď klienta.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "81185d2c-5509-47b4-92ec-6a3d25904413"
+                  "correlationId": "25382287-ce79-4c97-9dd6-1724c1463a6d"
                 }
               }
             }
@@ -1645,7 +1645,7 @@
                   "status": 500,
                   "detail": "Došlo k neočekávané výjimce při zpracování požadavku.",
                   "instance": "/api/v1/posudky/ridicskeOpravneni",
-                  "correlationId": "0626a84e-2c69-47e8-a0cd-ad33a155859b",
+                  "correlationId": "bdf9bdeb-3f4d-47c5-811c-23641b3f7670",
                   "errors": [
                     {
                       "field": "exception.type",
@@ -2041,6 +2041,10 @@
           "verzeZaznamu": {
             "type": "string",
             "nullable": true
+          },
+          "pdfArchiveComponentId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2142,7 +2146,8 @@
       },
       "PosudekRoNarodniKodCreateDto": {
         "required": [
-          "narodniKod"
+          "narodniKod",
+          "skupinaRo"
         ],
         "type": "object",
         "properties": {
@@ -2480,11 +2485,6 @@
       }
     }
   },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
   "tags": [
     {
       "name": "Ridicske opravneni",
@@ -2493,6 +2493,11 @@
     {
       "name": "Ciselniky",
       "description": "Externí API pro číselníky systému ELP."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
     }
   ]
 }

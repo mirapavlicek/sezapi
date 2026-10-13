@@ -1,0 +1,61 @@
+{
+  "resourceType" : "ServiceRequest",
+  "id" : "cz-imagingorder-example",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/img-order/StructureDefinition/cz-imagingOrderInformation"]
+  },
+  "text" : {
+    "status" : "additional",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\">Vyšetření MR pravého kolene</div>"
+  },
+  "status" : "active",
+  "intent" : "order",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "version" : "http://snomed.info/sct/11000279109",
+      "code" : "363679005"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "version" : "http://snomed.info/sct/11000279109",
+      "code" : "19741000087109"
+    }]
+  },
+  "orderDetail" : [{
+    "coding" : [{
+      "system" : "http://dicom.nema.org/resources/ontology/DCM",
+      "version" : "2025.3.20250714",
+      "code" : "MR",
+      "display" : "Magnetic Resonance"
+    }]
+  }],
+  "subject" : {
+    "reference" : "Patient/Mracena"
+  },
+  "authoredOn" : "2025-04-01T09:00:00+01:00",
+  "performer" : [{
+    "reference" : "Device/MRDevice"
+  }],
+  "reasonCode" : [{
+    "coding" : [{
+      "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
+      "code" : "M2321"
+    }]
+  }],
+  "insurance" : [{
+    "reference" : "Coverage/VZPCoverage"
+  }],
+  "bodySite" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "version" : "http://snomed.info/sct/11000279109",
+      "code" : "72696002"
+    }]
+  }],
+  "note" : [{
+    "text" : "Poznámka k vyšetření"
+  }]
+}

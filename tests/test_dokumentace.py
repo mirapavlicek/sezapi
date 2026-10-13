@@ -21,10 +21,12 @@ try:
 except ImportError:
     from sez_client import SEZAuth, SEZClient, KRP, DocasneUloziste, SZZ, ELP, EZadanky, Notifikace
     Terminologie = None  # type: ignore
-    CLIENT_ID = os.environ.get("SEZ_CLIENT_ID", "25488627_KrajskaZdravotniVerejnyTest")
-    P12_PATH = os.environ.get("SEZ_P12_PATH", "/Users/mira/Downloads/krajska_zdravotni.pfx")
+    # Veřejný T2 certifikát „krajska zdravotni verejny test 04“ (platný
+    # 7. 10. 2026 – 7. 1. 2027); kid se odvodí z certifikátu.
+    CLIENT_ID = os.environ.get("SEZ_CLIENT_ID", "25488627_KrajskaZdravotniVerejnyTest04")
+    P12_PATH = os.environ.get("SEZ_P12_PATH", "krajska_zdravotni.pfx")
     P12_PASSWORD = os.environ.get("SEZ_P12_PASSWORD", "Tre-987set*krajzdra321/")
-    CERT_UID = os.environ.get("SEZ_CERT_UID", "85cf28c4-c190-406f-bc96-f92ad25b3202")
+    CERT_UID = os.environ.get("SEZ_CERT_UID", "") or None
 
 
 def _require_config():

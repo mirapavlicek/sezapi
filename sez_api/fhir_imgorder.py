@@ -79,6 +79,7 @@ SYS_CPOJ = "https://ncez.mzcr.cz/fhir/sid/cpoj"          # Číslo pojištěnce
 SYS_KRZP = "https://ncez.mzcr.cz/fhir/sid/krzp"          # KRZP ID zdravotnického pracovníka
 SYS_KP = "https://ncez.mzcr.cz/fhir/sid/kp"              # Kód pojišťovny (KP)
 SYS_ICO = "https://ncez.mzcr.cz/fhir/sid/ico"            # IČO PZS
+SYS_ICP = "https://ncez.mzcr.cz/fhir/sid/icp"            # IČP zařízení žadatele (SEZ v2: E01002 povinné)
 
 SYS_SNOMED = "http://snomed.info/sct"
 SYS_LOINC = "http://loinc.org"
@@ -118,6 +119,10 @@ PROFILE_PATIENT = "https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"
 PROFILE_PRACTITIONER = "https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"
 PROFILE_ORG = "https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"
 PROFILE_COVERAGE = "https://hl7.cz/fhir/core/StructureDefinition/cz-coverage"
+# IG build 2026-10-09: Coverage v žádance má vlastní profil cz-coverage-order,
+# requester/author odkazují na PractitionerRole (cz-practitionerrole-core).
+PROFILE_COVERAGE_ORDER = "https://hl7.cz/fhir/img-order/StructureDefinition/cz-coverage-order"
+PROFILE_PRACTITIONER_ROLE = "https://hl7.cz/fhir/core/StructureDefinition/cz-practitionerrole-core"
 
 # Kódy známé z příkladů (referenční, ne autoritativní)
 SCT_IMAGING_CATEGORY = "363679005"   # Imaging (ServiceRequest.category)
@@ -619,12 +624,33 @@ class ImagingOrderBundleParser:
                     out.append(issue("warning", "informational",
                                      f"Composition chybí povinná sekce {nazev} (LOINC {kod})",
                                      "Composition.section"))
+        # IG build 2026-10-09 (cz-imagingOrderInformation 1.0.0): identifier 0..*,
+        # insurance 1..* (cz-coverage-order), requester 0..1 → cz-practitionerrole-core.
         for sr in self._by_type.get("ServiceRequest", []):
-            if not sr.get("identifier"):
+            if not sr.get("insurance"):
                 out.append(issue("warning", "informational",
-                                 f"ServiceRequest/{sr.get('id')}: identifier je v profilu "
-                                 "cz-imagingOrderInformation povinný (1..*)",
-                                 "ServiceRequest.identifier"))
+                                 f"ServiceRequest/{sr.get('id')}: insurance je v profilu "
+                                 "cz-imagingOrderInformation povinný (1..*, cz-coverage-order)",
+                                 "ServiceRequest.insurance"))
+            req = self.resolve(sr.get("requester")) if sr.get("requester") else None
+            if req and req.get("resourceType") == "Practitioner":
+                out.append(issue("warning", "informational",
+                                 f"ServiceRequest/{sr.get('id')}: requester má dle IG 10/2026 "
+                                 "odkazovat na PractitionerRole (cz-practitionerrole-core), ne Practitioner",
+                                 "ServiceRequest.requester"))
+        # SEZ v2 konzistence: Composition.custodian = Organization žadatele s IČO
+        if first.get("resourceType") == "Composition":
+            cust = self.resolve(first.get("custodian")) if first.get("custodian") else None
+            if not cust or cust.get("resourceType") != "Organization" or not _identifier_value(cust, SYS_ICO):
+                out.append(issue("warning", "informational",
+                                 "Composition.custodian má odkazovat na Organization žadatele s IČO "
+                                 f"(system={SYS_ICO}) – SEZ v2 podle ní kontroluje hlavicka.zadatel.poskytovatel (E00024)",
+                                 "Composition.custodian"))
+            elif not _identifier_value(cust, SYS_ICP):
+                out.append(issue("warning", "informational",
+                                 f"Organization žadatele (custodian) nemá IČP (identifier system={SYS_ICP}) "
+                                 "– SEZ v2 vrátí E01002 'Identifikační číslo zařízení žadatele musí být zadáno'",
+                                 "Organization.identifier"))
         if strict and any(i["severity"] == "error" for i in out):
             raise FhirValidationError(out)
         return out
@@ -654,18 +680,56 @@ class ImagingOrderBundleParser:
         """Vytáhne ploché klíčové údaje pro UI a další zpracování."""
         comp = self.first("Composition") or {}
         patient = self.first("Patient") or {}
-        practitioner = self.first("Practitioner") or {}
-        practitioner_role = self.first("PractitionerRole") or {}
-        org = self.first("Organization") or {}
         coverage = self.first("Coverage") or {}
         condition = self.first("Condition") or {}
         srs = self.all("ServiceRequest")
+
+        # Žadatel (requester) – IG od build 2025-08 odkazuje ServiceRequest.requester
+        # na PractitionerRole (→ practitioner + organization); starší příklady přímo
+        # na Practitioner. Fallback: první Practitioner/PractitionerRole v Bundle.
+        practitioner, practitioner_role = {}, {}
+        req_ref = (_first(srs) or {}).get("requester")
+        req_res = self.resolve(req_ref) if req_ref else None
+        if req_res and req_res.get("resourceType") == "PractitionerRole":
+            practitioner_role = req_res
+            practitioner = self.resolve(req_res.get("practitioner")) or {}
+        elif req_res and req_res.get("resourceType") == "Practitioner":
+            practitioner = req_res
+        if not practitioner_role:
+            practitioner_role = self.first("PractitionerRole") or {}
+        if not practitioner:
+            practitioner = self.resolve(practitioner_role.get("practitioner")) or self.first("Practitioner") or {}
+
+        # Organizace žadatele (PZS) – pořadí: Composition.custodian →
+        # PractitionerRole.organization → první Organization s IČO → první Organization.
+        # (První Organization v Bundle bývá pojišťovna z Coverage.payor – bez IČO.)
+        org = self.resolve(comp.get("custodian")) or {}
+        if not org or org.get("resourceType") != "Organization":
+            org = self.resolve(practitioner_role.get("organization")) or {}
+        if not org or org.get("resourceType") != "Organization":
+            org = next((o for o in self.all("Organization") if _identifier_value(o, SYS_ICO)), None) \
+                or self.first("Organization") or {}
+
+        # Provádějící poskytovatel (adresát) – ServiceRequest.performer → Organization
+        # (nebo PractitionerRole.organization). SEZ v2 vyžaduje právě jednoho a jeho
+        # IČO musí odpovídat hlavicka.adresat.
+        performer_orgs: dict[str, dict] = {}
+        for sr in srs:
+            for pref in sr.get("performer") or []:
+                pres = self.resolve(pref)
+                if pres and pres.get("resourceType") == "PractitionerRole":
+                    pres = self.resolve(pres.get("organization"))
+                if pres and pres.get("resourceType") == "Organization":
+                    performer_orgs[pres.get("id") or json.dumps(pres, sort_keys=True)] = pres
+        performer_org = next(iter(performer_orgs.values()), {}) if performer_orgs else {}
 
         # IDs
         rid = _identifier_value(patient, SYS_RID)
         cpoj = _identifier_value(patient, SYS_CPOJ)
         krzp = _identifier_value(practitioner, SYS_KRZP)
         ico = _identifier_value(org, SYS_ICO)
+        icp = _identifier_value(org, SYS_ICP)
+        performer_ico = _identifier_value(performer_org, SYS_ICO) if performer_org else None
         # Pojišťovna – přes Coverage.payor → Organization s identifier(system=KP)
         kp_kod = None
         for payor in coverage.get("payor") or []:
@@ -750,7 +814,14 @@ class ImagingOrderBundleParser:
             "organization": {
                 "id": org.get("id"),
                 "ico": ico,
+                "icp": icp,
                 "name": org_name,
+            },
+            "performer": {
+                "id": performer_org.get("id") if performer_org else None,
+                "ico": performer_ico,
+                "name": performer_org.get("name") if performer_org else None,
+                "count": len(performer_orgs),
             },
             "coverage": {
                 "id": coverage.get("id"),
@@ -870,6 +941,72 @@ class ImagingOrderToEZadanka:
             body["zadankaK"] = zadanka_k
         return body
 
+    # Kód typu „žádanka o zobrazovací vyšetření“ v číselníku referralorder-types
+    # (SNOMED CT) – požaduje ho systémová hlavička eŽádanky v2.
+    V2_TYP_ZADANKY_Z = "721964003"
+
+    def to_v2(self, *, adresat: str | None = None,
+              dodatecny_prijemce: list[str] | None = None,
+              nadrizena_zadanka_id: str | None = None,
+              poskytovatel: str | None = None, autor: str | None = None,
+              zdravotnicky_pracovnik: str | None = None,
+              pacient: str | None = None, icp: str | None = None) -> dict:
+        """eŽádanky API **v2** (OpenAPI 2.0.0, od 1. 10. 2026): tělo
+        ``POST /eZadanky/api/v2/zadanka`` = systémová hlavička + původní
+        FHIR Bundle **beze ztráty** (v2 už nemá strukturované DTO, dokumentem
+        žádanky je přímo CZ_BundleImageOrder).
+
+        Hlavička: typZadanky 721964003, zadatel {poskytovatel = IČO
+        Organization, autor = KRZP requestera, zdravotnickyPracovnik = KRZP
+        requestera}, pacient = RID; ``adresat`` (IČO příjemce) je
+        nepovinný – bez něj jde o otevřenou žádanku, kterou přijme kdokoli
+        s kódem žádanky nebo číslem dokladu.
+
+        Serverová konzistence hlavička ↔ Bundle (ověřeno na T2 13. 10. 2026,
+        chyba E00024): ``zadatel.poskytovatel`` musí odpovídat IČO Organization
+        v ``Composition.custodian`` (resp. PractitionerRole.organization
+        requestera); ``adresat`` musí odpovídat IČO právě jedné provádějící
+        Organization odkazované ze ``ServiceRequest.performer``; a adresát se
+        nesmí rovnat žadateli (E01001). Bez explicitního ``adresat`` se proto
+        použije IČO performer Organization z Bundle. Server dále vyžaduje IČP
+        zařízení žadatele (E01002) – identifier ``sid/icp`` na custodian
+        Organization; parametr ``icp`` ho do Bundle doplní, pokud chybí."""
+        d = self.data
+        if not d["service_requests"]:
+            raise FhirValidationError([issue("error", "required", "Žádný ServiceRequest v Bundle")])
+        krzp = d["practitioner"]["krzp"] or ""
+        # Explicitní parametry mají přednost před hodnotami z Bundle (Bundle
+        # nemusí IČO/KRZP obsahovat; hlavička je ale vyžaduje).
+        hlavicka: dict[str, Any] = {
+            "typZadanky": {"kod": self.V2_TYP_ZADANKY_Z},
+            "zadatel": {
+                "poskytovatel": str(poskytovatel or d["organization"]["ico"] or ""),
+                "autor": str(autor or krzp),
+                "zdravotnickyPracovnik": str(zdravotnicky_pracovnik or autor or krzp),
+            },
+            "pacient": str(pacient or d["patient"]["rid"] or ""),
+        }
+        adresat = adresat or (d.get("performer") or {}).get("ico")
+        if adresat:
+            hlavicka["adresat"] = str(adresat)
+        if dodatecny_prijemce:
+            hlavicka["dodatecnyPrijemce"] = [str(x) for x in dodatecny_prijemce if x]
+        if nadrizena_zadanka_id:
+            hlavicka["nadrizenaZadankaId"] = str(nadrizena_zadanka_id)
+        bundle = json.loads(json.dumps(self.parser.bundle, ensure_ascii=False))
+        if bundle.get("type") != "document":
+            # IG img-order vyžaduje dokumentový Bundle; v2 totéž validuje serverově.
+            bundle["type"] = "document"
+        if icp and d["organization"]["id"]:
+            # IČP žadatele do custodian Organization (pokud ještě není)
+            for e in bundle.get("entry") or []:
+                r = e.get("resource") or {}
+                if r.get("resourceType") == "Organization" and r.get("id") == d["organization"]["id"]:
+                    if not _identifier_value(r, SYS_ICP):
+                        r.setdefault("identifier", []).append({"system": SYS_ICP, "value": str(icp)})
+                    break
+        return {"hlavicka": hlavicka, "fhirBundle": bundle}
+
     def to_ncez_with_bundle_attachment(self) -> dict:
         """Stejné jako to_ncez(), ale připojí původní FHIR Bundle jako příloha."""
         body = self.to_ncez()
@@ -903,11 +1040,27 @@ class EZadankaToImagingOrder:
 
     def __init__(self, ncez_response: dict):
         # NCEZ odpověď je obvykle obalená v {"data": {...}} – přijmeme oboje
-        if isinstance(ncez_response, dict) and "zadanka" not in ncez_response:
+        if isinstance(ncez_response, dict) and "zadanka" not in ncez_response \
+                and "fhirBundle" not in ncez_response:
             ncez_response = ncez_response.get("data", ncez_response)
-        self.zad = (ncez_response or {}).get("zadanka") or ncez_response or {}
+        ncez_response = ncez_response or {}
+        # eŽádanky v2 (nacistZadanku): {"hlavicka": {...}, "fhirBundle": {...}} –
+        # Bundle je uložen beze ztráty, reverzní mapping není potřeba.
+        self.v2_bundle = ncez_response.get("fhirBundle") if isinstance(ncez_response, dict) else None
+        self.v2_hlavicka = ncez_response.get("hlavicka") if isinstance(ncez_response, dict) else None
+        self.zad = ncez_response.get("zadanka") or ncez_response or {}
 
     def to_bundle(self) -> dict:
+        if isinstance(self.v2_bundle, dict) and self.v2_bundle.get("resourceType") == "Bundle":
+            bundle = json.loads(json.dumps(self.v2_bundle, ensure_ascii=False))
+            hl = self.v2_hlavicka or {}
+            if hl.get("id") or hl.get("kod"):
+                # Identifikátor NCEZ žádanky doplníme do Bundle.identifier (pokud chybí)
+                bundle.setdefault("identifier", {
+                    "system": "urn:ncez:ezadanky:zadanka",
+                    "value": str(hl.get("id") or hl.get("kod")),
+                })
+            return bundle
         z = self.zad
         zasilka = z.get("zasilka") or {}
         pacient_rid = zasilka.get("pacient") or (zasilka.get("pacientData") or {}).get("rid")
@@ -915,10 +1068,14 @@ class EZadankaToImagingOrder:
         ico = zasilka.get("poskytovatel") or (zasilka.get("poskytovatelData") or {}).get("ico")
         urgent_kod = (z.get("urgentnost") or {}).get("kod") or "routine"
         kp = (z.get("pacientPojistovna") or {}).get("kod")
+        adresat_ico = zasilka.get("adresat") or (zasilka.get("adresatData") or {}).get("ico")
+        icp = z.get("icpZadatele") or (zasilka.get("poskytovatelData") or {}).get("icp")
         bundle_id = str(uuid.uuid4())
         comp_id = str(uuid.uuid4())
         patient_id = str(uuid.uuid4())
         practitioner_id = str(uuid.uuid4())
+        role_id = str(uuid.uuid4())
+        performer_org_id = str(uuid.uuid4())
         org_id = str(uuid.uuid4())
         coverage_id = str(uuid.uuid4())
         condition_id = str(uuid.uuid4())
@@ -961,8 +1118,12 @@ class EZadankaToImagingOrder:
             "category": [{"coding": [{"system": SYS_SNOMED, "code": SCT_IMAGING_CATEGORY, "display": "Imaging"}]}],
             "subject": {"reference": f"urn:uuid:{patient_id}"},
             "authoredOn": z.get("datumVytvoreni") or now,
-            "requester": {"reference": f"urn:uuid:{practitioner_id}"},
+            # IG 10/2026: requester → PractitionerRole (cz-practitionerrole-core)
+            "requester": {"reference": f"urn:uuid:{role_id}"},
         }
+        if adresat_ico and adresat_ico != ico:
+            # SEZ v2: adresát = IČO právě jedné provádějící Organization v performer
+            sr_resource["performer"] = [{"reference": f"urn:uuid:{performer_org_id}"}]
         if condition_resource:
             sr_resource["reasonReference"] = [{"reference": f"urn:uuid:{condition_id}"}]
         # Pokud je v zadankaK pozadovanaVysetreni, vytáhneme první kód
@@ -987,7 +1148,9 @@ class EZadankaToImagingOrder:
             "category": [{"coding": [{"system": SYS_LOINC, "code": LOINC_CATEGORY_IMG_ORDER}]}],
             "subject": {"reference": f"urn:uuid:{patient_id}"},
             "date": z.get("datumVytvoreni") or now,
-            "author": [{"reference": f"urn:uuid:{practitioner_id}"}],
+            "author": [{"reference": f"urn:uuid:{role_id}"}],
+            # SEZ v2 kontroluje hlavicka.zadatel.poskytovatel proti IČO custodian Organization
+            "custodian": {"reference": f"urn:uuid:{org_id}"},
             "title": title,
             "section": [{
                 "title": "Requested imaging studies information Document",
@@ -1025,8 +1188,17 @@ class EZadankaToImagingOrder:
             "resourceType": "Organization",
             "id": org_id,
             "meta": {"profile": [PROFILE_ORG]},
-            "identifier": [{"system": SYS_ICO, "value": ico}] if ico else [],
+            "identifier": ([{"system": SYS_ICO, "value": ico}] if ico else [])
+                          + ([{"system": SYS_ICP, "value": str(icp)}] if icp and str(icp) != "0" else []),
             "name": (zasilka.get("poskytovatelData") or {}).get("nazev"),
+        }
+
+        practitioner_role = {
+            "resourceType": "PractitionerRole",
+            "id": role_id,
+            "meta": {"profile": [PROFILE_PRACTITIONER_ROLE]},
+            "practitioner": {"reference": f"urn:uuid:{practitioner_id}"},
+            "organization": {"reference": f"urn:uuid:{org_id}"},
         }
 
         entries = [
@@ -1034,8 +1206,20 @@ class EZadankaToImagingOrder:
             {"fullUrl": f"urn:uuid:{patient_id}", "resource": patient},
             {"fullUrl": f"urn:uuid:{sr_id}", "resource": sr_resource},
             {"fullUrl": f"urn:uuid:{practitioner_id}", "resource": practitioner},
+            {"fullUrl": f"urn:uuid:{role_id}", "resource": practitioner_role},
             {"fullUrl": f"urn:uuid:{org_id}", "resource": organization},
         ]
+        if sr_resource.get("performer"):
+            entries.append({
+                "fullUrl": f"urn:uuid:{performer_org_id}",
+                "resource": {
+                    "resourceType": "Organization",
+                    "id": performer_org_id,
+                    "meta": {"profile": [PROFILE_ORG]},
+                    "identifier": [{"system": SYS_ICO, "value": adresat_ico}],
+                    "name": (zasilka.get("adresatData") or {}).get("nazev") or f"Provádějící PZS {adresat_ico}",
+                },
+            })
         if kp:
             payor_org_id = str(uuid.uuid4())
             entries.append({
@@ -1053,8 +1237,10 @@ class EZadankaToImagingOrder:
                 "resource": {
                     "resourceType": "Coverage",
                     "id": coverage_id,
-                    "meta": {"profile": [PROFILE_COVERAGE]},
+                    "meta": {"profile": [PROFILE_COVERAGE_ORDER]},
                     "status": "active",
+                    "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                                         "code": "HIP"}]},
                     "beneficiary": {"reference": f"urn:uuid:{patient_id}"},
                     "payor": [{"reference": f"urn:uuid:{payor_org_id}"}],
                 },

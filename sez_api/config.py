@@ -47,6 +47,14 @@ INTERNAL_ENV = env("SEZ_INTERNAL_ENV", "PROD")
 # Hodnota "v2" je jen pro ladění; po 15. 9. 2026 brána v2 odmítá.
 KRP_VERZE = env("SEZ_KRP_VERZE", "v3").strip().lower() or "v3"
 INTERNAL_KRP_VERZE = env("SEZ_INTERNAL_KRP_VERZE", KRP_VERZE).strip().lower() or "v3"
+# Verze API KRZP. Brána publikuje v2.0.7 i novou v3.0.4 (13. 10. 2026);
+# cesty jsou shodné, v3 jen opravuje název pole ztotozenaOsoba →
+# ztotoznenaOsoba. Výchozí zůstává v2, "v3" zapne nové rozhraní.
+KRZP_VERZE = env("SEZ_KRZP_VERZE", "v2").strip().lower() or "v2"
+# Verze eŽádanky API pro FHIR most (/api/img-order/*). Standard eŽádanka 2.0
+# → API v2.0.0 je platné od 1. 10. 2026, v1 je deprecated; "v1" jen po
+# přechodnou dobu pro stávající integrace.
+EZADANKY_VERZE = env("SEZ_EZADANKY_VERZE", "v2").strip().lower() or "v2"
 
 # Interní API je synchronní – volající (NIS) mívá timeout kolem 5 s, takže
 # výchozí nastavení klienta (30s timeout, 4 pokusy s backoffem až 5 s) je pro

@@ -56,3 +56,9 @@ checkmk/
 !docs/analytics/
 !docs/analytics/**
 docs/analytics/**/*.zip
+
+# FHIR vzory IG (img-order, order K/FT) – součást balíčku, musí být verzované
+!sez_api/fhir_imgorder_examples/
+!sez_api/fhir_imgorder_examples/*.json
+!sez_api/fhir_order_examples/
+!sez_api/fhir_order_examples/*.json

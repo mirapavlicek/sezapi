@@ -119,22 +119,30 @@ TermX na CSEZ vyžaduje **mTLS klientský certifikát**. Správné URL pro spec:
 
 ### Certifikát T2 (testovací)
 
+NCEZ veřejný testovací certifikát obměňuje zhruba čtvrtletně (stránka
+„Autentizace k API gateway“). Aktuální (platný od 7. 10. 2026):
+
 | Parametr | Hodnota |
 |----------|---------|
-| Název | krajska zdravotni verejny test |
+| Název (CN) | krajska zdravotni verejny test 04 |
 | Heslo | `Tre-987set*krajzdra321/` |
-| Klíč | `oMiEHl0Wprsa8ktxObWaG4zMbQwe38E3` |
-| UID (kid) | `85cf28c4-c190-406f-bc96-f92ad25b3202` |
+| Sériové číslo | `210000031878A0744CF8664AE2000000000318` |
+| Platnost | 7. 10. 2026 – 7. 1. 2027 |
 | IČO | `25488627` |
 | PZS | Krajská zdravotní, a.s. |
-| client_id | `25488627_KrajskaZdravotniVerejnyTest` |
+| client_id | `25488627_KrajskaZdravotniVerejnyTest04` |
+| kid | odvozuje se z certifikátu (SubjectKeyIdentifier); UID z EZCA portálu se už neuvádí |
+
+Předchozí certifikáty: „test 03“ (13. 7. – 13. 10. 2026,
+`25488627_KrajskaZdravotniVerejnyTest03`), „test 02“ (16. 4. – 16. 7. 2026),
+původní „krajska zdravotni verejny test“ (UID `85cf28c4-…`, do 21. 4. 2026).
 
 ### JWT assertion – payload
 
 ```json
 {
-  "iss": "25488627_KrajskaZdravotniVerejnyTest",
-  "sub": "25488627_KrajskaZdravotniVerejnyTest",
+  "iss": "25488627_KrajskaZdravotniVerejnyTest04",
+  "sub": "25488627_KrajskaZdravotniVerejnyTest04",
   "aud": "https://jsuint-auth-t2.csez.cz/connect/token",
   "iat": <unix_timestamp>,
   "exp": <unix_timestamp + 60>,

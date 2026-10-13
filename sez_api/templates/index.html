@@ -751,9 +751,10 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
       <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);border-color:#bfdbfe">
         <div class="card-title" style="color:#1e3a8a">Aktuální verze API a poslední změny</div>
         <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
+          <strong>Revize 13. 10. 2026</strong> (Manuál EZ pro PZS, 20 aktuálních swaggerů z brány T2): <strong>eŽádanky API v2.0.0</strong> (Standard eŽádanka 2.0; T2 od 25. 9., platné od 1. 10. 2026, <strong>v1.11.25 deprecated</strong>) – datová věta hlavička + FHIR Bundle, cesty <code>/api/v2/zadanka</code>, If-Match, bez UpravZadanku; nově <strong>KRZP v3.0.4</strong> (shodné cesty, oprava <code>ztotoznenaOsoba</code>); patch verze DÚ 1.11.27, ELP 3.0.3, SZZ 3.0.5, Notifikace 1.0.9, KRP 3.0.6, KRPZS 2.0.4, EZCA2 Správa 1.0.8. Souhrnné vyhledání SZZ v3 opraveno na skutečné cesty <code>/prevence/vyhledat</code> + <code>/screeningy/vyhledat</code>. Testovací certifikát T2 vyměněn za <strong>„krajska zdravotni verejny test 04“</strong> (platnost do 7. 1. 2027).<br>
           <strong>Revize 9. 9. 2026</strong> dle veřejné dokumentace: <strong>KRP k 15. 9. 2026 vypíná API v1 i v2</strong> (oznámení 27. 8.) – celé rozhraní KRP včetně hlavní sekce nyní volá <strong>v3</strong>; KRP 21. 8. provedl <strong>rollback úpravy duplicitního pacienta</strong> (opět až 5 kandidátů); stránka API endpointy (31. 8.) vrátila User-Agent na „doporučený od 1. 9. 2026, povinný od 1. 1. 2027“; HL7 CZ <strong>img-order IG</strong> (build 28. 8., cz-core 1.0.0) přidal <code>Composition.type.coding.version</code> a přejmenoval profily/ValueSety – viz box níže. PROD katalog <code>apio.csez.gov.cz/apidoc</code> i obě specifikace (EZCA Validace v1.0.0, Terminologie v1.1.0) jsou bitově shodné se snapshoty.
           <strong>Revize 19. 8. 2026:</strong> SZZ nová verze API 3.0.0 (Standard EZ SZZ 3.0 z 29. 7. 2026 – pět nových screeningů, položka <code>samoplatce</code>, opravený název HPV screeningu), KRP vypnul v1 k 14. 8. 2026.
-          <strong>Živé ověření T2 blokuje expirovaný klientský certifikát</strong> (<code>krajska_zdravotni.pfx</code>, platnost skončila 21. 4. 2026 → TLS alert „certificate expired"); po obnově v EZCA portálu spusťte <a href="/api/services/discover?force=true" target="_blank" style="color:#1e40af">/api/services/discover</a>.
+          <strong>Živé ověření T2 (13. 10. 2026)</strong> proběhlo s veřejným testovacím certifikátem <code>krajska zdravotni verejny test 04</code> (KRP číselník 200, eŽádanky v2 <code>/vyhledat</code> 200, Notifikace ping 200). <strong>Všechny tři typy eŽádanky Z, K i FT</strong> prošly na T2 celým cyklem uložení (201) → načtení → storno – z minimální kostry i z 9 oficiálních vzorů IG (img-order pro Z, společný <strong>HL7 CZ Order IG</strong> <code>hl7.fhir.cz.order</code> pro K a FT); pravidla brány (přesná shoda <code>fullUrl</code>, RID, KRZP, custodian + IČP, provádějící Organization, priorita routine|stat) zrcadlí klientská kontrola a <code>/api/ezadanky/v2/{typy,vzory,kostra,pripravit}</code>. NCEZ certifikát obměňuje čtvrtletně – po expiraci stáhněte nový z Manuálu EZ (Testovací identity) a spusťte <a href="/api/services/discover?force=true" target="_blank" style="color:#1e40af">/api/services/discover</a>.
           Kontext změn: <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129" target="_blank" style="color:#1e40af">MZČR Confluence – Novinky</a> a <a href="https://www.ezdravi.gov.cz/katalog-sluzeb" target="_blank" style="color:#1e40af">katalog služeb eZdraví</a>. Detail JWT: <a href="/api/debug/jwt" target="_blank" style="color:#1e40af">/api/debug/jwt</a>.
         </p>
         <div style="margin-bottom:10px;padding:10px 12px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;line-height:1.6">
@@ -767,14 +768,14 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           <thead><tr><th>Služba</th><th>Verze</th><th>Poslední změna</th></tr></thead>
           <tbody>
             <tr><td>KRP – Kmenový registr pacientů</td><td><code>v3</code> <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">v1 + v2 VYPNUTO k 15. 9. 2026</span></td><td><strong>27. 8. 2026: k 15. 9. 2026 bude vypnuto API KRP pro PZS v1 i v2</strong> (v1 vypnuto už 14. 8.) – k dispozici zůstává jen <strong>v3</strong>. Klient: hlavní rozhraní <code>/api/krp/*</code> i interní ztotožnění volají v3 (<code>SEZ_KRP_VERZE</code> / <code>SEZ_INTERNAL_KRP_VERZE</code>, výchozí <code>v3</code>; tělo požadavků je u v2 a v3 shodné). <strong>21. 8. 2026:</strong> rollback úpravy duplicitního pacienta z 30. 7. (T2 i PROD opět vrací až 5 pacientů, úprava přijde ve V4) – pole <code>jednoznacne</code>/<code>upozorneni</code> se odvozují z počtu kandidátů, takže platí dál; opravy AISV (občanství, datum úmrtí, adresa). 31. 8.: nové API pro zdravotní pojišťovny (netýká se PZS). <strong>v3:</strong> bez diakritiky v atributech, snake_case cesty, bez <code>ztotoznihromadne/vykonani</code></td></tr>
-            <tr><td>KRZP – Kmenový registr zdrav. prac.</td><td><code>v2.0.2</code></td><td>patch v2.0.1→v2.0.2</td></tr>
-            <tr><td>KRPZS – Kmenový registr poskytovatelů</td><td><code>v2.0.3</code></td><td>hledat-misto + krajKod (povinné), URL notifikace, capitalized cesty. Patch v2.0.2→v2.0.3</td></tr>
+            <tr><td>KRZP – Kmenový registr zdrav. prac.</td><td><code>v2.0.7</code> + <code>v3.0.4</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ VERZE</span></td><td><strong>13. 10. 2026:</strong> brána publikuje novou <strong>v3.0.4</strong> vedle v2.0.7 – shodné cesty (<code>/api/v3/…</code>), v3 jen opravuje název pole <code>ztotozenaOsoba → ztotoznenaOsoba</code>. Klient <code>KRZP(verze=…)</code> / <code>SEZ_KRZP_VERZE</code> (výchozí v2), odpovědi sjednocuje <code>normalizuj_odpoved</code>. Dříve patch v2.0.1→v2.0.2</td></tr>
+            <tr><td>KRPZS – Kmenový registr poskytovatelů</td><td><code>v2.0.4</code></td><td>hledat-misto + krajKod (povinné), URL notifikace, capitalized cesty. Patch v2.0.2→v2.0.3</td></tr>
             <tr><td>RO – Registr oprávnění</td><td><code>v1.0.8</code></td><td><strong>23. 6. 2026 (v1.0.8):</strong> oprava vytvoření osoby „Tvůrce oprávnění" (dopad na administraci RO a MFE RO). 20. 4. 2026: rozšíření Over o EHS osoby + opt-in/out (BC), v PROD dočasně bez Osoby/Opravnujici/{rid}</td></tr>
             <tr><td>RO NCPeH <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.7</code></td><td><strong>(květen 2026):</strong> samostatná služba pro přeshraniční (Pacient ↔ StátEHP), Over bez IdSluzbyEZ/rolí, výchozí size=1000</td></tr>
             <tr><td>SZZ – Sdílený zdravotní záznam</td><td><code>v3.0.0</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ VERZE</span> (+ v1.0.9, v2.0.4)</td><td><strong>29. 7. 2026: Standard EZ SZZ 3.0 → API 3.0.0</strong> (aplikace na T1/T2 od 28. 7.). Cesty <code>/api/v3</code>; <strong>5 nových screeningů</strong> (kolorektální koloskopie, prostata – vstupní PSA / urologické / bioptické, plíce – pneumologické), HPV screening bez dvojitého „D“, nová položka <code>samoplatce</code> (bool) u všech prevencí i screeningů a <code>genotypyHpvTestu</code>, souhrnné <code>/zdravotniZaznamy/vyhledat</code>, 15 nových číselníků a upravené rozsahy (NT-proBNP 0–100 000, PSA 1 000–12 000 µg/l, BBPS 0–9, výška/váha na 3 des. místa). Klient: <code>SZZv3</code>, <code>/api/szz3/…</code>, katalog a kontrola rozsahů; v UI přepínač verze. v2 běží paralelně</td></tr>
             <tr><td>ELP – Elektronické posudky</td><td><code>v1.0.7</code> + <code>v2.0.11</code> + <code>v3.0.2</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">3 VERZE</span></td><td><strong>std. 3.0 (30. 4. 2026):</strong> na gateway nyní 3 paralelní verze – v1.0.7, v2.0.11 a v3.0.2 (novější patch než publikované API 2.0.10); zpřísněné validace data, 70+, 300 znaků</td></tr>
             <tr><td>DÚ – Dočasné úložiště</td><td><code>v1.11.20</code> <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">PATCH</span></td><td><strong>23. 6. 2026 (v1.11.20 na T2):</strong> chybová hláška validace adresáta vůči KZR uvádí konkrétní element pole; 17. 6. (v1.11.19 na PROD) oprava DejSoubor. Dříve patch v1.11.13→v1.11.17. <strong>5.–12. 6. 2026:</strong> Popis API DÚ v1.2 + Standard DÚ 1.0 – doplněna služba ZpochybniZasilku, opravena cesta ZmenZasilku (parametry v query), sjednoceno „Zasilka" v cestách. 5. 5. 2026: zpřesnění validací (BC), 22. 4. 2026: notifikace</td></tr>
-            <tr><td>eŽádanky</td><td><code>v1.11.20</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">OSTRÝ PROVOZ</span></td><td><strong>Ostrý provoz od 1. 1. 2026</strong> (dobrovolné, povinné vystavení ~2028). Typy K/Z/FT live, laboratorní v pol. 2026. <strong>23. 6. 2026 (v1.11.20):</strong> u <code>UpravZadanku</code> se při vyplněném <code>upravenyPrijemce</code> ignoruje <code>upravenyPrijemceTyp</code> a adresátem je vždy PZS (klient pole neposílá); <code>NactiZadanku</code> od v1.11.19 kontroluje integritu souboru a při nesouladu hashe vrací 400. Dříve patch v1.11.13→v1.11.17; 21. 4. 2026: úprava FHIR detailu Z-žádanky</td></tr>
+            <tr><td>eŽádanky</td><td><code>v2.0.0</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ VERZE</span> (+ v1.11.25 <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">DEPRECATED</span>)</td><td><strong>13. 10. 2026: Standard eŽádanka 2.0 → API 2.0.0</strong> (T2 od 25. 9., platnost od 1. 10. 2026; v1 deprecated). Datová věta = <strong>systémová hlavička</strong> (typZadanky, zadatel, pacient, adresát) + <strong>FHIR Bundle</strong> typu document dle HL7 CZ IG (img-order / k-order), strukturované DTO zmizely. Zdrojové cesty <code>/api/v2/zadanka[/{id}/&lt;operace&gt;]</code>, <code>If-Match</code> = <code>verzeZaznamu</code> (409), uložení 201, <strong>UpravZadanku zrušeno</strong>, vyřízení vyžaduje zásilku s dokumentem, stránkování od 0, User-Agent povinný. Klient <code>EZadankyV2</code>, backend <code>/api/ezadanky/v2/*</code>, GUI záložka „eŽádanky v2“, simulátor i FHIR most img-order (<code>?api=v2</code> výchozí). Dříve: ostrý provoz v1 od 1. 1. 2026, 23. 6. 2026 v1.11.20</td></tr>
             <tr><td>FHIR Img Order (HL7-cz IG)</td><td><code>0.1.0</code> (R4) <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">BUILD 28. 8. 2026</span></td><td>CI build „Updates before publication“ (2026-08-28). Závislosti: <strong>cz-core <code>1.0.0</code></strong> (29. 7. 2026), cz-terminology <code>0.3.0</code>, eu.base <code>2.0.0</code>, eu.laboratory <code>2.0.0</code>. Nově <code>Composition.type.coding</code> 1..1 s <code>version</code> = SNOMED CT CZ edice, sekce clinicalQuestion → <code>cz-conditionClinicalQuestion</code>, přejmenované profily z cz-core, nové URL ValueSetů (<code>imaging-procedures</code>, <code>cz-mobility-type/-value</code>, <code>cz-diagnosis-condition</code> s MKN-10 + ORPHA). Builder doplňuje version, povinnou sekci clinicalQuestion a <code>ServiceRequest.identifier</code>. Bridge na /eŽádanky UlozZadanku</td></tr>
             <tr><td>SZZ – emergentní dataset</td><td>—</td><td><strong>Spuštěn 1. 1. 2026</strong>; v portálu EZKarta od 1. 5. 2026. Obsah: EZZ (krev. skupina, alergie, NÚL) + prevence/screeningy. Pacient může zavést nesouhlas přes RO</td></tr>
             <tr><td>Notifikace</td><td><code>v1.0.6</code></td><td>patch v1.0.5→v1.0.6. <strong>22. 7. 2026:</strong> MFE Notifikace 1.0.5 a Žurnál činností 1.0.6 (T2 i PROD) – bez dopadu na API</td></tr>
@@ -800,7 +801,8 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
         </div>
         <div style="margin-top:10px;padding:10px 12px;background:#dbeafe;border:1px solid #93c5fd;border-radius:6px;font-size:11px;color:#1e40af;line-height:1.6">
           <strong>Revize 2. 7. 2026 (veřejná dokumentace):</strong> živě ověřen PROD katalog <code>apio.csez.gov.cz/apidoc</code> – <strong>EZCA Validace v1.0.0 (nová)</strong> a <strong>Terminologie v1.1.0</strong>; dle aktualit Manuálu EZ dále <strong>SZZ v2.0.4 na T2</strong> (Standard SZZ 2.1, 16. 6.), <strong>Popis API DÚ v1.2</strong> (ZpochybniZasilku, 5.–12. 6.). T2 gateway je dostupná jen z ČR/SK – živé verze T2 načtete přes <code>/api/services/discover?force=true</code>.<br>
-          <strong>Poslední živá kontrola T2 gateway (8. 6. 2026):</strong> od 3. 6. se změnilo pouze <strong>KRP → v2.0.4 / v3.0.3</strong> (4. 6., jen změna kontaktního e-mailu, bez dopadu na rozhraní). Ostatní beze změny: ELP 3 paralelní verze (v1.0.7 / v2.0.11 / v3.0.2), DÚ/eŽádanky v1.11.17, KRPZS v2.0.3, KRZP v2.0.2, Notifikace v1.0.6, SZZ v1.0.9+v2.0.3 (nyní v2.0.4), EZCA II v1.0.7 + Správa v1.0.4, RO i RO NCPeH <code>v1.0.7</code>, TermX v1.0.5.
+          <strong>Poslední živá kontrola T2 gateway (13. 10. 2026, cert „verejny test 04“):</strong> <code>/apidoc/config.json</code> publikuje 20 specifikací – DÚ 1.11.27, ELP 1.0.7 / 2.0.11 / 3.0.3, <strong>eŽádanky 1.11.25 + 2.0.0</strong>, EZCA2 1.0.7 + Správa certifikátů 1.0.8, KRP 2.0.6 / 3.0.6, KRPZS 2.0.4, <strong>KRZP 2.0.7 + 3.0.4</strong>, Notifikace 1.0.9, RO i RO NCPeH 1.0.7, SZZ 1.0.9 / 2.0.7 / 3.0.5, TermX 1.0.5. Všechny jsou uloženy v <code>docs/analytics/swagger_specs</code>; cesty klienta byly proti nim strojově ověřeny (jediný rozdíl – SZZ v3 souhrn – opraven).<br>
+          <em>Předchozí kontrola 8. 6. 2026:</em> od 3. 6. se změnilo pouze <strong>KRP → v2.0.4 / v3.0.3</strong> (4. 6., jen změna kontaktního e-mailu, bez dopadu na rozhraní). Ostatní beze změny: ELP 3 paralelní verze (v1.0.7 / v2.0.11 / v3.0.2), DÚ/eŽádanky v1.11.17, KRPZS v2.0.3, KRZP v2.0.2, Notifikace v1.0.6, SZZ v1.0.9+v2.0.3 (nyní v2.0.4), EZCA II v1.0.7 + Správa v1.0.4, RO i RO NCPeH <code>v1.0.7</code>, TermX v1.0.5.
           <strong>Hlavní akce pro PZS:</strong>
           (1) <strong>EZCA II v1.0.7</strong> – pokud používáte <code>/api/certificates/certificate/{id}</code> nebo <code>/api/certificates/validatecertificate</code>, MUSÍTE migrovat na nové cesty <code>/api/content/certificate/{id}</code> a <code>/api/validate/certificate</code> (i v async variantě).
           (2) <strong>SZZ v2</strong> a <strong>KRP v3</strong> jsou paralelní k v1/v2 – existující implementace funguje dál, ale doporučujeme začít používat nové pro rozšířenou funkcionalitu.
@@ -3047,22 +3049,248 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         </div>
       </div>
 
-      <div class="sub-tabs" id="ezMainTabs">
-        <div class="sub-tab active" data-panel="ez-search-panel">Vyhledávání</div>
-        <div class="sub-tab" data-panel="ez-detail-panel">Detail žádanky</div>
-        <div class="sub-tab" data-panel="ez-create-panel">Nová žádanka</div>
-        <div class="sub-tab" data-panel="ez-workflow-panel">Workflow akce</div>
-        <div class="sub-tab" data-panel="ez-diag-panel">Diagnostika</div>
+      <div class="card" style="background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%);border-color:#86efac;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-weight:700;font-size:13px;color:#166534">Verze API eŽádanek</div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="ezApiVerze" value="v2" checked onchange="ezApiVerzeChanged()"> <strong>v2.0.0</strong> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">AKTUÁLNÍ od 1. 10. 2026</span></label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="ezApiVerze" value="v1" onchange="ezApiVerzeChanged()"> v1.11.25 <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">DEPRECATED</span></label>
+          <a href="/api/ezadanky/v2/katalog" target="_blank" style="font-size:11px;margin-left:auto">katalog v2 &nearr;</a>
+        </div>
+        <div style="font-size:11px;color:var(--fg2);line-height:1.6;margin-top:6px">
+          <strong>Revize 13. 10. 2026</strong> (Manuál EZ pro PZS → API eŽádanky, 7. 10. 2026): Standard eŽádanka 2.0 → API <code>v2.0.0</code> (T2 od 25. 9. 2026).
+          Datová věta = <strong>systémová hlavička</strong> (<code>hlavicka</code>: typZadanky, zadatel, pacient, adresát) + <strong>FHIR Bundle</strong> typu <code>document</code> dle HL7 CZ IG (Z: img-order; K a FT: společný HL7 CZ Order IG <code>hl7.fhir.cz.order</code>). Všechny tři typy ověřeny živě na T2 13. 10. 2026 (kostry i vzory IG) – viz Diagnostika a katalog.
+          Zdrojové cesty <code>/api/v2/zadanka[/{id}/&lt;operace&gt;]</code>, verze záznamu v hlavičce <code>If-Match</code> (409 při nesouladu), uložení vrací 201, <strong>UpravZadanku zrušeno</strong>, stránkování od 0, <code>User-Agent</code> povinný.
+          Záložky v1 zůstávají jen pro přechodné období.
+        </div>
       </div>
 
-      <!-- EZ SEARCH -->
-      <div class="sub-panel active" id="ez-search-panel">
+      <div class="sub-tabs" id="ezMainTabs">
+        <div class="sub-tab active" data-panel="ez-v2-panel" id="ezTabV2">eŽádanky v2 ✦</div>
+        <div class="sub-tab" data-panel="ez-search-panel">Vyhledávání (v1)</div>
+        <div class="sub-tab" data-panel="ez-detail-panel">Detail žádanky (v1)</div>
+        <div class="sub-tab" data-panel="ez-create-panel">Nová žádanka (v1)</div>
+        <div class="sub-tab" data-panel="ez-workflow-panel">Workflow akce (v1)</div>
+        <div class="sub-tab" data-panel="ez-diag-panel">Diagnostika (v1)</div>
+      </div>
+
+      <!-- EZ V2 (OpenAPI 2.0.0) -->
+      <div class="sub-panel active" id="ez-v2-panel">
+        <div class="sub-tabs" id="ez2Tabs" style="margin-top:0">
+          <div class="sub-tab active" data-panel="ez2-search-panel">Vyhledání</div>
+          <div class="sub-tab" data-panel="ez2-detail-panel">Detail (nacist)</div>
+          <div class="sub-tab" data-panel="ez2-create-panel">Nová žádanka (hlavička + FHIR)</div>
+          <div class="sub-tab" data-panel="ez2-wf-panel">Workflow (If-Match)</div>
+          <div class="sub-tab" data-panel="ez2-diag-panel">Diagnostika &amp; katalog</div>
+        </div>
+
+        <!-- v2 SEARCH -->
+        <div class="sub-panel active" id="ez2-search-panel">
+          <div class="card">
+            <div class="card-title">Vyhledání žádanek – <code>POST /api/v2/zadanka/vyhledat</code></div>
+            <p style="font-size:11px;color:var(--fg3);margin-bottom:8px">Vrací hlavičky žádanek, kde je volající žadatelem nebo příjemcem (+ údaje pro přijetí, bez FHIR Bundle). Stránky se číslují <strong>od 0</strong>.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+              <div class="form-group"><label>Pacient (RID)</label><input id="ez2SrcPacient" placeholder="např. 7653800856"></div>
+              <div class="form-group"><label>Autor (KRZP ID)</label><input id="ez2SrcAutor" placeholder="krzpId autora"></div>
+              <div class="form-group"><label>Příjemce (IČO)</label><input id="ez2SrcPrijemce" placeholder="IČO adresáta"></div>
+              <div class="form-group"><label>Poskytovatel (IČO)</label><input id="ez2SrcPoskytovatel" placeholder="IČO žadatele"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:8px">
+              <div class="form-group"><label>Datum od</label><input type="text" class="date-cs" id="ez2SrcOd" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Datum do</label><input type="text" class="date-cs" id="ez2SrcDo" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Kód žádanky</label><input id="ez2SrcKod" placeholder="8místný kód"></div>
+              <div class="form-group"><label>ID žádanky</label><input id="ez2SrcId" placeholder="UUID"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:12px;margin-top:8px">
+              <div class="form-group"><label>Stav (stav-zadanky)</label>
+                <select id="ez2SrcStav">
+                  <option value="">Všechny</option>
+                  <option value="0">0 – Nová</option><option value="1">1 – Přijatá</option><option value="2">2 – Vyřízená</option>
+                  <option value="3">3 – Stornovaná</option><option value="4">4 – Neproveditelná</option><option value="5">5 – Vrácená do oběhu</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Typ (referralorder-types)</label>
+                <select id="ez2SrcTyp">
+                  <option value="">Všechny</option>
+                  <option value="721964003">Z – zobrazovací (721964003)</option>
+                  <option value="57133-1">K – konziliární (57133-1)</option>
+                  <option value="57154-7">FT – fyzioterapie (57154-7)</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Priorita</label>
+                <select id="ez2SrcPriorita"><option value="">Libovolná</option><option value="routine">routine</option><option value="urgent">urgent</option><option value="asap">asap</option><option value="stat">stat</option></select>
+              </div>
+              <div class="form-group"><label>Metoda (čárkami)</label><input id="ez2SrcMetoda" placeholder="např. RAD, CT"></div>
+              <div class="form-group"><label><input type="checkbox" id="ez2SrcUzavrena"> Jen uzavřené</label></div>
+            </div>
+            <div style="display:grid;grid-template-columns:70px 70px auto;gap:12px;margin-top:8px;align-items:end">
+              <div class="form-group"><label>Stránka (od 0)</label><input type="number" id="ez2SrcPage" value="0" min="0"></div>
+              <div class="form-group"><label>Velikost</label><input type="number" id="ez2SrcSize" value="10" min="1" max="100"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary" onclick="ez2Search()">Vyhledat</button>
+                <button class="btn btn-outline" onclick="ez2SearchAktivni()" title="POST /api/v2/zadanka/vyhledatAktivni – žádanky ve stavu Nová dle id / RID / kódu (pro příjemce, který není adresátem)">Aktivní žádanky (id / RID / kód)</button>
+              </div>
+            </div>
+          </div>
+          <div id="ez2SearchCards" style="display:none"></div>
+          <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-iris" onclick="irisGenerate('ez2Result','ezadanky')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="ez2Result">-</div></div>
+        </div>
+
+        <!-- v2 DETAIL -->
+        <div class="sub-panel" id="ez2-detail-panel">
+          <div class="card">
+            <div class="card-title">Načtení žádanky – <code>POST /api/v2/zadanka/{id}/nacist</code></div>
+            <p style="font-size:11px;color:var(--fg3);margin-bottom:8px">Vrací systémovou hlavičku a FHIR Bundle. Bundle dostane jen žadatel/příjemce, nebo volající, který doloží <strong>kód žádanky</strong> či <strong>číslo dokladu</strong>. Odpověď nese <code>verzeZaznamu</code> (ETag) pro If-Match.</p>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end">
+              <div class="form-group"><label>ID žádanky (UUID)</label><input id="ez2Id" placeholder="UUID žádanky"></div>
+              <div class="form-group"><label>Kód žádanky</label><input id="ez2KodZadanky" placeholder="nepovinné"></div>
+              <div class="form-group"><label>Číslo dokladu</label><input id="ez2CisloDokladu" placeholder="nepovinné"></div>
+              <button class="btn btn-primary" onclick="ez2Nacist()">Načíst</button>
+            </div>
+          </div>
+          <div id="ez2DetailCard" style="display:none"></div>
+          <div class="card"><div class="card-header"><span class="card-title">Raw odpověď</span><button class="btn-iris" onclick="irisGenerate('ez2DetailResult','ezadanky')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="ez2DetailResult">-</div></div>
+        </div>
+
+        <!-- v2 CREATE -->
+        <div class="sub-panel" id="ez2-create-panel">
+          <div class="card">
+            <div class="card-title">Systémová hlavička – <code>hlavicka</code> (HlavickaVstup)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+              <div class="form-group"><label>Typ žádanky (referralorder-types)</label>
+                <select id="ez2CrTyp" onchange="ez2TypInfo(); ez2FillVzory(); ez2HlavickaChanged()">
+                  <option value="Z">Z – zobrazovací vyšetření (721964003, IG img-order)</option>
+                  <option value="K">K – konziliární / žádanka o vyšetření (57133-1, IG k-order)</option>
+                  <option value="FT">FT – fyzioterapie a ergoterapie (57154-7)</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Pacient (RID)</label><input id="ez2CrPacient" placeholder="RID pacienta" oninput="ez2HlavickaChanged()"></div>
+              <div class="form-group"><label>Adresát (IČO PZS, nepovinné)</label><input id="ez2CrAdresat" placeholder="prázdné = neadresná žádanka" oninput="ez2HlavickaChanged()"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">
+              <div class="form-group"><label>Poskytovatel žadatele (IČO)</label><input id="ez2CrPoskytovatel" placeholder="IČO" oninput="ez2HlavickaChanged()"></div>
+              <div class="form-group"><label>Autor – sepsal (krzpId)</label><input id="ez2CrAutor" placeholder="KRZP ID" oninput="ez2HlavickaChanged()"></div>
+              <div class="form-group"><label>Zdravotnický pracovník – podepsal (krzpId)</label><input id="ez2CrZp" placeholder="prázdné = autor" oninput="ez2HlavickaChanged()"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">
+              <div class="form-group"><label>IČP zařízení žadatele <span style="font-size:10px;color:var(--fg3)">(do Bundle, E01002)</span></label><input id="ez2CrIcp" placeholder="např. 72090001" value="72090001" title="Není v hlavičce – propíše se jako identifier sid/icp do custodian Organization v Bundle (server jinak vrátí E01002)"></div>
+              <div class="form-group"><label>Dodateční příjemci výsledku (IČO, čárkami)</label><input id="ez2CrDodatecni" placeholder="nepovinné" oninput="ez2HlavickaChanged()"></div>
+              <div class="form-group"><label>Nadřízená žádanka (id)</label><input id="ez2CrNadrizena" placeholder="nepovinné" oninput="ez2HlavickaChanged()"></div>
+            </div>
+            <div style="font-size:11px;color:var(--fg3);margin-top:6px">Hlavička obsahuje jen identifikátory a směrování. Klinický obsah (priorita, metoda, diagnóza, pojišťovna…) je ve FHIR Bundle (Composition + ServiceRequest + Patient + …).
+              <br><strong>Serverová konzistence (T2, chyba E00024/E01001):</strong> IČO poskytovatele = IČO Organization v <code>Composition.custodian</code>; adresát = IČO právě jedné provádějící Organization v <code>ServiceRequest.performer</code>; adresát ≠ poskytovatel. Tlačítko „Propsat hlavičku do Bundle“ to zajistí automaticky.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">FHIR Bundle (<code>fhirBundle</code>, type=document) <span style="font-size:10px;color:var(--fg3);font-weight:400">– první entry musí být Composition; typ dokumentu určuje <code>Composition.type</code></span></div>
+            <div id="ez2TypInfo" style="font-size:11px;color:var(--fg2);margin-bottom:8px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">
+              <div class="form-group" style="flex:1 1 280px;margin:0"><label>Vzor IG (všechny typy – ověřeny na T2)</label>
+                <select id="ez2VzorSelect"><option value="">– vyberte vzor –</option></select></div>
+              <button class="btn btn-outline" onclick="ez2LoadVzor()" title="Načte vzor IG; identifikátory (RID, KRZP, IČO, IČP) se propíší z hlavičky, reference se převedou na urn:uuid">Načíst vzor</button>
+              <button class="btn btn-outline" onclick="ez2Kostra()" title="Minimální validní Bundle vybraného typu z hlavičky a polí níže (server /api/ezadanky/v2/kostra)">Kostra dle typu</button>
+              <button class="btn btn-outline" onclick="ez2SyncBundleFromHlavicka()" title="Server (/api/ezadanky/v2/pripravit): reference → urn:uuid, Patient RID, Practitioner KRZP, Composition.custodian s IČO + IČP, provádějící Organization = adresát">Propsat hlavičku do Bundle</button>
+              <button class="btn btn-outline" onclick="ez2OpenImgOrder()" title="Otevře FHIR Builder img-order; sestavený Bundle lze přenést sem">FHIR Builder (Z)</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:8px">
+              <div class="form-group" style="margin:0"><label>Kostra: požadavek (text)</label><input id="ez2KoText" placeholder="např. Konziliární kardiologické vyšetření"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: výkon SNOMED (kód)</label><input id="ez2KoVykon" placeholder="K 185387006 / FT 229065009 / Z 168537006"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: diagnóza MKN-10</label><input id="ez2KoDg" placeholder="např. M545"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: priorita</label><select id="ez2KoPriorita"><option value="routine">routine (rutina)</option><option value="stat">stat (STATIM)</option></select></div>
+            </div>
+            <div id="ez2PripravaInfo" style="font-size:11px;color:var(--fg3);margin-bottom:6px;display:none"></div>
+            <textarea id="ez2CrBundle" rows="16" style="width:100%;box-sizing:border-box;font-size:11px;font-family:var(--mono)" placeholder='{"resourceType":"Bundle","type":"document","entry":[{"resource":{"resourceType":"Composition", ...}}]}'></textarea>
+          </div>
+          <div class="card">
+            <div class="card-title">Tělo požadavku – <code>POST /api/v2/zadanka</code> → 201</div>
+            <textarea id="ez2CrBody" rows="10" style="width:100%;box-sizing:border-box;font-size:11px;font-family:var(--mono)" readonly></textarea>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-outline" onclick="ez2Zkontroluj()">Zkontrolovat (klientská kontrola)</button>
+              <button class="btn btn-green" onclick="ez2Uloz()">Odeslat (ulozitZadanku)</button>
+            </div>
+            <div id="ez2CrCheck" style="margin-top:8px;font-size:11px"></div>
+          </div>
+          <div class="card"><div class="card-header"><span class="card-title">Odpověď API</span><button class="btn-iris" onclick="irisGenerate('ez2CreateResult','ezadanky')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="ez2CreateResult">-</div></div>
+        </div>
+
+        <!-- v2 WORKFLOW -->
+        <div class="sub-panel" id="ez2-wf-panel">
+          <div class="card">
+            <div class="card-title">Procesní operace – <code>PATCH /api/v2/zadanka/{id}/…</code> s hlavičkou <code>If-Match</code></div>
+            <p style="font-size:12px;color:var(--fg2);margin-bottom:12px">Každá operace posílá aktuální <code>verzeZaznamu</code> v hlavičce If-Match; při nesouladu vrací server <strong>HTTP 409</strong>. Po úspěchu se verze automaticky aktualizuje z odpovědi. <strong>Úprava žádanky (UpravZadanku) ve v2 neexistuje</strong> – náhradou je storno a nová žádanka.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+              <div class="form-group"><label>ID žádanky (UUID)</label><input id="ez2WfId" placeholder="UUID"></div>
+              <div class="form-group"><label>verzeZaznamu (If-Match)</label><input id="ez2WfVerze" placeholder="z hlavicka.verzeZaznamu / ETag"></div>
+              <button class="btn btn-outline" onclick="ez2WfRefresh()" title="Načte aktuální hlavičku a doplní verzeZaznamu">Obnovit verzi</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="card">
+              <div class="card-title" style="color:var(--green)">&#10148; Přijmout – <code>/prijmout</code></div>
+              <div class="form-group"><label>Kód žádanky</label><input id="ez2WfKod" placeholder="pro ne-adresáta"></div>
+              <div class="form-group"><label>Číslo dokladu</label><input id="ez2WfDoklad" placeholder="alternativa ke kódu"></div>
+              <div class="form-group"><label>Plánované vyšetření</label><input type="datetime-local" id="ez2WfDatumPlan"></div>
+              <button class="btn btn-green" style="margin-top:8px" onclick="ez2Wf('prijmout')">Přijmout</button>
+            </div>
+            <div class="card">
+              <div class="card-title" style="color:var(--accent)">&#10004; Vyřídit – <code>/vyridit</code></div>
+              <div class="form-group"><label>Způsob vyřízení (zpusob-vyrizeni)</label><input id="ez2WfZpusob" list="ez2ZpusobList" placeholder="kód z číselníku zpusob-vyrizeni"><datalist id="ez2ZpusobList"></datalist></div>
+              <div class="form-group"><label>Upřesnění</label><input id="ez2WfZpusobText" placeholder="nepovinné (max 250)"></div>
+              <div class="form-group"><label>Datum skutečné realizace</label><input type="datetime-local" id="ez2WfDatumReal"></div>
+              <div class="form-group"><label><input type="checkbox" id="ez2WfZaslatPac"> Zaslat výsledek pacientovi</label> &nbsp; <label><input type="checkbox" id="ez2WfZaslatPL"> praktikovi</label></div>
+              <div class="form-group"><label>Výsledek – zásilka s ≥ 1 dokumentem (JSON) <button class="btn btn-outline" style="padding:0 6px;font-size:10px" onclick="ez2VysledekSkeleton()">kostra</button></label>
+                <textarea id="ez2WfVysledek" rows="7" style="font-size:10px;font-family:var(--mono)" placeholder='{"nazev":"...","typ":{"kod":"..."},"autor":"krzpId","zdravotnickyPracovnik":"krzpId","poskytovatel":"IČO","pacient":"RID","dokument":[{...}]}'></textarea>
+              </div>
+              <button class="btn btn-primary" style="margin-top:8px" onclick="ez2Wf('vyridit')">Vyřídit</button>
+            </div>
+            <div class="card">
+              <div class="card-title" style="color:var(--red)">&#10008; Stornovat – <code>/stornovat</code></div>
+              <div class="form-group"><label>Důvod storna (duvod-storna)</label><input id="ez2WfStornoDuvod" list="ez2StornoList" placeholder="kód z číselníku duvod-storna"><datalist id="ez2StornoList"></datalist></div>
+              <div class="form-group"><label>Upřesnění</label><input id="ez2WfStornoText" placeholder="nepovinné (max 250)"></div>
+              <button class="btn" style="margin-top:8px;background:var(--red);color:#fff;border:none" onclick="ez2Wf('stornovat')">Stornovat</button>
+            </div>
+            <div class="card">
+              <div class="card-title" style="color:var(--orange)">&#8634; Vrátit do oběhu / Neproveditelnost</div>
+              <div class="form-group"><label>Akce</label>
+                <select id="ez2WfExtraAkce" onchange="ez2ExtraChanged()">
+                  <option value="vratitDoObehu">Vrátit do oběhu – /vratitDoObehu (duvod-vraceni)</option>
+                  <option value="zaznacitNeproveditelnost">Zaznačit neproveditelnost – /zaznacitNeproveditelnost (duvod-odmitnuti)</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Důvod (kód)</label><input id="ez2WfExtraDuvod" list="ez2ExtraList" placeholder="kód z číselníku"><datalist id="ez2ExtraList"></datalist></div>
+              <div class="form-group"><label>Upřesnění</label><input id="ez2WfExtraText" placeholder="nepovinné (max 250)"></div>
+              <div class="form-group" id="ez2WfExtraKodWrap" style="display:none"><label>Kód žádanky (ne-adresát)</label><input id="ez2WfExtraKod" placeholder="nepovinné"></div>
+              <button class="btn btn-outline" style="margin-top:8px" onclick="ez2WfExtra()">Provést</button>
+            </div>
+          </div>
+          <div class="card" style="background:#fef2f2;border-color:#fecaca">
+            <div class="card-title" style="color:#991b1b">&#9998; Upravit žádanku – ve v2 zrušeno</div>
+            <div style="font-size:12px;color:#7f1d1d">Služba <code>UpravZadanku</code> není součástí kontraktu 2.0.0. Vystavenou žádanku nelze měnit – stornujte ji (<code>/stornovat</code>) a vystavte novou (<code>POST /api/v2/zadanka</code>), případně s <code>nadrizenaZadankaId</code>.</div>
+          </div>
+          <div class="json-box" id="ez2WfResult">-</div>
+        </div>
+
+        <!-- v2 DIAG -->
+        <div class="sub-panel" id="ez2-diag-panel">
+          <div class="card">
+            <div class="card-title">Diagnostika v2</div>
+            <p style="font-size:12px;color:var(--fg2);margin-bottom:10px">Sondy bez vedlejších účinků nad všemi operacemi v2 (vyhledání, načtení a procesní PATCH nad neexistujícím ID) – ověří autorizaci PZS (E01001) a dostupnost cest <code>/api/v2</code>.</p>
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="ez2RunDiagnose()">Spustit diagnostiku v2</button>
+              <button class="btn btn-outline" onclick="ez2LoadKatalog()">Katalog operací a číselníků</button>
+            </div>
+            <div id="ez2DiagResult"></div>
+          </div>
+          <div id="ez2KatalogBox"></div>
+        </div>
+      </div>
+
+      <!-- EZ SEARCH (v1 – deprecated) -->
+      <div class="sub-panel" id="ez-search-panel">
         <div id="ezSearchAuthWarn" class="card" style="background:#fef2f2;border-color:#fca5a5;display:none">
           <div style="font-weight:600;font-size:12px;color:#991b1b;margin-bottom:4px">&#9888; Vyhledávání vyžaduje PZS kontext</div>
           <div style="font-size:12px;color:#7f1d1d;line-height:1.6">
             Endpointy <code>VyhledejZadanku</code> a <code>VyhledejAktivniZadanku</code> vyžadují, aby volající byl
             identifikován jako <strong>poskytovatel zdravotních služeb (PZS)</strong> přes JSU token exchange na SEZ Gateway.
-            Náš testovací klient (<code>25488627_KrajskaZdravotniVerejnyTest</code>) nemá v JSU registrovaný PZS kontext pro eŽádanky.
+            Náš testovací klient (<code>25488627_KrajskaZdravotniVerejnyTest04</code>) nemá v JSU registrovaný PZS kontext pro eŽádanky.
             <br><strong>Řešení:</strong> Zaregistrovat klienta s PZS oprávněním na MZČR, nebo použít klienta s plným PZS přístupem.
             <br>Pro offline demo použijte <strong>Simulační režim</strong> nebo záložku <strong>Diagnostika</strong>.
           </div>
@@ -3128,7 +3356,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card">
           <div class="card-title">Načtení žádanky podle ID</div>
           <p style="font-size:11px;color:var(--fg3);margin-bottom:8px">
-            Aktuální eŽádanky API <code>v1.11.17</code> zveřejňuje detail přes <code>NactiZadanku</code>; legacy endpointy pro vizualizaci a přílohy už ve swaggeru nejsou.
+            eŽádanky API <strong>v1</strong> (<code>v1.11.25</code>, od 1. 10. 2026 <strong>deprecated</strong>) zveřejňuje detail přes <code>NactiZadanku</code>; legacy endpointy pro vizualizaci a přílohy už ve swaggeru nejsou. Aktuální rozhraní je v záložce <strong>eŽádanky v2</strong> (<code>POST /api/v2/zadanka/{id}/nacist</code>).
           </p>
           <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
             <div class="form-group"><label>ID žádanky (UUID)</label><input id="ezId" placeholder="UUID žádanky"></div>
@@ -3188,7 +3416,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <button class="btn btn-outline" onclick="ezTemplateChanged()">Obnovit ze šablony</button>
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--fg3);line-height:1.5">
-            <strong>UlozZadanku</strong> je aktuální publikační endpoint <code>v1.11.17</code> a vyžaduje PZS kontext z JWT.
+            <strong>UlozZadanku</strong> je publikační endpoint <strong>v1</strong> (<code>v1.11.25</code>, od 1. 10. 2026 deprecated) a vyžaduje PZS kontext z JWT. Nové žádanky vystavujte přes <strong>eŽádanky v2</strong> (<code>POST /api/v2/zadanka</code>, hlavička + FHIR Bundle).
             Legacy helpery <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> a <code>SestavSouborZadanky</code> už nejsou součástí aktuálního swaggeru.
           </div>
         </div>
@@ -3335,8 +3563,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div style="font-size:18px;font-weight:700;color:#7dd3fc">&#127909; HL7 Czech Imaging Order FHIR IG <span style="font-size:11px;background:#22d3ee;color:#0c4a6e;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600">v0.1.0 / FHIR R4</span></div>
         <p style="margin:8px 0 0;color:#bae6fd;font-size:13px;line-height:1.6">
           FHIR adapter pro <strong style="color:#fef9c3">elektronické žádanky obrazových vyšetření</strong> dle HL7-cz IG.
-          Přijímá <code style="color:#fef9c3">CZ_BundleImageOrder</code> (Bundle type=document), validuje, mapuje na
-          NCEZ <code style="color:#fef9c3">/eZadanky/UlozZadanku</code> a vrátí výsledek.
+          Přijímá <code style="color:#fef9c3">CZ_BundleImageOrder</code> (Bundle type=document), validuje a ukládá jako eŽádanku:
+          <strong style="color:#fef9c3">v2</strong> (výchozí od 13. 10. 2026) = <code style="color:#fef9c3">POST /eZadanky/api/v2/zadanka</code> s hlavičkou + Bundle beze ztráty; <code>?api=v1</code> = lossy mapování na deprecated <code style="color:#fef9c3">UlozZadanku</code>.
         </p>
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #475569;font-size:11px;color:#94a3b8">
           Profily: <code>cz-bundleImageOrder</code>, <code>cz-compositionImageOrder</code>, <code>cz-imagingOrderInformation</code> (ServiceRequest), <code>cz-conditionImage</code> (MKN-10), <code>cz-coverage</code>, <code>cz-patient-core</code>, <code>cz-practitioner-core</code>.
@@ -3528,12 +3756,19 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card">
           <div class="card-title">📤 Odeslat FHIR Bundle do NCEZ /eZadanky</div>
           <p style="font-size:12px;color:var(--fg3);margin-bottom:8px">
-            Bundle z textarea v záložce „Validace + náhled" se převede na NCEZ <code>UlozZadankuExtRequest</code>
-            a odešle přes existující eŽádanky klienta. Vyžaduje aktivní mTLS spojení s gateway.
+            Bundle z textarea v záložce „Validace + náhled" se odešle jako eŽádanka. <strong>API v2</strong>: tělo <code>{hlavicka, fhirBundle}</code> – Bundle se uloží beze ztráty, hlavička se odvodí z Bundle (RID / IČO / KRZP) a lze ji doplnit níže. <strong>API v1</strong> (deprecated): převod na <code>UlozZadankuExtRequest</code>. Vyžaduje aktivní mTLS spojení s gateway.
           </p>
           <div class="form-row">
-            <div class="form-group"><label>ISPZS (identifikátor IS PZS)</label><input id="imgSubIspzs" placeholder="FHIR-IMG-ORDER" value="FHIR-IMG-ORDER"></div>
-            <div class="form-group" style="flex:0 0 auto;display:flex;align-items:center;gap:6px"><label style="margin:0"><input type="checkbox" id="imgSubAttach"> Vložit Bundle jako přílohu</label></div>
+            <div class="form-group" style="flex:0 0 150px"><label>Verze API eŽádanek</label><select id="imgSubApi" onchange="imgSubApiChanged()"><option value="v2" selected>v2.0.0 (aktuální)</option><option value="v1">v1.11.25 (deprecated)</option></select></div>
+            <div class="form-group"><label>Adresát (IČO PZS, v2)</label><input id="imgSubAdresat" placeholder="prázdné = neadresná žádanka"></div>
+            <div class="form-group"><label>Poskytovatel žadatele (IČO, v2)</label><input id="imgSubPoskytovatel" placeholder="z Bundle / Organization"></div>
+            <div class="form-group"><label>Autor / podepsal (KRZP, v2)</label><input id="imgSubAutor" placeholder="z Bundle / Practitioner"></div>
+            <div class="form-group" style="flex:0 0 130px"><label>IČP žadatele (v2)</label><input id="imgSubIcp" placeholder="72090001" title="Doplní se jako identifier sid/icp do custodian Organization (server jinak vrátí E01002)"></div>
+          </div>
+          <p style="font-size:11px;color:var(--fg3);margin:0 0 8px">Serverová konzistence v2 (T2, E00024/E01001/E01002): poskytovatel = IČO Organization v <code>Composition.custodian</code>, adresát = IČO právě jedné provádějící Organization v <code>ServiceRequest.performer</code> (adresát ≠ poskytovatel), custodian Organization musí mít IČP.</p>
+          <div class="form-row" id="imgSubV1Row" style="display:none">
+            <div class="form-group"><label>ISPZS (identifikátor IS PZS, v1)</label><input id="imgSubIspzs" placeholder="FHIR-IMG-ORDER" value="FHIR-IMG-ORDER"></div>
+            <div class="form-group" style="flex:0 0 auto;display:flex;align-items:center;gap:6px"><label style="margin:0"><input type="checkbox" id="imgSubAttach"> Vložit Bundle jako přílohu (v1)</label></div>
           </div>
           <button class="btn btn-primary" onclick="imgOrderSubmit()" style="background:#16a34a">📤 Odeslat (POST /api/img-order/Bundle)</button>
         </div>
@@ -3545,7 +3780,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card">
           <div class="card-title">🔎 Vyhledat existující žádanku v NCEZ</div>
           <p style="font-size:12px;color:var(--fg3);margin-bottom:8px">
-            Volá <code>POST /api/img-order/Bundle/_search</code> (interně <code>EZadanky.vyhledejZadanku</code>).
+            Volá <code>POST /api/img-order/Bundle/_search</code> (interně <code>EZadankyV2.vyhledat</code>, stránky od 0; s <code>?api=v1</code> deprecated <code>EZadanky.vyhledejZadanku</code>).
             Klikni na řádek → načte se detail jako FHIR <code>CZ_BundleImageOrder</code>.
           </p>
           <div class="form-row">
@@ -3564,7 +3799,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
                 <button type="button" onclick="_setDateRange('imgSearchOd','imgSearchDo',-90)">3&nbsp;měs.</button>
               </div>
             </div>
-            <div class="form-group"><label>Stránka</label><input id="imgSearchPage" type="number" min="1" value="1"></div>
+            <div class="form-group"><label>Stránka (v2 od 0)</label><input id="imgSearchPage" type="number" min="0" value="0"></div>
             <div class="form-group"><label>Velikost</label><input id="imgSearchSize" type="number" min="1" max="100" value="20"></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -3597,11 +3832,11 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
         <div class="card" style="background:#fef9c3;border-color:#facc15;margin-top:10px">
           <div class="card-title">⚙️ Lifecycle akce přes FHIR style operace</div>
           <p style="font-size:12px;color:#713f12;margin-bottom:8px">
-            FHIR-style aliasy nad NCEZ <code>StornujZadanku</code>, <code>PrijmiZadanku</code>, <code>VyridZadanku</code>.
+            FHIR-style aliasy nad eŽádanky v2 <code>/stornovat</code>, <code>/prijmout</code>, <code>/vyridit</code> (If-Match = verzeZaznamu); pro v1 nad <code>StornujZadanku</code>, <code>PrijmiZadanku</code>, <code>VyridZadanku</code>. <strong>$fulfill ve v2 vyžaduje zásilku s dokumentem</strong> – použijte záložku eŽádanky v2 → Workflow.
           </p>
           <div class="form-row">
             <div class="form-group"><label>NCEZ ID</label><input id="imgLcId" placeholder="GUID"></div>
-            <div class="form-group"><label>verzeRadku (ETag) *</label><input id="imgLcVerze" placeholder="AAAAAA="></div>
+            <div class="form-group"><label>verzeZaznamu / verzeRadku (If-Match) *</label><input id="imgLcVerze" placeholder="AAAAAA="></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-warning" onclick="imgOrderLifecycle('cancel')">$cancel (Stornuj)</button>
@@ -8059,6 +8294,8 @@ function initSubTabs() {
         if (tab.dataset.panel === 'du-create-panel') duInitCreate();
         if (tab.dataset.panel === 'elp-create-panel') elp2CreateInit();
         if (tab.dataset.panel === 'ez-create-panel') ezCreateInitOnce();
+        if (tab.dataset.panel === 'ez2-create-panel') ez2CreateInitOnce();
+        if (tab.dataset.panel === 'ez2-wf-panel') ez2WfInitOnce();
       });
     });
   });
@@ -12266,11 +12503,11 @@ async function ezRunDiagnose() {
   if (!data.pzs_context) {
     const okEndpoints = data.results.filter(r => r.auth_ok).map(r => '<code>' + escHtml(r.endpoint) + '</code>');
     html += '<div style="margin-top:12px;padding:10px;background:#fef2f2;border-radius:6px;font-size:12px;color:#7f1d1d;line-height:1.6">' +
-      '<strong>Diagnóza:</strong> Náš JWT assertion (iss: <code>' + escHtml(data.client_id || '25488627_KrajskaZdravotniVerejnyTest') + '</code>) ' +
+      '<strong>Diagnóza:</strong> Náš JWT assertion (iss: <code>' + escHtml(data.client_id || '25488627_KrajskaZdravotniVerejnyTest04') + '</code>) ' +
       'nemá v JSU registrovaný PZS kontext. Gateway provede token exchange, ale výsledný token neobsahuje PZS identitu. ' +
       'Proto endpointy vyžadující PZS vrací <code>E01001</code>.<br>' +
       '<strong>Dostupné s aktuálním certifikátem:</strong> ' + (okEndpoints.length ? okEndpoints.join(', ') : 'žádné') + '.<br>' +
-      '<strong>Poznámka:</strong> Aktuální eŽádanky API <code>v1.11.17</code> už nepublikuje legacy endpointy <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> ani <code>SestavSouborZadanky</code>.' +
+      '<strong>Poznámka:</strong> eŽádanky API v1 (<code>v1.11.25</code>, deprecated od 1. 10. 2026) už nepublikuje legacy endpointy <code>DejVizualZadanky</code>, <code>DejPrilohyZadanky</code> ani <code>SestavSouborZadanky</code>.' +
       '</div>';
   }
   box.innerHTML = html;
@@ -12468,14 +12705,14 @@ async function ezNacti() {
   ezRenderDetail(data);
 }
 async function ezVizual() {
-  if (!_ezSimEnabled) return toast('Vizualizace žádanky už není součástí aktuálního API v1.11.17', true);
+  if (!_ezSimEnabled) return toast('Vizualizace žádanky už není součástí API v1 (deprecated) ani v2', true);
   const id = document.getElementById('ezId').value.trim();
   if (!id) return toast('Zadejte ID žádanky', true);
   const data = await api('GET', '/api/ezadanky/vizual/' + id);
   showResult('ezDetailResult', data);
 }
 async function ezPrilohy() {
-  if (!_ezSimEnabled) return toast('Přílohy žádanky už nejsou součástí aktuálního API v1.11.17', true);
+  if (!_ezSimEnabled) return toast('Přílohy žádanky už nejsou součástí API v1 (deprecated) ani v2 – dokumenty jsou ve FHIR Bundle / zásilkách DÚ', true);
   const id = document.getElementById('ezId').value.trim();
   if (!id) return toast('Zadejte ID žádanky', true);
   const data = await api('GET', '/api/ezadanky/prilohy/' + id);
@@ -12825,7 +13062,540 @@ async function ezWfUprav() {
 }
 
 async function ezCreateSestavSoubor() {
-  toast('SestavSouborZadanky už není součástí aktuálního eŽádanky API v1.11.17', true);
+  toast('SestavSouborZadanky už není součástí eŽádanky API v1 (deprecated); ve v2 neexistuje', true);
+}
+
+// ---------------------------------------------------------------------------
+// eŽádanky – API verze 2 (OpenAPI 2.0.0, Standard eŽádanka 2.0; revize 13. 10. 2026)
+// Datová věta = systémová hlavička + FHIR Bundle (document); If-Match = verzeZaznamu.
+// ---------------------------------------------------------------------------
+const EZ2_TYPY = {
+  Z:  {kod:'721964003', system:'http://snomed.info/sct', nazev:'Žádanka o zobrazovací vyšetření', ig:'img-order'},
+  K:  {kod:'57133-1',   system:'http://loinc.org',       nazev:'Žádanka o vyšetření (konziliární)', ig:'k-order'},
+  FT: {kod:'57154-7',   system:'http://loinc.org',       nazev:'Žádanka o fyzioterapii', ig:'k-order'},
+};
+const EZ2_TYP_NAZEV = {'721964003':'Z – zobrazovací','57133-1':'K – konziliární','57154-7':'FT – fyzioterapie','721965002':'laboratorní','57830-2':'hospitalizace'};
+let _ez2LastVerze = {};   // id → verzeZaznamu (z posledních odpovědí)
+let _ez2CiselnikyLoaded = false;
+
+function ezApiVerze() {
+  const r = document.querySelector('input[name="ezApiVerze"]:checked');
+  return r ? r.value : 'v2';
+}
+function ezApiVerzeChanged() {
+  const v = ezApiVerze();
+  const tab = document.querySelector('#ezMainTabs .sub-tab[data-panel="' + (v === 'v2' ? 'ez-v2-panel' : 'ez-search-panel') + '"]');
+  if (tab) tab.click();
+  if (v === 'v1') toast('eŽádanky API v1 je od 1. 10. 2026 deprecated – používejte v2', true);
+}
+
+function _ez2Val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function _ez2Checked(id) { const el = document.getElementById(id); return !!(el && el.checked); }
+function _ez2Remember(data) {
+  // uloží verzeZaznamu z odpovědi (hlavicka.verzeZaznamu, případně top-level z backendu)
+  const hl = data?.data?.hlavicka || data?.hlavicka;
+  const vz = hl?.verzeZaznamu || data?.verzeZaznamu;
+  if (hl?.id && vz) _ez2LastVerze[hl.id] = vz;
+  return vz;
+}
+
+// --- Vyhledání -------------------------------------------------------------
+function ez2BuildSearchBody() {
+  const b = {strankovani:{page:Math.max(0, parseInt(_ez2Val('ez2SrcPage'))||0), size:parseInt(_ez2Val('ez2SrcSize'))||10}};
+  const map = {pacient:'ez2SrcPacient', autor:'ez2SrcAutor', prijemce:'ez2SrcPrijemce', poskytovatel:'ez2SrcPoskytovatel',
+               kod:'ez2SrcKod', id:'ez2SrcId', stav:'ez2SrcStav', typZadanky:'ez2SrcTyp', priorita:'ez2SrcPriorita'};
+  for (const [k, id] of Object.entries(map)) { const v = _ez2Val(id); if (v) b[k] = v; }
+  const od = _csToIso(_ez2Val('ez2SrcOd')); const doo = _csToIso(_ez2Val('ez2SrcDo'));
+  if (od) b.datumOd = od; if (doo) b.datumDo = doo;
+  const met = _ez2Val('ez2SrcMetoda'); if (met) b.metoda = met.split(',').map(s => s.trim()).filter(Boolean);
+  if (_ez2Checked('ez2SrcUzavrena')) b.uzavrena = true;
+  return b;
+}
+async function ez2Search() {
+  const data = await api('POST', '/api/ezadanky/v2/vyhledat', ez2BuildSearchBody());
+  showResult('ez2Result', data);
+  ez2RenderCards(data);
+  _ezCheckSearchAuth(data);
+}
+async function ez2SearchAktivni() {
+  const b = {strankovani:{page:Math.max(0, parseInt(_ez2Val('ez2SrcPage'))||0), size:parseInt(_ez2Val('ez2SrcSize'))||10}};
+  const rid = _ez2Val('ez2SrcPacient'), id = _ez2Val('ez2SrcId'), kod = _ez2Val('ez2SrcKod');
+  if (rid) b.rid = rid; if (id) b.id = id; if (kod) b.kodZadanky = kod;
+  if (!rid && !id && !kod) return toast('vyhledatAktivni vyžaduje alespoň jedno z: RID pacienta, ID žádanky, kód žádanky', true);
+  const data = await api('POST', '/api/ezadanky/v2/vyhledat-aktivni', b);
+  showResult('ez2Result', data);
+  ez2RenderCards(data);
+  _ezCheckSearchAuth(data);
+}
+function ez2RenderCards(data) {
+  const box = document.getElementById('ez2SearchCards');
+  box.innerHTML = ''; box.style.display = 'none';
+  if (!data || data.status >= 400) return;
+  const resp = data.data || data;
+  const items = resp.nalezeneZaznamy || [];
+  if (!items.length) return;
+  box.style.display = '';
+  const th = (t, al) => '<th style="text-align:' + (al||'left') + ';padding:8px;border-bottom:2px solid var(--border)">' + t + '</th>';
+  let html = '<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr>' +
+    th('ID / kód') + th('Typ') + th('Stav') + th('Priorita') + th('Pacient (RID)') + th('Žadatel') + th('Adresát') + th('Vytvořeno') + th('Akce','center') + '</tr></thead><tbody>';
+  for (const z of items) {
+    const hl = z.hlavicka || {}; const upp = z.udajeProPrijeti || {};
+    const id = hl.id || '-'; const shortId = id.length > 12 ? id.substring(0, 8) + '…' : id;
+    if (hl.id && hl.verzeZaznamu) _ez2LastVerze[hl.id] = hl.verzeZaznamu;
+    const stavKod = hl.stav?.kod ?? '?'; const stavNazev = hl.stav?.nazev || EZ_STAVY[stavKod] || stavKod;
+    const stavColor = EZ_STAV_COLORS[stavKod] || 'var(--fg2)';
+    const typ = hl.typZadanky?.kod || '-'; const typN = EZ2_TYP_NAZEV[typ] || hl.typZadanky?.nazev || typ;
+    const urg = upp.urgentnost?.kod || '-'; const urgStyle = (urg === 'stat' || urg === 'asap') ? 'color:var(--red);font-weight:700' : '';
+    const zad = hl.zadatel || {};
+    html += '<tr style="border-bottom:1px solid var(--border)">' +
+      '<td style="padding:6px 8px;font-family:var(--mono);font-size:10px" title="' + escHtml(id) + '">' + escHtml(shortId) + (hl.kod ? '<br><span style="color:var(--fg3)">' + escHtml(hl.kod) + '</span>' : '') + '</td>' +
+      '<td style="padding:6px 8px;font-size:11px" title="' + escHtml(typ) + '">' + escHtml(typN) + '</td>' +
+      '<td style="padding:6px 8px"><span style="color:' + stavColor + ';font-weight:600">' + escHtml(String(stavNazev)) + '</span></td>' +
+      '<td style="padding:6px 8px;' + urgStyle + '">' + escHtml(urg) + '</td>' +
+      '<td style="padding:6px 8px;font-family:var(--mono);font-size:11px">' + escHtml(hl.pacient || '-') + '</td>' +
+      '<td style="padding:6px 8px;font-size:11px">IČO ' + escHtml(zad.poskytovatel || '-') + '<br><span style="color:var(--fg3)">KRZP ' + escHtml(zad.zdravotnickyPracovnik || zad.autor || '-') + '</span></td>' +
+      '<td style="padding:6px 8px;font-size:11px">' + escHtml(hl.adresat || '— neadresná') + '</td>' +
+      '<td style="padding:6px 8px;font-size:11px">' + escHtml((hl.datumVytvoreni || '').replace('T', ' ').slice(0, 16)) + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;white-space:nowrap">' +
+        '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="ez2OpenDetail(\'' + escHtml(id) + '\')">Detail</button> ' +
+        '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="ez2OpenWorkflow(\'' + escHtml(id) + '\',\'' + escHtml(hl.verzeZaznamu || '') + '\')">Workflow</button>' +
+      '</td></tr>';
+  }
+  html += '</tbody></table>';
+  const total = resp.totalCount ?? items.length;
+  const paging = ' <span style="font-size:11px;font-weight:400;color:var(--fg3)">(' + total + ' výsledků, stránka ' + (resp.pageNumber ?? 0) + ' z ' + (resp.pageCount ?? '?') + (resp.pocetNeprectenych ? ', nepřečtených ' + resp.pocetNeprectenych : '') + ')</span>';
+  const simBadge = data._sim ? ' <span style="background:#7c3aed;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;vertical-align:middle">SIM</span>' : '';
+  box.innerHTML = '<div class="card"><div class="card-title">Nalezené žádanky (v2)' + paging + simBadge + '</div>' + html + '</div>';
+}
+function ez2OpenDetail(id) {
+  document.getElementById('ez2Id').value = id;
+  document.querySelector('#ez2Tabs [data-panel="ez2-detail-panel"]').click();
+  ez2Nacist();
+}
+function ez2OpenWorkflow(id, verze) {
+  document.getElementById('ez2WfId').value = id;
+  document.getElementById('ez2WfVerze').value = verze || _ez2LastVerze[id] || '';
+  document.querySelector('#ez2Tabs [data-panel="ez2-wf-panel"]').click();
+}
+
+// --- Detail ----------------------------------------------------------------
+async function ez2Nacist() {
+  const id = _ez2Val('ez2Id');
+  if (!id) return toast('Zadejte ID žádanky', true);
+  const body = {};
+  if (_ez2Val('ez2KodZadanky')) body.kodZadanky = _ez2Val('ez2KodZadanky');
+  if (_ez2Val('ez2CisloDokladu')) body.cisloDokladu = _ez2Val('ez2CisloDokladu');
+  const data = await api('POST', '/api/ezadanky/v2/zadanka/' + encodeURIComponent(id) + '/nacist', body);
+  showResult('ez2DetailResult', data);
+  _ez2Remember(data);
+  ez2RenderDetail(data);
+}
+function _ez2Cell(label, val) {
+  return '<div style="font-size:11px"><span style="color:var(--fg3)">' + escHtml(label) + '</span><br><span style="font-weight:600">' + escHtml(val == null || val === '' ? '—' : String(val)) + '</span></div>';
+}
+function ez2BundleSummary(b) {
+  if (!b || typeof b !== 'object') return null;
+  const entries = b.entry || []; const types = {}; let comp = null, patient = null;
+  const srs = [];
+  for (const e of entries) {
+    const r = e?.resource || {}; if (!r.resourceType) continue;
+    types[r.resourceType] = (types[r.resourceType] || 0) + 1;
+    if (r.resourceType === 'Composition' && !comp) comp = r;
+    if (r.resourceType === 'Patient' && !patient) patient = r;
+    if (r.resourceType === 'ServiceRequest') srs.push(r);
+  }
+  return {type: b.type, entries: entries.length, types, title: comp?.title, status: comp?.status, date: comp?.date,
+    patient: patient ? ((patient.name?.[0]?.family || '') + ' ' + (patient.name?.[0]?.given || []).join(' ')).trim() : null,
+    requests: srs.map(s => ({priority: s.priority, code: s.code?.coding?.[0]?.display || s.code?.coding?.[0]?.code || s.code?.text,
+      modality: s.extension?.find(x => /modality/i.test(x.url || ''))?.valueCoding?.code, bodySite: s.bodySite?.[0]?.coding?.[0]?.display}))};
+}
+function ez2RenderDetail(data) {
+  const card = document.getElementById('ez2DetailCard');
+  card.style.display = 'none'; card.innerHTML = '';
+  if (!data || data.status >= 400) return;
+  const d = data.data || data; const hl = d.hlavicka; if (!hl) return;
+  const stavKod = hl.stav?.kod ?? '?'; const stavNazev = hl.stav?.nazev || EZ_STAVY[stavKod] || stavKod;
+  const zad = hl.zadatel || {};
+  let html = '<div class="card"><div class="card-title">Systémová hlavička <span style="font-size:11px;color:var(--fg3);font-weight:400">' + escHtml(hl.id || '') + '</span>' +
+    (data._sim ? ' <span style="background:#7c3aed;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px">SIM</span>' : '') + '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">' +
+    _ez2Cell('Stav', stavKod + ' – ' + stavNazev) + _ez2Cell('Typ žádanky', (EZ2_TYP_NAZEV[hl.typZadanky?.kod] || '') + ' (' + (hl.typZadanky?.kod || '-') + ')') +
+    _ez2Cell('Kód žádanky', hl.kod) + _ez2Cell('verzeZaznamu (If-Match)', hl.verzeZaznamu) +
+    _ez2Cell('Pacient (RID)', hl.pacient) + _ez2Cell('Poskytovatel žadatele (IČO)', zad.poskytovatel) + _ez2Cell('Autor – sepsal (KRZP)', zad.autor) + _ez2Cell('Podepsal (KRZP)', zad.zdravotnickyPracovnik) +
+    _ez2Cell('Adresát (IČO)', hl.adresat || '— neadresná') + _ez2Cell('Dodateční příjemci', (hl.dodatecnyPrijemce || []).join(', ')) + _ez2Cell('Nadřízená žádanka', hl.nadrizenaZadankaId) + _ez2Cell('Podřízené žádanky', (hl.podrizeneZadanky || []).join(', ')) +
+    _ez2Cell('Vytvořeno', hl.datumVytvoreni) + _ez2Cell('Expirace', hl.datumExpirace) + _ez2Cell('Poslední přijetí', hl.datumPoslednihoPrijeti) + _ez2Cell('Plánované vyšetření', hl.datumPlanovanehoVysetreni) +
+    _ez2Cell('Vyřízeno', hl.datumVyrizeni) + _ez2Cell('Skutečná realizace', hl.datumSkutecneRealizaceVysetreni) + _ez2Cell('Způsob vyřízení', hl.zpusobVyrizeni ? (hl.zpusobVyrizeni.kod + (hl.zpusobVyrizeniUpresneni ? ' – ' + hl.zpusobVyrizeniUpresneni : '')) : null) + _ez2Cell('Zásilky výsledku', (hl.zasilkyVysledku || []).join(', ')) +
+    _ez2Cell('Storno', hl.datumStorna) + _ez2Cell('Neproveditelnost', hl.datumZaznaceniNeproveditelnosti) + _ez2Cell('Poslední vrácení do oběhu', hl.datumPoslednihoVraceniDoObehu) +
+    '</div>' +
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-outline" onclick="ez2OpenWorkflow(\'' + escHtml(hl.id || '') + '\',\'' + escHtml(hl.verzeZaznamu || '') + '\')">Workflow s touto verzí</button>' +
+      (d.fhirBundle ? '<button class="btn btn-outline" onclick="ez2CopyBundleToCreate()">Použít Bundle jako vzor nové žádanky</button>' : '') +
+    '</div></div>';
+  const s = ez2BundleSummary(d.fhirBundle);
+  if (s) {
+    html += '<div class="card"><div class="card-title">FHIR Bundle (' + escHtml(s.type || '?') + ', ' + s.entries + ' entry)</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">' +
+      _ez2Cell('Composition.title', s.title) + _ez2Cell('Composition.status / date', (s.status || '-') + ' / ' + (s.date || '-')) + _ez2Cell('Pacient (Bundle)', s.patient) +
+      _ez2Cell('Zdroje', Object.entries(s.types).map(([k, v]) => k + '×' + v).join(', ')) + '</div>';
+    if (s.requests.length) {
+      html += '<div style="margin-top:8px;font-size:11px"><strong>ServiceRequest (' + s.requests.length + ')</strong><ul style="margin:4px 0 0 16px;padding:0">' +
+        s.requests.map(r => '<li>' + escHtml(r.code || '?') + (r.modality ? ' · modalita ' + escHtml(r.modality) : '') + (r.bodySite ? ' · ' + escHtml(r.bodySite) : '') + (r.priority ? ' · <em>' + escHtml(r.priority) + '</em>' : '') + '</li>').join('') + '</ul></div>';
+    }
+    html += '</div>';
+  } else if (hl && d.fhirBundle === null) {
+    html += '<div class="card" style="background:#fffbeb;border-color:#fbbf24;font-size:12px">FHIR Bundle nebyl vrácen – volající není žadatel ani příjemce. Doložte <strong>kód žádanky</strong> nebo <strong>číslo dokladu</strong>.</div>';
+  }
+  card.innerHTML = html; card.style.display = '';
+  card._bundle = d.fhirBundle || null;
+  card._lastHl = hl;
+}
+function ez2CopyBundleToCreate() {
+  const card = document.getElementById('ez2DetailCard');
+  if (!card._bundle) return;
+  document.getElementById('ez2CrBundle').value = JSON.stringify(card._bundle, null, 2);
+  document.querySelector('#ez2Tabs [data-panel="ez2-create-panel"]').click();
+  ez2HlavickaChanged();
+  toast('Bundle zkopírován do nové žádanky');
+}
+
+// --- Nová žádanka ----------------------------------------------------------
+let _ez2CreateInit = false;
+function ez2CreateInitOnce() {
+  if (_ez2CreateInit) return; _ez2CreateInit = true;
+  if (!_ez2Val('ez2CrPoskytovatel')) {
+    const ico = (typeof CLIENT_ICO !== 'undefined' && CLIENT_ICO) ? CLIENT_ICO : '25488627';
+    document.getElementById('ez2CrPoskytovatel').value = ico;
+  }
+  ez2LoadTypy().then(() => { ez2TypInfo(); ez2FillVzory(); });
+  if (!_ez2Val('ez2CrBundle')) ez2LoadBundleExample('Bundle-BundleKralikRTG.json', true);
+  else ez2HlavickaChanged();
+}
+function ez2Hlavicka() {
+  const typ = EZ2_TYPY[_ez2Val('ez2CrTyp') || 'Z'] || EZ2_TYPY.Z;
+  const autor = _ez2Val('ez2CrAutor');
+  const hl = {typZadanky:{kod:typ.kod}, zadatel:{poskytovatel:_ez2Val('ez2CrPoskytovatel'), autor, zdravotnickyPracovnik:_ez2Val('ez2CrZp') || autor}, pacient:_ez2Val('ez2CrPacient')};
+  if (_ez2Val('ez2CrAdresat')) hl.adresat = _ez2Val('ez2CrAdresat');
+  const dod = _ez2Val('ez2CrDodatecni').split(',').map(s => s.trim()).filter(Boolean); if (dod.length) hl.dodatecnyPrijemce = dod;
+  if (_ez2Val('ez2CrNadrizena')) hl.nadrizenaZadankaId = _ez2Val('ez2CrNadrizena');
+  return hl;
+}
+function ez2ParseBundle() {
+  const txt = _ez2Val('ez2CrBundle'); if (!txt) return null;
+  try { return JSON.parse(txt); } catch (e) { return {_parseError: e.message}; }
+}
+function ez2HlavickaChanged() {
+  const b = ez2ParseBundle();
+  const body = {hlavicka: ez2Hlavicka(), fhirBundle: (b && !b._parseError) ? b : null};
+  const ta = document.getElementById('ez2CrBody');
+  let txt = JSON.stringify(body, null, 2);
+  if (txt.length > 20000) txt = JSON.stringify({hlavicka: body.hlavicka, fhirBundle: '… ' + (b?.entry?.length || 0) + ' entry (celé tělo se odešle)'}, null, 2);
+  ta.value = txt;
+  const chk = document.getElementById('ez2CrCheck');
+  if (b && b._parseError) chk.innerHTML = '<span style="color:var(--red)">FHIR Bundle není validní JSON: ' + escHtml(b._parseError) + '</span>'; else chk.innerHTML = '';
+}
+function _ez2BundleIds(b) {
+  // RID / IČO / KRZP z Bundle (Patient / Organization / Practitioner identifiers)
+  const out = {}; const sys = {rid:/ncez\/rid|\/rid$/i, ico:/ncez\/ico|\/ico$/i, krzp:/ncez\/krzp|\/krzp$/i};
+  for (const e of (b?.entry || [])) {
+    const r = e?.resource || {};
+    for (const idn of (r.identifier || [])) {
+      const s = idn.system || '';
+      if (r.resourceType === 'Patient' && sys.rid.test(s) && !out.rid) out.rid = idn.value;
+      if (r.resourceType === 'Organization' && sys.ico.test(s) && !out.ico) out.ico = idn.value;
+      if (r.resourceType === 'Practitioner' && sys.krzp.test(s) && !out.krzp) out.krzp = idn.value;
+    }
+    if (r.resourceType === 'ServiceRequest' && r.priority && !out.priority) out.priority = r.priority;
+  }
+  return out;
+}
+// --- Typy Z / K / FT: vzory IG, kostra, příprava Bundle (server) -------------
+let _ez2Typy = null, _ez2VzorySeznam = null;
+async function ez2LoadTypy() {
+  if (_ez2Typy) return _ez2Typy;
+  const t = await api('GET', '/api/ezadanky/v2/typy');
+  _ez2Typy = (t && t.typy) ? t : (t?.data?.typy ? t.data : null);
+  const v = await api('GET', '/api/ezadanky/v2/vzory');
+  _ez2VzorySeznam = v?.vzory || v?.data?.vzory || [];
+  return _ez2Typy;
+}
+function ez2FillVzory() {
+  const sel = document.getElementById('ez2VzorSelect'); if (!sel) return;
+  const typ = _ez2Val('ez2CrTyp') || 'Z';
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">– vyberte vzor –</option>';
+  for (const v of (_ez2VzorySeznam || [])) {
+    const o = document.createElement('option'); o.value = v.name;
+    o.textContent = (v.typ || '?') + ' · ' + v.name.replace(/^Bundle-Bundle|\.json$/g, '') + ' (' + (v.ig || '').replace('hl7.fhir.cz.', '') + ')';
+    if (v.typ && v.typ !== typ) o.style.color = 'var(--fg3)';
+    sel.appendChild(o);
+  }
+  const curTyp = (_ez2VzorySeznam || []).find(v => v.name === cur)?.typ;
+  if (cur && curTyp === typ && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+  else { const first = (_ez2VzorySeznam || []).find(v => v.typ === typ); if (first) sel.value = first.name; }
+}
+function ez2TypInfo() {
+  const el = document.getElementById('ez2TypInfo'); if (!el || !_ez2Typy) return;
+  const typ = _ez2Val('ez2CrTyp') || 'Z'; const t = _ez2Typy.typy?.[typ]; if (!t) { el.innerHTML = ''; return; }
+  el.innerHTML = '<strong>' + typ + ' – ' + escHtml(t.nazev) + '</strong>: kód <code>' + escHtml(t.kod) + '</code> (' + escHtml((t.system || '').replace('http://', '')) + '), '
+    + escHtml(t.specifikace || '') + ', IG <a href="' + escHtml(t.ig_url) + '" target="_blank" rel="noopener">' + escHtml(t.ig) + '</a>'
+    + ' · Bundle profil <code>' + escHtml((t.bundle_profile || '').split('/').pop()) + '</code>, ServiceRequest <code>' + escHtml((t.servicerequest_profile || '').split('/').pop()) + '</code>'
+    + (_ez2Typy.overeno_t2 ? ' · <span style="color:var(--green)">ověřeno živě na T2 ' + escHtml(_ez2Typy.overeno_t2) + '</span>' : '');
+}
+async function ez2LoadBundleExample(name, silent) {
+  await ez2LoadTypy(); ez2FillVzory();
+  const sel = document.getElementById('ez2VzorSelect'); if (sel && name) sel.value = name;
+  return ez2LoadVzor(silent);
+}
+function _ez2PripravaParams() {
+  const hl = ez2Hlavicka();
+  const q = new URLSearchParams();
+  if (hl.pacient) q.set('pacient', hl.pacient);
+  if (hl.zadatel.poskytovatel) q.set('poskytovatel', hl.zadatel.poskytovatel);
+  if (hl.zadatel.autor) q.set('autor', hl.zadatel.autor);
+  if (hl.adresat) q.set('adresat', hl.adresat);
+  if (_ez2Val('ez2CrIcp')) q.set('icp', _ez2Val('ez2CrIcp'));
+  return q;
+}
+function _ez2ShowPriprava(data, uvod) {
+  const info = document.getElementById('ez2PripravaInfo'); if (!info) return;
+  const zm = data?.zmeny || [], vy = data?.vyhrady || [];
+  info.style.display = '';
+  info.innerHTML = '<strong>' + escHtml(uvod) + '</strong>'
+    + (zm.length ? ' – úpravy Bundle (' + zm.length + '): <span title="' + escHtml(zm.join('\n')) + '">' + escHtml(zm.slice(0, 3).join('; ')) + (zm.length > 3 ? ' …' : '') + '</span>' : '')
+    + (vy.length ? '<div style="color:var(--red);margin-top:4px">Výhrady: ' + vy.map(escHtml).join('<br>') + '</div>' : '<div style="color:var(--green);margin-top:4px">✓ Klientská kontrola bez výhrad (pravidla brány E00024/E01001/E01002).</div>');
+}
+function _ez2ApplyBody(data) {
+  const b = data?.fhirBundle; if (!b) return false;
+  document.getElementById('ez2CrBundle').value = JSON.stringify(b, null, 2);
+  const hl = data.hlavicka || {};
+  const typ = Object.keys(EZ2_TYPY).find(k => EZ2_TYPY[k].kod === hl.typZadanky?.kod); if (typ) document.getElementById('ez2CrTyp').value = typ;
+  if (hl.pacient) document.getElementById('ez2CrPacient').value = hl.pacient;
+  if (hl.zadatel?.autor) document.getElementById('ez2CrAutor').value = hl.zadatel.autor;
+  if (hl.zadatel?.poskytovatel) document.getElementById('ez2CrPoskytovatel').value = hl.zadatel.poskytovatel;
+  if (hl.adresat) document.getElementById('ez2CrAdresat').value = hl.adresat;
+  ez2TypInfo(); ez2FillVzory(); ez2HlavickaChanged();
+  return true;
+}
+async function ez2LoadVzor(silent) {
+  await ez2LoadTypy(); ez2FillVzory();
+  const name = _ez2Val('ez2VzorSelect'); if (!name) return silent ? null : toast('Vyberte vzor', true);
+  const data = await api('GET', '/api/ezadanky/v2/vzory/' + encodeURIComponent(name) + '?pripravit=1&' + _ez2PripravaParams().toString());
+  if (!_ez2ApplyBody(data)) { if (!silent) toast('Vzor se nepodařilo načíst', true); return; }
+  _ez2ShowPriprava(data, 'Vzor ' + name + ' (typ ' + (data.typ || '?') + ') připraven podle hlavičky');
+  if (!silent) toast('Vzor načten: ' + name + ' (' + (data.fhirBundle.entry || []).length + ' entry, typ ' + (data.typ || '?') + ')');
+}
+async function ez2Kostra() {
+  const hl = ez2Hlavicka(); const typ = _ez2Val('ez2CrTyp') || 'K';
+  if (!hl.pacient || !hl.zadatel.poskytovatel || !hl.zadatel.autor) return toast('Kostra potřebuje RID pacienta, IČO poskytovatele a KRZP autora v hlavičce', true);
+  const body = {typ, pacient: hl.pacient, poskytovatel: hl.zadatel.poskytovatel, autor: hl.zadatel.autor, zdravotnickyPracovnik: _ez2Val('ez2CrZp') || null,
+                icp: _ez2Val('ez2CrIcp') || null, adresat: hl.adresat || null, textPozadavku: _ez2Val('ez2KoText') || null,
+                priorita: _ez2Val('ez2KoPriorita') || 'routine', nazevPoskytovatele: (typeof CLIENT_NAZEV !== 'undefined' && CLIENT_NAZEV) ? CLIENT_NAZEV : null,
+                klinickaOtazka: _ez2Val('ez2KoText') || null, dodatecnyPrijemce: hl.dodatecnyPrijemce || null, nadrizenaZadankaId: hl.nadrizenaZadankaId || null};
+  if (_ez2Val('ez2KoVykon')) body.vykony = [{code: _ez2Val('ez2KoVykon')}];
+  if (_ez2Val('ez2KoDg')) body.diagnoza = {code: _ez2Val('ez2KoDg')};
+  const data = await api('POST', '/api/ezadanky/v2/kostra', body);
+  if (!_ez2ApplyBody(data)) return toast('Kostru se nepodařilo sestavit: ' + (data?.error || data?.data?.error || '?'), true);
+  _ez2ShowPriprava(data, 'Kostra ' + typ + ' sestavena (' + (data.fhirBundle.entry || []).length + ' entry) – doplňte klinický obsah dle IG');
+  toast('Kostra Bundle ' + typ + ' vytvořena');
+}
+function _ez2Uuid() { return (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); })); }
+function ez2BundleSkeleton(typ) { document.getElementById('ez2CrTyp').value = typ; return ez2Kostra(); }
+async function ez2SyncBundleFromHlavicka() {
+  const b = ez2ParseBundle(); if (!b || b._parseError) return toast('Bundle není validní JSON', true);
+  const data = await api('POST', '/api/ezadanky/v2/pripravit', {hlavicka: ez2Hlavicka(), fhirBundle: b, icp: _ez2Val('ez2CrIcp') || null});
+  if (!data?.fhirBundle) return toast('Příprava Bundle selhala: ' + (data?.error || data?.data?.error || '?'), true);
+  document.getElementById('ez2CrBundle').value = JSON.stringify(data.fhirBundle, null, 2);
+  ez2HlavickaChanged();
+  _ez2ShowPriprava(data, 'Bundle připraven podle hlavičky');
+  toast('Propsáno: ' + (data.zmeny || []).length + ' úprav (reference urn:uuid, custodian + IČP, RID, KRZP, provádějící Organization)');
+}
+function ez2OpenImgOrder() {
+  const nav = document.querySelector('[data-section="sec-img-order"], [onclick*="sec-img-order"]');
+  if (nav) nav.click(); else toast('Sekce FHIR Builder (img-order) je v menu „eŽádanky (FHIR img-order)“');
+}
+function ez2RequestBody() {
+  const b = ez2ParseBundle();
+  if (!b || b._parseError) { toast('FHIR Bundle chybí nebo není validní JSON', true); return null; }
+  return {hlavicka: ez2Hlavicka(), fhirBundle: b};
+}
+async function ez2Zkontroluj() {
+  const body = ez2RequestBody(); if (!body) return;
+  const data = await api('POST', '/api/ezadanky/v2/zkontroluj', body);
+  const chk = document.getElementById('ez2CrCheck');
+  const v = data?.data?.vyhrady || [];
+  chk.innerHTML = v.length ? '<div style="color:var(--red)"><strong>Výhrady (' + v.length + '):</strong><ul style="margin:4px 0 0 16px">' + v.map(x => '<li>' + escHtml(x) + '</li>').join('') + '</ul></div>'
+                           : '<span style="color:var(--green);font-weight:600">✓ Povinná pole hlavičky a Bundle jsou vyplněna (serverová validace proti IG proběhne až na bráně).</span>';
+}
+async function ez2Uloz() {
+  const body = ez2RequestBody(); if (!body) return;
+  const data = await api('POST', '/api/ezadanky/v2/uloz', body);
+  showResult('ez2CreateResult', data);
+  const vz = _ez2Remember(data);
+  const hl = data?.data?.hlavicka;
+  if (hl?.id) {
+    toast('Žádanka vytvořena: ' + (hl.kod || hl.id) + (vz ? ' (verze ' + vz + ')' : ''));
+    document.getElementById('ez2WfId').value = hl.id; document.getElementById('ez2WfVerze').value = vz || '';
+    document.getElementById('ez2Id').value = hl.id;
+  } else if (data?._klientskaKontrola) {
+    const chk = document.getElementById('ez2CrCheck');
+    const errs = data.data?.errors || [];
+    const konz = errs.some(e => /E0002|E0100|custodian|performer|IČP/.test(e.message || ''));
+    chk.innerHTML = '<div style="color:var(--red)"><strong>Požadavek neodeslán – klientská kontrola:</strong><ul style="margin:4px 0 0 16px">' + errs.map(e => '<li>' + escHtml(e.message) + '</li>').join('') + '</ul>'
+      + (konz ? '<div style="margin-top:6px;color:var(--fg2)">Tip: tlačítko <button class="btn btn-outline" style="padding:2px 8px;font-size:11px" onclick="ez2SyncBundleFromHlavicka()">Propsat hlavičku do Bundle</button> doplní custodian, IČP i provádějící Organization (adresát) podle hlavičky.</div>' : '') + '</div>';
+  }
+}
+
+// --- Workflow (If-Match) -----------------------------------------------------
+let _ez2WfInit = false;
+async function ez2WfInitOnce() {
+  if (_ez2WfInit) return; _ez2WfInit = true;
+  ez2ExtraChanged();
+  ez2LoadCiselniky();
+}
+async function ez2LoadCiselniky() {
+  if (_ez2CiselnikyLoaded) return; _ez2CiselnikyLoaded = true;
+  const fill = async (vs, listId) => {
+    try {
+      const r = await api('GET', '/api/termx/valueset/' + encodeURIComponent(vs) + '/expand?public=true&count=50');
+      const items = r?.data?.expansion?.contains || r?.expansion?.contains || [];
+      const dl = document.getElementById(listId); if (!dl) return;
+      dl.innerHTML = items.map(c => '<option value="' + escHtml(c.code) + '">' + escHtml(c.display || '') + '</option>').join('');
+      dl._items = items;
+    } catch (e) { /* číselník není dostupný – pole zůstává volné */ }
+  };
+  await Promise.all([fill('zpusob-vyrizeni', 'ez2ZpusobList'), fill('duvod-storna', 'ez2StornoList')]);
+  ez2ExtraChanged(true);
+}
+async function ez2ExtraChanged(fromLoad) {
+  const akce = _ez2Val('ez2WfExtraAkce');
+  document.getElementById('ez2WfExtraKodWrap').style.display = akce === 'zaznacitNeproveditelnost' ? '' : 'none';
+  const vs = akce === 'zaznacitNeproveditelnost' ? 'duvod-odmitnuti' : 'duvod-vraceni';
+  const dl = document.getElementById('ez2ExtraList'); if (!dl) return;
+  if (dl.dataset.vs === vs) return; dl.dataset.vs = vs; dl.innerHTML = '';
+  try {
+    const r = await api('GET', '/api/termx/valueset/' + encodeURIComponent(vs) + '/expand?public=true&count=50');
+    const items = r?.data?.expansion?.contains || r?.expansion?.contains || [];
+    dl.innerHTML = items.map(c => '<option value="' + escHtml(c.code) + '">' + escHtml(c.display || '') + '</option>').join('');
+  } catch (e) { /* ignore */ }
+}
+async function ez2WfRefresh() {
+  const id = _ez2Val('ez2WfId'); if (!id) return toast('Zadejte ID žádanky', true);
+  const data = await api('POST', '/api/ezadanky/v2/zadanka/' + encodeURIComponent(id) + '/nacist', {});
+  const vz = _ez2Remember(data);
+  if (vz) { document.getElementById('ez2WfVerze').value = vz; toast('verzeZaznamu obnovena: ' + vz); }
+  else showResult('ez2WfResult', data);
+}
+function _ez2WfIdVerze() {
+  const id = _ez2Val('ez2WfId'); let vz = _ez2Val('ez2WfVerze');
+  if (!id) { toast('Zadejte ID žádanky', true); return null; }
+  if (!vz && _ez2LastVerze[id]) { vz = _ez2LastVerze[id]; document.getElementById('ez2WfVerze').value = vz; }
+  if (!vz) { toast('Chybí verzeZaznamu (If-Match) – načtěte žádanku nebo použijte „Obnovit verzi“', true); return null; }
+  return {id, vz};
+}
+function _ez2Dt(id) { const v = _ez2Val(id); return v ? (v.length === 16 ? v + ':00' : v) : null; }
+async function ez2Wf(operace, body) {
+  const iv = _ez2WfIdVerze(); if (!iv) return;
+  body = body || {};
+  if (operace === 'prijmout') {
+    if (_ez2Val('ez2WfKod')) body.kodZadanky = _ez2Val('ez2WfKod');
+    if (_ez2Val('ez2WfDoklad')) body.cisloDokladu = _ez2Val('ez2WfDoklad');
+    if (_ez2Dt('ez2WfDatumPlan')) body.datumPlanovanehoVysetreni = _ez2Dt('ez2WfDatumPlan');
+  } else if (operace === 'stornovat') {
+    if (!_ez2Val('ez2WfStornoDuvod')) return toast('Zadejte důvod storna (číselník duvod-storna)', true);
+    body.duvodStornaZadanky = {kod:_ez2Val('ez2WfStornoDuvod')};
+    if (_ez2Val('ez2WfStornoText')) body.duvodStornaUpresneni = _ez2Val('ez2WfStornoText');
+  } else if (operace === 'vyridit') {
+    if (!_ez2Val('ez2WfZpusob')) return toast('Zadejte způsob vyřízení (číselník zpusob-vyrizeni)', true);
+    if (!_ez2Dt('ez2WfDatumReal')) return toast('Zadejte datum skutečné realizace vyšetření', true);
+    let vysledek; try { vysledek = JSON.parse(_ez2Val('ez2WfVysledek') || 'null'); } catch (e) { return toast('Výsledek (zásilka) není validní JSON: ' + e.message, true); }
+    if (!vysledek || !Array.isArray(vysledek.dokument) || !vysledek.dokument.length) return toast('Výsledek musí být zásilka s nejméně jedním dokumentem (v2 ji vyžaduje u všech způsobů vyřízení)', true);
+    body.zpusobVyrizeniZadanky = {kod:_ez2Val('ez2WfZpusob')};
+    if (_ez2Val('ez2WfZpusobText')) body.zpusobVyrizeniUpresneni = _ez2Val('ez2WfZpusobText');
+    body.vysledek = vysledek; body.datumSkutecneRealizaceVysetreni = _ez2Dt('ez2WfDatumReal');
+    body.zaslatVysledekPacientovi = _ez2Checked('ez2WfZaslatPac'); body.zaslatVysledekPraktikovi = _ez2Checked('ez2WfZaslatPL');
+  }
+  const path = {prijmout:'prijmout', stornovat:'stornovat', vyridit:'vyridit', vratitDoObehu:'vratit-do-obehu', zaznacitNeproveditelnost:'zaznacit-neproveditelnost'}[operace];
+  const data = await api('PATCH', '/api/ezadanky/v2/zadanka/' + encodeURIComponent(iv.id) + '/' + path, body, {'If-Match': iv.vz});
+  showResult('ez2WfResult', data);
+  const vz = _ez2Remember(data);
+  if (vz) { document.getElementById('ez2WfVerze').value = vz; }
+  if (data?.status === 409) toast('409 – verze záznamu nesouhlasí, obnovte verzeZaznamu („Obnovit verzi“)', true);
+}
+async function ez2WfExtra() {
+  const akce = _ez2Val('ez2WfExtraAkce'); const duvod = _ez2Val('ez2WfExtraDuvod');
+  if (!duvod) return toast('Zadejte kód důvodu', true);
+  const body = {};
+  if (akce === 'vratitDoObehu') { body.duvodVraceniZadanky = {kod:duvod}; if (_ez2Val('ez2WfExtraText')) body.duvodVraceniUpresneni = _ez2Val('ez2WfExtraText'); }
+  else { body.duvodNeproveditelnostiZadanky = {kod:duvod}; if (_ez2Val('ez2WfExtraText')) body.duvodNeproveditelnostiUpresneni = _ez2Val('ez2WfExtraText'); if (_ez2Val('ez2WfExtraKod')) body.kodZadanky = _ez2Val('ez2WfExtraKod'); }
+  return ez2Wf(akce, body);
+}
+function ez2VysledekSkeleton() {
+  const id = _ez2Val('ez2WfId');
+  const hl = (document.getElementById('ez2DetailCard')?._lastHl) || {};
+  const rid = hl.pacient || _ez2Val('ez2CrPacient') || 'RID', krzp = _ez2Val('ez2CrAutor') || 'KRZPID', ico = _ez2Val('ez2CrPoskytovatel') || ((typeof CLIENT_ICO !== 'undefined' && CLIENT_ICO) || '25488627');
+  const txt = 'Výsledek vyšetření k žádance ' + (id || '') + '\n';
+  const b64 = btoa(unescape(encodeURIComponent(txt)));
+  const z = {nazev:'Výsledek vyšetření', typ:{kod:'11488-4'}, klasifikace:{kod:'11488-4'}, autor:krzp, zdravotnickyPracovnik:krzp, poskytovatel:ico, pacient:rid,
+    dokument:[{nazev:'Zprava.txt', typ:{kod:'11488-4'}, klasifikace:{kod:'11488-4'}, duvernost:{kod:'N'}, format:{kod:'urn:ihe:iti:xds:2017:mimeTypeSufficient'}, mime:{kod:'text/plain'}, jazyk:{kod:'cs'},
+               autor:krzp, poskytovatel:ico, pacient:rid, hash:'<SHA-256 hex obsahu>', soubor:{soubor:b64}}]};
+  document.getElementById('ez2WfVysledek').value = JSON.stringify(z, null, 2);
+  toast('Kostra zásilky vložena – doplňte hash (SHA-256) a kódy z číselníků document-category / format-code');
+}
+
+// --- Diagnostika & katalog ---------------------------------------------------
+async function ez2RunDiagnose() {
+  const box = document.getElementById('ez2DiagResult');
+  box.innerHTML = '<div style="font-size:12px;color:var(--fg3)">Testuji operace v2…</div>';
+  const data = await api('GET', '/api/ezadanky/v2/diagnose');
+  if (!data || data.error) { box.innerHTML = '<div style="color:var(--red);font-size:12px">' + escHtml(data?.error || 'Chyba') + '</div>'; return; }
+  const ok = data.pzs_context;
+  let html = '<div style="padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:12px;background:' + (ok ? '#dcfce7;color:#166534' : '#fef3c7;color:#92400e') + '"><strong>' + escHtml(data.summary || '') + '</strong>' +
+    (ok ? '' : '<br>Operace vracející E01001 vyžadují PZS kontext (JSU). Pro offline práci zapněte Simulační režim.') + (data._sim ? ' <span style="background:#7c3aed;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px">SIM</span>' : '') + '</div>';
+  html += '<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px">Operace</th><th style="text-align:left;padding:6px">Metoda</th><th style="text-align:left;padding:6px">HTTP</th><th style="text-align:left;padding:6px">Autorizace</th><th style="text-align:left;padding:6px">Odpověď</th></tr></thead><tbody>';
+  for (const r of (data.results || [])) {
+    html += '<tr style="border-top:1px solid var(--border)"><td style="padding:6px;font-family:var(--mono)">' + escHtml(r.endpoint) + '</td><td style="padding:6px">' + escHtml(r.method) + '</td><td style="padding:6px">' + r.status + '</td>' +
+      '<td style="padding:6px;color:' + (r.auth_ok ? 'var(--green)' : 'var(--red)') + ';font-weight:600">' + (r.auth_ok ? '✓ OK' : '✗ E01001 / odmítnuto') + '</td>' +
+      '<td style="padding:6px;color:var(--fg3);max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escHtml(JSON.stringify(r.error || '')) + '">' + escHtml(r.error ? JSON.stringify(r.error).slice(0, 120) : '—') + '</td></tr>';
+  }
+  box.innerHTML = html + '</tbody></table>';
+}
+async function ez2LoadKatalog() {
+  const box = document.getElementById('ez2KatalogBox');
+  const k = await api('GET', '/api/ezadanky/v2/katalog');
+  if (!k || k.error) { box.innerHTML = '<div class="card" style="color:var(--red)">' + escHtml(k?.error || 'Chyba') + '</div>'; return; }
+  const row = (cells) => '<tr style="border-top:1px solid var(--border)">' + cells.map(c => '<td style="padding:5px 8px;vertical-align:top">' + c + '</td>').join('') + '</tr>';
+  let html = '<div class="card"><div class="card-title">Operace eŽádanky ' + escHtml(k.verze) + ' <span style="font-size:11px;color:var(--fg3);font-weight:400">platnost od ' + escHtml(k.platnostOd) + '; v1 ' + escHtml(k.v1?.verze || '') + ' deprecated</span></div>' +
+    '<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:5px 8px">Operace</th><th style="text-align:left;padding:5px 8px">Metoda a cesta</th><th style="text-align:left;padding:5px 8px">If-Match</th><th style="text-align:left;padding:5px 8px">Popis</th></tr></thead><tbody>' +
+    (k.operace || []).map(o => row([escHtml(o.nazev), '<code>' + escHtml(o.metoda + ' ' + o.cesta) + '</code>', o.ifMatch ? '✓' : '—', escHtml(o.popis)])).join('') + '</tbody></table></div>';
+  html += '<div class="card"><div class="card-title">Co se změnilo proti v1</div><ul style="font-size:12px;margin:0 0 0 16px;line-height:1.7">' + (k.zmeny || []).map(z => '<li>' + escHtml(z) + '</li>').join('') + '</ul></div>';
+  html += '<div class="card"><div class="card-title">Převod služeb v1 → v2</div><table style="width:100%;font-size:11px;border-collapse:collapse"><tbody>' +
+    (k.prevodZV1 || []).map(p => row(['<code>' + escHtml(p.v1) + '</code>', p.zruseno ? '<span style="color:var(--red);font-weight:600">zrušeno – náhradou storno + nová žádanka</span>' : '<code>' + escHtml(p.v2) + '</code>'])).join('') + '</tbody></table></div>';
+  html += '<div class="card"><div class="card-title">Číselníky (TermX) a typy žádanek</div><table style="width:100%;font-size:11px;border-collapse:collapse"><tbody>' +
+    Object.entries(k.ciselniky || {}).map(([pole, vs]) => row([escHtml(pole), '<code>' + escHtml(vs) + '</code> <a href="#" style="font-size:10px" onclick="event.preventDefault();ez2ShowValueSet(\'' + escHtml(vs) + '\')">zobrazit</a>'])).join('') + '</tbody></table>' +
+    '<div style="margin-top:8px;font-size:11px">' + Object.entries(k.typyZadanky || {}).map(([t, v]) => '<span style="display:inline-block;margin:2px 8px 2px 0;padding:2px 8px;border-radius:6px;background:#f1f5f9"><strong>' + escHtml(t) + '</strong> ' + escHtml(v.kod) + ' – ' + escHtml(v.nazev) + ' <span style="color:var(--fg3)">(IG ' + escHtml(v.ig) + ')</span></span>').join('') + '</div>' +
+    '<div id="ez2ValueSetBox" style="margin-top:8px"></div></div>';
+  const ty = k.typy || {};
+  if (ty.typy) {
+    html += '<div class="card"><div class="card-title">Typy eŽádanky dle Manuálu EZ (Z, K, FT) – profily IG a vzory' + (ty.overeno_t2 ? ' <span style="font-size:11px;color:var(--green);font-weight:400">všechny tři typy ověřeny živě na T2 ' + escHtml(ty.overeno_t2) + '</span>' : '') + '</div>' +
+      '<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:5px 8px">Typ</th><th style="text-align:left;padding:5px 8px">Kód (Composition.type)</th><th style="text-align:left;padding:5px 8px">Specifikace / IG</th><th style="text-align:left;padding:5px 8px">Profily</th><th style="text-align:left;padding:5px 8px">Vzory</th></tr></thead><tbody>' +
+      Object.entries(ty.typy).map(([t, v]) => row(['<strong>' + escHtml(t) + '</strong> ' + escHtml(v.nazev),
+        '<code>' + escHtml(v.kod) + '</code><br><span style="color:var(--fg3)">' + escHtml(v.system) + '</span>',
+        escHtml(v.specifikace || '') + '<br><a href="' + escHtml(v.ig_url) + '" target="_blank" rel="noopener">' + escHtml(v.ig) + '</a>',
+        '<code>' + escHtml((v.bundle_profile || '').split('/').pop()) + '</code><br><code>' + escHtml((v.composition_profile || '').split('/').pop()) + '</code><br><code>' + escHtml((v.servicerequest_profile || '').split('/').pop()) + '</code>',
+        (v.vzory || []).map(x => (typeof x === 'string' ? x : (x.name || x.soubor || '')) + (x.dostupny === false ? ' <span style="color:var(--fg3)">(chybí)</span>' : '')).map(escHtml).join('<br>') || '—'])).join('') + '</tbody></table>' +
+      '<div style="margin-top:8px;font-size:12px"><strong>Pravidla brány (zjištěno živě na T2):</strong><ul style="margin:4px 0 0 16px;line-height:1.7">' + (ty.pravidla_brany || []).map(p => '<li>' + escHtml(typeof p === 'string' ? p : (p.pravidlo || p.text || JSON.stringify(p))) + '</li>').join('') + '</ul></div>' +
+      (ty.zdroje ? '<div style="margin-top:6px;font-size:11px;color:var(--fg3)">Zdroje: ' + (Array.isArray(ty.zdroje) ? ty.zdroje : Object.values(ty.zdroje)).map(z => typeof z === 'string' ? '<a href="' + escHtml(z) + '" target="_blank" rel="noopener">' + escHtml(z) + '</a>' : escHtml(JSON.stringify(z))).join(' · ') + '</div>' : '') + '</div>';
+  }
+  box.innerHTML = html;
+}
+async function ez2ShowValueSet(vs) {
+  const box = document.getElementById('ez2ValueSetBox');
+  box.innerHTML = '<div style="font-size:11px;color:var(--fg3)">Načítám ' + escHtml(vs) + '…</div>';
+  const r = await api('GET', '/api/termx/valueset/' + encodeURIComponent(vs) + '/expand?public=true&count=200');
+  const items = r?.data?.expansion?.contains || r?.expansion?.contains || [];
+  if (!items.length) { box.innerHTML = '<div style="font-size:11px;color:var(--red)">Číselník ' + escHtml(vs) + ' se nepodařilo rozbalit (' + escHtml(String(r?.status || '')) + ').</div>'; return; }
+  box.innerHTML = '<div style="font-size:11px"><strong>' + escHtml(vs) + '</strong> (' + items.length + ' položek)<table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:4px"><tbody>' +
+    items.map(c => '<tr style="border-top:1px solid var(--border)"><td style="padding:3px 8px;font-family:var(--mono)">' + escHtml(c.code) + '</td><td style="padding:3px 8px">' + escHtml(c.display || '') + '</td><td style="padding:3px 8px;color:var(--fg3);font-size:10px">' + escHtml(c.system || '') + '</td></tr>').join('') + '</tbody></table></div>';
 }
 
 // ---------------------------------------------------------------------------
@@ -17246,36 +18016,57 @@ async function imgOrderBuildAndValidate() {
 async function imgOrderSubmit() {
   const body = _imgOrderGetJson();
   if (!body) return;
-  const ispzs = _val('imgSubIspzs') || 'FHIR-IMG-ORDER';
-  const attach = document.getElementById('imgSubAttach').checked ? 'true' : 'false';
-  const r = await api('POST',
-    '/api/img-order/Bundle?ispzs=' + encodeURIComponent(ispzs) + '&attach_bundle=' + attach,
-    body);
-  _showJson('imgOrderSubmitResult', r);
-  if (r && r.data && r.data.ncez && r.data.ncez.id) {
-    document.getElementById('imgReadId').value = r.data.ncez.id;
-    document.getElementById('imgLcId').value = r.data.ncez.id;
-    document.getElementById('imgLcVerze').value = r.data.ncez.verzeRadku || '';
-    toast('Žádanka uložena, NCEZ ID: ' + r.data.ncez.id);
+  const apiV = _imgApi();
+  let url = '/api/img-order/Bundle?api=' + apiV;
+  if (apiV === 'v1') {
+    const ispzs = _val('imgSubIspzs') || 'FHIR-IMG-ORDER';
+    const attach = document.getElementById('imgSubAttach').checked ? 'true' : 'false';
+    url += '&ispzs=' + encodeURIComponent(ispzs) + '&attach_bundle=' + attach;
+  } else {
+    for (const [q, id] of [['adresat', 'imgSubAdresat'], ['poskytovatel', 'imgSubPoskytovatel'], ['autor', 'imgSubAutor'], ['icp', 'imgSubIcp']]) {
+      const v = _val(id); if (v) url += '&' + q + '=' + encodeURIComponent(v);
+    }
   }
+  const r = await api('POST', url, body);
+  _showJson('imgOrderSubmitResult', r);
+  // backend vrací přímo {status:'created', ncez:{...}} (není obaleno v data)
+  const res = (r && r.ncez) ? r : (r && r.data && r.data.ncez ? r.data : null);
+  if (res && res.ncez && res.ncez.id) {
+    document.getElementById('imgReadId').value = res.ncez.id;
+    document.getElementById('imgLcId').value = res.ncez.id;
+    document.getElementById('imgLcVerze').value = res.ncez.verzeZaznamu || res.ncez.verzeRadku || '';
+    toast('Žádanka uložena (' + (res.api || apiV) + '), NCEZ ID: ' + res.ncez.id + (res.ncez.kod ? ', kód ' + res.ncez.kod : ''));
+  }
+}
+function _imgApi() { const el = document.getElementById('imgSubApi'); return el && el.value === 'v1' ? 'v1' : 'v2'; }
+function imgSubApiChanged() {
+  const v1 = _imgApi() === 'v1';
+  const row = document.getElementById('imgSubV1Row'); if (row) row.style.display = v1 ? '' : 'none';
+  if (v1) toast('eŽádanky API v1 je od 1. 10. 2026 deprecated', true);
 }
 
 async function imgOrderRead() {
   const id = _val('imgReadId');
   if (!id) { toast('Zadej NCEZ ID', true); return; }
-  const r = await api('GET', '/api/img-order/Bundle/' + encodeURIComponent(id));
+  const r = await api('GET', '/api/img-order/Bundle/' + encodeURIComponent(id) + '?api=' + _imgApi());
   _showJson('imgOrderReadResult', r);
 }
 
 async function imgOrderLifecycle(op) {
   const id = _val('imgLcId'); const verze = _val('imgLcVerze');
-  if (!id || !verze) { toast('Zadej ID a verzeRadku', true); return; }
-  let body = {verzeRadku: verze};
+  if (!id || !verze) { toast('Zadej ID a verzeZaznamu / verzeRadku', true); return; }
+  const apiV = _imgApi();
+  let body = apiV === 'v2' ? {verzeZaznamu: verze} : {verzeRadku: verze};
   if (op === 'cancel') body.duvodKod = '1';
-  else if (op === 'fulfill') body.zpusobKod = '1';
+  else if (op === 'fulfill') {
+    body.zpusobKod = '1';
+    if (apiV === 'v2') { toast('$fulfill ve v2 vyžaduje zásilku s dokumentem a datum realizace – použijte eŽádanky v2 → Workflow → Vyřídit', true); return; }
+  }
   const r = await api('POST',
-    '/api/img-order/Bundle/' + encodeURIComponent(id) + '/$' + op, body);
+    '/api/img-order/Bundle/' + encodeURIComponent(id) + '/$' + op + '?api=' + apiV, body);
   _showJson('imgOrderLcResult', r);
+  const vz = r?.verzeZaznamu || r?.data?.hlavicka?.verzeZaznamu;
+  if (vz) document.getElementById('imgLcVerze').value = vz;
 }
 
 // --- Taxonomy / ValueSets -------------------------------------------------
@@ -17473,10 +18264,10 @@ async function imgOrderSearch() {
     kod: _val('imgSearchKod') || undefined,
     datumOd: _val('imgSearchOd') || undefined,
     datumDo: _val('imgSearchDo') || undefined,
-    page: parseInt(_val('imgSearchPage') || '1'),
+    page: parseInt(_val('imgSearchPage') || (_imgApi() === 'v2' ? '0' : '1')),
     size: parseInt(_val('imgSearchSize') || '20'),
   };
-  const r = await api('POST', '/api/img-order/Bundle/_search', body);
+  const r = await api('POST', '/api/img-order/Bundle/_search?api=' + _imgApi(), body);
   _showJson('imgSearchResult', r);
   if (!r || !r.data) return;
   const entries = (r.data.entry || []);
@@ -17502,7 +18293,7 @@ async function imgOrderSearch() {
     const prio = esc(r0.priority || '');
     const stav = esc(ncez.stav || '');
     const dat = esc((ncez.datumVytvoreni || '').substring(0,16).replace('T',' '));
-    const verze = ncez.verzeRadku ? esc(ncez.verzeRadku) : '';
+    const verze = esc(ncez.verzeZaznamu || ncez.verzeRadku || '');
     html += '<tr style="cursor:pointer" onclick="imgOrderLoadFromSearch(\'' + id + '\', \'' + verze + '\')">'
           + '<td style="padding:5px 8px;font-family:var(--mono);font-size:11px">' + id.substring(0,12) + '…</td>'
           + '<td style="padding:5px 8px">' + title + '</td>'

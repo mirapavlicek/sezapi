@@ -1740,11 +1740,41 @@ class DocasneUloziste:
 
 
 class KRZP:
-    """Kmenový registr zdravotnických pracovníků – PZS API v2."""
-    BASE = "/krzp"
+    """Kmenový registr zdravotnických pracovníků – PZS API.
 
-    def __init__(self, client: SEZClient):
+    Brána publikuje **v2.0.7** i novou **v3.0.4** (Manuál EZ pro PZS, 13. 10.
+    2026). Cesty a těla požadavků jsou shodné, v3 se liší jen prefixem
+    ``/api/v3`` a opraveným názvem pole v odpovědích ztotožnění
+    ``ztotozenaOsoba`` → ``ztotoznenaOsoba`` (viz :meth:`normalizuj_odpoved`).
+    Výchozí verzi určuje ``SEZ_KRZP_VERZE`` (``v2``), lze ji přepsat
+    parametrem ``verze``."""
+    BASE = "/krzp"
+    VERZE = "v2"
+    DOSTUPNE_VERZE = ("v2", "v3")
+
+    def __init__(self, client: SEZClient, verze: str | None = None):
         self.c = client
+        v = (verze or getattr(client.config, "KRZP_VERZE", None)
+             or os.environ.get("SEZ_KRZP_VERZE") or "v2")
+        v = str(v).strip().lower()
+        if not v.startswith("v"):
+            v = "v" + v
+        self.VERZE = v
+
+    @staticmethod
+    def normalizuj_odpoved(data):
+        """Sjednotí v2/v3 odpovědi – do slovníků doplní obě varianty klíče
+        ``ztotozenaOsoba`` (v2) / ``ztotoznenaOsoba`` (v3)."""
+        if isinstance(data, list):
+            return [KRZP.normalizuj_odpoved(x) for x in data]
+        if isinstance(data, dict):
+            out = {k: KRZP.normalizuj_odpoved(v) for k, v in data.items()}
+            if "ztotoznenaOsoba" in out and "ztotozenaOsoba" not in out:
+                out["ztotozenaOsoba"] = out["ztotoznenaOsoba"]
+            elif "ztotozenaOsoba" in out and "ztotoznenaOsoba" not in out:
+                out["ztotoznenaOsoba"] = out["ztotozenaOsoba"]
+            return out
+        return data
 
     def _envelope(self, ucel, data, key="zadostData"):
         from datetime import date
@@ -1764,19 +1794,19 @@ class KRZP:
 
     def hledat_krzpid(self, krzpid: str):
         return self.c.post(
-            f"{self.BASE}/api/v2/pracovnik/hledat/krzpid",
+            f"{self.BASE}/api/{self.VERZE}/pracovnik/hledat/krzpid",
             self._envelope("LECBA", {"krzpid": krzpid}),
         )
 
     def hledat_jmeno(self, jmeno: str, prijmeni: str, datum_narozeni: str):
         return self.c.post(
-            f"{self.BASE}/api/v2/pracovnik/hledat/jmenoPrijmeniDatumNarozeni",
+            f"{self.BASE}/api/{self.VERZE}/pracovnik/hledat/jmenoPrijmeniDatumNarozeni",
             self._envelope("LECBA", {"jmeno": jmeno, "prijmeni": prijmeni, "datumNarozeni": datum_narozeni}, key="data"),
         )
 
     def hledat_zamestnavatel(self, ico: str, vcetne_neplatnych: bool = False):
         return self.c.post(
-            f"{self.BASE}/api/v2/pracovnik/hledat/zamestnavatel",
+            f"{self.BASE}/api/{self.VERZE}/pracovnik/hledat/zamestnavatel",
             self._envelope("LECBA", {"ico": ico, "vcetneNeplatnych": vcetne_neplatnych}, key="data"),
         )
 
@@ -1790,16 +1820,16 @@ class KRZP:
         if krzpid:
             data["krzpid"] = krzpid
         return self.c.post(
-            f"{self.BASE}/api/v2/pracovnik/hledat/personalistika",
+            f"{self.BASE}/api/{self.VERZE}/pracovnik/hledat/personalistika",
             self._envelope("LECBA", data, key="data"),
         )
 
     def reklamuj_udaj(self, reklamace_data, ucel="OVERENI"):
-        return self.c.post(f"{self.BASE}/api/v2/pracovnik/reklamuj/udaj",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/pracovnik/reklamuj/udaj",
                            self._envelope(ucel, reklamace_data))
 
     def ciselnik(self, nazev_ciselniku, ucel="OVERENI"):
-        return self.c.post(f"{self.BASE}/api/v2/ciselnik/{nazev_ciselniku}",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/ciselnik/{nazev_ciselniku}",
                            {"zadostInfo": {"datum": self._now(), "ucel": ucel,
                                            "zadostId": str(uuid.uuid4())}})
 
@@ -1809,15 +1839,15 @@ class KRZP:
             data["subjektId"] = subjekt_id
         if subjekt_typ:
             data["subjektTyp"] = subjekt_typ
-        return self.c.post(f"{self.BASE}/api/v2/notifikace/stav",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/stav",
                            self._envelope(ucel, data))
 
     def notifikace_zalozit(self, nastaveni, ucel="OVERENI"):
-        return self.c.post(f"{self.BASE}/api/v2/notifikace/zalozit",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/zalozit",
                            self._envelope(ucel, nastaveni))
 
     def notifikace_zrusit(self, data, ucel="OVERENI"):
-        return self.c.post(f"{self.BASE}/api/v2/notifikace/zrusit",
+        return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/zrusit",
                            self._envelope(ucel, data))
 
 
@@ -2340,7 +2370,18 @@ class ELPv3:
 
 
 class EZadanky:
+    """eŽádanky – externí API **verze 1** (``/api/v1/eZadanka/*``).
+
+    .. deprecated:: 2.34
+       NCEZ označil verzi 1 k 1. 10. 2026 jako *deprecated* (Standard
+       systému eŽádanka 2.0, OpenAPI 2.0.0 nasazeno na T2 25. 9. 2026).
+       Zůstává dostupná jen po přechodnou dobu a nové integrace se na ni
+       nezřizují – používejte :class:`EZadankyV2`. Převodní tabulku
+       služeb vrací :meth:`EZadankyV2.prevod_z_v1`.
+    """
     BASE = "/eZadanky"
+    VERZE = "v1"
+    DEPRECATED = True
 
     def __init__(self, client: SEZClient):
         self.c = client
@@ -2482,6 +2523,549 @@ class EZadanky:
         return {
             "summary": f"{auth_ok}/{len(results)} endpointů prošlo autorizací",
             "pzs_context": auth_ok == len(results),
+            "results": results,
+        }
+
+
+class EZadankyV2:
+    """eŽádanky – externí API **verze 2** (OpenAPI 2.0.0, aktuální od 1. 10. 2026).
+
+    Zdroj: Manuál EZ pro PZS → API eŽádanky (7. 10. 2026) a swagger
+    ``Ezadanky_v2.0.0.json`` z brány (T2 nasazeno 25. 9. 2026).
+
+    Hlavní rozdíly proti v1 (třída :class:`EZadanky`):
+
+    * datová věta = **systémová hlavička** (``hlavicka``: typZadanky, zadatel
+      {poskytovatel, autor, zdravotnickyPracovnik}, pacient, adresat,
+      dodatecnyPrijemce, nadrizenaZadankaId) + **FHIR Bundle** typu
+      ``document`` (``fhirBundle``) dle HL7 CZ IG (Z = img-order, K/FT =
+      k-order); strukturovaná DTO ZadankaZ/K/Ft a ``ispzs`` zmizely,
+    * REST cesty jsou zdrojové: ``/api/v2/zadanka[/{id}/<operace>]``,
+      identifikátor žádanky je v cestě,
+    * procesní operace předávají verzi záznamu v hlavičce **If-Match**
+      (``verzeZaznamu`` z odpovědi, vrací ji i hlavička ETag); nesoulad
+      = HTTP 409; v těle už ``verzeRadku`` není,
+    * uložení vrací HTTP 201 a hlavičku s ``id``, ``kod`` a ``verzeZaznamu``,
+    * detaily z kmenových registrů (pacientData, autorData, …) se nevrací,
+    * **UpravZadanku neexistuje** – náhradou je storno a nová žádanka,
+    * ``vyridit`` vyžaduje zásilku s nejméně jedním dokumentem u všech
+      způsobů vyřízení; vzniklé zásilky vrací ``hlavicka.zasilkyVysledku``,
+    * stránkování ``strankovani.page`` je číslované **od 0** (v1 od 1),
+    * hlavička ``User-Agent`` je povinná (klient ji posílá vždy).
+
+    Odpovědi vrací :class:`requests.Response`; pomocná metoda
+    :meth:`verze_zaznamu` vytáhne hodnotu pro další If-Match.
+    """
+    BASE = "/eZadanky"
+    VERZE = "v2"
+    DEPRECATED = False
+
+    #: Operace rozhraní dle stránky „API eŽádanky“ (metoda, cesta, popis).
+    OPERACE = (
+        ("ulozitZadanku", "POST", "/api/v2/zadanka",
+         "Vytvoří novou eŽádanku ze systémové hlavičky a FHIR Bundle (HTTP 201)."),
+        ("vyhledatZadanky", "POST", "/api/v2/zadanka/vyhledat",
+         "Stránkovaný seznam hlaviček žádanek, kde je volající žadatel nebo příjemce."),
+        ("vyhledatAktivniZadanky", "POST", "/api/v2/zadanka/vyhledatAktivni",
+         "Žádanky ve stavu Nová podle údajů pacienta nebo žádanky (volající není žadatel ani adresát)."),
+        ("nacistZadanku", "POST", "/api/v2/zadanka/{id}/nacist",
+         "Systémová hlavička a FHIR Bundle v rozsahu oprávnění volajícího."),
+        ("prijmoutZadanku", "PATCH", "/api/v2/zadanka/{id}/prijmout",
+         "Přechod do stavu Přijatá; ne-adresát prokazuje oprávnění kódem žádanky nebo číslem dokladu."),
+        ("vratitZadankuDoObehu", "PATCH", "/api/v2/zadanka/{id}/vratitDoObehu",
+         "Vrátí přijatou žádanku zpět do oběhu (kapacitní / technické potíže příjemce)."),
+        ("zaznacitNeproveditelnostZadanky", "PATCH", "/api/v2/zadanka/{id}/zaznacitNeproveditelnost",
+         "Označí žádanku za neproveditelnou."),
+        ("stornovatZadanku", "PATCH", "/api/v2/zadanka/{id}/stornovat",
+         "Storno žadatelem, dokud je žádanka ve stavu Nová."),
+        ("vyriditZadanku", "PATCH", "/api/v2/zadanka/{id}/vyridit",
+         "Vyřízení a předání výsledku zásilkou s nejméně jedním dokumentem."),
+    )
+
+    #: Převod služeb verze 1 na verzi 2 (tabulka ze stránky API eŽádanky).
+    PREVOD_Z_V1 = (
+        ("POST /api/v1/eZadanka/UlozZadanku", "POST /api/v2/zadanka"),
+        ("POST /api/v1/eZadanka/VyhledejZadanku", "POST /api/v2/zadanka/vyhledat"),
+        ("POST /api/v1/eZadanka/VyhledejAktivniZadanku", "POST /api/v2/zadanka/vyhledatAktivni"),
+        ("GET /api/v1/eZadanka/NactiZadanku/{id}", "POST /api/v2/zadanka/{id}/nacist"),
+        ("PATCH /api/v1/eZadanka/PrijmiZadanku", "PATCH /api/v2/zadanka/{id}/prijmout"),
+        ("PATCH /api/v1/eZadanka/VratZadankuDoObehu", "PATCH /api/v2/zadanka/{id}/vratitDoObehu"),
+        ("PATCH /api/v1/eZadanka/ZaznacNeproveditelnostZadanky",
+         "PATCH /api/v2/zadanka/{id}/zaznacitNeproveditelnost"),
+        ("PATCH /api/v1/eZadanka/StornujZadanku", "PATCH /api/v2/zadanka/{id}/stornovat"),
+        ("PATCH /api/v1/eZadanka/VyridZadanku", "PATCH /api/v2/zadanka/{id}/vyridit"),
+        ("PATCH /api/v1/eZadanka/UpravZadanku", None),
+    )
+
+    #: Číselníky systémové hlavičky a operací (TermX kódy) dle API eŽádanky.
+    CISELNIKY = {
+        "stav": "stav-zadanky",
+        "typZadanky": "referralorder-types",
+        "urgentnost": "request-priority-cz",
+        "pacientPojistovna": "cz-healthinsurancecompanycode-vs",
+        "metodaData (typ Z, 721964003)": "cz-modality",
+        "duvodVraceniZadanky": "duvod-vraceni",
+        "duvodStornaZadanky": "duvod-storna",
+        "duvodNeproveditelnostiZadanky": "duvod-odmitnuti",
+        "zpusobVyrizeniZadanky": "zpusob-vyrizeni",
+        "Zasilka.klasifikace / Dokument.klasifikace": "document-category",
+        "Dokument.duvernost": "v3-Confidentiality",
+        "Dokument.format": "format-code",
+        "Dokument.jazyk": "languages",
+        "Dokument.mime": "media-type",
+    }
+
+    #: Typy eŽádanky – kódy z číselníku referralorder-types (TermX, ověřeno
+    #: $expand na apio.csez.gov.cz/terminologie 13. 10. 2026): K = LOINC
+    #: 57133-1 „žádanka o vyšetření“, Z = SNOMED 721964003 „žádanka o
+    #: zobrazovací vyšetření“, FT = LOINC 57154-7 „žádanka o fyzioterapii“.
+    #: (Číselník obsahuje i 721965002 laboratorní a 57830-2 hospitalizace,
+    #: které Standard eŽádanka 2.0 zatím nepodporuje.)
+    #: Manuál EZ pro PZS: podporované typy K, Z, FT. IG pro K a FT je společný
+    #: (HL7 CZ Order IG, hl7.fhir.cz.order 1.0.0, https://hl7.cz/fhir/order –
+    #: repo HL7-cz/k-order), pro Z samostatný (img-order). Všechny tři typy
+    #: ověřeny živě na T2 13. 10. 2026 (uložení 201 → načtení → storno).
+    TYPY_ZADANKY = {
+        "K": {"kod": "57133-1", "system": "http://loinc.org",
+              "nazev": "Konziliární žádanka (žádanka o vyšetření)",
+              "ig": "hl7.fhir.cz.order", "ig_url": "https://build.fhir.org/ig/HL7-cz/k-order/",
+              "specifikace": "Funkční specifikace eŽádanky typu K v7.0"},
+        "Z": {"kod": "721964003", "system": "http://snomed.info/sct",
+              "nazev": "Žádanka o zobrazovací vyšetření",
+              "ig": "hl7.fhir.cz.img-order", "ig_url": "https://build.fhir.org/ig/HL7-cz/img-order/",
+              "specifikace": "Funkční specifikace eŽádanky typu Z v2.0"},
+        "FT": {"kod": "57154-7", "system": "http://loinc.org",
+               "nazev": "Žádanka o fyzioterapii a ergoterapii",
+               "ig": "hl7.fhir.cz.order", "ig_url": "https://build.fhir.org/ig/HL7-cz/k-order/",
+               "specifikace": "Funkční specifikace eŽádanky typu FT v7.0"},
+    }
+
+    #: Stavy žádanky (číselník stav-zadanky).
+    STAVY = {
+        "0": "Nová", "1": "Přijatá", "2": "Vyřízená",
+        "3": "Stornovaná", "4": "Neproveditelná", "5": "Vrácená do oběhu",
+    }
+
+    def __init__(self, client: SEZClient):
+        self.c = client
+
+    # -- pomocné -----------------------------------------------------------
+
+    @staticmethod
+    def _if_match(verze_zaznamu) -> dict:
+        if not verze_zaznamu:
+            raise ValueError(
+                "Procesní operace eŽádanky v2 vyžaduje verzeZaznamu "
+                "(hlavička If-Match) – hodnota z hlavicka.verzeZaznamu "
+                "nebo z ETag poslední odpovědi.")
+        return {"If-Match": str(verze_zaznamu)}
+
+    @staticmethod
+    def verze_zaznamu(resp) -> "str | None":
+        """``verzeZaznamu`` z odpovědi (hlavicka.verzeZaznamu, jinak ETag)."""
+        try:
+            data = resp.json() if hasattr(resp, "json") else resp
+        except Exception:
+            data = None
+        if isinstance(data, dict):
+            hl = data.get("hlavicka") if isinstance(data.get("hlavicka"), dict) else data
+            v = hl.get("verzeZaznamu")
+            if v:
+                return v
+        headers = getattr(resp, "headers", None) or {}
+        etag = headers.get("ETag") or headers.get("etag")
+        return etag.strip('"') if etag else None
+
+    @staticmethod
+    def _polozka(kod):
+        """Položka číselníku na vstupu – posílá se jen ``kod`` (+ volitelně
+        verze); řetězec se zabalí."""
+        if isinstance(kod, dict):
+            return {k: v for k, v in kod.items() if k in ("kod", "verze") and v}
+        return {"kod": str(kod)}
+
+    @classmethod
+    def sestav_hlavicku(cls, *, typ_zadanky, pacient, poskytovatel, autor,
+                        zdravotnicky_pracovnik=None, adresat=None,
+                        dodatecny_prijemce=None, nadrizena_zadanka_id=None) -> dict:
+        """Systémová hlavička pro :meth:`uloz` (schéma ``HlavickaVstup``).
+
+        ``typ_zadanky`` přijímá písmeno K/Z/FT nebo kód z číselníku
+        referralorder-types; ``zdravotnicky_pracovnik`` (podepsal) se bez
+        zadání rovná ``autor`` (sepsal)."""
+        typ = str(typ_zadanky).upper()
+        if typ in cls.TYPY_ZADANKY:
+            typ = cls.TYPY_ZADANKY[typ]["kod"]
+        hl = {
+            "typZadanky": {"kod": typ},
+            "zadatel": {
+                "poskytovatel": str(poskytovatel),
+                "autor": str(autor),
+                "zdravotnickyPracovnik": str(zdravotnicky_pracovnik or autor),
+            },
+            "pacient": str(pacient),
+        }
+        if adresat:
+            hl["adresat"] = str(adresat)
+        if dodatecny_prijemce:
+            hl["dodatecnyPrijemce"] = [str(x) for x in dodatecny_prijemce if x]
+        if nadrizena_zadanka_id:
+            hl["nadrizenaZadankaId"] = str(nadrizena_zadanka_id)
+        return hl
+
+    @staticmethod
+    def zkontroluj_pozadavek(body: dict) -> list[str]:
+        """Rychlá klientská kontrola těla ``ulozitZadanku`` (povinná pole
+        dle swaggeru 2.0.0 – nenahrazuje serverovou validaci proti IG)."""
+        vyhrady = []
+        if not isinstance(body, dict):
+            return ["Tělo musí být objekt s poli hlavicka a fhirBundle."]
+        hl = body.get("hlavicka")
+        if not isinstance(hl, dict):
+            vyhrady.append("hlavicka: povinná systémová hlavička chybí.")
+        else:
+            if not (hl.get("typZadanky") or {}).get("kod"):
+                vyhrady.append("hlavicka.typZadanky.kod: povinné (referralorder-types).")
+            zad = hl.get("zadatel") or {}
+            for k in ("poskytovatel", "autor", "zdravotnickyPracovnik"):
+                if not zad.get(k):
+                    vyhrady.append(f"hlavicka.zadatel.{k}: povinné.")
+            if not hl.get("pacient"):
+                vyhrady.append("hlavicka.pacient: povinné (RID).")
+            for k in ("ispzs", "verzeRadku", "zasilka", "stav", "urgentnost"):
+                if k in hl:
+                    vyhrady.append(f"hlavicka.{k}: pole z v1, ve v2 se nepoužívá.")
+        fb = body.get("fhirBundle")
+        if not isinstance(fb, dict):
+            vyhrady.append("fhirBundle: povinný FHIR Bundle typu document chybí.")
+        else:
+            if fb.get("resourceType") != "Bundle":
+                vyhrady.append("fhirBundle.resourceType: musí být 'Bundle'.")
+            if fb.get("type") != "document":
+                vyhrady.append("fhirBundle.type: musí být 'document'.")
+            entries = fb.get("entry") or []
+            if not entries:
+                vyhrady.append("fhirBundle.entry: prázdný Bundle – chybí Composition.")
+            else:
+                prvni = (entries[0].get("resource") or {}).get("resourceType")
+                if prvni != "Composition":
+                    vyhrady.append("fhirBundle.entry[0]: první resource dokumentového "
+                                   "Bundle musí být Composition.")
+                if isinstance(hl, dict):
+                    vyhrady += EZadankyV2._zkontroluj_konzistenci(hl, fb)
+        for k in ("zadanka", "zadankaZ", "zadankaK", "zadankaFt"):
+            if k in body:
+                vyhrady.append(f"{k}: strukturované DTO z v1 bylo z kontraktu v2 odstraněno.")
+        return vyhrady
+
+    @staticmethod
+    def _zkontroluj_konzistenci(hl: dict, fb: dict) -> list[str]:
+        """Serverová pravidla konzistence hlavička ↔ Bundle (E00024 / E01001 /
+        E01002), ověřená živě na T2 13. 10. 2026 pro všechny typy Z, K i FT:
+
+        * brána řeší reference **jen přesnou shodou s ``entry.fullUrl``**
+          (relativní ``Patient/1`` při absolutním fullUrl nenajde → ``bundle: null``),
+        * ``pacient`` = RID Patient v ``Composition.subject``,
+        * ``zadatel.autor`` = KRZP Practitioner z ``Composition.author``
+          (přímo nebo přes PractitionerRole.practitioner),
+        * ``zadatel.poskytovatel`` = IČO Organization v ``Composition.custodian``
+          (PractitionerRole.organization server nepoužívá) a tato Organization
+          musí mít IČP (E01002),
+        * ``adresat`` = IČO právě jedné provádějící Organization odkazované
+          ze ``ServiceRequest.performer`` (přímo nebo přes PractitionerRole),
+        * adresát se nesmí rovnat žadateli (systém je pro komunikaci mezi PZS),
+        * ``ServiceRequest.priority`` jen z číselníku request-priority-cz
+          (``routine`` | ``stat``; ``urgent``/``asap`` brána odmítne).
+        """
+        SYS_RID = "https://ncez.mzcr.cz/fhir/sid/rid"
+        SYS_KRZP = "https://ncez.mzcr.cz/fhir/sid/krzp"
+        SYS_ICO = "https://ncez.mzcr.cz/fhir/sid/ico"
+        SYS_ICP = "https://ncez.mzcr.cz/fhir/sid/icp"
+        PRIORITY_CZ = {"routine", "stat"}
+        res_by_url, res_by_id = {}, {}
+        for e in fb.get("entry") or []:
+            r = e.get("resource") or {}
+            if e.get("fullUrl"):
+                res_by_url[e["fullUrl"]] = r
+            if r.get("resourceType") and r.get("id"):
+                res_by_id[f"{r['resourceType']}/{r['id']}"] = r
+                res_by_id[f"urn:uuid:{r['id']}"] = r
+
+        out = []
+        nepresne = []
+
+        def resolve(ref, kde):
+            """Přesná shoda s fullUrl (= chování brány); volnější shoda se jen eviduje."""
+            if isinstance(ref, dict):
+                ref = ref.get("reference")
+            if not ref:
+                return None
+            r = res_by_url.get(ref)
+            if r is None:
+                r = res_by_id.get(ref)
+                if r is None and "/" in ref:
+                    r = res_by_id.get("/".join(ref.rstrip("/").split("/")[-2:]))
+                if r is not None:
+                    nepresne.append(f"{kde} = {ref}")
+            return r
+
+        def ident(res, system):
+            for i in (res or {}).get("identifier") or []:
+                if isinstance(i, dict) and i.get("system") == system and i.get("value"):
+                    return str(i["value"])
+            return None
+
+        comp = (fb.get("entry") or [{}])[0].get("resource") or {}
+        srs = [e.get("resource") for e in fb.get("entry") or []
+               if (e.get("resource") or {}).get("resourceType") == "ServiceRequest"]
+        zad = hl.get("zadatel") or {}
+
+        # pacient
+        pat = resolve(comp.get("subject"), "Composition.subject")
+        if hl.get("pacient"):
+            if not pat or pat.get("resourceType") != "Patient":
+                out.append("fhirBundle: Composition.subject neukazuje na Patient – server vrátí E00024 "
+                           "'RID pacienta v hlavičce neodpovídá pacientovi ve FHIR Bundle'.")
+            elif ident(pat, SYS_RID) != str(hl["pacient"]):
+                out.append(f"hlavicka.pacient ({hl['pacient']}) ≠ RID Patient v Bundle "
+                           f"({ident(pat, SYS_RID)}) – server vrátí E00024.")
+
+        # autor
+        autor = resolve((comp.get("author") or [None])[0], "Composition.author[0]")
+        role_org = None
+        if autor and autor.get("resourceType") == "PractitionerRole":
+            role_org = resolve(autor.get("organization"), "PractitionerRole.organization")
+            autor = resolve(autor.get("practitioner"), "PractitionerRole.practitioner")
+        if zad.get("autor"):
+            if not autor or autor.get("resourceType") != "Practitioner":
+                out.append("fhirBundle: Composition.author neukazuje na Practitioner/PractitionerRole "
+                           "s KRZP – server vrátí E00024 'Identifikátor autora v hlavičce neodpovídá "
+                           "autorovi ve FHIR Bundle'.")
+            elif ident(autor, SYS_KRZP) != str(zad["autor"]):
+                out.append(f"hlavicka.zadatel.autor ({zad['autor']}) ≠ KRZP Practitioner autora "
+                           f"v Bundle ({ident(autor, SYS_KRZP)}) – server vrátí E00024.")
+
+        # žadatel – jen Composition.custodian
+        zad_org = resolve(comp.get("custodian"), "Composition.custodian")
+        if zad_org and zad_org.get("resourceType") != "Organization":
+            zad_org = None
+        zad_ico = ident(zad_org, SYS_ICO)
+        posk = str(zad.get("poskytovatel") or "")
+        if not zad_org:
+            tip = (" (PractitionerRole.organization autora server nepoužívá – doplňte custodian)"
+                   if role_org else "")
+            out.append("fhirBundle: Composition.custodian neukazuje na Organization žadatele s IČO"
+                       f"{tip} – server vrátí E00024 'IČO žadatele v hlavičce neodpovídá "
+                       "poskytovateli ve FHIR Bundle'.")
+        elif not zad_ico:
+            out.append(f"fhirBundle: custodian Organization nemá identifier system={SYS_ICO} – "
+                       "server vrátí E00024.")
+        elif posk and zad_ico != posk:
+            out.append(f"hlavicka.zadatel.poskytovatel ({posk}) ≠ IČO custodian Organization "
+                       f"v Bundle ({zad_ico}) – server vrátí E00024.")
+        if zad_org and not ident(zad_org, SYS_ICP):
+            out.append("fhirBundle: Organization žadatele (custodian) nemá IČP (identifier "
+                       f"system={SYS_ICP}) – server vrátí E01002 'Identifikační číslo zařízení "
+                       "žadatele musí být zadáno'.")
+
+        # provádějící poskytovatel
+        perf = {}
+        for sr in srs:
+            for p in sr.get("performer") or []:
+                r = resolve(p, "ServiceRequest.performer")
+                if r and r.get("resourceType") == "PractitionerRole":
+                    r = resolve(r.get("organization"), "PractitionerRole.organization")
+                if r and r.get("resourceType") == "Organization":
+                    perf[ident(r, SYS_ICO) or id(r)] = r
+            pr = sr.get("priority")
+            if pr and pr not in PRIORITY_CZ:
+                out.append(f"ServiceRequest/{sr.get('id')}: priority '{pr}' není v číselníku "
+                           "request-priority-cz (routine | stat) – server vrátí E01001.")
+        adresat = hl.get("adresat")
+        if len(perf) > 1:
+            out.append("fhirBundle: ServiceRequest.performer odkazuje na více než jednu "
+                       "Organization – server vrátí E00024 'Žádanka nesmí mít více než "
+                       "jednoho provádějícího poskytovatele'.")
+        if adresat:
+            perf_ico = next(iter(perf), None) if perf else None
+            if not perf:
+                out.append("hlavicka.adresat je vyplněn, ale Bundle neobsahuje provádějící "
+                           "Organization (ServiceRequest.performer → Organization s IČO) – "
+                           "server vrátí E00024.")
+            elif perf_ico and perf_ico != str(adresat):
+                out.append(f"hlavicka.adresat ({adresat}) ≠ IČO provádějící Organization "
+                           f"v Bundle ({perf_ico}) – server vrátí E00024.")
+            if posk and str(adresat) == posk:
+                out.append("hlavicka.adresat = zadatel.poskytovatel – server vrátí E01001 "
+                           "(systém je určen pro komunikaci mezi různými PZS).")
+        if nepresne:
+            out.append("fhirBundle: reference neodpovídají přesně entry.fullUrl (brána je tak "
+                       "neřeší → 'bundle: null', E00024): " + "; ".join(nepresne[:4])
+                       + (" …" if len(nepresne) > 4 else "")
+                       + ". Použijte urn:uuid: fullUrl i reference (fhir_order.normalizuj_reference).")
+        return out
+
+    # -- operace ------------------------------------------------------------
+
+    def uloz(self, hlavicka: dict, fhir_bundle: dict = None):
+        """POST /api/v2/zadanka – ``hlavicka`` může být rovnou celé tělo
+        ``{hlavicka, fhirBundle}``."""
+        if fhir_bundle is None and isinstance(hlavicka, dict) and "hlavicka" in hlavicka:
+            body = hlavicka
+        else:
+            body = {"hlavicka": hlavicka, "fhirBundle": fhir_bundle}
+        return self.c.post(f"{self.BASE}/api/v2/zadanka", body)
+
+    uloz_zadanku = uloz
+
+    def vyhledat(self, body: dict = None):
+        """POST /api/v2/zadanka/vyhledat (filtr dle VyhledejZadankuRequest;
+        stránky od 0)."""
+        return self.c.post(f"{self.BASE}/api/v2/zadanka/vyhledat", body or {})
+
+    vyhledej_zadanku = vyhledat
+
+    def vyhledat_aktivni(self, body: dict = None):
+        """POST /api/v2/zadanka/vyhledatAktivni – alespoň jedno z id / rid /
+        kodZadanky."""
+        return self.c.post(f"{self.BASE}/api/v2/zadanka/vyhledatAktivni", body or {})
+
+    vyhledej_aktivni = vyhledat_aktivni
+
+    def nacist(self, zadanka_id: str, kod_zadanky: str = None, cislo_dokladu: str = None):
+        """POST /api/v2/zadanka/{id}/nacist – kód žádanky nebo číslo dokladu
+        zpřístupní FHIR Bundle i ne-žadateli/ne-příjemci."""
+        body = {}
+        if kod_zadanky:
+            body["kodZadanky"] = kod_zadanky
+        if cislo_dokladu:
+            body["cisloDokladu"] = cislo_dokladu
+        return self.c.post(f"{self.BASE}/api/v2/zadanka/{zadanka_id}/nacist", body)
+
+    nacti_zadanku = nacist
+
+    def prijmout(self, zadanka_id: str, verze_zaznamu: str, *, kod_zadanky=None,
+                 cislo_dokladu=None, datum_planovaneho_vysetreni=None):
+        body = {}
+        if kod_zadanky:
+            body["kodZadanky"] = kod_zadanky
+        if cislo_dokladu:
+            body["cisloDokladu"] = cislo_dokladu
+        if datum_planovaneho_vysetreni:
+            body["datumPlanovanehoVysetreni"] = datum_planovaneho_vysetreni
+        return self.c.patch(f"{self.BASE}/api/v2/zadanka/{zadanka_id}/prijmout", body,
+                            extra_headers=self._if_match(verze_zaznamu))
+
+    prijmi = prijmout
+
+    def vratit_do_obehu(self, zadanka_id: str, verze_zaznamu: str, duvod, upresneni=None):
+        body = {"duvodVraceniZadanky": self._polozka(duvod)}
+        if upresneni:
+            body["duvodVraceniUpresneni"] = upresneni[:250]
+        return self.c.patch(f"{self.BASE}/api/v2/zadanka/{zadanka_id}/vratitDoObehu", body,
+                            extra_headers=self._if_match(verze_zaznamu))
+
+    vrat_do_obehu = vratit_do_obehu
+
+    def zaznacit_neproveditelnost(self, zadanka_id: str, verze_zaznamu: str, duvod,
+                                  upresneni=None, kod_zadanky=None):
+        body = {"duvodNeproveditelnostiZadanky": self._polozka(duvod)}
+        if upresneni:
+            body["duvodNeproveditelnostiUpresneni"] = upresneni[:250]
+        if kod_zadanky:
+            body["kodZadanky"] = kod_zadanky
+        return self.c.patch(
+            f"{self.BASE}/api/v2/zadanka/{zadanka_id}/zaznacitNeproveditelnost", body,
+            extra_headers=self._if_match(verze_zaznamu))
+
+    neproveditelnost = zaznacit_neproveditelnost
+
+    def stornovat(self, zadanka_id: str, verze_zaznamu: str, duvod, upresneni=None):
+        body = {"duvodStornaZadanky": self._polozka(duvod)}
+        if upresneni:
+            body["duvodStornaUpresneni"] = upresneni[:250]
+        return self.c.patch(f"{self.BASE}/api/v2/zadanka/{zadanka_id}/stornovat", body,
+                            extra_headers=self._if_match(verze_zaznamu))
+
+    stornuj = stornovat
+
+    def vyridit(self, zadanka_id: str, verze_zaznamu: str, *, zpusob_vyrizeni, vysledek: dict,
+                datum_skutecne_realizace: str, upresneni=None,
+                zaslat_pacientovi: bool = None, zaslat_praktikovi: bool = None):
+        """PATCH /api/v2/zadanka/{id}/vyridit – ``vysledek`` je zásilka
+        (schéma Zasilka) s nejméně jedním dokumentem; je povinná u všech
+        způsobů vyřízení, protože výsledek se vždy ukládá do DÚ."""
+        if not isinstance(vysledek, dict) or not vysledek.get("dokument"):
+            raise ValueError("vyridit: vysledek musí být zásilka s nejméně jedním dokumentem "
+                             "(v2 ji vyžaduje u všech způsobů vyřízení).")
+        body = {
+            "zpusobVyrizeniZadanky": self._polozka(zpusob_vyrizeni),
+            "vysledek": vysledek,
+            "datumSkutecneRealizaceVysetreni": datum_skutecne_realizace,
+        }
+        if upresneni:
+            body["zpusobVyrizeniUpresneni"] = upresneni[:250]
+        if zaslat_pacientovi is not None:
+            body["zaslatVysledekPacientovi"] = bool(zaslat_pacientovi)
+        if zaslat_praktikovi is not None:
+            body["zaslatVysledekPraktikovi"] = bool(zaslat_praktikovi)
+        return self.c.patch(f"{self.BASE}/api/v2/zadanka/{zadanka_id}/vyridit", body,
+                            extra_headers=self._if_match(verze_zaznamu))
+
+    vyrid = vyridit
+
+    def uprav(self, *args, **kwargs):
+        raise NotImplementedError(
+            "UpravZadanku ve verzi 2 neexistuje – vystavenou eŽádanku nelze upravit, "
+            "náhradou je stornovat() a uloz() nové žádanky.")
+
+    @classmethod
+    def prevod_z_v1(cls) -> list[dict]:
+        return [{"v1": a, "v2": b, "zruseno": b is None} for a, b in cls.PREVOD_Z_V1]
+
+    def diagnose(self) -> dict:
+        """Sonda bez vedlejších účinků – vyhledání (stránka 0, 1 záznam),
+        načtení neexistující žádanky a procesní operace nad neexistujícím
+        ID. Ověří autorizaci PZS (E01001) a dostupnost cest v2."""
+        dummy = "00000000-0000-0000-0000-000000000001"
+        probes = [
+            ("vyhledatZadanky", "POST", f"{self.BASE}/api/v2/zadanka/vyhledat",
+             {"strankovani": {"page": 0, "size": 1}}, None),
+            ("vyhledatAktivniZadanky", "POST", f"{self.BASE}/api/v2/zadanka/vyhledatAktivni",
+             {"id": dummy, "strankovani": {"page": 0, "size": 1}}, None),
+            ("nacistZadanku", "POST", f"{self.BASE}/api/v2/zadanka/{dummy}/nacist", {}, None),
+            ("prijmoutZadanku", "PATCH", f"{self.BASE}/api/v2/zadanka/{dummy}/prijmout",
+             {}, {"If-Match": "AAAAAAA="}),
+            ("stornovatZadanku", "PATCH", f"{self.BASE}/api/v2/zadanka/{dummy}/stornovat",
+             {"duvodStornaZadanky": {"kod": "admin-chyba"}}, {"If-Match": "AAAAAAA="}),
+            ("vratitZadankuDoObehu", "PATCH", f"{self.BASE}/api/v2/zadanka/{dummy}/vratitDoObehu",
+             {"duvodVraceniZadanky": {"kod": "kapacitni-omezeni"}}, {"If-Match": "AAAAAAA="}),
+            ("zaznacitNeproveditelnostZadanky", "PATCH",
+             f"{self.BASE}/api/v2/zadanka/{dummy}/zaznacitNeproveditelnost",
+             {"duvodNeproveditelnostiZadanky": {"kod": "jiny-duvod"}}, {"If-Match": "AAAAAAA="}),
+        ]
+        results = []
+        for label, method, path, body, hdrs in probes:
+            try:
+                if method == "POST":
+                    r = self.c.post(path, body)
+                else:
+                    r = self.c.patch(path, body, extra_headers=hdrs)
+                try:
+                    data = r.json()
+                except Exception:
+                    data = r.text[:200]
+                auth_ok = "E01001" not in str(data) and r.status_code not in (401, 403)
+                results.append({"endpoint": label, "method": method, "status": r.status_code,
+                                "auth_ok": auth_ok, "error": data if r.status_code >= 400 else None})
+            except Exception as exc:
+                results.append({"endpoint": label, "method": method, "status": 0,
+                                "auth_ok": False, "error": str(exc)[:200]})
+        ok = sum(1 for r in results if r["auth_ok"])
+        return {
+            "verze": "v2",
+            "summary": f"{ok}/{len(results)} operací v2 prošlo autorizací",
+            "pzs_context": ok == len(results),
             "results": results,
         }
 
@@ -3722,10 +4306,58 @@ class SZZv3:
     def emergentni_pdf(self, body):
         return self.c.post(f"{self.BASE}/api/v3/emergentniZaznam/pdf", body)
 
+    class _SlozenaOdpoved:
+        """Odpověď složená ze dvou volání – chová se jako ``requests.Response``
+        v rozsahu, který používá aplikace (``status_code``, ``json()``,
+        ``text``, ``headers``, ``ok``)."""
+
+        def __init__(self, status_code: int, data, headers=None):
+            self.status_code = status_code
+            self._data = data
+            self.headers = headers or {}
+            import json as _json
+            self.text = _json.dumps(data, ensure_ascii=False)
+
+        def json(self):
+            return self._data
+
+        @property
+        def ok(self):
+            return 200 <= self.status_code < 300
+
     def zdravotni_zaznamy_vyhledat(self, body):
-        """POST /api/v3/zdravotniZaznamy/vyhledat – všechny výsledky prevencí
-        i screeningů pacienta jedním dotazem (novinka v3)."""
-        return self.c.post(f"{self.BASE}/api/v3/zdravotniZaznamy/vyhledat", body)
+        """Souhrn všech prevencí i screeningů pacienta.
+
+        Revize 13. 10. 2026: swagger SZZ 3.0.5 **nemá** cestu
+        ``/api/v3/zdravotniZaznamy/vyhledat`` (brána vracela 404). Souhrn se
+        skládá ze dvou skutečných operací ``POST /api/v3/prevence/vyhledat``
+        a ``POST /api/v3/screeningy/vyhledat`` (shodné tělo: rid, jenPlatne,
+        sort, order, page, size). Vrací objekt s ``status_code`` = horší
+        z obou odpovědí a ``json()`` =
+        ``{"prevence": PrevenceDetailDto, "screeningy": ScreeningyDetailDto,
+        "_zdroje": {...}}``."""
+        body = body or {}
+        r1 = self.prevence_vyhledat_souhrn(body)
+        r2 = self.screeningy_vyhledat_souhrn(body)
+
+        def _json(r):
+            try:
+                return r.json()
+            except Exception:
+                return getattr(r, "text", None)
+
+        status = max(r1.status_code, r2.status_code)
+        data = {
+            "prevence": _json(r1),
+            "screeningy": _json(r2),
+            "_zdroje": {
+                "prevence": {"cesta": f"{self.BASE}/api/v3/prevence/vyhledat",
+                             "status": r1.status_code},
+                "screeningy": {"cesta": f"{self.BASE}/api/v3/screeningy/vyhledat",
+                               "status": r2.status_code},
+            },
+        }
+        return self._SlozenaOdpoved(status, data, getattr(r2, "headers", None))
 
     # --- Léčivé přípravky ---
     def lecive_pripravky_vytvor(self, body):

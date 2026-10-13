@@ -1,0 +1,831 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "BundleFTHipRehabilitation",
+  "meta" : {
+    "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/BundleOrderCz"]
+  },
+  "language" : "cs",
+  "identifier" : {
+    "system" : "https://hl7.cz/fhir/order/sid/document",
+    "value" : "FTHIP-2026-0001"
+  },
+  "type" : "document",
+  "timestamp" : "2026-09-04T09:05:00+02:00",
+  "entry" : [{
+    "fullUrl" : "https://example.org/fhir/Composition/FTCompositionHipRehabilitation",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "FTCompositionHipRehabilitation",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/ft-order-composition-cz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_FTCompositionHipRehabilitation\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition FTCompositionHipRehabilitation</b></p><a name=\"FTCompositionHipRehabilitation\"> </a><a name=\"hcFTCompositionHipRehabilitation\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-ft-order-composition-cz.html\">Composition: FT-order (Zadanka fyzioterapie) (CZ)</a></p></div><p><b>identifier</b>: 6a77187d-7e74-4fce-b604-bad9b2840102</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57154-7}\">žádanka o fyzioterapii</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-04 09:05:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-PractitionerRole-Orthopedist.html\">Milan Horak (https://ncez.mzcr.cz/fhir/sid/krzp#100000010): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - ortopedická ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>title</b>: Fyzioterapie po totální endoprotéze kyčle</p></div>"
+      },
+      "identifier" : {
+        "value" : "6a77187d-7e74-4fce-b604-bad9b2840102"
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57154-7"
+        }],
+        "text" : "žádanka o fyzioterapii"
+      },
+      "category" : [{
+        "coding" : [{
+          "system" : "http://loinc.org",
+          "code" : "57133-1"
+        }]
+      }],
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      },
+      "date" : "2026-09-04T09:05:00+02:00",
+      "author" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Orthopedist"
+      }],
+      "title" : "Fyzioterapie po totální endoprotéze kyčle",
+      "section" : [{
+        "title" : "Requested physiotherapy procedures",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "57154-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Požadována mobilizační a cvičebná fyzioterapie po totální endoprotéze levé kyčle. Povolené zatěžování levé dolní končetiny do 50 % tělesné hmotnosti. Pracoviště fyzioterapie volí pacient podle bydliště.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "ServiceRequest/FTServiceRequest-HipRehabilitation"
+        }]
+      },
+      {
+        "title" : "Clinical indication and question",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "104720-8"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\">Stav po TEP levé kyčle dne 2026-08-20. Povolené zatěžování levé dolní končetiny do 50 % tělesné hmotnosti. Implantát: totální endoprotéza levého kyčelního kloubu.</div>"
+        },
+        "entry" : [{
+          "reference" : "Condition/Condition-FTClinicalQuestion"
+        }]
+      },
+      {
+        "title" : "Cíle terapie",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "61146-7"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Obnovení bezpečné chůze s postupným zatěžováním levé dolní končetiny.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Goal/Goal-FTHipRehabilitation"
+        }]
+      },
+      {
+        "title" : "coverage",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "87520-3"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Zdravotní pojišťovna: 111.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Coverage/Coverage-FTHipRehabilitation"
+        }]
+      },
+      {
+        "title" : "Zdravotnické prostředky",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "97813-0"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Totální endoprotéza levého kyčelního kloubu, implantovaná dne 20. srpna 2026.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "DeviceUseStatement/DeviceUseStatement-FTHipImplant"
+        }]
+      },
+      {
+        "title" : "Podpůrné klinické informace",
+        "code" : {
+          "coding" : [{
+            "system" : "http://loinc.org",
+            "code" : "55752-0"
+          }]
+        },
+        "text" : {
+          "status" : "generated",
+          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Mobilita po operaci kyčle: pacient dokáže vstát. Hodnocení ze dne 4. září 2026.</p></div>"
+        },
+        "entry" : [{
+          "reference" : "Observation/Observation-FTHipMobility"
+        }]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Patient/Patient-FTHipRehabilitation",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "Patient-FTHipRehabilitation",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xml:lang=\"cs\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\"><a name=\"Patient_Patient-FTHipRehabilitation\"> </a><p><b>Karel Dvorak</b> — muž / male, 1958-04-22.</p><p>RID: 1000000101 (official); RČ / birth number: 5804221234; číslo pojištěnce / insurance number: 1115804221234.</p><p>Bydliště / home: Lipová 24, 500 02 Hradec Králové, CZ. Pracoviště / work: Průmyslová 18, 500 03 Hradec Králové, CZ.</p><p>Mobil / mobile: <a href=\"tel:+420777111222\">+420777111222</a>; email: <a href=\"mailto:karel.dvorak@example.cz\">karel.dvorak@example.cz</a>.</p><p>Místo narození / birthplace: Hradec Králové, CZ. Preferovaný jazyk / preferred language: čeština (cs).</p><p>Praktický lékař a registrující poskytovatel / general practitioner and registering provider: <a href=\"PractitionerRole-PractitionerRole-FTGeneralPractitioner.html\">PractitionerRole-FTGeneralPractitioner</a>; všeobecné lékařství / general medical service (SNOMED CT 700232004).</p><p>Spravující organizace / managing organization: <a href=\"Organization-af2b3114-e872-43b9-9875-cceb39122f7f.html\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare</a>.</p></div>"
+      },
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
+        "valueAddress" : {
+          "city" : "Hradec Králové",
+          "country" : "CZ",
+          "_country" : {
+            "extension" : [{
+              "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+              "valueCoding" : {
+                "system" : "urn:iso:std:iso:3166",
+                "code" : "CZ",
+                "display" : "Czechia"
+              }
+            }]
+          }
+        }
+      },
+      {
+        "extension" : [{
+          "url" : "value",
+          "valueReference" : {
+            "reference" : "PractitionerRole/PractitionerRole-FTGeneralPractitioner"
+          }
+        },
+        {
+          "url" : "category",
+          "valueCodeableConcept" : {
+            "coding" : [{
+              "system" : "http://snomed.info/sct",
+              "version" : "http://snomed.info/sct/11000279109",
+              "code" : "700232004",
+              "display" : "služba - všeobecná lékařská péče"
+            }]
+          }
+        }],
+        "url" : "https://hl7.cz/fhir/core/StructureDefinition/registering-provider-cz"
+      }],
+      "identifier" : [{
+        "use" : "official",
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rid",
+        "value" : "1000000101"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/rcis",
+        "value" : "5804221234"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/cpoj",
+        "value" : "1115804221234"
+      }],
+      "name" : [{
+        "family" : "Dvorak",
+        "given" : ["Karel"]
+      }],
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420777111222",
+        "use" : "mobile"
+      },
+      {
+        "system" : "email",
+        "value" : "karel.dvorak@example.cz"
+      }],
+      "gender" : "male",
+      "birthDate" : "1958-04-22",
+      "address" : [{
+        "use" : "home",
+        "type" : "physical",
+        "text" : "Lipová 24, 500 02 Hradec Králové",
+        "line" : ["Lipová 24"],
+        "city" : "Hradec Králové",
+        "postalCode" : "50002",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      },
+      {
+        "use" : "work",
+        "type" : "physical",
+        "text" : "Průmyslová 18, 500 03 Hradec Králové",
+        "line" : ["Průmyslová 18"],
+        "city" : "Hradec Králové",
+        "postalCode" : "50003",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }],
+      "communication" : [{
+        "language" : {
+          "coding" : [{
+            "system" : "urn:ietf:bcp:47",
+            "code" : "cs",
+            "display" : "Czech"
+          }],
+          "text" : "čeština"
+        },
+        "preferred" : true
+      }],
+      "generalPractitioner" : [{
+        "reference" : "PractitionerRole/PractitionerRole-FTGeneralPractitioner"
+      }],
+      "managingOrganization" : {
+        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a</b></p><a name=\"a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><a name=\"hca81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000001"
+      }],
+      "name" : [{
+        "text" : "MUDr. Ivan Andel",
+        "family" : "Andel",
+        "given" : ["Ivan"]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/PractitionerRole/PractitionerRole-FTGeneralPractitioner",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "PractitionerRole-FTGeneralPractitioner",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-FTGeneralPractitioner\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-FTGeneralPractitioner</b></p><a name=\"PractitionerRole-FTGeneralPractitioner\"> </a><a name=\"hcPractitionerRole-FTGeneralPractitioner\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a.html\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-af2b3114-e872-43b9-9875-cceb39122f7f.html\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 001}\">Všeobecné praktické lékařství</span></td></tr></table></div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a"
+      },
+      "organization" : {
+        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "001",
+          "display" : "Pracoviště praktického lékaře pro dospělé"
+        }],
+        "text" : "Všeobecné praktické lékařství"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "af2b3114-e872-43b9-9875-cceb39122f7f",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization af2b3114-e872-43b9-9875-cceb39122f7f</b></p><a name=\"af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><a name=\"hcaf2b3114-e872-43b9-9875-cceb39122f7f\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001352</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123457\">+420800123457</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001352"
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123457",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ"
+            }
+          }]
+        }
+      }],
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Practitioner/Practitioner-Orthopedist",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "Practitioner-Orthopedist",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_Practitioner-Orthopedist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-Orthopedist</b></p><a name=\"Practitioner-Orthopedist\"> </a><a name=\"hcPractitioner-Orthopedist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Milan Horak (https://ncez.mzcr.cz/fhir/sid/krzp#100000010)</p><hr/></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
+        "value" : "100000010"
+      }],
+      "name" : [{
+        "family" : "Horak",
+        "given" : ["Milan"],
+        "prefix" : ["MUDr."]
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/PractitionerRole/PractitionerRole-Orthopedist",
+    "resource" : {
+      "resourceType" : "PractitionerRole",
+      "id" : "PractitionerRole-Orthopedist",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-Orthopedist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Orthopedist</b></p><a name=\"PractitionerRole-Orthopedist\"> </a><a name=\"hcPractitionerRole-Orthopedist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Milan Horak (https://ncez.mzcr.cz/fhir/sid/krzp#100000010): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - ortopedická ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-Practitioner-Orthopedist.html\">Milan Horak (https://ncez.mzcr.cz/fhir/sid/krzp#100000010)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-Organization-OrthopedicsClinic.html\">Nemocnice Pod Lipou - ortopedická ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 606}\">Ortopedie</span></td></tr></table></div>"
+      },
+      "practitioner" : {
+        "reference" : "Practitioner/Practitioner-Orthopedist"
+      },
+      "organization" : {
+        "reference" : "Organization/Organization-OrthopedicsClinic"
+      },
+      "code" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+          "code" : "L1",
+          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
+        }]
+      }],
+      "specialty" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+          "code" : "606",
+          "display" : "Pracoviště ortopedie"
+        }],
+        "text" : "Ortopedie"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-OrthopedicsClinic",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-OrthopedicsClinic",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-OrthopedicsClinic\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-OrthopedicsClinic</b></p><a name=\"Organization-OrthopedicsClinic\"> </a><a name=\"hcOrganization-OrthopedicsClinic\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou - ortopedická ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001356</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
+        "value" : "42001356"
+      }],
+      "name" : "Nemocnice Pod Lipou - ortopedická ambulance",
+      "partOf" : {
+        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "display" : "Nemocnice Pod Lipou, a.s."
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169</b></p><a name=\"ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><a name=\"hcace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345679</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123456\">+420800123456</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/krpzs",
+        "value" : "100000001"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345679"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
+        "value" : "42001000"
+      }],
+      "type" : [{
+        "coding" : [{
+          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
+          "code" : "102",
+          "display" : "Nemocnice"
+        }]
+      }],
+      "name" : "Nemocnice Pod Lipou, a.s.",
+      "telecom" : [{
+        "system" : "phone",
+        "value" : "+420800123456",
+        "use" : "work"
+      }],
+      "address" : [{
+        "use" : "work",
+        "type" : "both",
+        "line" : ["Ukazkova 1"],
+        "city" : "Praha",
+        "postalCode" : "10000",
+        "country" : "CZ",
+        "_country" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+            "valueCoding" : {
+              "system" : "urn:iso:std:iso:3166",
+              "code" : "CZ",
+              "display" : "Czechia"
+            }
+          }]
+        }
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Organization/Organization-Insurance111",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "Organization-Insurance111",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/kp",
+        "value" : "111"
+      },
+      {
+        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
+        "value" : "12345687"
+      }],
+      "name" : "Zdravotni pojistovna Modra reka"
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Coverage/Coverage-FTHipRehabilitation",
+    "resource" : {
+      "resourceType" : "Coverage",
+      "id" : "Coverage-FTHipRehabilitation",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_Coverage-FTHipRehabilitation\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage Coverage-FTHipRehabilitation</b></p><a name=\"Coverage-FTHipRehabilitation\"> </a><a name=\"hcCoverage-FTHipRehabilitation\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>identifier</b>: <code>https://ncez.mzcr.cz/fhir/sid/pojistovna</code>/111</p><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>beneficiary</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
+      },
+      "identifier" : [{
+        "system" : "https://ncez.mzcr.cz/fhir/sid/pojistovna",
+        "value" : "111"
+      }],
+      "status" : "active",
+      "type" : {
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code" : "HIP"
+        }]
+      },
+      "beneficiary" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      },
+      "payor" : [{
+        "reference" : "Organization/Organization-Insurance111"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Condition/Condition-FTHipArthroplasty",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "Condition-FTHipArthroplasty",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_Condition-FTHipArthroplasty\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition Condition-FTHipArthroplasty</b></p><a name=\"Condition-FTHipArthroplasty\"> </a><a name=\"hcCondition-FTHipArthroplasty\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 Z47}\">Následná péče po náhradě kloubu</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p></div>"
+      },
+      "code" : {
+        "coding" : [{
+          "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
+          "code" : "Z47",
+          "display" : "Jiná ortopedická následná péče"
+        }],
+        "text" : "Následná péče po náhradě kloubu"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Condition/Condition-FTClinicalQuestion",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "Condition-FTClinicalQuestion",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-clinicalQuestion"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_Condition-FTClinicalQuestion\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition Condition-FTClinicalQuestion</b></p><a name=\"Condition-FTClinicalQuestion\"> </a><a name=\"hcCondition-FTClinicalQuestion\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-clinicalQuestion.html\">Clinical question (CZ)</a></p></div><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 82971005}\">Omezená pohyblivost po náhradě kyčelního kloubu – posouzení možností rehabilitace.</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p></div>"
+      },
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "code" : "82971005",
+          "display" : "narušená pohyblivost"
+        }],
+        "text" : "Omezená pohyblivost po náhradě kyčelního kloubu – posouzení možností rehabilitace."
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/ServiceRequest/FTServiceRequest-HipRehabilitation",
+    "resource" : {
+      "resourceType" : "ServiceRequest",
+      "id" : "FTServiceRequest-HipRehabilitation",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/FTServiceRequestCz"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_FTServiceRequest-HipRehabilitation\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest FTServiceRequest-HipRehabilitation</b></p><a name=\"FTServiceRequest-HipRehabilitation\"> </a><a name=\"hcFTServiceRequest-HipRehabilitation\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-FTServiceRequestCz.html\">FT (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/6a77187d-7e74-4fce-b604-bad9b2840101</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 62868009}, {http://snomed.info/sct 229065009}\">Mobilizační a cvičebná fyzioterapie</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p><p><b>authoredOn</b>: 2026-09-04 09:00:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-PractitionerRole-Orthopedist.html\">Milan Horak (https://ncez.mzcr.cz/fhir/sid/krzp#100000010): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - ortopedická ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>reasonReference</b>: <a href=\"Condition-Condition-FTHipArthroplasty.html\">Condition Následná péče po náhradě kloubu</a></p><p><b>insurance</b>: <a href=\"Coverage-Coverage-FTHipRehabilitation.html\">Coverage: identifier = https://ncez.mzcr.cz/fhir/sid/pojistovna#111; status = active; type = health insurance plan policy</a></p><p><b>supportingInfo</b>: </p><ul><li><a href=\"Goal-Goal-FTHipRehabilitation.html\">Goal: lifecycleStatus = active; description = Obnovení bezpečné chůze s postupným zatěžováním levé dolní končetiny</a></li><li><a href=\"DeviceUseStatement-DeviceUseStatement-FTHipImplant.html\">DeviceUseStatement: status = active; timing[x] = 2026-08-20</a></li></ul><p><b>note</b>: </p><blockquote><div><p>Operace levé kyčle dne 2026-08-20. Povolené zatěžování levé dolní končetiny do 50 % tělesné hmotnosti. Pracoviště fyzioterapie volí pacient podle bydliště.</p>\n</div></blockquote></div>"
+      },
+      "identifier" : [{
+        "system" : "urn:ietf:rfc:4122",
+        "value" : "6a77187d-7e74-4fce-b604-bad9b2840101"
+      }],
+      "status" : "active",
+      "intent" : "order",
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "62868009",
+          "display" : "mobilizační cvičení"
+        },
+        {
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "229065009",
+          "display" : "terapie cvičením"
+        }],
+        "text" : "Mobilizační a cvičebná fyzioterapie"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      },
+      "authoredOn" : "2026-09-04T09:00:00+02:00",
+      "requester" : {
+        "reference" : "PractitionerRole/PractitionerRole-Orthopedist"
+      },
+      "reasonReference" : [{
+        "reference" : "Condition/Condition-FTHipArthroplasty"
+      }],
+      "insurance" : [{
+        "reference" : "Coverage/Coverage-FTHipRehabilitation"
+      }],
+      "supportingInfo" : [{
+        "reference" : "Goal/Goal-FTHipRehabilitation"
+      },
+      {
+        "reference" : "DeviceUseStatement/DeviceUseStatement-FTHipImplant"
+      }],
+      "note" : [{
+        "text" : "Operace levé kyčle dne 2026-08-20. Povolené zatěžování levé dolní končetiny do 50 % tělesné hmotnosti. Pracoviště fyzioterapie volí pacient podle bydliště."
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Observation/Observation-FTHipMobility",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "Observation-FTHipMobility",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-patient-mobility"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Observation_Observation-FTHipMobility\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Observation Observation-FTHipMobility</b></p><a name=\"Observation-FTHipMobility\"> </a><a name=\"hcObservation-FTHipMobility\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-patient-mobility.html\">Patient mobility: General Order (CZ)</a></p></div><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category activity}\">Activity</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 282870005}\">Ability to stand up</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p><p><b>effective</b>: 2026-09-04 08:30:00+0200</p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-Orthopedist.html\">Milan Horak (https://ncez.mzcr.cz/fhir/sid/krzp#100000010): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou - ortopedická ambulance (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>value</b>: <span title=\"Codes:{http://snomed.info/sct 282873007}\">dokáže vstát</span></p></div>"
+      },
+      "status" : "final",
+      "category" : [{
+        "coding" : [{
+          "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+          "code" : "activity",
+          "display" : "Activity"
+        }]
+      }],
+      "code" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "282870005",
+          "display" : "Ability to stand up"
+        }]
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      },
+      "effectiveDateTime" : "2026-09-04T08:30:00+02:00",
+      "performer" : [{
+        "reference" : "PractitionerRole/PractitionerRole-Orthopedist"
+      }],
+      "valueCodeableConcept" : {
+        "coding" : [{
+          "system" : "http://snomed.info/sct",
+          "version" : "http://snomed.info/sct/11000279109",
+          "code" : "282873007",
+          "display" : "dokáže vstát"
+        }]
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Device/Device-FTHipImplant",
+    "resource" : {
+      "resourceType" : "Device",
+      "id" : "Device-FTHipImplant",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-medical-device"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Device_Device-FTHipImplant\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Device Device-FTHipImplant</b></p><a name=\"Device-FTHipImplant\"> </a><a name=\"hcDevice-FTHipImplant\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-medical-device.html\">Medical Device (CZ core)</a></p></div><h3>DeviceNames</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Name</b></td><td><b>Type</b></td></tr><tr><td style=\"display: none\">*</td><td>Kyčelní endoprotéza</td><td>User Friendly name</td></tr></table><p><b>type</b>: <span title=\"Codes:\">Totální endoprotéza levého kyčelního kloubu</span></p><p><b>patient</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p></div>"
+      },
+      "deviceName" : [{
+        "name" : "Kyčelní endoprotéza",
+        "type" : "user-friendly-name"
+      }],
+      "type" : {
+        "text" : "Totální endoprotéza levého kyčelního kloubu"
+      },
+      "patient" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      }
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/DeviceUseStatement/DeviceUseStatement-FTHipImplant",
+    "resource" : {
+      "resourceType" : "DeviceUseStatement",
+      "id" : "DeviceUseStatement-FTHipImplant",
+      "meta" : {
+        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/deviceUseStatement-cz-core"]
+      },
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"DeviceUseStatement_DeviceUseStatement-FTHipImplant\"> </a><p class=\"res-header-id\"><b>Generated Narrative: DeviceUseStatement DeviceUseStatement-FTHipImplant</b></p><a name=\"DeviceUseStatement-FTHipImplant\"> </a><a name=\"hcDeviceUseStatement-FTHipImplant\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-deviceUseStatement-cz-core.html\">Device Use Statement (CZ core)</a></p></div><p><b>status</b>: Active</p><p><b>subject</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p><p><b>timing</b>: 2026-08-20</p><p><b>device</b>: <a href=\"Device-Device-FTHipImplant.html\">Device: type = Totální endoprotéza levého kyčelního kloubu</a></p><p><b>reasonReference</b>: <a href=\"Condition-Condition-FTHipArthroplasty.html\">Condition Následná péče po náhradě kloubu</a></p></div>"
+      },
+      "status" : "active",
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      },
+      "timingDateTime" : "2026-08-20",
+      "device" : {
+        "reference" : "Device/Device-FTHipImplant"
+      },
+      "reasonReference" : [{
+        "reference" : "Condition/Condition-FTHipArthroplasty"
+      }]
+    }
+  },
+  {
+    "fullUrl" : "https://example.org/fhir/Goal/Goal-FTHipRehabilitation",
+    "resource" : {
+      "resourceType" : "Goal",
+      "id" : "Goal-FTHipRehabilitation",
+      "language" : "cs",
+      "text" : {
+        "status" : "generated",
+        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Goal_Goal-FTHipRehabilitation\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Goal Goal-FTHipRehabilitation</b></p><a name=\"Goal-FTHipRehabilitation\"> </a><a name=\"hcGoal-FTHipRehabilitation\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p></div><p><b>lifecycleStatus</b>: Active</p><p><b>description</b>: <span title=\"Codes:\">Obnovení bezpečné chůze s postupným zatěžováním levé dolní končetiny</span></p><p><b>subject</b>: <a href=\"Patient-Patient-FTHipRehabilitation.html\">Karel Dvorak  Male, DoB: 1958-04-22 ( https://ncez.mzcr.cz/fhir/sid/rcis#5804221234)</a></p></div>"
+      },
+      "lifecycleStatus" : "active",
+      "description" : {
+        "text" : "Obnovení bezpečné chůze s postupným zatěžováním levé dolní končetiny"
+      },
+      "subject" : {
+        "reference" : "Patient/Patient-FTHipRehabilitation"
+      }
+    }
+  }]
+}

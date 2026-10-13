@@ -32,6 +32,7 @@ from sez_api.client import (  # noqa: F401
     ELPv2,
     ELPv3,
     EZadanky,
+    EZadankyV2,
     Notifikace,
     EZCA2,
     EZCA2SpravaCertifikatu,
