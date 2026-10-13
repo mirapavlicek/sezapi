@@ -80,7 +80,9 @@ to_v2, pripravit, normalizuj_reference, analyzuj, katalog_typu, vzory IG),
 endpointy /api/ezadanky/v2/{typy,vzory,kostra,pripravit}, GUI výběr typu a
 vzoru; zkontroluj_pozadavek zrcadlí pravidla brány (přesná shoda fullUrl,
 RID, KRZP, custodian + IČP, performer, priorita routine|stat, intramurální
-operace). KRZP: nová v3.0.4 vedle v2.0.7 –
+operace). Lokální fulltext číselníků pro kostru (terminologie_index:
+kompletní MKN-10 z TermX, SNOMED CT CZ sady výkonů K/FT/Z z expanzí IG,
+/api/terminologie/hledat, našeptávače v GUI). KRZP: nová v3.0.4 vedle v2.0.7 –
 KRZP(verze=…)/SEZ_KRZP_VERZE, normalizuj_odpoved (ztotozenaOsoba ↔
 ztotoznenaOsoba). SZZv3.zdravotni_zaznamy_vyhledat skládá
 /prevence/vyhledat + /screeningy/vyhledat (cesta /zdravotniZaznamy/vyhledat
@@ -306,8 +308,9 @@ from sez_api.client import (
     UZISObsazenostLuzek,
 )
 from sez_api import fhir_order  # noqa: E402  (typy Z/K/FT, kostry, příprava Bundle)
+from sez_api import terminologie_index  # noqa: E402  (fulltext MKN-10 / SNOMED CT pro kostru)
 
-__version__ = "2.35.0"
+__version__ = "2.36.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",
@@ -332,6 +335,7 @@ __all__ = [
     "EZadanky",
     "EZadankyV2",
     "fhir_order",
+    "terminologie_index",
     "Notifikace",
     "EZCA2",
     "EZCA2SpravaCertifikatu",

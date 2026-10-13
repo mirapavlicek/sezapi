@@ -428,6 +428,12 @@ td.mono { font-family: var(--mono); font-size: 12px; }
 a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
 .skip-link { position: absolute; left: -999px; top: 8px; z-index: 10000; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; }
 .skip-link:focus { left: 12px; }
+/* našeptávač číselníků (MKN-10, SNOMED CT) v kostře eŽádanky */
+.ez2-ac { position:absolute; left:0; right:0; top:100%; z-index:50; max-height:260px; overflow-y:auto; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.12); font-size:12px; }
+.ez2-ac .ez2-ac-item { padding:6px 10px; cursor:pointer; display:flex; gap:8px; align-items:baseline; }
+.ez2-ac .ez2-ac-item:hover, .ez2-ac .ez2-ac-item.active { background:var(--bg3); }
+.ez2-ac .ez2-ac-item code { font-size:11px; min-width:84px; }
+.ez2-ac .ez2-ac-meta { padding:4px 10px; font-size:10px; color:var(--fg3); border-top:1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -3157,7 +3163,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             <div class="card-title">Systémová hlavička – <code>hlavicka</code> (HlavickaVstup)</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
               <div class="form-group"><label>Typ žádanky (referralorder-types)</label>
-                <select id="ez2CrTyp" onchange="ez2TypInfo(); ez2FillVzory(); ez2HlavickaChanged()">
+                <select id="ez2CrTyp" onchange="ez2TypInfo(); ez2FillVzory(); ez2TermSadaInfo(); ez2HlavickaChanged()">
                   <option value="Z">Z – zobrazovací vyšetření (721964003, IG img-order)</option>
                   <option value="K">K – konziliární / žádanka o vyšetření (57133-1, IG k-order)</option>
                   <option value="FT">FT – fyzioterapie a ergoterapie (57154-7)</option>
@@ -3192,8 +3198,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:8px">
               <div class="form-group" style="margin:0"><label>Kostra: požadavek (text)</label><input id="ez2KoText" placeholder="např. Konziliární kardiologické vyšetření"></div>
-              <div class="form-group" style="margin:0"><label>Kostra: výkon SNOMED (kód)</label><input id="ez2KoVykon" placeholder="K 185387006 / FT 229065009 / Z 168537006"></div>
-              <div class="form-group" style="margin:0"><label>Kostra: diagnóza MKN-10</label><input id="ez2KoDg" placeholder="např. M545"></div>
+              <div class="form-group" style="margin:0;position:relative"><label>Kostra: výkon SNOMED CT <span id="ez2KoVykonSada" style="font-weight:400;color:var(--fg3)"></span></label><input id="ez2KoVykon" autocomplete="off" placeholder="hledat název nebo kód – např. konzultace kardiolog, cvičení, CT mozku"><div id="ez2KoVykonAc" class="ez2-ac" style="display:none"></div><div id="ez2KoVykonInfo" style="font-size:10px;color:var(--fg3);min-height:12px"></div></div>
+              <div class="form-group" style="margin:0;position:relative"><label>Kostra: diagnóza MKN-10 <span style="font-weight:400;color:var(--fg3)">(38 934 kódů, ÚZIS 2025-01)</span></label><input id="ez2KoDg" autocomplete="off" placeholder="hledat název nebo kód – např. bolest zad, M54.5, zlomenina kotník"><div id="ez2KoDgAc" class="ez2-ac" style="display:none"></div><div id="ez2KoDgInfo" style="font-size:10px;color:var(--fg3);min-height:12px"></div></div>
               <div class="form-group" style="margin:0"><label>Kostra: priorita</label><select id="ez2KoPriorita"><option value="routine">routine (rutina)</option><option value="stat">stat (STATIM)</option></select></div>
             </div>
             <div id="ez2PripravaInfo" style="font-size:11px;color:var(--fg3);margin-bottom:6px;display:none"></div>
@@ -13267,6 +13273,7 @@ function ez2CreateInitOnce() {
     document.getElementById('ez2CrPoskytovatel').value = ico;
   }
   ez2LoadTypy().then(() => { ez2TypInfo(); ez2FillVzory(); });
+  ez2TermInit('ez2KoVykon', _ez2TermSadaVykonu); ez2TermInit('ez2KoDg', () => 'mkn10'); ez2TermSadaInfo();
   if (!_ez2Val('ez2CrBundle')) ez2LoadBundleExample('Bundle-BundleKralikRTG.json', true);
   else ez2HlavickaChanged();
 }
@@ -13391,8 +13398,9 @@ async function ez2Kostra() {
                 icp: _ez2Val('ez2CrIcp') || null, adresat: hl.adresat || null, textPozadavku: _ez2Val('ez2KoText') || null,
                 priorita: _ez2Val('ez2KoPriorita') || 'routine', nazevPoskytovatele: (typeof CLIENT_NAZEV !== 'undefined' && CLIENT_NAZEV) ? CLIENT_NAZEV : null,
                 klinickaOtazka: _ez2Val('ez2KoText') || null, dodatecnyPrijemce: hl.dodatecnyPrijemce || null, nadrizenaZadankaId: hl.nadrizenaZadankaId || null};
-  if (_ez2Val('ez2KoVykon')) body.vykony = [{code: _ez2Val('ez2KoVykon')}];
-  if (_ez2Val('ez2KoDg')) body.diagnoza = {code: _ez2Val('ez2KoDg')};
+  const vyk = _ez2TermHodnota('ez2KoVykon'), dg = _ez2TermHodnota('ez2KoDg');
+  if (vyk) body.vykony = [vyk];
+  if (dg) body.diagnoza = dg;
   const data = await api('POST', '/api/ezadanky/v2/kostra', body);
   if (!_ez2ApplyBody(data)) return toast('Kostru se nepodařilo sestavit: ' + (data?.error || data?.data?.error || '?'), true);
   _ez2ShowPriprava(data, 'Kostra ' + typ + ' sestavena (' + (data.fhirBundle.entry || []).length + ' entry) – doplňte klinický obsah dle IG');
@@ -13400,6 +13408,71 @@ async function ez2Kostra() {
 }
 function _ez2Uuid() { return (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); })); }
 function ez2BundleSkeleton(typ) { document.getElementById('ez2CrTyp').value = typ; return ez2Kostra(); }
+
+// --- Našeptávač číselníků (lokální index: MKN-10 kompletní, SNOMED CT CZ sady dle typu) ---
+const _ez2TermSady = {};   // inputId → () => sada
+const _ez2TermTimers = {};
+function _ez2TermSadaVykonu() { return ({K: 'sct-k-procedures', FT: 'sct-ft-procedures', Z: 'sct-imaging-procedures'})[_ez2Val('ez2CrTyp') || 'K']; }
+function _ez2TermHodnota(inputId) {
+  // Vybraná položka (data-code/data-display); jinak ručně zadaný kód (první token) bez displaye.
+  const el = document.getElementById(inputId); if (!el) return null;
+  if (el.dataset.code) { const o = {code: el.dataset.code, display: el.dataset.display || undefined}; if (el.dataset.system) o.system = el.dataset.system; return o; }
+  const raw = (el.value || '').trim(); if (!raw) return null;
+  const tok = raw.split(/[\s–-]+/)[0].replace('.', '');
+  return /^[A-Za-z0-9]{3,18}$/.test(tok) ? {code: tok} : null;
+}
+function _ez2TermVyber(inputId, item) {
+  const el = document.getElementById(inputId), info = document.getElementById(inputId + 'Info');
+  el.dataset.code = item.code; el.dataset.display = item.display || ''; if (item.system) el.dataset.system = item.system;
+  el.value = item.code + ' – ' + (item.display || '');
+  if (info) info.innerHTML = '✓ <code>' + escHtml(item.code) + '</code> ' + escHtml(item.display || '') + (item.system ? ' <span style="color:var(--fg3)">' + escHtml((item.system || '').replace('http://', '').replace('https://', '')) + (item.version ? ' ' + escHtml(item.version) : '') + '</span>' : '');
+  _ez2TermSkryt(inputId);
+}
+function _ez2TermSkryt(inputId) { const ac = document.getElementById(inputId + 'Ac'); if (ac) { ac.style.display = 'none'; ac.innerHTML = ''; } }
+async function _ez2TermHledat(inputId) {
+  const el = document.getElementById(inputId), ac = document.getElementById(inputId + 'Ac'), info = document.getElementById(inputId + 'Info');
+  const q = (el.value || '').trim();
+  if (q.length < 2) { _ez2TermSkryt(inputId); return; }
+  const sada = (_ez2TermSady[inputId] || (() => 'mkn10'))();
+  const r = await api('GET', '/api/terminologie/hledat?sada=' + encodeURIComponent(sada) + '&q=' + encodeURIComponent(q) + '&limit=12');
+  if (!r || r.error) { if (info) info.textContent = 'Vyhledávání selhalo: ' + (r?.error || '?'); return; }
+  if (document.getElementById(inputId).value.trim() !== q) return;  // mezitím se psalo dál
+  const items = r.items || []; const lk = r.lookup;
+  let html = items.map((it, i) => '<div class="ez2-ac-item' + (i === 0 ? ' active' : '') + '" data-i="' + i + '"><code>' + escHtml(it.code) + '</code><span>' + escHtml(it.display || '') + '</span></div>').join('');
+  if (!items.length && lk) html += '<div class="ez2-ac-item active" data-i="lk"><code>' + escHtml(lk.code) + '</code><span>' + escHtml(lk.display_cs || lk.display || '') + ' <span style="color:var(--fg3)">(TermX $lookup' + (lk.version ? ', ' + escHtml(lk.version) : '') + ')</span></span></div>';
+  if (!html) html = '<div class="ez2-ac-meta">Nic nenalezeno v sadě ' + escHtml(sada) + (r.sada && r.sada.uplne === false ? ' (snímek IG je ořezaný na ' + r.sada.pocet + ' položek – kód lze zadat ručně, ověří se přes TermX $lookup)' : '') + '</div>';
+  else html += '<div class="ez2-ac-meta">' + (r.total || items.length) + ' shod · ' + escHtml((r.sada && r.sada.nazev) || sada) + (r.sada && r.sada.version ? ' · ' + escHtml(r.sada.version) : '') + (r.sada && r.sada.uplne === false ? ' · <em>snímek ořezaný (IG limitedExpansion)</em>' : '') + '</div>';
+  ac.innerHTML = html; ac.style.display = '';
+  ac._items = items; ac._lookup = lk;
+  ac.querySelectorAll('.ez2-ac-item').forEach(d => d.addEventListener('mousedown', ev => { ev.preventDefault(); const i = d.dataset.i; _ez2TermVyber(inputId, i === 'lk' ? lk : items[+i]); }));
+}
+function ez2TermInit(inputId, sadaFn) {
+  const el = document.getElementById(inputId); if (!el || el._ez2TermInit) return; el._ez2TermInit = true;
+  _ez2TermSady[inputId] = sadaFn;
+  el.addEventListener('input', () => {
+    delete el.dataset.code; delete el.dataset.display; delete el.dataset.system;
+    const info = document.getElementById(inputId + 'Info'); if (info) info.textContent = '';
+    clearTimeout(_ez2TermTimers[inputId]); _ez2TermTimers[inputId] = setTimeout(() => _ez2TermHledat(inputId), 220);
+  });
+  el.addEventListener('focus', () => { if (!el.dataset.code && (el.value || '').trim().length >= 2) _ez2TermHledat(inputId); });
+  el.addEventListener('blur', () => setTimeout(() => _ez2TermSkryt(inputId), 150));
+  el.addEventListener('keydown', ev => {
+    const ac = document.getElementById(inputId + 'Ac'); if (!ac || ac.style.display === 'none') return;
+    const rows = [...ac.querySelectorAll('.ez2-ac-item')]; let idx = rows.findIndex(r => r.classList.contains('active'));
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); idx = Math.max(0, Math.min(rows.length - 1, idx + (ev.key === 'ArrowDown' ? 1 : -1))); rows.forEach((r, i) => r.classList.toggle('active', i === idx)); rows[idx] && rows[idx].scrollIntoView({block: 'nearest'}); }
+    else if (ev.key === 'Enter' && idx >= 0) { ev.preventDefault(); const i = rows[idx].dataset.i; _ez2TermVyber(inputId, i === 'lk' ? ac._lookup : ac._items[+i]); }
+    else if (ev.key === 'Escape') _ez2TermSkryt(inputId);
+  });
+}
+function ez2TermSadaInfo() {
+  const el = document.getElementById('ez2KoVykonSada'); if (!el) return;
+  const typ = _ez2Val('ez2CrTyp') || 'K';
+  el.textContent = ({K: '(konzultace, doporučení)', FT: '(fyzioterapeutické zákroky)', Z: '(zobrazovací výkony)'})[typ] || '';
+  el.title = ({K: 'ValueSet korder-procedures-vs (SNOMED CT: <<11429006, <<3457005)', FT: 'ValueSet ft-order-procedures-vs (SNOMED CT: <<91251008)', Z: 'ValueSet imaging-procedures (SNOMED CT zobrazovací výkony)'})[typ] || '';
+  // při změně typu neplatí dříve vybraný výkon z jiné sady
+  const v = document.getElementById('ez2KoVykon'); if (v && v.dataset.code && v.dataset.sadaTyp && v.dataset.sadaTyp !== typ) { delete v.dataset.code; delete v.dataset.display; v.value = ''; const info = document.getElementById('ez2KoVykonInfo'); if (info) info.textContent = ''; }
+  if (v) v.dataset.sadaTyp = typ;
+}
 async function ez2SyncBundleFromHlavicka() {
   const b = ez2ParseBundle(); if (!b || b._parseError) return toast('Bundle není validní JSON', true);
   const data = await api('POST', '/api/ezadanky/v2/pripravit', {hlavicka: ez2Hlavicka(), fhirBundle: b, icp: _ez2Val('ez2CrIcp') || null});

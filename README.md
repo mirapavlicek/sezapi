@@ -566,6 +566,20 @@ telo = fhir_order.to_v2(vzor, icp="<IČP>", pacient="<RID>", poskytovatel="<IČO
 print(fhir_order.analyzuj(telo["fhirBundle"]))   # typ, pacient, autor, zadatel, performer, reference
 ```
 
+**Vyhledávání v číselnících pro kostru** (modul `sez_api.terminologie_index`,
+`GET /api/terminologie/hledat?sada=…|typ=K|FT|Z&q=…`, `GET /api/terminologie/sady`):
+TermX při `$expand` ignoruje `filter` a ořezává expanzi na 5 000 položek a
+SNOMED CT v něm jako obsah není, proto balíček nese komprimované snímky
+(`sez_api/terminologie_data/*.json.gz`): kompletní **MKN-10** (Mkn10_5 2025-01,
+38 934 kódů, z TermX `CodeSystem/mkn-10--2025-01`) a **SNOMED CT CZ** sady
+s českými názvy z expanzí HL7 CZ IG (`korder-procedures-vs` pro K,
+`ft-order-procedures-vs` pro FT, `imaging-procedures` pro Z, `condition-sct`,
+`vzp-odbornost-vs`). Hledá se bez diakritiky (kód i název, `M54.5` = `M545`);
+kód mimo snímek (K a Z IG publikuje ořezané na 1 000 položek) se ověří přes
+TermX `$lookup`. V GUI jsou pole „výkon SNOMED CT“ a „diagnóza MKN-10“ kostry
+našeptávače – vybraný kód i název se propíší do `ServiceRequest.code`
+a `Condition.code`.
+
 REST: `GET /api/ezadanky/v2/typy` (katalog typů, profilů, vzorů a pravidel
 brány), `GET /api/ezadanky/v2/vzory[/{name}?pripravit=1&pacient=…&icp=…]`,
 `POST /api/ezadanky/v2/kostra` (`{typ, pacient, poskytovatel, autor, icp,

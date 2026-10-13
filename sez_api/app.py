@@ -42,6 +42,7 @@ from sez_api import certdistribuce
 from sez_api import krpzs_registr
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_order as _fhir_order
+from sez_api import terminologie_index as _term_idx
 from sez_api import fhir_ezd as _fhir_ezd
 from sez_api import ncpeh as _ncpeh_mod
 from sez_api.ncpeh import NCPeH
@@ -2853,6 +2854,37 @@ async def ez2_vzor(name: str, pripravit: int = 0, pacient: str = None, poskytova
     body["vyhrady"] = EZadankyV2.zkontroluj_pozadavek(body)
     body["typ"] = _fhir_order.typ_z_bundle(b)
     return JSONResponse(body)
+
+
+@app.get("/api/terminologie/sady")
+async def terminologie_sady():
+    """Lokální číselníky pro vyhledávání (MKN-10 kompletní z TermX; SNOMED CT
+    sady výkonů K/FT/Z, diagnóz a odborností z expanzí HL7 CZ IG s českými názvy)."""
+    return JSONResponse({"sady": _term_idx.info_sad(), "vykonyPodleTypu": _term_idx.SADY_VYKONU,
+                         "diagnozy": _term_idx.SADY_DIAGNOZ})
+
+
+@app.get("/api/terminologie/hledat")
+async def terminologie_hledat(q: str = "", sada: str = None, typ: str = None, limit: int = 20,
+                              lookup: int = 1):
+    """Fulltext bez diakritiky v lokální sadě (``sada=mkn10|sct-k-procedures|…``
+    nebo ``typ=K|FT|Z`` pro sadu výkonů daného typu). Je-li dotaz kód, který
+    ve snímku není (sady z IG jsou u K a Z ořezané na 1 000 položek), ověří se
+    přes TermX ``CodeSystem/$lookup`` a vrátí se jako ``lookup``."""
+    if not sada and typ:
+        sada = _term_idx.SADY_VYKONU.get(typ.upper())
+    sada = sada or "mkn10"
+    try:
+        res = _term_idx.hledat(sada, q, limit=limit)
+    except KeyError as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+    qs = (q or "").strip().replace(".", "")
+    if lookup and qs and not res["items"] and re.fullmatch(r"[A-Za-z0-9]{3,18}", qs):
+        system = (res["sada"] or {}).get("system") or _term_idx.SYS_SNOMED
+        hit = _term_idx.lookup_kod(_termx_module(public=True), system, qs)
+        if hit:
+            res["lookup"] = hit
+    return JSONResponse(res)
 
 
 @app.post("/api/ezadanky/v2/kostra")
