@@ -1396,6 +1396,17 @@ Struktura KRP: vždy obálka `{zadostInfo*, zadostData*}`
 
 Povinná pole NovyPacient: `prijmeni*` (max 50), `datumNarozeni*`
 
+KRP rozhoduje podle věku (popis API KRP, NCEZ): do 3 kalendářních měsíců věku zakládá
+novorozence bez ohledu na občanství (minimum jméno, příjmení, datum narození, volitelně
+`matka`; neztotožňuje se). Starší osobu založí jen jako cizince – standard vyžaduje doklad
+(`typDokladu`, `cislo`, `stat`) a u občana mimo EU i `kontaktniTelefon` nebo `kontaktniEmail`.
+Občana ČR staršího 3 měsíců (i bez uvedeného `statniObcanstvi` nebo s dvojím občanstvím
+včetně CZ) odmítne s HTTP 400 „Nelze založit pacienta, který je starší než 3 měsíce.“
+
+Chování T2 ověřené 21. 10. 2026: cizince staršího 3 měsíců založí i bez dokladu a kontaktu,
+pole mimo schéma (`rodnePrijmeni`, `zdravotniPojisteni`, `platnostDo` u dokladu) tiše
+zahodí a `pohlavi` musí být kód z číselníku (`0`–`3`), ne `M`/`Z`.
+
 ```json
 {
   "zadostInfo": {
@@ -1406,8 +1417,8 @@ Povinná pole NovyPacient: `prijmeni*` (max 50), `datumNarozeni*`
   "zadostData": {
     "jmeno": "Hans",
     "prijmeni": "Mueller",
-    "datumNarozeni": "1985-03-22T00:00:00+01:00",
-    "pohlavi": "M",
+    "datumNarozeni": "1985-03-22",
+    "pohlavi": "1",
     "statniObcanstvi": ["DE"],
     "kontaktniEmail": "hans.mueller@example.de",
     "kontaktniTelefon": "+491701234567",
@@ -1419,7 +1430,7 @@ Povinná pole NovyPacient: `prijmeni*` (max 50), `datumNarozeni*`
       "cisloPopisne": 48
     },
     "doklady": [
-      { "typ": "PAS", "cislo": "C01X00T47", "platnostDo": "2030-05-15" }
+      { "typDokladu": "P", "cislo": "C01X00T47", "stat": "DE" }
     ]
   }
 }

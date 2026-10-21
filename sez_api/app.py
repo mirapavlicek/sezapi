@@ -4270,7 +4270,7 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/priradit/docasny_rid", "desc": "Přiřazení DRID ke skutečnému RID"},
-                    {"method": "POST", "path": "/krp/api/v3/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec do 3 měsíců, cizinec)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zmenit/pacient", "desc": "Změna údajů pacienta"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/reklamuj/udaj", "desc": "Reklamace údaje pacienta"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/slouceni/zadost", "desc": "Žádost o sloučení pacientů"},
@@ -7100,8 +7100,48 @@ def _irop_tech10(body, modules, client):
             "steps": steps, "passed": passed, "total": len(steps)}
 
 
+def _irop_krp_rid(step: dict) -> str | None:
+    data = step.get("data")
+    od = data.get("odpovedData") if isinstance(data, dict) else None
+    return od.get("rid") if isinstance(od, dict) else None
+
+
+def _irop_krp_zalozit(name, krp, pacient_data) -> dict:
+    """Krok založení pacienta v KRP – projde jen s přiděleným RID."""
+    step = _irop_step_api(name, krp.zalozit_pacienta, pacient_data)
+    rid = _irop_krp_rid(step)
+    if step["passed"] and not rid:
+        step["passed"] = False
+        step["error"] = "KRP nevrátil RID založeného pacienta"
+    if rid:
+        step["_rid"] = rid
+        step["_stav"] = (step["data"].get("odpovedInfo") or {}).get("popis", "")
+    return step
+
+
+def _irop_krp_odmitnuti(name, krp, pacient_data) -> dict:
+    """Krok, u kterého KRP založení odmítnout musí (HTTP 4xx bez RID)."""
+    step = _irop_step_api(name, krp.zalozit_pacienta, pacient_data)
+    rid = _irop_krp_rid(step)
+    data = step.get("data") if isinstance(step.get("data"), dict) else {}
+    chyby = (data.get("odpovedInfo") or {}).get("chybyZpracovani") or []
+    duvod = "; ".join(c.get("message", "") for c in chyby if isinstance(c, dict))
+    odmitnuto = 400 <= (step.get("status") or 0) < 500 and not rid
+    step["passed"] = odmitnuto
+    step["error"] = None if odmitnuto else (
+        f"KRP pacienta založil (RID {rid}), ačkoli to standard nepřipouští" if rid
+        else step.get("error") or "KRP nevrátil očekávané odmítnutí")
+    if odmitnuto:
+        step["_odmitnuti"] = duvod or step.get("error")
+    return step
+
+
 def _irop_obs3(body, modules, client):
-    """TS-OBS-3: Založení pacienta v KRP (novorozenec)."""
+    """TS-OBS-3: Založení pacienta v KRP – novorozenec a cizinec.
+
+    KRP rozhoduje podle věku: do 3 měsíců zakládá novorozence (bez ohledu na
+    občanství), starší osobu jen jako cizince. Občana ČR staršího 3 měsíců
+    (i bez uvedeného občanství) odmítne – takový pacient se má vyhledat."""
     steps = []
     krp = modules.get("krp")
     if not krp:
@@ -7124,14 +7164,8 @@ def _irop_obs3(body, modules, client):
             "rodneCislo": f"900115{uuid.uuid4().hex[:4].upper()}",
         },
     }
-    step = _irop_step_api("Založit pacienta (novorozenec)", krp.zalozit_pacienta, pacient_data)
-    if step["passed"] and step.get("data"):
-        d = step["data"]
-        od = d.get("odpovedData", {}) if isinstance(d, dict) else {}
-        if isinstance(od, dict) and od.get("rid"):
-            step["_rid"] = od["rid"]
-            step["_stav"] = d.get("odpovedInfo", {}).get("popis", "")
-    elif not step["passed"] and step.get("data") and isinstance(step["data"], dict):
+    step = _irop_krp_zalozit("Založit pacienta (novorozenec)", krp, pacient_data)
+    if not step["passed"] and step.get("data") and isinstance(step["data"], dict):
         info = step["data"].get("odpovedInfo") or {}
         step["_api_error"] = info.get("popis") or info.get("kod") or step.get("error")
     steps.append(step)
@@ -7157,6 +7191,35 @@ def _irop_obs3(body, modules, client):
                 "error": None if codes_ok else "Vrácené kódy pohlaví/státního občanství neodpovídají očekávání",
                 "_debug": {},
             })
+
+    steps.append(_irop_krp_zalozit("Založit novorozence – cizince (bez dokladu)", krp, {
+        "jmeno": f"IROPCiz{uuid.uuid4().hex[:6]}",
+        "prijmeni": "Testovaci",
+        "datumNarozeni": (date.today() - timedelta(days=10)).isoformat(),
+        "pohlavi": "1",
+        "statniObcanstvi": ["UA"],
+        "mistoNarozeniZemeKod": "CZ",
+        "matka": {"jmeno": "Oksana", "prijmeni": "Testovaci", "datumNarozeni": "1994-05-02"},
+    }))
+    # Minimální sada dle standardu KRP: doklad se státem vydání, u občana
+    # mimo EU navíc kontaktní telefon nebo e-mail.
+    steps.append(_irop_krp_zalozit("Založit cizince staršího 3 měsíců", krp, {
+        "jmeno": f"IROPCiz{uuid.uuid4().hex[:6]}",
+        "prijmeni": "Testovaci",
+        "datumNarozeni": "1988-03-14",
+        "pohlavi": "1",
+        "statniObcanstvi": ["UA"],
+        "kontaktniTelefon": "+420777123456",
+        "doklady": [{"typDokladu": "P", "cislo": f"FX{uuid.uuid4().hex[:7].upper()}", "stat": "UA"}],
+    }))
+    steps.append(_irop_krp_odmitnuti("Odmítnutí občana ČR staršího 3 měsíců", krp, {
+        "jmeno": f"IROPTest{uuid.uuid4().hex[:6]}",
+        "prijmeni": "Testovaci",
+        "datumNarozeni": (date.today() - timedelta(days=130)).isoformat(),
+        "pohlavi": "2",
+        "statniObcanstvi": ["CZ"],
+    }))
+
     passed = sum(1 for s in steps if s["passed"])
     return {"scenario_id": "TS-OBS-3", "name": "Založení pacienta v KRP",
             "steps": steps, "passed": passed, "total": len(steps)}
@@ -7777,7 +7840,8 @@ IROP_SCENARIOS = {
     "TS-OBS-2":  {"fn": _irop_obs2, "name": "Vytvoření eZD",
                    "desc": "Generování FHIR Bundle, validace formátu, uložení do DÚ a kontrola dohledatelnosti."},
     "TS-OBS-3":  {"fn": _irop_obs3, "name": "Založení pacienta v KRP",
-                   "desc": "Založení novorozence v KRP se správnými kódy a kontrola vrácených údajů."},
+                   "desc": "Založení novorozence (občan ČR i cizinec) a cizince staršího 3 měsíců v KRP, "
+                            "kontrola vrácených údajů a odmítnutí občana ČR staršího 3 měsíců."},
     "TS-OBS-4":  {"fn": _irop_obs4, "name": "Příjem výjezdové zprávy ZZS",
                    "desc": "Kompletní E2E flow: ZZS sestaví FHIR Bundle (LOINC 67796-3), odešle do DÚ, "
                             "příjmová nemocnice vyhledá, stáhne, ověří integritu (SHA-256) a validuje FHIR strukturu."},

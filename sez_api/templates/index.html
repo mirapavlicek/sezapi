@@ -1063,29 +1063,37 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">➕</span> Založit pacienta
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Založí nového pacienta v KRP. Používá se typicky pro <strong>novorozence</strong> nebo <strong>cizince</strong>
-            bez existujícího záznamu. Systém přidělí nový RID. Pole označená * jsou povinná.
+            Založí nového pacienta v KRP (<code>NovyPacient</code>, KRP v3). Systém přidělí nový RID. Povinné jsou jen pole označená *.
+            KRP rozhoduje podle věku: do 3 měsíců zakládá <strong>novorozence</strong> (i cizince, stačí jméno, příjmení
+            a datum narození), starší osobu jen jako <strong>cizince</strong> (dle standardu s dokladem, u občana mimo EU
+            i s telefonem nebo e-mailem). Občana ČR staršího 3 měsíců nezaloží – vyhledejte ho.
           </p>
 
           <div style="font-weight:600;font-size:12px;color:var(--fg3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)">Základní údaje</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-            <div class="form-group"><label>Jméno *</label><input id="krpSprZalJmeno" placeholder="Jan"></div>
-            <div class="form-group"><label>Příjmení *</label><input id="krpSprZalPrijmeni" placeholder="Novák"></div>
-            <div class="form-group"><label>Rodné příjmení</label><input id="krpSprZalRodPrijmeni" placeholder="Pokud se liší"></div>
+            <div class="form-group"><label>Jméno</label><input id="krpSprZalJmeno" maxlength="50" placeholder="Jan"></div>
+            <div class="form-group"><label>Příjmení *</label><input id="krpSprZalPrijmeni" maxlength="50" placeholder="Novák"></div>
+            <div class="form-group"><label>Rodné číslo</label><input id="krpSprZalRc" maxlength="20" placeholder="8501011234"></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">
-            <div class="form-group"><label>Rodné číslo</label><input id="krpSprZalRc" placeholder="8501011234"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
             <div class="form-group"><label>Datum narození *</label><input id="krpSprZalDatNar" type="text" class="date-cs" placeholder="dd.mm.rrrr"></div>
+            <div class="form-group"><label>Datum úmrtí</label><input id="krpSprZalDatUmrti" type="text" class="date-cs" placeholder="dd.mm.rrrr"></div>
             <div class="form-group"><label>Pohlaví</label>
               <select id="krpSprZalPohlavi"><option value="">-- vyberte --</option></select>
             </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
             <div class="form-group"><label>Státní občanství</label>
               <select id="krpSprZalStat"><option value="">-- vyberte --</option></select>
             </div>
+            <div class="form-group"><label>Další státní občanství</label>
+              <select id="krpSprZalStat2"><option value="">-- žádné --</option></select>
+            </div>
+            <div class="form-group"><label>Číslo pojištěnce</label><input id="krpSprZalCisloPoj" maxlength="22" placeholder="8501011234"></div>
           </div>
 
           <details style="margin-top:12px">
-            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Adresa a kontakty</summary>
+            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Adresa pobytu a kontakty</summary>
             <div class="form-group" style="margin-top:8px">
               <label>Hledat adresu v RUIAN (ČR)</label>
               <div class="ruian-wrap">
@@ -1096,39 +1104,66 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
               <div id="krpSprZalRuianTag" style="min-height:18px"></div>
               <input type="hidden" id="krpSprZalRuianId">
             </div>
-            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:8px">
-              <div class="form-group"><label>Ulice</label><input id="krpSprZalUlice" placeholder="Nemocniční"></div>
-              <div class="form-group"><label>Č.p.</label><input id="krpSprZalCp" placeholder="128" style="max-width:90px"></div>
-              <div class="form-group"><label>Č.o.</label><input id="krpSprZalCo" placeholder="5" style="max-width:90px"></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">
+              <div class="form-group"><label>Ulice</label><input id="krpSprZalUlice" maxlength="50" placeholder="Nemocniční"></div>
+              <div class="form-group"><label>Č.p.</label><input id="krpSprZalCp" inputmode="numeric" placeholder="128"></div>
+              <div class="form-group"><label>Č.ev.</label><input id="krpSprZalCe" inputmode="numeric" placeholder=""></div>
+              <div class="form-group"><label>Č.o.</label><input id="krpSprZalCo" maxlength="5" placeholder="5"></div>
+              <div class="form-group"><label>Jiné číslo</label><input id="krpSprZalCisloJine" maxlength="10" title="Jen pokud adresa nemá číslo popisné ani evidenční"></div>
             </div>
-            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:4px">
-              <div class="form-group"><label>Obec</label><input id="krpSprZalMesto" placeholder="Ústí nad Labem"></div>
-              <div class="form-group"><label>PSČ</label><input id="krpSprZalPsc" placeholder="40001"></div>
-              <div class="form-group"><label>Stát</label><input id="krpSprZalAdresaStat" value="CZ" placeholder="CZ" style="max-width:60px"></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-top:4px">
+              <div class="form-group"><label>Obec</label><input id="krpSprZalMesto" maxlength="50" placeholder="Ústí nad Labem"></div>
+              <div class="form-group"><label>PSČ</label><input id="krpSprZalPsc" inputmode="numeric" placeholder="40001"></div>
+              <div class="form-group"><label>P.O. Box</label><input id="krpSprZalPoBox" maxlength="10"></div>
+              <div class="form-group"><label>Stát</label><input id="krpSprZalAdresaStat" value="CZ" placeholder="CZ" maxlength="2"></div>
             </div>
+            <div class="form-group" style="margin-top:4px"><label>Doplňující popis adresy</label><input id="krpSprZalAdresaPopis" maxlength="256"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-              <div class="form-group"><label>Telefon</label><input id="krpSprZalTelefon" placeholder="+420 123 456 789"></div>
-              <div class="form-group"><label>E-mail</label><input id="krpSprZalEmail" placeholder="pacient@email.cz" type="email"></div>
+              <div class="form-group"><label>Telefon</label><input id="krpSprZalTelefon" maxlength="120" placeholder="+420 123 456 789"></div>
+              <div class="form-group"><label>E-mail</label><input id="krpSprZalEmail" maxlength="120" placeholder="pacient@email.cz" type="email"></div>
             </div>
           </details>
 
           <details style="margin-top:8px">
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Doklady</summary>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-              <div class="form-group"><label>Typ dokladu</label>
-                <select id="krpSprZalDokladTyp"><option value="">-- žádný --</option></select>
+            <div id="krpSprZalDoklady" style="margin-top:8px">
+              <div class="zal-doklad" style="display:grid;grid-template-columns:1fr 1fr 1fr 32px;gap:8px">
+                <div class="form-group"><label>Typ dokladu *</label>
+                  <select id="krpSprZalDokladTyp" data-f="typ"><option value="">-- žádný --</option></select>
+                </div>
+                <div class="form-group"><label>Číslo dokladu *</label><input id="krpSprZalDokladCislo" data-f="cislo" maxlength="4000" placeholder="AB123456"></div>
+                <div class="form-group"><label>Stát vydání</label>
+                  <select id="krpSprZalDokladStat" data-f="stat"><option value="">-- vyberte --</option></select>
+                </div>
+                <div></div>
               </div>
-              <div class="form-group"><label>Číslo dokladu</label><input id="krpSprZalDokladCislo" placeholder="AB123456"></div>
-              <div class="form-group"><label>Platnost do</label><input id="krpSprZalDokladPlatnost" type="text" class="date-cs" placeholder="dd.mm.rrrr"></div>
+            </div>
+            <button class="btn btn-outline btn-sm" type="button" onclick="krpZalPridatDoklad()" style="margin-top:6px">+ Přidat doklad</button>
+          </details>
+
+          <details style="margin-top:8px">
+            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Místo narození</summary>
+            <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-top:8px">
+              <div class="form-group"><label>Země</label>
+                <select id="krpSprZalMistoZeme"><option value="">-- vyberte --</option></select>
+              </div>
+              <div class="form-group"><label>RUIAN ID obce (ČR)</label><input id="krpSprZalMistoRuianObec" inputmode="numeric" placeholder="554791"></div>
+              <div class="form-group"><label>Název místa (mimo ČR)</label><input id="krpSprZalMistoSvet" maxlength="100" placeholder="Kyjiv"></div>
             </div>
           </details>
 
           <details style="margin-top:8px">
-            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Pojištění</summary>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-              <div class="form-group"><label>Číslo pojištěnce</label><input id="krpSprZalCisloPoj" placeholder="8501011234"></div>
-              <div class="form-group"><label>Kód pojišťovny</label>
-                <select id="krpSprZalPojistovna"><option value="">-- vyberte --</option></select>
+            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Matka novorozence</summary>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+              <div class="form-group"><label>Jméno</label><input id="krpSprZalMatkaJmeno" placeholder="Jana"></div>
+              <div class="form-group"><label>Příjmení</label><input id="krpSprZalMatkaPrijmeni" placeholder="Nováková"></div>
+              <div class="form-group"><label>RID matky</label><input id="krpSprZalMatkaRid" maxlength="10" placeholder="1234567890"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+              <div class="form-group"><label>Rodné číslo</label><input id="krpSprZalMatkaRc" placeholder="9055151234"></div>
+              <div class="form-group"><label>Datum narození</label><input id="krpSprZalMatkaDatNar" type="text" class="date-cs" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group" style="display:flex;align-items:flex-end">
+                <label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="krpSprZalMatkaAdresa"> Adresa matky = adresa pobytu</label>
               </div>
             </div>
           </details>
@@ -1136,7 +1171,7 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           <details style="margin-top:8px">
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Vlastní JSON (pokročilé)</summary>
             <p style="font-size:11px;color:var(--fg3);margin:6px 0">Pokud vyplníte JSON, formulářová pole výše budou ignorována a odešle se přesně to, co sem zadáte.</p>
-            <div class="form-group"><textarea id="krpSprZalozitJson" rows="6" placeholder='{"pacientData":{"jmeno":"Jan","prijmeni":"Novák","datumNarozeni":"1985-01-01",…}}'></textarea></div>
+            <div class="form-group"><textarea id="krpSprZalozitJson" rows="6" placeholder='{"jmeno":"Jan","prijmeni":"Novák","datumNarozeni":"2026-10-01",…}'></textarea></div>
           </details>
 
           <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
@@ -5080,7 +5115,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <tr><td><code>TS-TECH-14</code></td><td>EZCA II + Správa cert. (NOVÉ)</td><td>Seznam EZCA cert., CRL list a číselník chyb (read-only operace)</td><td>Technický</td></tr>
               <tr><td><code>TS-TECH-15</code></td><td>Discovery brány (NOVÉ)</td><td>Stažení /apidoc/config.json a kontrola, že brána publikuje očekávané verze 17 služeb</td><td>Technický</td></tr>
               <tr><td><code>TS-OBS-2</code></td><td>Vytvoření eZD</td><td>Generování FHIR Bundle, validace formátu, uložení do DÚ a ověření dohledatelnosti</td><td>Obsahový</td></tr>
-              <tr><td><code>TS-OBS-3</code></td><td>Založení pacienta</td><td>Založení novorozence v KRP + kontrola vrácených kódů</td><td>Obsahový</td></tr>
+              <tr><td><code>TS-OBS-3</code></td><td>Založení pacienta</td><td>Založení novorozence (i cizince) a cizince staršího 3 měsíců v KRP + kontrola vrácených kódů a odmítnutí občana ČR staršího 3 měsíců</td><td>Obsahový</td></tr>
               <tr><td><code>TS-OBS-4</code></td><td>Příjem výjezdové zprávy ZZS (NOVÉ)</td><td>E2E flow: ZZS → DÚ → příjmová nemocnice (FHIR Bundle LOINC 67796-3, vyhledat, stáhnout, validovat SHA-256)</td><td>Obsahový</td></tr>
             </tbody>
           </table>
@@ -5298,7 +5333,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
       <div class="sub-panel" id="irop-obs-panel">
         <div class="card" id="iropObs1"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-1</span><span class="card-title">Příjem, uložení a zobrazení eZD</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Stažení dokumentu z DÚ, validace integrity (hash, velikost), lokální uložení a náhled obsahu.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-1')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-1" style="margin-top:10px;min-height:30px">-</div></div>
         <div class="card" id="iropObs2"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-2</span><span class="card-title">Vytvoření eZD a zpřístupnění v DÚ</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Generování FHIR Bundle (Composition, Patient, Practitioner, Organization), uložení jako eZD do DÚ a kontrola dohledatelnosti.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-2')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-2" style="margin-top:10px;min-height:30px">-</div></div>
-        <div class="card" id="iropObs3"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-3</span><span class="card-title">Založení pacienta v KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Založení novorozence v KRP se správnými kódy (pohlaví, státní občanství) a kontrola vrácených údajů přes RID.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-3')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-3" style="margin-top:10px;min-height:30px">-</div></div>
+        <div class="card" id="iropObs3"><div class="card-header"><span class="badge" style="font-size:11px;margin-right:8px;background:#7c3aed;color:#fff">TS-OBS-3</span><span class="card-title">Založení pacienta v KRP</span></div><p style="font-size:12px;color:var(--fg3);margin:4px 0 8px">Založení novorozence v KRP se správnými kódy (pohlaví, státní občanství) a kontrola vrácených údajů přes RID. Dále novorozenec cizinec, cizinec starší 3 měsíců a očekávané odmítnutí občana ČR staršího 3 měsíců.</p><button class="btn btn-primary" onclick="iropRunScenario('TS-OBS-3')">Spustit</button><div class="json-box" id="iropRes-TS-OBS-3" style="margin-top:10px;min-height:30px">-</div></div>
 
         <div class="card" id="iropObs4" style="border-left:4px solid #dc2626">
           <div class="card-header">
@@ -5643,18 +5678,34 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">➕ Založit pacienta (POST /api/v3/pacient/zalozit/pacient)</div>
           <div class="form-row">
-            <div class="form-group"><label>Jméno *</label><input id="krp3ZalJmeno" placeholder="Jan"></div>
-            <div class="form-group"><label>Příjmení *</label><input id="krp3ZalPrijmeni" placeholder="Novak"></div>
+            <div class="form-group"><label>Jméno</label><input id="krp3ZalJmeno" maxlength="50" placeholder="Jan"></div>
+            <div class="form-group"><label>Příjmení *</label><input id="krp3ZalPrijmeni" maxlength="50" placeholder="Novak"></div>
             <div class="form-group"><label>Datum narození *</label><input type="text" class="date-cs" id="krp3ZalDn" placeholder="dd.mm.rrrr"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Rodné číslo</label><input id="krp3ZalRc" placeholder="RRMMDD/XXXX"></div>
+            <div class="form-group"><label>Rodné číslo</label><input id="krp3ZalRc" maxlength="20" placeholder="RRMMDDXXXX"></div>
             <div class="form-group"><label>Pohlaví</label>
               <select id="krp3ZalPohlavi">
-                <option value="M">M</option><option value="Z">Z</option><option value="N">N (neznámé)</option>
+                <option value="">-- neuvedeno --</option><option value="1">1 – muž</option><option value="2">2 – žena</option>
+                <option value="3">3 – nelze specifikovat</option><option value="0">0 – neudáno</option>
               </select>
             </div>
-            <div class="form-group"><label>Státní občanství</label><input id="krp3ZalStat" placeholder="CZ" value="CZ"></div>
+            <div class="form-group"><label>Státní občanství</label><input id="krp3ZalStat" placeholder="CZ" value="CZ" maxlength="2"></div>
+          </div>
+          <div style="font-size:11px;color:var(--fg3);margin:2px 0 6px">
+            Do 3 měsíců věku se zakládá novorozenec (i cizinec). Starší osobu KRP založí jen jako cizince – dle standardu s dokladem,
+            u občana mimo EU i s telefonem nebo e-mailem. Občana ČR staršího 3 měsíců KRP odmítne.
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Typ dokladu</label>
+              <select id="krp3ZalDokladTyp"><option value="">-- žádný --</option><option value="P">P – pas</option><option value="ID">ID – občanský průkaz</option></select>
+            </div>
+            <div class="form-group"><label>Číslo dokladu</label><input id="krp3ZalDokladCislo" maxlength="4000" placeholder="FX1234567"></div>
+            <div class="form-group"><label>Stát vydání</label><input id="krp3ZalDokladStat" placeholder="UA" maxlength="2"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Telefon</label><input id="krp3ZalTelefon" maxlength="120" placeholder="+420 777 123 456"></div>
+            <div class="form-group"><label>E-mail</label><input id="krp3ZalEmail" type="email" maxlength="120" placeholder="pacient@example.com"></div>
           </div>
           <div style="font-weight:600;font-size:11px;color:var(--fg3);text-transform:uppercase;margin:8px 0 4px">Vlastní body (volitelné, override)</div>
           <textarea id="krp3ZalBodyOverride" rows="3" placeholder='{} = sestaví se z polí výše'></textarea>
@@ -9705,7 +9756,7 @@ function _isValidDateCs(v) {
   if (!v) return true;
   const iso = _csToIso(v);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
-  const d = new Date(iso + 'T00:00:00');
+  const d = new Date(iso + 'T00:00:00Z');
   return !isNaN(d.getTime()) && iso === d.toISOString().slice(0, 10);
 }
 
@@ -9903,50 +9954,136 @@ function _ruianHighlight(dropEl) {
   if (active) active.scrollIntoView({ block: 'nearest' });
 }
 
+// KRP zakládá do 3 kalendářních měsíců věku novorozence, starší osobu jen jako
+// cizince; chybějící občanství nebo občanství CZ (i dvojí) bere jako české.
+function _krpStarsiNez3Mesice(isoDatum) {
+  const dn = new Date(`${(isoDatum || '').slice(0, 10)}T00:00:00`);
+  if (isNaN(dn)) return false;
+  const hranice = new Date();
+  hranice.setHours(0, 0, 0, 0);
+  hranice.setMonth(hranice.getMonth() - 3);
+  return dn < hranice;
+}
+
+function _krpZalozeniPovoleno(pacient) {
+  if (!_krpStarsiNez3Mesice(pacient.datumNarozeni)) return true;
+  const obcanstvi = (pacient.statniObcanstvi || []).filter(Boolean);
+  if (!obcanstvi.length || obcanstvi.includes('CZ')) {
+    toast('KRP nezaloží občana ČR staršího 3 měsíců – pacienta vyhledejte (dle RČ, jména a data narození nebo čísla pojištěnce).', true);
+    return false;
+  }
+  if (!(pacient.doklady || []).length) {
+    toast('Cizinec starší 3 měsíců: standard KRP vyžaduje doklad se státem vydání, u občana mimo EU i telefon nebo e-mail.');
+  }
+  return true;
+}
+
+function _krpZalBezPrazdnych(o) {
+  Object.keys(o).forEach(k => {
+    const v = o[k];
+    if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) delete o[k];
+  });
+  return Object.keys(o).length ? o : undefined;
+}
+
+function _krpZalInt(id, popis) {
+  const v = _val(id).replace(/\s+/g, '');
+  if (!v) return undefined;
+  if (!/^\d+$/.test(v)) throw new Error(`${popis} musí být celé číslo`);
+  return parseInt(v, 10);
+}
+
+function _krpZalAdresa() {
+  const a = _krpZalBezPrazdnych({
+    ruianId: _krpZalInt('krpSprZalRuianId', 'RUIAN ID adresy'),
+    ulice: _val('krpSprZalUlice'),
+    cisloPopisne: _krpZalInt('krpSprZalCp', 'Číslo popisné'),
+    cisloEvidencni: _krpZalInt('krpSprZalCe', 'Číslo evidenční'),
+    cisloOrientacni: _val('krpSprZalCo'),
+    cisloJine: _val('krpSprZalCisloJine'),
+    obec: _val('krpSprZalMesto'),
+    psc: _krpZalInt('krpSprZalPsc', 'PSČ'),
+    poBox: _val('krpSprZalPoBox'),
+    popis: _val('krpSprZalAdresaPopis'),
+  });
+  if (!a) return undefined;
+  const stat = _val('krpSprZalAdresaStat').toUpperCase();
+  if (stat) a.stat = stat;
+  return a;
+}
+
+function _krpZalDoklady() {
+  const doklady = [];
+  document.querySelectorAll('#krpSprZalDoklady .zal-doklad').forEach((row, i) => {
+    const f = n => (row.querySelector(`[data-f="${n}"]`)?.value || '').trim();
+    const typ = f('typ'), cislo = f('cislo');
+    if (!typ && !cislo) return;
+    if (!typ || !cislo) throw new Error(`Doklad ${i + 1}: vyplňte typ i číslo dokladu`);
+    doklady.push(_krpZalBezPrazdnych({ typDokladu: typ, cislo, stat: f('stat') }));
+  });
+  return doklady;
+}
+
+let _krpZalDokladSeq = 1;
+function krpZalPridatDoklad() {
+  const n = ++_krpZalDokladSeq;
+  const row = document.createElement('div');
+  row.className = 'zal-doklad';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 32px;gap:8px;margin-top:6px';
+  row.innerHTML = `
+    <div class="form-group"><select id="krpSprZalDokladTyp${n}" data-f="typ"></select></div>
+    <div class="form-group"><input data-f="cislo" maxlength="4000" placeholder="Číslo dokladu"></div>
+    <div class="form-group"><select id="krpSprZalDokladStat${n}" data-f="stat"></select></div>
+    <button class="btn btn-outline btn-sm" type="button" title="Odebrat doklad" onclick="this.parentElement.remove()">×</button>`;
+  document.getElementById('krpSprZalDoklady').appendChild(row);
+  _csFillSelectSync(`krpSprZalDokladTyp${n}`, _csCache.druh_dokladu || _csFallback.druh_dokladu, '-- žádný --');
+  _csFillSelectSync(`krpSprZalDokladStat${n}`, _csCache.stat || _csFallback.stat, '-- vyberte --');
+}
+
+function _krpZalNovyPacient() {
+  const prijmeni = _val('krpSprZalPrijmeni'), datumNarozeni = _val('krpSprZalDatNar');
+  if (!prijmeni) throw new Error('Příjmení je povinné');
+  if (!datumNarozeni) throw new Error('Datum narození je povinné');
+  const adresaPobytu = _krpZalAdresa();
+  const matka = _krpZalBezPrazdnych({
+    jmeno: _val('krpSprZalMatkaJmeno'),
+    prijmeni: _val('krpSprZalMatkaPrijmeni'),
+    rid: _val('krpSprZalMatkaRid'),
+    rodneCislo: _val('krpSprZalMatkaRc'),
+    datumNarozeni: _val('krpSprZalMatkaDatNar'),
+  });
+  if (matka && adresaPobytu && document.getElementById('krpSprZalMatkaAdresa')?.checked) {
+    matka.adresa = { ...adresaPobytu };
+  }
+  return _krpZalBezPrazdnych({
+    jmeno: _val('krpSprZalJmeno'),
+    prijmeni,
+    rodneCislo: _val('krpSprZalRc'),
+    kontaktniEmail: _val('krpSprZalEmail'),
+    kontaktniTelefon: _val('krpSprZalTelefon'),
+    cisloPojistence: _val('krpSprZalCisloPoj'),
+    datumNarozeni,
+    datumUmrti: _val('krpSprZalDatUmrti'),
+    pohlavi: _val('krpSprZalPohlavi'),
+    statniObcanstvi: [...new Set([_val('krpSprZalStat'), _val('krpSprZalStat2')].filter(Boolean))],
+    adresaPobytu,
+    doklady: _krpZalDoklady(),
+    matka,
+    mistoNarozeniRuianObecId: _krpZalInt('krpSprZalMistoRuianObec', 'RUIAN ID obce narození'),
+    mistoNarozeniZemeKod: _val('krpSprZalMistoZeme'),
+    mistoNarozeniSvetNazev: _val('krpSprZalMistoSvet'),
+  });
+}
+
 async function krpZalozit() {
   const jsonEl = document.getElementById('krpSprZalozitJson');
   let body;
   if (jsonEl && jsonEl.value.trim()) {
     try { body = JSON.parse(jsonEl.value); } catch { return toast('Neplatný JSON', true); }
   } else {
-    body = {};
-    const jmeno = _val('krpSprZalJmeno'), prijmeni = _val('krpSprZalPrijmeni');
-    if (!jmeno || !prijmeni) return toast('Jméno a příjmení jsou povinné', true);
-    if (!_val('krpSprZalDatNar')) return toast('Datum narození je povinné', true);
-    body.jmeno = jmeno;
-    body.prijmeni = prijmeni;
-    const rp = _val('krpSprZalRodPrijmeni'); if (rp) body.rodnePrijmeni = rp;
-    body.datumNarozeni = _val('krpSprZalDatNar');
-    const rc = _val('krpSprZalRc'); if (rc) body.rodneCislo = rc;
-    const pohl = _val('krpSprZalPohlavi'); if (pohl) body.pohlavi = pohl;
-    const stat = _val('krpSprZalStat'); if (stat) body.statniObcanstvi = [stat];
-    const ulice = _val('krpSprZalUlice'), mesto = _val('krpSprZalMesto'), psc = _val('krpSprZalPsc');
-    const cp = _val('krpSprZalCp'), co = _val('krpSprZalCo'), adStat = _val('krpSprZalAdresaStat');
-    const ruianId = _val('krpSprZalRuianId');
-    if (ulice || mesto || psc || ruianId) {
-      body.adresaPobytu = {};
-      if (ruianId) body.adresaPobytu.ruianId = parseInt(ruianId) || undefined;
-      if (ulice) body.adresaPobytu.ulice = ulice;
-      if (cp) body.adresaPobytu.cisloPopisne = parseInt(cp) || undefined;
-      if (co) body.adresaPobytu.cisloOrientacni = co;
-      if (mesto) body.adresaPobytu.obec = mesto;
-      if (psc) body.adresaPobytu.psc = parseInt(psc) || undefined;
-      if (adStat) body.adresaPobytu.stat = adStat;
-    }
-    const tel = _val('krpSprZalTelefon'); if (tel) body.kontaktniTelefon = tel;
-    const email = _val('krpSprZalEmail'); if (email) body.kontaktniEmail = email;
-    const dtyp = _val('krpSprZalDokladTyp'), dcislo = _val('krpSprZalDokladCislo');
-    if (dtyp && dcislo) {
-      const dok = { typDokladu: dtyp, cislo: dcislo };
-      const dplat = _val('krpSprZalDokladPlatnost'); if (dplat) dok.platnostDo = dplat;
-      body.doklady = [dok];
-    }
-    const cpoj = _val('krpSprZalCisloPoj'), kpoj = _val('krpSprZalPojistovna');
-    if (cpoj) body.cisloPojistence = cpoj;
-    if (kpoj) {
-      body.zdravotniPojisteni = [{ kodPojistovny: kpoj }];
-    }
+    try { body = _krpZalNovyPacient(); } catch (e) { return toast(e.message, true); }
   }
+  if (!_krpZalozeniPovoleno(body)) return;
   const data = await api('POST', '/api/krp/zalozit-pacienta', body);
   showResult('krpSpravaResult', data);
   if (data?.status === 428) {
@@ -9954,7 +10091,9 @@ async function krpZalozit() {
     return;
   }
   const rid = data?.data?.odpovedData?.rid || data?.data?.rid;
-  if (rid) toast(`Pacient založen, RID: ${rid}`);
+  if (!rid) return;
+  if (data?.data?.odpovedInfo?.subStav === 'OsobaJizExistuje') toast(`Pacient už v KRP existuje, RID: ${rid}`);
+  else toast(`Pacient založen, RID: ${rid}`);
 }
 
 async function krpNacistPacienta() {
@@ -10504,12 +10643,10 @@ let _csSource = {};
 
 const _csFallback = {
   pohlavi: [
-    {kod:'1',nazev:'Muž'},{kod:'2',nazev:'Žena'},{kod:'0',nazev:'Neuvedeno'},
+    {kod:'1',nazev:'muž'},{kod:'2',nazev:'žena'},{kod:'3',nazev:'nelze specifikovat'},{kod:'0',nazev:'neudáno'},
   ],
   druh_dokladu: [
-    {kod:'OP',nazev:'Občanský průkaz'},{kod:'PAS',nazev:'Cestovní pas'},
-    {kod:'OPR',nazev:'Průkaz o povolení k pobytu'},{kod:'PR',nazev:'Průkaz žadatele o mezinárodní ochranu'},
-    {kod:'VS',nazev:'Vízový štítek'},{kod:'PP',nazev:'Povolení k pobytu (karta)'},
+    {kod:'P',nazev:'Pas'},{kod:'ID',nazev:'Občanský průkaz'},
   ],
   zdravotni_pojistovna: [
     {kod:'111',nazev:'VZP – Všeobecná zdravotní pojišťovna'},
@@ -10547,10 +10684,13 @@ function _fmtDate(s) {
 }
 
 async function _csLoad(nazev) {
-  if (_csCache[nazev] && _csCache[nazev].length) return _csCache[nazev];
+  // Výchozí data plní formuláře hned po načtení stránky – živý číselník je musí nahradit.
+  if (_csCache[nazev] && _csCache[nazev].length && _csSource[nazev] === 'api') return _csCache[nazev];
   try {
     const r = await api('GET', `/api/krp/ciselnik/${nazev}`);
-    const items = _krpCiselnikExtract(r).filter(it => it.kod);
+    const dnes = new Date();
+    const items = _krpCiselnikExtract(r)
+      .filter(it => it.kod && (!it.platnostDo || new Date(it.platnostDo) >= dnes));
     if (items.length) {
       _csCache[nazev] = items;
       _csSource[nazev] = 'api';
@@ -10594,8 +10734,10 @@ async function _csFillSelect(selectId, nazev, emptyLabel, formatFn) {
 const _csFormDefs = [
   ['krpSprZalPohlavi','pohlavi','-- vyberte --'],
   ['krpSprZalStat','stat','-- vyberte --'],
+  ['krpSprZalStat2','stat','-- žádné --'],
   ['krpSprZalDokladTyp','druh_dokladu','-- žádný --'],
-  ['krpSprZalPojistovna','zdravotni_pojistovna','-- vyberte --'],
+  ['krpSprZalDokladStat','stat','-- vyberte --'],
+  ['krpSprZalMistoZeme','stat','-- vyberte --'],
   ['krpSprZmenPohlavi','pohlavi','-- beze změny --'],
   ['krpDokTyp','druh_dokladu','-- vyberte --'],
   ['krpCizStat','stat','-- vyberte --'],
@@ -16600,9 +16742,20 @@ async function krp3Zalozit() {
     datumNarozeni: _csDateToIso(_val('krp3ZalDn')),
     rodneCislo: _val('krp3ZalRc'),
     pohlavi: _val('krp3ZalPohlavi'),
-    statniObcanstvi: [_val('krp3ZalStat') || 'CZ'],
+    kontaktniTelefon: _val('krp3ZalTelefon'),
+    kontaktniEmail: _val('krp3ZalEmail'),
   });
+  const stat = _val('krp3ZalStat').toUpperCase();
+  if (stat) built.statniObcanstvi = [stat];
+  const dtyp = _val('krp3ZalDokladTyp'), dcislo = _val('krp3ZalDokladCislo');
+  if (dtyp || dcislo) {
+    if (!dtyp || !dcislo) return toast('Vyplňte typ i číslo dokladu', true);
+    built.doklady = [_krp3Clean({ typDokladu: dtyp, cislo: dcislo, stat: _val('krp3ZalDokladStat').toUpperCase() })];
+  }
+  const override = document.getElementById('krp3ZalBodyOverride')?.value.trim();
+  if (!override && (!built.prijmeni || !built.datumNarozeni)) return toast('Příjmení a datum narození jsou povinné', true);
   let body; try { body = _bodyOrOverride('krp3ZalBodyOverride', _krp3Env(built)); } catch { return; }
+  if (!_krpZalozeniPovoleno(body.zadostData || {})) return;
   const r = await api('POST', '/api/krp3/zalozit', body);
   _showJson('krp3SpravaResult', r);
 }

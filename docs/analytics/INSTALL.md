@@ -127,11 +127,11 @@ Set sc = krp.HledatJmenoPrijmeniRC("Jan", "Novak", "8506151234", "LECBA", .respo
 Set novyPacient = {
     "jmeno": "Hans",
     "prijmeni": "Mueller",
-    "datumNarozeni": "1985-03-22T00:00:00+01:00",
-    "pohlavi": "M",
+    "datumNarozeni": "1985-03-22",
+    "pohlavi": "1",
     "statniObcanstvi": ["DE"],
     "adresaPobytu": {"stat": "CZ", "obec": "Praha", "psc": 11000, "ulice": "Vinohradska", "cisloPopisne": 48},
-    "doklady": [{"typ": "PAS", "cislo": "C01X00T47", "platnostDo": "2030-05-15"}]
+    "doklady": [{"typDokladu": "P", "cislo": "C01X00T47", "stat": "DE"}]
 }
 Set sc = krp.ZalozitPacienta(novyPacient, "Zalozeni cizince", .response)
 ```

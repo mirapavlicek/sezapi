@@ -102,6 +102,19 @@ Bundle-BundleKralikRTG aktualizován na build 9. 10. 2026 (custodian,
 requester → PractitionerRole, SR.identifier 0..*, insurance 1..*,
 cz-coverage-order); reverzní generátor Bundle tomu odpovídá.
 
+KRP založení pacienta (2026-10-21, ověřeno na T2): KRP rozhoduje podle věku –
+do 3 kalendářních měsíců zakládá novorozence bez ohledu na občanství, starší
+osobu jen jako cizince; občana ČR (i bez občanství nebo s dvojím vč. CZ)
+staršího 3 měsíců odmítne HTTP 400. TS-OBS-3 nově zakládá i novorozence
+cizince a cizince staršího 3 měsíců a ověřuje odmítnutí občana ČR. Formuláře
+„Založit pacienta“ odpovídají schématu NovyPacient (povinné jen příjmení
+a datum narození; datum úmrtí, víc občanství a dokladů, matka novorozence,
+místo narození, celá adresa) – dřív posílaly pole mimo schéma, která KRP tiše
+zahodí, a v3 formulář pohlaví M/Z mimo číselník. Číselníky KRP v GUI se nově
+načítají živě (záložní data je už nepřekryjí; záložní typy dokladů P/ID)
+a bez položek s prošlou platností. Opravena kontrola datových polí, která
+v časovém pásmu východně od UTC hlásila každé platné datum jako neplatné.
+
 Revize NCEZ zdrojů 2026-09-09:
 - KRP: NCEZ oznámil 27. 8. 2026, že k 15. 9. 2026 VYPÍNÁ API KRP pro PZS
   verze v1 i v2 (dosud bylo vypnuto jen v1). Hlavní rozhraní /api/krp/*
@@ -310,7 +323,7 @@ from sez_api.client import (
 from sez_api import fhir_order  # noqa: E402  (typy Z/K/FT, kostry, příprava Bundle)
 from sez_api import terminologie_index  # noqa: E402  (fulltext MKN-10 / SNOMED CT pro kostru)
 
-__version__ = "2.36.0"
+__version__ = "2.37.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

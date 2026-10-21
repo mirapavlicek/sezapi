@@ -18,6 +18,7 @@ from sez_api.app import (
     _irop_hodnoceni_scenare,
     _irop_hodnoceni_celkove,
     _irop_obs2,
+    _irop_obs3,
     _irop_tech4,
     _irop_tech5,
     _irop_tech6,
@@ -439,6 +440,80 @@ def test_obs2_zasilka_ma_adresata_jineho_pzs():
     _irop_obs2({"ico": "25488627", "ico_adresat": "00179906",
                 "doc_type": "pacientsky-souhrn"}, {"du": du2}, None)
     assert du2.zasilky[0]["adresat"] == "00179906"
+
+
+# --- TS-OBS-3: novorozenec a cizinec v KRP ------------------------------------
+
+class _FakeKRPZalozeni:
+    """KRP dle chování T2: do 3 měsíců zakládá kohokoli, starší jen cizince;
+    občana ČR (i bez občanství) staršího 3 měsíců odmítne."""
+    last_request_debug = None
+
+    def __init__(self, zalozit_cz_starsiho=False):
+        self.zalozit_cz_starsiho = zalozit_cz_starsiho
+        self.zalozeni = []
+        self.pacienti = {}
+
+    def zalozit_pacienta(self, data, ucel="LECBA"):
+        from datetime import date, timedelta
+        self.zalozeni.append(data)
+        starsi = date.fromisoformat(data["datumNarozeni"]) < date.today() - timedelta(days=92)
+        obcanstvi = data.get("statniObcanstvi") or []
+        if starsi and (not obcanstvi or "CZ" in obcanstvi) and not self.zalozit_cz_starsiho:
+            return _FakeResp({"odpovedInfo": {
+                "stav": "Chyba", "subStav": "ChybaVstupnichDat",
+                "chybyZpracovani": [{"message": "Nelze založit pacienta, který je starší než 3 měsíce.",
+                                     "fieldName": "DatumNarozeni"}]},
+                "odpovedData": None}, status=400)
+        rid = str(1000000000 + 13 * len(self.zalozeni))
+        self.pacienti[rid] = {
+            "rid": rid,
+            "pohlavi": {"hodnota": data.get("pohlavi")},
+            "statniObcanstvi": [{"hodnota": s} for s in obcanstvi],
+        }
+        return _FakeResp({"odpovedInfo": {"stav": "OK", "subStav": "OsobaZalozena",
+                                          "popis": "Pacient úspěšně založen"},
+                          "odpovedData": {"rid": rid, "typZaznamu": {"nazev": "Neztotozneny"}}})
+
+    def hledat_rid(self, rid, ucel="LECBA"):
+        return _FakeResp({"odpovedInfo": {"stav": "OK"}, "odpovedData": self.pacienti[rid]})
+
+
+def test_obs3_novorozenec_cizinec_a_odmitnuti_cz():
+    krp = _FakeKRPZalozeni()
+    r = _irop_obs3({}, {"krp": krp}, None)
+    assert r["passed"] == r["total"] == 6, [(s["name"], s["error"]) for s in r["steps"]]
+    assert _irop_hodnoceni_scenare(r) == "VYHOVUJE"
+
+    novorozenec_cizinec, cizinec, cz_starsi = krp.zalozeni[1:]
+    assert novorozenec_cizinec["statniObcanstvi"] == ["UA"]
+    assert "doklady" not in novorozenec_cizinec
+    assert cizinec["doklady"][0]["typDokladu"] == "P"
+    assert cizinec["doklady"][0]["stat"] == "UA"
+    assert cizinec.get("kontaktniTelefon") or cizinec.get("kontaktniEmail")
+    assert cz_starsi["statniObcanstvi"] == ["CZ"]
+
+    odmitnuti = r["steps"][-1]
+    assert odmitnuti["status"] == 400
+    assert "3 měsíce" in odmitnuti["_odmitnuti"]
+
+
+def test_obs3_nevyhovuje_kdyz_krp_zalozi_cz_starsiho_3_mesicu():
+    r = _irop_obs3({}, {"krp": _FakeKRPZalozeni(zalozit_cz_starsiho=True)}, None)
+    odmitnuti = r["steps"][-1]
+    assert not odmitnuti["passed"]
+    assert "ačkoli to standard nepřipouští" in odmitnuti["error"]
+    assert _irop_hodnoceni_scenare(r) == "NEVYHOVUJE"
+
+
+def test_obs3_zalozeni_bez_rid_neprojde():
+    class _BezRid(_FakeKRPZalozeni):
+        def zalozit_pacienta(self, data, ucel="LECBA"):
+            return _FakeResp({"odpovedInfo": {"stav": "OK"}, "odpovedData": None})
+
+    r = _irop_obs3({}, {"krp": _BezRid()}, None)
+    assert not r["steps"][0]["passed"]
+    assert r["steps"][0]["error"] == "KRP nevrátil RID založeného pacienta"
 
 
 # --- request/response debug u každého kroku -----------------------------------
