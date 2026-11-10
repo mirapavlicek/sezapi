@@ -2640,11 +2640,45 @@ class EZadankyV2:
                "specifikace": "Funkční specifikace eŽádanky typu FT v7.0"},
     }
 
-    #: Stavy žádanky (číselník stav-zadanky).
+    #: Stavy žádanky – číselník ``stav-zadanky`` v1.0.0 (Standard systému
+    #: eŽádanka v2.0, Tabulka 9; ověřeno ``CodeSystem/$lookup`` na produkčním
+    #: TermX 10. 11. 2026 a testovací sadou Postman MZ ČR z 15. 10. 2026,
+    #: která po ``vyridit`` čeká stav "4").
+    #: Do revize 10. 11. 2026 zde byly kódy 2/4 prohozené a kód 5 vedený jako
+    #: „Vrácená do oběhu“ – vrácení do oběhu ale není stav: žádanka se vrací
+    #: do stavu 0 (Nová) a ztrácí adresáta. Kód 5 (Expirovaná) uvádí Standard,
+    #: v produkčním TermX zatím není.
     STAVY = {
-        "0": "Nová", "1": "Přijatá", "2": "Vyřízená",
-        "3": "Stornovaná", "4": "Neproveditelná", "5": "Vrácená do oběhu",
+        "0": "Nová", "1": "Přijatá", "2": "Neproveditelná",
+        "3": "Stornovaná", "4": "Dokončená", "5": "Expirovaná",
     }
+    #: Název stavu 4 v uživatelském rozhraní (Standard: „Dokončená“ = vyřízená).
+    STAV_NOVA, STAV_PRIJATA, STAV_NEPROVEDITELNA = "0", "1", "2"
+    STAV_STORNOVANA, STAV_DOKONCENA, STAV_EXPIROVANA = "3", "4", "5"
+    #: Stavy, ve kterých žádanka čeká na příjemce / je rozpracovaná.
+    STAVY_AKTIVNI = ("0", "1")
+    #: Koncové stavy – nad žádankou už nelze provést procesní operaci.
+    STAVY_KONCOVE = ("2", "3", "4", "5")
+    #: Procesní operace → výsledný stav.
+    PRECHODY = {
+        "0": {"prijmout": "1", "stornovat": "3"},
+        "1": {"vyridit": "4", "stornovat": "3",
+              "zaznacitNeproveditelnost": "2", "vratitDoObehu": "0"},
+    }
+
+    @staticmethod
+    def etag_na_verzi(etag) -> "str | None":
+        """Hodnota ``verzeZaznamu`` z hlavičky ETag: odstraní příznak slabého
+        validátoru ``W/`` i uvozovky (stejně jako testovací sada Postman
+        MZ ČR, která před použitím v If-Match odřízne předponu ``W/``
+        a krajní uvozovky)."""
+        if not etag:
+            return None
+        v = str(etag).strip()
+        if v[:2].upper() == "W/":
+            v = v[2:]
+        v = v.strip().strip('"')
+        return v or None
 
     def __init__(self, client: SEZClient):
         self.c = client
@@ -2658,7 +2692,7 @@ class EZadankyV2:
                 "Procesní operace eŽádanky v2 vyžaduje verzeZaznamu "
                 "(hlavička If-Match) – hodnota z hlavicka.verzeZaznamu "
                 "nebo z ETag poslední odpovědi.")
-        return {"If-Match": str(verze_zaznamu)}
+        return {"If-Match": EZadankyV2.etag_na_verzi(verze_zaznamu) or str(verze_zaznamu)}
 
     @staticmethod
     def verze_zaznamu(resp) -> "str | None":
@@ -2674,7 +2708,7 @@ class EZadankyV2:
                 return v
         headers = getattr(resp, "headers", None) or {}
         etag = headers.get("ETag") or headers.get("etag")
-        return etag.strip('"') if etag else None
+        return EZadankyV2.etag_na_verzi(etag)
 
     @staticmethod
     def _polozka(kod):
@@ -3013,6 +3047,80 @@ class EZadankyV2:
                             extra_headers=self._if_match(verze_zaznamu))
 
     vyrid = vyridit
+
+    @staticmethod
+    def sestav_vysledek(obsah, *, nazev_souboru: str, autor: str, poskytovatel: str,
+                        pacient: str, zdravotnicky_pracovnik: str = None,
+                        mime: str = "text/plain", typ: str = "721964003",
+                        klasifikace: str = "57133-1", jazyk: str = "cs-CZ",
+                        duvernost: str = "N",
+                        format_kod: str = "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        nazev: str = "Výsledek zobrazovacího vyšetření") -> dict:
+        """Zásilka s výsledkem pro :meth:`vyridit` ve tvaru testovací sady
+        Postman MZ ČR (15. 10. 2026): jeden dokument, ``hash`` = SHA-256
+        (hex) **bajtů** souboru, ``soubor.soubor`` = base64, jazyk ``cs-CZ``,
+        formát ``urn:ihe:iti:xds:2017:mimeTypeSufficient``.
+
+        Autor i poskytovatel výsledku jsou **příjemce** žádanky (ten, kdo
+        vyšetření provedl), ne žadatel. Výchozí ``typ``/``klasifikace``
+        odpovídají žádance Z z testovací sady – pro jiné typy je předejte."""
+        import base64 as _b64
+        import hashlib as _hl
+        data = obsah.encode("utf-8") if isinstance(obsah, str) else bytes(obsah or b"")
+        if not data:
+            raise ValueError("sestav_vysledek: soubor s výsledkem je prázdný.")
+        spolecne = {"autor": str(autor), "poskytovatel": str(poskytovatel),
+                    "pacient": str(pacient)}
+        return {
+            "nazev": nazev,
+            "typ": {"kod": typ},
+            "klasifikace": {"kod": klasifikace},
+            "autor": str(autor),
+            "zdravotnickyPracovnik": str(zdravotnicky_pracovnik or autor),
+            "poskytovatel": str(poskytovatel),
+            "pacient": str(pacient),
+            "dokument": [{
+                "nazev": nazev_souboru,
+                "typ": {"kod": typ},
+                "jazyk": {"kod": jazyk},
+                "klasifikace": {"kod": klasifikace},
+                "duvernost": {"kod": duvernost},
+                "format": {"kod": format_kod},
+                "mime": {"kod": mime},
+                **spolecne,
+                "hash": _hl.sha256(data).hexdigest(),
+                "soubor": {"soubor": _b64.b64encode(data).decode("ascii")},
+            }],
+        }
+
+    @classmethod
+    def stav_po_operaci(cls, stav: str, operace: str) -> "str | None":
+        """Výsledný stav po procesní operaci, nebo ``None``, pokud operaci
+        ve výchozím stavu provést nelze (Standard systému eŽádanka v2.0)."""
+        return cls.PRECHODY.get(str(stav), {}).get(operace)
+
+    #: Kroky scénáře „životní cyklus eŽádanky“ dle testovací sady Postman
+    #: MZ ČR (kolekce 01–03, 15. 10. 2026) – kdo krok volá a jaký stav čeká.
+    ZIVOTNI_CYKLUS = [
+        {"krok": 1, "kdo": "žadatel", "operace": "uloz",
+         "volani": "POST /api/v2/zadanka", "http": 201, "stav": "0"},
+        {"krok": 2, "kdo": "žadatel", "operace": "nacist",
+         "volani": "POST /api/v2/zadanka/{id}/nacist", "http": 200, "stav": "0"},
+        {"krok": 3, "kdo": "příjemce", "operace": "vyhledat_aktivni",
+         "volani": "POST /api/v2/zadanka/vyhledatAktivni", "http": 200, "stav": "0",
+         "poznamka": "tělo jen rid NEBO jen kodZadanky + strankovani {page: 0, size: 20}"},
+        {"krok": 4, "kdo": "příjemce", "operace": "nacist",
+         "volani": "POST /api/v2/zadanka/{id}/nacist", "http": 200, "stav": "0",
+         "poznamka": "s cisloDokladu nebo kodZadanky – zpřístupní Bundle ne-adresátovi"},
+        {"krok": 5, "kdo": "příjemce", "operace": "prijmout",
+         "volani": "PATCH /api/v2/zadanka/{id}/prijmout", "http": 200, "stav": "1"},
+        {"krok": 6, "kdo": "příjemce", "operace": "vyridit",
+         "volani": "PATCH /api/v2/zadanka/{id}/vyridit", "http": 200, "stav": "4",
+         "poznamka": "zpusobVyrizeniZadanky.kod \"1\", zásilka viz sestav_vysledek()"},
+        {"krok": 7, "kdo": "příjemce", "operace": "nacist",
+         "volani": "POST /api/v2/zadanka/{id}/nacist", "http": 200, "stav": "4",
+         "poznamka": "hlavicka.zasilkyVysledku obsahuje id zásilky v DÚ"},
+    ]
 
     def uprav(self, *args, **kwargs):
         raise NotImplementedError(
@@ -4045,27 +4153,47 @@ class SZZv2:
         "preventivniProhlidkyPldd",        # praktický lékař pro děti a dorost
     ]
 
-    # Známé typy v modulu /screeningy
-    # Pozn.: HPV screening děložního hrdla je ve swaggeru v2.0.1 veden s dvojitým
-    # "D" – /screeningy/karcinomDDeloznihoHrdlaHpv (překlep v API, ale reálná
-    # cesta). Jednoduché "karcinomDeloznihoHrdlaHpv" přijímáme jako alias.
+    # Známé typy v modulu /screeningy – dle swaggeru SZZ 2.0.7 (T2, 13. 10. 2026).
+    # Verze 2.0.4 (červen 2026) doplnila i do v2 pět
+    # samostatných screeningů (koloskopie, vstupní PSA, urologické a bioptické
+    # vyšetření prostaty, pneumologické vyšetření) – viz SCREENINGY_OD_2_0_4.
+    # HPV screening děložního hrdla byl ve swaggeru v2.0.1 veden s dvojitým "D"
+    # (/screeningy/karcinomDDeloznihoHrdlaHpv); swagger 2.0.7 už má opravenou
+    # cestu karcinomDeloznihoHrdlaHpv (changelog opravu neuvádí, takže není
+    # jasné, od které verze platí). Klient proto volá opravenou cestu a při
+    # HTTP 404 zkusí původní zápis (HPV_CESTA_PUVODNI) – funguje tak proti
+    # novému i staršímu nasazení. Starý zápis přijímáme jako alias.
     SCREENINGY_TYPY = [
         "aneurysmaAbdominalniAortyUsg",
-        "karcinomDDeloznihoHrdlaHpv",
         "karcinomDeloznihoHrdlaCytologie",
         "karcinomDeloznihoHrdlaExpertniKolposkopie",
+        "karcinomDeloznihoHrdlaHpv",
         "karcinomPlicLdct",
+        "karcinomPlicPneumologickeVysetreni",
+        "karcinomProstatyBioptickeVysetreni",
         "karcinomProstatyMri",
         "karcinomProstatyPsa",
+        "karcinomProstatyUrologickeVysetreni",
+        "karcinomProstatyVstupniPsa",
         "karcinomPrsuBiopsie",
         "karcinomPrsuMamografie",
+        "kolorektalniKarcinomKoloskopie",
         "kolorektalniKarcinomToks",
     ]
 
+    SCREENINGY_OD_2_0_4 = (
+        "karcinomPlicPneumologickeVysetreni",
+        "karcinomProstatyBioptickeVysetreni",
+        "karcinomProstatyUrologickeVysetreni",
+        "karcinomProstatyVstupniPsa",
+        "kolorektalniKarcinomKoloskopie",
+    )
+
     # Aliasy typů → cesta dle swaggeru
     SCREENINGY_ALIASY = {
-        "karcinomDeloznihoHrdlaHpv": "karcinomDDeloznihoHrdlaHpv",
+        "karcinomDDeloznihoHrdlaHpv": "karcinomDeloznihoHrdlaHpv",
     }
+    HPV_CESTA_PUVODNI = "karcinomDDeloznihoHrdlaHpv"
 
     # Emergentní záznam v2 – stejná podmnožina jako v1 (alergie bez CasZjisteni)
     EMERGENTNI_TYPY = [
@@ -4090,13 +4218,23 @@ class SZZv2:
     def _crud(self, modul: str, typ: str):
         """Vrátí slovník metod pro daný modul/typ."""
         base = f"{self.BASE}/api/v2/{modul}/{typ}"
+        puvodni = None
+        if modul == "screeningy" and typ == "karcinomDeloznihoHrdlaHpv":
+            puvodni = f"{self.BASE}/api/v2/{modul}/{self.HPV_CESTA_PUVODNI}"
+
+        def volej(metoda, pripona, body):
+            r = metoda(f"{base}{pripona}", body)
+            if puvodni and getattr(r, "status_code", None) == 404:
+                return metoda(f"{puvodni}{pripona}", body)
+            return r
+
         return {
-            "vytvor": lambda body: self.c.post(base, body),
-            "vyhledat": lambda body: self.c.post(f"{base}/vyhledat", body),
-            "uprav": lambda id_, body: self.c.put(f"{base}/{id_}", body),
-            "obnovit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/obnovit", body or {}),
-            "zneplatnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zneplatnit", body or {}),
-            "zpochybnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zpochybnit", body or {}),
+            "vytvor": lambda body: volej(self.c.post, "", body),
+            "vyhledat": lambda body: volej(self.c.post, "/vyhledat", body),
+            "uprav": lambda id_, body: volej(self.c.put, f"/{id_}", body),
+            "obnovit": lambda id_, body=None: volej(self.c.patch, f"/{id_}/obnovit", body or {}),
+            "zneplatnit": lambda id_, body=None: volej(self.c.patch, f"/{id_}/zneplatnit", body or {}),
+            "zpochybnit": lambda id_, body=None: volej(self.c.patch, f"/{id_}/zpochybnit", body or {}),
         }
 
     def prevence(self, typ: str):
@@ -4159,19 +4297,24 @@ class SZZv2:
 
 
 # ===========================================================================
-# SZZ v3.0.0 – Sdílený zdravotní záznam (Standard EZ SZZ 3.0, 29. 7. 2026).
-# Proti v2: cesty /api/v3, pět nových screeningů (koloskopie, vstupní PSA,
-# navazující urologické a bioptické vyšetření, pneumologické vyšetření),
-# opravený překlep v HPV screeningu děložního hrdla a nová položka
-# `samoplatce` u všech preventivních i screeningových vyšetření.
+# SZZ v3 – Sdílený zdravotní záznam (Standard EZ SZZ 3.1, 23. 10. 2026;
+# swagger 3.0.5 z T2).
+# Proti v2: cesty /api/v3 a nová položka `samoplatce` u všech preventivních
+# i screeningových vyšetření.
+# Standard 3.1 (wiki 23. 10. 2026, Novinky T2 20. 10. 2026): účast ve
+# screeningových programech (prostata, plíce, AAA) se vede jako samostatné
+# záznamy /api/v3/screeningy/*Ucast a z preventivní prohlídky VPL byly
+# položky ucastVeScreeningu* odebrány.
 # v2 zůstává dostupná paralelně.
 # ===========================================================================
 class SZZv3:
-    """SZZ v3.0.0 – /api/v3 s moduly /prevence, /screeningy, /emergentniZaznam."""
+    """SZZ v3 – /api/v3 s moduly /prevence, /screeningy, /emergentniZaznam."""
 
     BASE = "/sdilenyZdravotniZaznam"
-    VERZE_API = "3.0.0"
-    VERZE_STANDARDU = "3.0"
+    #: Poslední verze swaggeru ověřená na T2 (13. 10. 2026). Standard 3.1 je
+    #: dle wiki „platný pro SZZ od verze 3.0.5“.
+    VERZE_API = "3.0.5"
+    VERZE_STANDARDU = "3.1"
 
     PREVENCE_TYPY = [
         "kardiovaskularniRizika",
@@ -4200,7 +4343,54 @@ class SZZv3:
         "karcinomPrsuMamografie",
         "kolorektalniKarcinomKoloskopie",
         "kolorektalniKarcinomToks",
+        # Standard SZZ 3.1, kap. 6 – účast ve screeningu jako samostatný záznam
+        "aneurysmaAbdominalniAortyUcast",
+        "karcinomPlicUcast",
+        "karcinomProstatyUcast",
     ]
+
+    #: Samostatné záznamy účasti ve screeningovém programu (Standard SZZ 3.1,
+    #: Novinky EZ 20. 10. 2026). Standard u nich uvádí jen POST, PUT a PATCH
+    #: zneplatnit/zpochybnit/obnovit – operaci ``…/vyhledat`` NE; záznamy se
+    #: čtou souhrnem ``POST /api/v3/screeningy/vyhledat``.
+    #: Hodnoty: číselník (TermX id), kódy výkonů (číselníky SZZ v3.0 – verze
+    #: 3.1 je na wiki jen jako odkaz), cílová skupina a odbornost dle
+    #: přílohy 7.2 Standardu 3.1.
+    UCAST_VE_SCREENINGU = {
+        "karcinomProstatyUcast": {
+            "nazev": "Účast ve screeningu karcinomu prostaty",
+            "ciselnik": "szz-ucast-ve-screeningu-karcinomu-prostaty",
+            "kody": {"01131": "souhlasí s účastí", "01132": "souhlasí s účastí",
+                     "01133": "souhlasí s účastí", "01134": "nesouhlasí s účastí"},
+            "cilova_skupina": "muži 50–69 let",
+            "pohlavi": "M", "vek_od": 50, "vek_do": 69,
+            "odbornost": "L44",
+            "vpl_polozka": "ucastVeScreeninguKarcinomuProstaty",
+        },
+        "aneurysmaAbdominalniAortyUcast": {
+            "nazev": "Účast ve screeningu aneurysmatu abdominální aorty",
+            "ciselnik": "szz-ucast-ve-screeningu-aaa",
+            "kody": {"01135": "souhlasí s účastí", "01136": "nesouhlasí s účastí"},
+            "cilova_skupina": "muži 65–67 let",
+            "pohlavi": "M", "vek_od": 65, "vek_do": 67,
+            "odbornost": "L44",
+            "max_platnych_zaznamu": 1,
+            "vpl_polozka": "ucastVeScreeninguAaa",
+        },
+        "karcinomPlicUcast": {
+            "nazev": "Účast ve screeningu karcinomu plic",
+            "ciselnik": "szz-ucast-ve-screeningu-karcinomu-plic",
+            "kody": {"01196": "souhlasí s účastí", "01197": "nesouhlasí s účastí"},
+            "cilova_skupina": "muži i ženy 55–74 let",
+            "pohlavi": None, "vek_od": 55, "vek_do": 74,
+            "odbornost": "L44",
+            "vpl_polozka": "ucastVeScreeninguKarcinomuPlic",
+        },
+    }
+
+    #: Položky, které Standard 3.1 odebral z preventivní prohlídky VPL (v3).
+    VPL_ODEBRANE_POLOZKY = tuple(
+        v["vpl_polozka"] for v in UCAST_VE_SCREENINGU.values())
 
     # Ve v2 byl HPV screening veden s dvojitým "D" (karcinomDDeloznihoHrdlaHpv);
     # v3 je překlep opravený, starý zápis přijímáme jako alias.
@@ -4223,9 +4413,16 @@ class SZZv3:
         "obvodPasu": (10, 400, 3),
         "hladinaToksUgG": (0, 500, 2),
         "vysledekBbps": (0, 9, 0),
-        "hladinaPsa": (1000, 12000, 2),
+        # swagger 3.0.5: HladinaPsaUgL „z původních 1 000 až 12 000 na 0 až 200 µg/l“.
+        # Klíče jsou názvy JSON polí dle swaggeru 3.0.5 (hladinaPsaUgL,
+        # objemProstatyMl, psaVelocity); dřívější zápisy bez jednotky
+        # zůstávají jako aliasy.
+        "hladinaPsaUgL": (0, 200, 2),
+        "hladinaPsa": (0, 200, 2),
+        "objemProstatyMl": (0, 1000, 2),
         "objemProstaty": (0, 1000, 2),
         "psaDenzita": (0, 10, 2),
+        "psaVelocity": (0, 10, 2),
         "psaVelocita": (0, 10, 2),
         "pocetLetZanechaniKoureni": (0, 120, 1),
     }
@@ -4233,10 +4430,13 @@ class SZZv3:
     # Maximální délka volných textů (poznámky, popisy) dle validací v3.
     MAX_TEXT = 300
 
-    # Číselníky, které v3 přinesla nad rámec v2.
+    # Číselníky, které v3 přinesla nad rámec v2. Kódy dle Standardu SZZ 3.1
+    # a listu „Přehled“ přílohy Číselníky SZZ (ne zkrácené názvy listů
+    # xlsx – Excel je ořezává na 31 znaků, odtud dřívější
+    # „szz-ucast-karcinom-plic“ a „urologie-vysledek-biopt-vys“).
     NOVE_CISELNIKY = [
-        "szz-ucast-karcinom-plic",
-        "szz-ucast-karcinom-prostaty",
+        "szz-ucast-ve-screeningu-karcinomu-plic",
+        "szz-ucast-ve-screeningu-karcinomu-prostaty",
         "szz-ucast-ve-screeningu-aaa",
         "gastro-typ-koloskopie",
         "gastro-kompletnost-koloskopie",
@@ -4245,12 +4445,19 @@ class SZZv3:
         "urologie-klinicke-vysetreni",
         "urologie-dalsi-vysetreni",
         "urologie-typ-biopsie",
-        "urologie-vysledek-biopt-vys",
+        "urologie-vysledek-biopt-vysetreni",
         "pneumologie-koureni",
         "pneumologie-fyzikalni-vysetreni",
         "pneumologie-rtg-plic",
         "pneumologie-funkcni-vysetreni",
     ]
+
+    @staticmethod
+    def termx_id(ciselnik: str) -> str:
+        """Id ValueSetu číselníku SZZ v TermX (manifest apio.csez.gov.cz,
+        10. 11. 2026): všechny číselníky SZZ tam nesou předponu ``szz-``
+        (např. ``szz-gastro-typ-koloskopie``)."""
+        return ciselnik if ciselnik.startswith("szz-") else f"szz-{ciselnik}"
 
     def __init__(self, client: SEZClient):
         self.c = client
@@ -4268,7 +4475,7 @@ class SZZv3:
     # --- Generický CRUD pro prevence/screeningy/emergentní záznam ---
     def _crud(self, modul: str, typ: str):
         base = f"{self.BASE}/api/v3/{modul}/{typ}"
-        return {
+        ops = {
             "vytvor": lambda body: self.c.post(base, body),
             "vyhledat": lambda body: self.c.post(f"{base}/vyhledat", body),
             "uprav": lambda id_, body: self.c.put(f"{base}/{id_}", body),
@@ -4276,6 +4483,32 @@ class SZZv3:
             "zneplatnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zneplatnit", body or {}),
             "zpochybnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zpochybnit", body or {}),
         }
+        if modul == "screeningy" and typ in self.UCAST_VE_SCREENINGU:
+            del ops["vyhledat"]
+        return ops
+
+    @classmethod
+    def ocisti_vpl(cls, body: dict | None) -> dict:
+        """Odstraní z těla preventivní prohlídky VPL položky účasti ve
+        screeningu, které Standard SZZ 3.1 ve v3 zrušil (účast se zadává
+        výhradně službami ``/screeningy/*Ucast``). Vrací kopii těla."""
+        return {k: v for k, v in (body or {}).items()
+                if k not in cls.VPL_ODEBRANE_POLOZKY}
+
+    @classmethod
+    def ucast_mimo_cilovou_skupinu(cls, typ: str, vek: int | None = None,
+                                   pohlavi: str | None = None) -> str | None:
+        """Upozornění, pokud pacient nespadá do cílové skupiny programu
+        (Novinky EZ 20. 10. 2026). Závaznou kontrolu dělá server; ``None`` =
+        bez výhrad nebo nelze posoudit."""
+        info = cls.UCAST_VE_SCREENINGU.get(typ)
+        if not info:
+            return None
+        if pohlavi and info["pohlavi"] and pohlavi.upper()[:1] != info["pohlavi"]:
+            return f"{info['nazev']}: program je určen pro {info['cilova_skupina']}."
+        if vek is not None and not (info["vek_od"] <= vek <= info["vek_do"]):
+            return f"{info['nazev']}: program je určen pro {info['cilova_skupina']} (věk {vek})."
+        return None
 
     def prevence(self, typ: str):
         if typ not in self.PREVENCE_TYPY:
@@ -4412,6 +4645,18 @@ class SZZv3:
         if "samoplatce" in telo and not isinstance(telo["samoplatce"], bool):
             vyhrady.append("samoplatce: očekává se true/false.")
         return vyhrady
+
+    @classmethod
+    def upozorneni(cls, telo: dict) -> list:
+        """Neblokující upozornění k tělu požadavku v3 (Standard SZZ 3.1)."""
+        if not isinstance(telo, dict):
+            return []
+        return [
+            f"{k}: Standard SZZ 3.1 položku z preventivní prohlídky VPL ve v3 "
+            f"odebral – účast zadejte službou /api/v3/screeningy/{typ}."
+            for typ, info in cls.UCAST_VE_SCREENINGU.items()
+            for k in [info["vpl_polozka"]] if k in telo
+        ]
 
 
 # ===========================================================================

@@ -62,15 +62,31 @@ IG_ORDER_PACKAGE = "hl7.fhir.cz.order"
 IG_ORDER_VERSION = "1.0.0"
 IG_ORDER_URL = "https://build.fhir.org/ig/HL7-cz/k-order/"
 IG_IMG_ORDER_URL = "https://build.fhir.org/ig/HL7-cz/img-order/"
+#: Oficiální portál HL7 CZ IG („centrum pravdy“ MZ ČR) – publikované verze.
+IG_PORTAL_URL = "https://ig.ezdravi.gov.cz/"
+IG_ORDER_PUBLISHED_URL = "https://ig.ezdravi.gov.cz/order/"
+IG_IMG_ORDER_PUBLISHED_URL = "https://ig.ezdravi.gov.cz/img-order/"
+IG_ORDER_PUBLISHED = "2026-10-17"
 
+#: Abstraktní rodič; publikovaný balíček 1.0.0 (17. 10. 2026) používá v příkladech
+#: konkrétní profily podle typu – viz PROFILE_BUNDLE_K / PROFILE_BUNDLE_FT.
 PROFILE_BUNDLE_ORDER = f"{CANONICAL_ORDER}/StructureDefinition/BundleOrderCz"
+PROFILE_BUNDLE_K = f"{CANONICAL_ORDER}/StructureDefinition/KOrderBundleCz"
+PROFILE_BUNDLE_FT = f"{CANONICAL_ORDER}/StructureDefinition/FTOrderBundleCz"
 PROFILE_COMPOSITION_K = f"{CANONICAL_ORDER}/StructureDefinition/k-order-composition-cz"
 PROFILE_COMPOSITION_FT = f"{CANONICAL_ORDER}/StructureDefinition/ft-order-composition-cz"
 PROFILE_SR_K = f"{CANONICAL_ORDER}/StructureDefinition/KOrderServiceRequestCz"
 PROFILE_SR_FT = f"{CANONICAL_ORDER}/StructureDefinition/FTServiceRequestCz"
 PROFILE_COVERAGE_ORDER = f"{CANONICAL_ORDER}/StructureDefinition/cz-coverage-order"
 PROFILE_CLINICAL_QUESTION = f"{CANONICAL_ORDER}/StructureDefinition/cz-clinicalQuestion"
-PROFILE_PRACTITIONER_ROLE_ORDER = f"{CANONICAL_ORDER}/StructureDefinition/practitionerrole-cz-order"
+#: Profil žije v hl7.fhir.cz.core 1.0.0 (ne v IG order) a vyžaduje
+#: specialty z číselníku vzp-smluvni-odbornost (1..1).
+PROFILE_PRACTITIONER_ROLE_ORDER = "https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"
+SYS_VZP_ODBORNOST = "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost"
+#: Wiki eŽádanky (6. 11. 2026): na T2 jsou v číselníku vzp-smluvni-odbornost
+#: jen hodnoty z veřejné verze 2010; jiné kódy testovací brána odmítne.
+ODBORNOST_T2_POZNAMKA = ("Na T2 platí v číselníku vzp-smluvni-odbornost jen hodnoty z veřejné "
+                         "verze 2010 (Manuál EZ – eŽádanky, 6. 11. 2026).")
 
 SYS_ICZ = "https://ncez.mzcr.cz/fhir/sid/icz"
 SYS_KRPZS = "https://ncez.mzcr.cz/fhir/sid/krpzs"
@@ -112,7 +128,7 @@ TYPY: dict[str, dict[str, Any]] = {
         "nazev": "Konziliární žádanka (žádanka o vyšetření)",
         "specifikace": "Funkční specifikace eŽádanky typu K v7.0",
         "ig": IG_ORDER_PACKAGE, "ig_url": IG_ORDER_URL,
-        "bundle_profile": PROFILE_BUNDLE_ORDER,
+        "bundle_profile": PROFILE_BUNDLE_K,
         "composition_profile": PROFILE_COMPOSITION_K,
         "servicerequest_profile": PROFILE_SR_K,
         "vzory": ["Bundle-BundleKOrderExample.json", "Bundle-BundleDermatologyUrgentExample.json",
@@ -124,7 +140,7 @@ TYPY: dict[str, dict[str, Any]] = {
         "nazev": "Žádanka o fyzioterapii a ergoterapii",
         "specifikace": "Funkční specifikace eŽádanky typu FT v7.0",
         "ig": IG_ORDER_PACKAGE, "ig_url": IG_ORDER_URL,
-        "bundle_profile": PROFILE_BUNDLE_ORDER,
+        "bundle_profile": PROFILE_BUNDLE_FT,
         "composition_profile": PROFILE_COMPOSITION_FT,
         "servicerequest_profile": PROFILE_SR_FT,
         "vzory": ["Bundle-BundleFTExample.json", "Bundle-BundleFTHipRehabilitation.json",
@@ -159,6 +175,12 @@ def _now() -> str:
 
 def _uuid() -> str:
     return str(uuid.uuid4())
+
+
+def _html(text) -> str:
+    """Text bezpečný pro vložení do XHTML narativu."""
+    import html as _h
+    return _h.escape(str(text or ""), quote=False)
 
 
 def _ref(rid: str) -> dict:
@@ -557,13 +579,20 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
            klinicka_otazka: str | None = None, pojistovna: str | None = "111",
            cislo_pojistence: str | None = None, priorita: str = "routine",
            pacient_jmeno: dict | None = None, odbornost: str | None = None,
-           pocet_procedur: int | None = None) -> dict:
+           pocet_procedur: int | None = None, datum_narozeni: str | None = None) -> dict:
     """Minimální FHIR Bundle (document) žádanky **K** nebo **FT** podle
     HL7 CZ Order IG 1.0.0, který splňuje pravidla brány (urn:uuid reference,
     custodian s IČO+IČP, autor přes PractitionerRole, Coverage, sekce
     orderInformation + coverage [+ clinicalQuestion]). Pro typ Z použijte
     ``fhir_imgorder.EZadankaToImagingOrder(...).to_bundle()`` /
-    ``kostra_z``."""
+    ``kostra_z``.
+
+    Revize 10. 11. 2026 (publikovaný balíček 1.0.0 ze 17. 10. 2026): profil
+    Bundle podle typu (``KOrderBundleCz`` / ``FTOrderBundleCz``),
+    PractitionerRole z cz-core (``practitionerrole-cz-order``),
+    ``Patient.birthDate`` (cz-patient-core 1..1 – ``datum_narozeni``),
+    ``Composition.confidentiality`` a text u sekce klinické otázky. Co
+    profil vyžaduje a kostra nedostala, vrátí :func:`vyhrady_ig`."""
     typ = (typ or "K").upper()
     if typ not in ("K", "FT"):
         raise ValueError("kostra(): typ musí být K nebo FT (Z viz kostra_z)")
@@ -582,6 +611,7 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
         "language": "cs",
         "identifier": {"system": "urn:ietf:rfc:3986", "value": f"urn:uuid:{ids['comp']}"},
         "status": "final",
+        "confidentiality": "N",
         "type": {"coding": [{"system": SYS_LOINC, "code": t["kod"]}],
                  "text": "žádanka o fyzioterapii" if typ == "FT" else "žádanka o vyšetření"},
         "category": [{"coding": [{"system": SYS_LOINC, "code": LOINC_TYP_K}]}],
@@ -597,6 +627,8 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
     patient = {"resourceType": "Patient", "id": ids["pat"], "meta": {"profile": [PROFILE_PATIENT]},
                "identifier": [{"use": "official", "system": SYS_RID, "value": str(pacient)}],
                "name": [jm]}
+    if datum_narozeni:
+        patient["birthDate"] = str(datum_narozeni)[:10]
     if cislo_pojistence:
         patient["identifier"].append({"system": SYS_CPOJ, "value": str(cislo_pojistence)})
     entries.append({"fullUrl": f"urn:uuid:{ids['pat']}", "resource": patient})
@@ -609,8 +641,7 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
                             "meta": {"profile": [PROFILE_PRACTITIONER_ROLE_ORDER]},
                             "practitioner": _ref(ids["prac"]), "organization": _ref(ids["org"])}
     if odbornost:
-        role["specialty"] = [{"coding": [{"system": "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
-                                          "code": str(odbornost)}]}]
+        role["specialty"] = [{"coding": [{"system": SYS_VZP_ODBORNOST, "code": str(odbornost)}]}]
     entries.append({"fullUrl": f"urn:uuid:{ids['role']}", "resource": role})
 
     org_ids = [{"system": SYS_ICO, "value": str(poskytovatel)}]
@@ -682,13 +713,15 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
     composition["section"].append({
         "title": "Požadovaná fyzioterapie" if typ == "FT" else "Požadovaná vyšetření",
         "code": {"coding": [{"system": SYS_LOINC, "code": t["kod"]}]},
-        "text": {"status": "generated", "div": f'<div xmlns="http://www.w3.org/1999/xhtml">{text_pozadavku or title}</div>'},
+        "text": {"status": "generated", "div": f'<div xmlns="http://www.w3.org/1999/xhtml">{_html(text_pozadavku or title)}</div>'},
         "entry": [_ref(s) for s in sr_ids],
     })
     if condition:
         composition["section"].append({
             "title": "Klinická indikace a otázka",
             "code": {"coding": [{"system": SYS_LOINC, "code": SEKCE["clinicalQuestion"]}]},
+            "text": {"status": "generated",
+                     "div": f'<div xmlns="http://www.w3.org/1999/xhtml">{_html(condition["code"]["text"])}</div>'},
             "entry": [_ref(ids["cond"])],
         })
     composition["section"].append({
@@ -699,7 +732,7 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
 
     return {
         "resourceType": "Bundle", "id": ids["bundle"],
-        "meta": {"profile": [PROFILE_BUNDLE_ORDER]},
+        "meta": {"profile": [t["bundle_profile"]]},
         "identifier": {"system": "urn:ietf:rfc:3986", "value": f"urn:uuid:{ids['bundle']}"},
         "type": "document", "timestamp": now,
         "entry": entries,
@@ -709,17 +742,35 @@ def kostra(typ: str, *, pacient: str, poskytovatel: str, autor: str, icp: str | 
 def kostra_z(*, pacient: str, poskytovatel: str, autor: str, icp: str | None = None,
              adresat: str | None = None, nazev: str | None = None,
              nazev_poskytovatele: str | None = None, pojistovna: str | None = "111",
-             priorita: str = "routine", diagnoza: dict | None = None, vykon: dict | None = None) -> dict:
-    """Kostra žádanky **Z** (img-order) – využívá generátor v ``fhir_imgorder``
-    (stejný tvar prošel 13. 10. 2026 na T2)."""
+             priorita: str = "routine", diagnoza: dict | None = None, vykon: dict | None = None,
+             pacient_jmeno: dict | None = None, datum_narozeni: str | None = None,
+             cislo_pojistence: str | None = None, odbornost: str | None = None,
+             modalita: str | None = None, text_pozadavku: str | None = None,
+             klinicka_otazka: str | None = None, pokyny_pacientovi: str | None = None) -> dict:
+    """Kostra žádanky **Z** (img-order) – využívá generátor v ``fhir_imgorder``.
+
+    Základní tvar prošel 13. 10. 2026 na T2; revize 10. 11. 2026 doplnila
+    prvky povinné v publikovaném IG img-order 1.0.0 a přítomné v testovací
+    sadě Postman MZ ČR (jazyk, důvěrnost, identifikátor dokumentu, sekce
+    úhrady, jméno a datum narození pacienta, odbornost žadatele, kód/text
+    výkonu, modalita DICOM, narativ). Nepovinné vstupy se propíší, jen když
+    jsou zadané – chybějící povinné prvky IG vrátí :func:`vyhrady_ig`."""
     from .fhir_imgorder import EZadankaToImagingOrder
     _over_prioritu(priorita)
+    jm = pacient_jmeno or {}
     rec: dict[str, Any] = {"zadanka": {
         "id": _uuid(), "urgentnost": {"kod": priorita}, "icpZadatele": icp,
         "pacientPojistovna": {"kod": pojistovna} if pojistovna else None,
+        "odbornostZadatele": odbornost, "modalita": modalita,
+        "textPozadavku": text_pozadavku, "klinickaOtazka": klinicka_otazka,
+        "pokynyPacientovi": pokyny_pacientovi,
         "zasilka": {"pacient": pacient, "autor": autor, "poskytovatel": poskytovatel,
                     "adresat": adresat, "nazev": nazev or "Žádanka o zobrazovací vyšetření",
-                    "poskytovatelData": {"nazev": nazev_poskytovatele}},
+                    "poskytovatelData": {"nazev": nazev_poskytovatele},
+                    "pacientData": {"prijmeni": jm.get("family"),
+                                    "jmeno": " ".join(jm.get("given") or []) or None,
+                                    "datumNarozeni": datum_narozeni,
+                                    "cisloPojistence": cislo_pojistence}},
         "zadankaK": {},
     }}
     if diagnoza:
@@ -731,6 +782,68 @@ def kostra_z(*, pacient: str, poskytovatel: str, autor: str, icp: str | None = N
                                                               "kod": vykon.get("code") or vykon.get("kod"),
                                                               "display": vykon.get("display", "")}]
     return EZadankaToImagingOrder(rec).to_bundle()
+
+
+# ---------------------------------------------------------------------------
+# Kontrola kostry proti povinným prvkům publikovaných IG (order 1.0.0,
+# img-order 1.0.0, cz-core 1.0.0). Brána T2 tyto prvky 13. 10. 2026
+# nevyžadovala, proto jde o upozornění, ne o blokující chybu.
+# ---------------------------------------------------------------------------
+
+_SEKCE_POVINNE = {
+    "Z": {"55115-0": "orderInformation", "18785-6": "clinicalQuestion", "87520-3": "coverage"},
+    "K": {LOINC_TYP_K: "orderInformation", "87520-3": "coverage"},
+    "FT": {LOINC_TYP_FT: "orderInformation", "87520-3": "coverage"},
+}
+
+
+def vyhrady_ig(bundle: dict) -> list[str]:
+    """Co v Bundle chybí proti povinným prvkům publikovaných HL7 CZ IG."""
+    typ = typ_z_bundle(bundle)
+    if not typ:
+        return ["Bundle nemá jako první entry Composition se známým typem žádanky (Z/K/FT)."]
+    out: list[str] = []
+    res = [e.get("resource") or {} for e in (bundle or {}).get("entry") or []]
+    comp = res[0]
+    profily = (bundle.get("meta") or {}).get("profile") or []
+    if typ in ("K", "FT") and PROFILE_BUNDLE_ORDER in profily:
+        out.append(f"Bundle.meta.profile: IG order 1.0.0 používá {TYPY[typ]['bundle_profile'].rsplit('/', 1)[-1]} "
+                   "(BundleOrderCz je abstraktní rodič).")
+    if not comp.get("identifier"):
+        out.append("Composition.identifier: povinný (composition-cz-core 1..1).")
+    if typ == "Z":
+        for pole in ("language", "confidentiality"):
+            if not comp.get(pole):
+                out.append(f"Composition.{pole}: povinné v img-order 1.0.0 (1..1).")
+    kody = {c.get("code") for sek in comp.get("section") or []
+            for c in (sek.get("code") or {}).get("coding") or []}
+    for kod, nazev in _SEKCE_POVINNE[typ].items():
+        if kod not in kody:
+            out.append(f"Composition.section:{nazev} (LOINC {kod}): povinná sekce chybí.")
+    for r in res:
+        rt = r.get("resourceType")
+        if rt == "Patient":
+            if not r.get("birthDate"):
+                out.append("Patient.birthDate: povinné v cz-patient-core 1.0.0 (1..1).")
+            jmena = r.get("name") or []
+            if not jmena or any(n.get("family") in (None, "", "Příjmení") for n in jmena):
+                out.append("Patient.name: doplňte skutečné jméno a příjmení pacienta (1..*).")
+        elif rt == "PractitionerRole":
+            systemy = {c.get("system") for sp in r.get("specialty") or [] for c in sp.get("coding") or []}
+            if SYS_VZP_ODBORNOST not in systemy:
+                out.append("PractitionerRole.specialty: chybí odbornost žadatele z číselníku "
+                           "vzp-smluvni-odbornost (practitionerrole-cz-order 1..1). " + ODBORNOST_T2_POZNAMKA)
+        elif rt == "ServiceRequest":
+            if not r.get("code"):
+                out.append("ServiceRequest.code: povinné (1..1) – kód výkonu nebo alespoň code.text.")
+            if typ == "Z":
+                if not r.get("orderDetail"):
+                    out.append("ServiceRequest.orderDetail: povinné v img-order 1.0.0 (1..*) – modalita DICOM, např. DX, CT, MR, US.")
+                if not r.get("text"):
+                    out.append("ServiceRequest.text: povinný narativ v img-order 1.0.0 (1..1).")
+                if not r.get("insurance"):
+                    out.append("ServiceRequest.insurance: povinné v img-order 1.0.0 (1..*).")
+    return list(dict.fromkeys(out))
 
 
 # ---------------------------------------------------------------------------
@@ -778,5 +891,11 @@ def katalog_typu() -> dict:
     return {"typy": out, "pravidla_brany": PRAVIDLA_BRANY,
             "zdroje": {"manual": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/56000561",
                        "api": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/59670529",
-                       "ig_order": IG_ORDER_URL, "ig_img_order": IG_IMG_ORDER_URL},
+                       "ig_order": IG_ORDER_URL, "ig_img_order": IG_IMG_ORDER_URL,
+                       "ig_portal": IG_PORTAL_URL, "ig_order_publikovany": IG_ORDER_PUBLISHED_URL,
+                       "ig_img_order_publikovany": IG_IMG_ORDER_PUBLISHED_URL},
+            "ig_verze": {"hl7.fhir.cz.order": IG_ORDER_VERSION, "hl7.fhir.cz.img-order": "1.0.0",
+                         "hl7.fhir.cz.core": "1.0.0"},
+            "odbornost_t2": ODBORNOST_T2_POZNAMKA,
+            "priority": list(PRIORITY_CZ),
             "overeno_t2": "2026-10-13"}

@@ -87,7 +87,8 @@ def test_konkretni_cesty_dle_standardu(szz3):
 # --- nové typy vyšetření ---------------------------------------------------
 
 def test_nove_screeningy_ve_v3(szz3):
-    """Standard 3.0 přidal pět vyšetření, která v2 neměla."""
+    """Pět samostatných screeningů z června–července 2026. Swagger v2.0.7
+    je má od verze 2.0.4 i ve v2 (revize 10. 11. 2026)."""
     mod, _ = szz3
     for typ in ("kolorektalniKarcinomKoloskopie",
                 "karcinomProstatyVstupniPsa",
@@ -95,7 +96,8 @@ def test_nove_screeningy_ve_v3(szz3):
                 "karcinomProstatyBioptickeVysetreni",
                 "karcinomPlicPneumologickeVysetreni"):
         assert typ in SZZv3.SCREENINGY_TYPY, typ
-        assert typ not in SZZv2.SCREENINGY_TYPY, f"{typ} už byl ve v2"
+        assert typ in SZZv2.SCREENINGY_TYPY, f"{typ} chybí ve v2 (od 2.0.4)"
+        assert typ in SZZv2.SCREENINGY_OD_2_0_4
         mod.screening(typ)  # nesmí vyhodit
 
 
@@ -133,7 +135,10 @@ def test_kontrola_prijme_platne_hodnoty():
     assert SZZv3.zkontroluj({"vyska": 175.5, "vaha": 82.25,
                              "obvodPasu": 95, "samoplatce": False}) == []
     assert SZZv3.zkontroluj({"ntProbnp": 100000}) == []
-    assert SZZv3.zkontroluj({"hladinaPsa": 1500.25, "psaDenzita": 0.15}) == []
+    # swagger 3.0.5: HladinaPsaUgL 0–200 µg/l (dříve 1 000–12 000)
+    assert SZZv3.zkontroluj({"hladinaPsaUgL": 150.25, "psaDenzita": 0.15}) == []
+    assert SZZv3.zkontroluj({"hladinaPsaUgL": 1500.25})
+    assert SZZv3.zkontroluj({"hladinaPsa": 150.25}) == []
     assert SZZv3.zkontroluj({"vysledekBbps": 9}) == []
 
 
@@ -164,10 +169,13 @@ def test_endpoint_katalog_popisuje_novinky_v3():
     d = TestClient(app).get("/api/szz3/katalog").json()
     assert d["status"] == 200
     data = d["data"]
-    assert data["verzeApi"] == "3.0.0"
-    assert data["platneOd"] == "2026-07-29"
-    assert "kolorektalniKarcinomKoloskopie" in data["screeningyNoveVeV3"]
-    assert len(data["screeningyNoveVeV3"]) == 5
+    assert data["verzeApi"] == "3.0.5"
+    assert data["verzeStandardu"] == "3.1"
+    assert data["platneOd"] == "2026-10-23"
+    # Standard 3.1: jen ve v3 jsou tři služby účasti ve screeningu
+    assert sorted(data["screeningyNoveVeV3"]) == [
+        "aneurysmaAbdominalniAortyUcast", "karcinomPlicUcast", "karcinomProstatyUcast"]
+    assert "kolorektalniKarcinomKoloskopie" in data["screeningyOdV2_0_4"]
     assert data["rozsahy"]["ntProbnp"] == {"min": 0, "max": 100000,
                                            "desetinnaMista": 0}
     assert "szz-ucast-ve-screeningu-aaa" in data["noveCiselniky"]
@@ -178,7 +186,7 @@ def test_endpoint_zkontrolovat():
     c = TestClient(app)
     ok = c.post("/api/szz3/zkontrolovat",
                 json={"vyska": 175.5, "samoplatce": True}).json()
-    assert ok["data"] == {"validni": True, "vyhrady": []}
+    assert ok["data"] == {"validni": True, "vyhrady": [], "upozorneni": []}
 
     chyba = c.post("/api/szz3/zkontrolovat", json={"ntProbnp": 999999}).json()
     assert chyba["data"]["validni"] is False

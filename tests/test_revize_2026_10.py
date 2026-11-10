@@ -472,7 +472,8 @@ def test_v2_simulator_workflow(klient):
         assert klient.patch(f"/api/ezadanky/v2/zadanka/{zid}/vyridit", json=vyr).json()["status"] == 400
         vyr["vysledek"] = {"dokument": [{"nazev": "zprava"}]}
         r = klient.patch(f"/api/ezadanky/v2/zadanka/{zid}/vyridit", json=vyr).json()
-        assert r["status"] == 200 and r["data"]["hlavicka"]["stav"]["kod"] == "2"
+        # stav-zadanky: 4 = Dokončená (revize 10. 11. 2026 – dříve chybně "2")
+        assert r["status"] == 200 and r["data"]["hlavicka"]["stav"]["kod"] == "4"
         assert r["data"]["hlavicka"]["zasilkyVysledku"]
 
         assert klient.patch(f"/api/ezadanky/v2/zadanka/{zid}/upravit").json()["status"] == 410

@@ -88,19 +88,31 @@ SYS_MKN10_5 = "https://terminology.uzis.cz/CodeSystem/Mkn10_5"
 SYS_ORPHA = "http://www.orpha.net"
 SYS_UCUM = "http://unitsofmeasure.org"
 
-# IG identita + závislosti (revize 2026-09-09 ze sushi-config.yaml a
-# ImplementationGuide CI buildu 2026-08-28)
-IG_VERSION = "0.1.0"
-IG_BUILD_DATE = "2026-08-28"
+# IG identita + závislosti. Revize 2026-11-10: publikovaná verze 1.0.0 na
+# oficiálním portálu https://ig.ezdravi.gov.cz/img-order/ (build 2026-10-05);
+# průběžný CI build (2026-10-31) má navíc Composition.identifier 1..1
+# (rodič composition-cz-core) a eu.laboratory 2.1.0.
+IG_VERSION = "1.0.0"
+IG_BUILD_DATE = "2026-10-05"
+IG_CI_BUILD_DATE = "2026-10-31"
 IG_FHIR_VERSION = "4.0.1"
 IG_CANONICAL = "https://hl7.cz/fhir/img-order"
+IG_PUBLISHED_URL = "https://ig.ezdravi.gov.cz/img-order/"
+IG_CI_URL = "https://build.fhir.org/ig/HL7-cz/img-order/"
 IG_DEPENDENCIES = {
     "hl7.fhir.cz.core": "1.0.0",
+    # cz.terminology není od 1.0.0 přímou závislostí (přichází přes cz.core);
+    # klíč zůstává kvůli CapabilityStatement a starším volajícím.
     "hl7.fhir.cz.terminology": "0.3.0",
-    "hl7.fhir.eu.base": "2.0.0",
-    "hl7.fhir.eu.extensions.r4": "1.3.0",
+    "hl7.fhir.eu.base": "2.0.1",
+    "hl7.fhir.eu.extensions.r4": "1.3.1",
     "hl7.fhir.eu.laboratory": "2.0.0",
+    "hl7.fhir.eu.imaging": "1.0.0-ballot",
+    "hl7.terminology.r4": "7.4.0",
 }
+SYS_VZP_ODBORNOST = "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost"
+SYS_MKN10 = "https://uzis.cz/terminology/CodeSystem/mkn-10"
+LOINC_COVERAGE_SECTION = "87520-3"
 # SNOMED CT – česká národní edice (Composition.type.coding.version, IG od 8/2026)
 SCT_CZ_EDITION = "http://snomed.info/sct/11000279109"
 
@@ -1109,13 +1121,13 @@ class EZadankaToImagingOrder:
             "resourceType": "ServiceRequest",
             "id": sr_id,
             "meta": {"profile": [PROFILE_SR]},
-            # identifier je v cz-imagingOrderInformation povinný (1..*)
             "identifier": [{"system": "urn:ietf:rfc:3986",
                             "value": f"urn:uuid:{zasilka.get('id') or z.get('id') or sr_id}"}],
             "status": "active",
             "intent": "order",
             "priority": urgent_kod if urgent_kod in FHIR_PRIORITY_TO_URGENTNOST else "routine",
-            "category": [{"coding": [{"system": SYS_SNOMED, "code": SCT_IMAGING_CATEGORY, "display": "Imaging"}]}],
+            "category": [{"coding": [{"system": SYS_SNOMED, "version": SCT_CZ_EDITION,
+                                      "code": SCT_IMAGING_CATEGORY, "display": "Imaging"}]}],
             "subject": {"reference": f"urn:uuid:{patient_id}"},
             "authoredOn": z.get("datumVytvoreni") or now,
             # IG 10/2026: requester → PractitionerRole (cz-practitionerrole-core)
@@ -1136,12 +1148,40 @@ class EZadankaToImagingOrder:
                     "display": pv[0].get("display") or "",
                 }]
             }
+            if pv[0].get("display"):
+                sr_resource["code"]["text"] = pv[0]["display"]
+        else:
+            # img-order 1.0.0: ServiceRequest.code 1..1 – bez kódu výkonu alespoň
+            # text (stejně jako testovací sada Postman MZ ČR: code.text).
+            sr_resource["code"] = {"text": z.get("textPozadavku") or title}
+        # img-order 1.0.0: orderDetail 1..* nese modalitu (DICOM DCM, např. DX, CT, MR)
+        modalita = (z.get("modalita") or "").strip().upper()
+        if modalita:
+            sr_resource["orderDetail"] = [{"coding": [{"system": SYS_DICOM, "code": modalita}]}]
+        if z.get("pokynyPacientovi"):
+            sr_resource["patientInstruction"] = str(z["pokynyPacientovi"])
+        # Diagnóza MKN-10 i jako reasonCode (vedle Condition v sekci klinické otázky)
+        mkn = [c for c in codings if c.get("code") and "mkn" in (c.get("system") or "").lower()]
+        if mkn:
+            sr_resource["reasonCode"] = [{"coding": [{"system": c["system"], "code": c["code"]}]} for c in mkn]
+        popis = "; ".join(x for x in (
+            (sr_resource["code"].get("text") or (sr_resource["code"].get("coding") or [{}])[0].get("code")),
+            f"metoda {modalita}" if modalita else None,
+            z.get("klinickaOtazka") or duvod.get("text") or (codings[0].get("display") if codings else None),
+        ) if x)
+        sr_resource["text"] = {"status": "generated",
+                               "div": f'<div xmlns="http://www.w3.org/1999/xhtml"><p>{_xhtml(popis or title)}</p></div>'}
 
         composition = {
             "resourceType": "Composition",
             "id": comp_id,
             "meta": {"profile": [PROFILE_COMPOSITION]},
+            # img-order 1.0.0: language 1..1, confidentiality 1..1; identifier 1..1
+            # v CI buildu z 31. 10. 2026 (rodič composition-cz-core)
+            "language": "cs",
+            "identifier": {"system": "urn:ietf:rfc:3986", "value": f"urn:uuid:{comp_id}"},
             "status": "final",
+            "confidentiality": "N",
             # IG 8/2026: type.coding 1..1 s version = SNOMED CT CZ edice
             "type": {"coding": [{"system": SYS_SNOMED, "version": SCT_CZ_EDITION,
                                  "code": SCT_COMPOSITION_TYPE_IMG_ORDER}]},
@@ -1164,8 +1204,15 @@ class EZadankaToImagingOrder:
             "title": "Clinical question",
             "code": {"coding": [{"system": SYS_LOINC, "code": LOINC_CLINICAL_QUESTION}]},
         }
+        otazka = z.get("klinickaOtazka") or (condition_resource or {}).get("code", {}).get("text")
+        if otazka:
+            clinical_section["text"] = {
+                "status": "additional",
+                "div": f'<div xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs" lang="cs">{_xhtml(otazka)}</div>'}
         if condition_resource:
             clinical_section["entry"] = [{"reference": f"urn:uuid:{condition_id}"}]
+        elif otazka:
+            pass  # sekce s narativem (jako testovací sada MZ ČR) nepotřebuje emptyReason
         else:
             clinical_section["emptyReason"] = {"coding": [{
                 "system": "http://terminology.hl7.org/CodeSystem/list-empty-reason",
@@ -1178,12 +1225,29 @@ class EZadankaToImagingOrder:
             "meta": {"profile": [PROFILE_PATIENT]},
             "identifier": [{"system": SYS_RID, "value": pacient_rid}] if pacient_rid else [],
         }
+        # cz-patient-core 1.0.0: name 1..*, birthDate 1..1 – doplní se, jsou-li známé
+        pd = zasilka.get("pacientData") or {}
+        cpoj = pd.get("cisloPojistence") or z.get("cisloPojistence")
+        if cpoj:
+            patient["identifier"].append({"system": SYS_CPOJ, "value": str(cpoj)})
+        if pd.get("prijmeni") or pd.get("jmeno"):
+            patient["name"] = [{k: v for k, v in (
+                ("family", pd.get("prijmeni")),
+                ("given", [pd["jmeno"]] if pd.get("jmeno") else None)) if v}]
+        if pd.get("datumNarozeni"):
+            patient["birthDate"] = str(pd["datumNarozeni"])[:10]
         practitioner = {
             "resourceType": "Practitioner",
             "id": practitioner_id,
             "meta": {"profile": [PROFILE_PRACTITIONER]},
             "identifier": [{"system": SYS_KRZP, "value": autor_krzp}] if autor_krzp else [],
         }
+        ad = zasilka.get("autorData") or {}
+        if ad.get("prijmeni") or ad.get("jmeno"):
+            practitioner["name"] = [{k: v for k, v in (
+                ("family", ad.get("prijmeni")),
+                ("given", [ad["jmeno"]] if ad.get("jmeno") else None),
+                ("prefix", [ad["titulPred"]] if ad.get("titulPred") else None)) if v}]
         organization = {
             "resourceType": "Organization",
             "id": org_id,
@@ -1200,6 +1264,10 @@ class EZadankaToImagingOrder:
             "practitioner": {"reference": f"urn:uuid:{practitioner_id}"},
             "organization": {"reference": f"urn:uuid:{org_id}"},
         }
+        odbornost = z.get("odbornostZadatele") or ad.get("odbornost")
+        if odbornost:
+            practitioner_role["specialty"] = [{"coding": [
+                {"system": SYS_VZP_ODBORNOST, "code": str(odbornost)}]}]
 
         entries = [
             {"fullUrl": f"urn:uuid:{comp_id}", "resource": composition},
@@ -1245,7 +1313,30 @@ class EZadankaToImagingOrder:
                     "payor": [{"reference": f"urn:uuid:{payor_org_id}"}],
                 },
             })
-            sr_resource["insurance"] = [{"reference": f"urn:uuid:{coverage_id}"}]
+            if cpoj:
+                entries[-1]["resource"]["subscriberId"] = str(cpoj)
+        else:
+            # Samoplátce – sekce úhrady je v img-order 1.0.0 povinná (1..1),
+            # plátcem je pacient.
+            entries.append({
+                "fullUrl": f"urn:uuid:{coverage_id}",
+                "resource": {
+                    "resourceType": "Coverage",
+                    "id": coverage_id,
+                    "meta": {"profile": [PROFILE_COVERAGE_ORDER]},
+                    "status": "active",
+                    "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                                         "code": "pay"}]},
+                    "beneficiary": {"reference": f"urn:uuid:{patient_id}"},
+                    "payor": [{"reference": f"urn:uuid:{patient_id}"}],
+                },
+            })
+        sr_resource["insurance"] = [{"reference": f"urn:uuid:{coverage_id}"}]
+        composition["section"].append({
+            "title": "Typ úhrady",
+            "code": {"coding": [{"system": SYS_LOINC, "code": LOINC_COVERAGE_SECTION}]},
+            "entry": [{"reference": f"urn:uuid:{coverage_id}"}],
+        })
         if condition_resource:
             entries.append({"fullUrl": f"urn:uuid:{condition_id}", "resource": condition_resource})
 
@@ -1302,7 +1393,7 @@ def load_example(name: str) -> dict | None:
 # CapabilityStatement (jednoduchý, pro /api/img-order/CapabilityStatement)
 # ---------------------------------------------------------------------------
 
-def capability_statement(version: str = "0.1.0") -> dict:
+def capability_statement(version: str = IG_VERSION) -> dict:
     return {
         "resourceType": "CapabilityStatement",
         "status": "draft",
@@ -1332,9 +1423,12 @@ def capability_statement(version: str = "0.1.0") -> dict:
                 "interaction": [{"code": "create"}, {"code": "read"}],
                 "operation": [
                     {"name": "validate", "definition": "http://hl7.org/fhir/OperationDefinition/Resource-validate"},
-                    {"name": "cancel", "definition": "https://hl7.cz/fhir/img-order/OperationDefinition/Bundle-cancel"},
-                    {"name": "accept", "definition": "https://hl7.cz/fhir/img-order/OperationDefinition/Bundle-accept"},
-                    {"name": "fulfill", "definition": "https://hl7.cz/fhir/img-order/OperationDefinition/Bundle-fulfill"},
+                    # Operace adaptéru této aplikace (mapují se na procesní operace
+                    # eŽádanky v2). IG img-order 1.0.0 žádné OperationDefinition
+                    # nedefinuje, proto lokální kanonické URL místo hl7.cz.
+                    {"name": "cancel", "definition": "urn:sez-api:OperationDefinition:Bundle-cancel"},
+                    {"name": "accept", "definition": "urn:sez-api:OperationDefinition:Bundle-accept"},
+                    {"name": "fulfill", "definition": "urn:sez-api:OperationDefinition:Bundle-fulfill"},
                 ],
             }],
         }],
@@ -1344,6 +1438,11 @@ def capability_statement(version: str = "0.1.0") -> dict:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _xhtml(text) -> str:
+    import html as _h
+    return _h.escape(str(text or ""), quote=False)
+
 
 def _identifier_value(resource: dict, system: str) -> str | None:
     for i in resource.get("identifier") or []:

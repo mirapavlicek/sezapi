@@ -143,7 +143,8 @@ def test_kostra_k_ft_dle_ig_order(typ):
     b = fo.kostra(typ, **IDENT, text_pozadavku="Test", diagnoza={"code": "M545", "display": "Bolest dolní části zad"},
                   klinicka_otazka="Otázka?", pocet_procedur=10)
     assert fo.typ_z_bundle(b) == typ
-    assert b["meta"]["profile"] == [fo.PROFILE_BUNDLE_ORDER]
+    # IG order 1.0.0 (17. 10. 2026): konkrétní profil Bundle podle typu
+    assert b["meta"]["profile"] == [fo.PROFILE_BUNDLE_K if typ == "K" else fo.PROFILE_BUNDLE_FT]
     comp = b["entry"][0]["resource"]
     assert comp["resourceType"] == "Composition"
     assert comp["meta"]["profile"] == [fo.TYPY[typ]["composition_profile"]]

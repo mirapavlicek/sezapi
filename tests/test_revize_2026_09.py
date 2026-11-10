@@ -201,7 +201,7 @@ def test_img_order_composition_type_ma_verzi_sct_cz_edice():
     from sez_api.fhir_imgorder import (EZadankaToImagingOrder, IG_DEPENDENCIES,
                                        IG_VERSION, SCT_CZ_EDITION)
 
-    assert IG_VERSION == "0.1.0"
+    assert IG_VERSION == "1.0.0"  # publikováno na ig.ezdravi.gov.cz (revize 10. 11. 2026)
     assert IG_DEPENDENCIES["hl7.fhir.cz.core"] == "1.0.0"
     b = EZadankaToImagingOrder(_ncez_zadanka()).to_bundle()
     comp = b["entry"][0]["resource"]

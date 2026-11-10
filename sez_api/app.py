@@ -2098,15 +2098,31 @@ async def elp3_opravneni(request: Request):
 _ez_sim_mode = False
 _ez_sim_store: dict = {}
 
+# Stavy dle číselníku stav-zadanky v1.0.0 (Standard systému eŽádanka v2.0,
+# Tabulka 9; produkční TermX a testovací sada Postman MZ ČR z 15. 10. 2026):
+# 0 Nová, 1 Přijatá, 2 Neproveditelná, 3 Stornovaná, 4 Dokončená (= vyřízená),
+# 5 Expirovaná. Vrácení do oběhu není stav – žádanka se vrací do 0 (Nová)
+# a ztrácí adresáta. Do revize 10. 11. 2026 byly kódy 2/4 prohozené a kód 5
+# vedený jako „Vrácená do oběhu“.
 _EZ_TRANSITIONS = {
     "0": {"prijmi": "1", "stornuj": "3"},
-    "1": {"vyrid": "2", "stornuj": "3", "neproveditelnost": "4", "vrat": "5"},
-    "5": {"prijmi": "1", "stornuj": "3"},
+    "1": {"vyrid": "4", "stornuj": "3", "neproveditelnost": "2", "vrat": "0"},
 }
 _EZ_STAV_NAMES = {
-    "0": "Nová", "1": "Přijatá", "2": "Vyřízená",
-    "3": "Stornovaná", "4": "Neproveditelná", "5": "Vrácená do oběhu",
+    "0": "Nová", "1": "Přijatá", "2": "Neproveditelná",
+    "3": "Stornovaná", "4": "Dokončená", "5": "Expirovaná",
 }
+_EZ_STAVY_AKTIVNI = ("0", "1")
+_EZ_STAVY_KONCOVE = ("2", "3", "4", "5")
+
+
+def _ez_stav_na_fhir(stav) -> str:
+    """Stav žádanky (stav-zadanky) → ``ServiceRequest.status``."""
+    if stav in (None, "0", "1"):
+        return "active"
+    if stav == "4":
+        return "completed"
+    return "revoked"
 
 
 def _ez_sim_verze():
@@ -2215,6 +2231,12 @@ def _ez_sim_transition(zid, action, extras=None):
             rec["datumSkutecneRealizaceVysetreni"] = extras["datumSkutecneRealizaceVysetreni"]
     elif action == "stornuj":
         rec["datumStorna"] = now
+    elif action == "vrat":
+        # Vrácením do oběhu žádanka ztrácí adresáta a údaje o přijetí.
+        rec["datumPoslednihoPrijeti"] = None
+        (rec.get("zasilka") or {}).pop("adresat", None)
+        if isinstance(rec.get("_v2_hlavicka"), dict):
+            rec["_v2_hlavicka"].pop("adresat", None)
     return rec, None
 
 
@@ -2258,7 +2280,7 @@ def _ez_sim_search(body):
 
 
 def _ez_sim_search_aktivni(body):
-    items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] in ("0", "1", "5")]
+    items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] in _EZ_STAVY_AKTIVNI]
     rid = body.get("rid")
     if rid:
         items = [z for z in items if z["zasilka"].get("pacient") == rid]
@@ -2280,7 +2302,7 @@ def _ez_sim_seed():
          "pac": ("Petr", "Dvořák", "6534744190", "1965-07-30"),
          "aut": ("MUDr.", "Jan", "Dobrý", "102129137"),
          "ico": "25488627", "icp": "72090001", "instr": "Pacient na antikoagulační terapii"},
-        {"nazev": "Laboratorní vyšetření – biochemie", "metoda": "LAB", "urg": "routine", "stav": "2",
+        {"nazev": "Laboratorní vyšetření – biochemie", "metoda": "LAB", "urg": "routine", "stav": "4",
          "pac": ("Anna", "Králová", "6653225891", "1988-01-14"),
          "aut": ("MUDr.", "Petra", "Lékařová", "102129137"),
          "ico": "25488627", "icp": "72090001", "instr": "Odběr nalačno"},
@@ -2305,11 +2327,11 @@ def _ez_sim_seed():
             "pacientPojistovna": {"kod": "111", "verze": "1.0"},
             "datumVytvoreni": now,
             "datumExpirace": None,
-            "datumPoslednihoPrijeti": now if t["stav"] in ("1", "2") else None,
-            "datumVyrizeni": now if t["stav"] == "2" else None,
+            "datumPoslednihoPrijeti": now if t["stav"] in ("1", "4") else None,
+            "datumVyrizeni": now if t["stav"] == "4" else None,
             "datumStorna": now if t["stav"] == "3" else None,
             "datumPlanovanehoVysetreni": None,
-            "datumSkutecneRealizaceVysetreni": now if t["stav"] == "2" else None,
+            "datumSkutecneRealizaceVysetreni": now if t["stav"] == "4" else None,
             "zasilka": {
                 "nazev": t["nazev"],
                 "typ": {"kod": "57133-1", "verze": "1.0.0"},
@@ -2461,7 +2483,7 @@ async def ez_uprav(request: Request):
         rec = _ez_sim_store.get(zid)
         if not rec:
             return _ez_sim_err(f"Žádanka {zid} nenalezena", "E00002")
-        if rec["stav"]["kod"] in ("2", "3", "4"):
+        if rec["stav"]["kod"] in _EZ_STAVY_KONCOVE:
             return _ez_sim_err(f"Žádanku ve stavu '{_EZ_STAV_NAMES.get(rec['stav']['kod'])}' nelze upravit")
         if body.get("upravenyPacient"):
             rec["zasilka"]["pacient"] = body["upravenyPacient"]
@@ -2712,6 +2734,12 @@ _EZ2_SIM_ACTIONS = {
 }
 
 
+def _fhir_etag(hodnota) -> str | None:
+    """verzeZaznamu z ETag / If-Match – bez příznaku ``W/`` a uvozovek."""
+    from sez_api.client import EZadankyV2
+    return EZadankyV2.etag_na_verzi(hodnota)
+
+
 def _ez2_sim_transition(zid: str, operace: str, if_match: str | None, body: dict):
     """Procesní operace v2 nad simulátorem – kontrola If-Match (409) a přechodu stavu."""
     rec = _ez_sim_store.get(zid)
@@ -2719,7 +2747,7 @@ def _ez2_sim_transition(zid: str, operace: str, if_match: str | None, body: dict
         return _ez_sim_err(f"Žádanka {zid} nenalezena v simulaci", "E00002", 404)
     if not if_match:
         return _ez_sim_err("Chybí hlavička If-Match (verzeZaznamu).", "E00400", 400)
-    if if_match.strip('"') != rec.get("verzeRadku"):
+    if _fhir_etag(if_match) != rec.get("verzeRadku"):
         return _ez_sim_err(
             f"Verze záznamu nesouhlasí (If-Match={if_match}, aktuální={rec.get('verzeRadku')}). "
             "Načtěte žádanku znovu.", "E00409", 409)
@@ -2762,7 +2790,7 @@ def _ez2_if_match(request: Request, body: dict) -> str | None:
     v = request.headers.get("if-match")
     if not v and isinstance(body, dict):
         v = body.get("verzeZaznamu") or body.get("ifMatch") or body.get("If-Match")
-    return str(v).strip('"') if v else None
+    return _fhir_etag(v) if v else None
 
 
 def _ez2_strip_meta(body: dict) -> dict:
@@ -2807,6 +2835,10 @@ async def ez2_katalog():
         "typyZadanky": EZadankyV2.TYPY_ZADANKY,
         "typy": _fhir_order.katalog_typu(),
         "stavy": EZadankyV2.STAVY,
+        "stavyAktivni": list(EZadankyV2.STAVY_AKTIVNI),
+        "stavyKoncove": list(EZadankyV2.STAVY_KONCOVE),
+        "prechody": EZadankyV2.PRECHODY,
+        "zivotniCyklus": EZadankyV2.ZIVOTNI_CYKLUS,
         "prevodZV1": EZadankyV2.prevod_z_v1(),
         "zmeny": [
             "Datová věta = systémová hlavička (hlavicka) + FHIR Bundle typu document (fhirBundle) dle HL7 CZ IG "
@@ -2818,9 +2850,37 @@ async def ez2_katalog():
             "Vyřízení vyžaduje zásilku s nejméně jedním dokumentem u všech způsobů vyřízení.",
             "Stránkování od 0 (v1 od 1); detailní data z registrů (pacientData, autorData…) se nevrací.",
             "Hlavička User-Agent je povinná (X-Correlation-Id doporučena, od 1. 1. 2027 povinná).",
+            "Revize 10. 11. 2026: stavy dle číselníku stav-zadanky – 2 Neproveditelná, 4 Dokončená (vyřízená), "
+            "5 Expirovaná; vrácení do oběhu vrací žádanku do stavu 0 (Nová) bez adresáta.",
+            "Revize 10. 11. 2026: ETag může být slabý validátor (W/\"…\") – do If-Match se posílá hodnota "
+            "bez W/ a uvozovek.",
         ],
         "simulace": _ez_sim_mode,
     })
+
+
+@app.post("/api/ezadanky/v2/vysledek-kostra")
+async def ez2_vysledek_kostra(request: Request):
+    """Zásilka s výsledkem pro ``vyridit`` ve tvaru testovací sady Postman
+    MZ ČR – hash SHA-256 se počítá na serveru (prohlížeč bez HTTPS nemá
+    ``crypto.subtle``). Vstup: ``text`` nebo ``obsahBase64``, ``nazevSouboru``,
+    ``autor`` (KRZP příjemce), ``poskytovatel`` (IČO příjemce), ``pacient``."""
+    import base64 as _b64
+    body = await request.json()
+    try:
+        obsah = (_b64.b64decode(body["obsahBase64"], validate=True)
+                 if body.get("obsahBase64") else (body.get("text") or ""))
+        volby = {k2: body[k1] for k1, k2 in (
+            ("mime", "mime"), ("typ", "typ"), ("klasifikace", "klasifikace"),
+            ("jazyk", "jazyk"), ("nazev", "nazev")) if body.get(k1)}
+        zasilka = EZadankyV2.sestav_vysledek(
+            obsah, nazev_souboru=body.get("nazevSouboru") or "vysledek.txt",
+            autor=body.get("autor") or "", poskytovatel=body.get("poskytovatel") or "",
+            pacient=body.get("pacient") or "",
+            zdravotnicky_pracovnik=body.get("zdravotnickyPracovnik"), **volby)
+    except Exception as e:
+        return error_response(f"Zásilku s výsledkem nelze sestavit: {e}", 400)
+    return JSONResponse({"status": 200, "data": zasilka})
 
 
 # --- Typy žádanek Z / K / FT: katalog, vzory IG, kostra, příprava Bundle ------
@@ -2895,8 +2955,12 @@ async def ez2_kostra(request: Request):
     zdravotnickyPracovnik?, nazev?, nazevPoskytovatele?, nazevAdresata?,
     textPozadavku?, vykony?: [{code, display, system?}], diagnoza?: {code, display},
     klinickaOtazka?, pojistovna? (kód KP, null = samoplátce), cisloPojistence?,
-    priorita? (routine|stat), pocetProcedur? (FT), odbornost?}``.
-    Stejný tvar prošel 13. 10. 2026 na T2 u všech tří typů (201 Created)."""
+    priorita? (routine|stat), pocetProcedur? (FT), odbornost?, pacientJmeno?
+    ({family, given[]}), datumNarozeni?, modalita? (Z – DICOM, např. DX),
+    pokynyPacientovi? (Z)}``.
+    Základní tvar prošel 13. 10. 2026 na T2 u všech tří typů (201 Created);
+    ``upozorneniIg`` v odpovědi vyjmenuje, co chybí proti povinným prvkům
+    publikovaných IG 1.0.0 (neblokující)."""
     body = await request.json()
     typ = (body.get("typ") or "K").upper()
     try:
@@ -2907,17 +2971,20 @@ async def ez2_kostra(request: Request):
                         icp=body.get("icp"), adresat=body.get("adresat") or None, nazev=body.get("nazev"),
                         nazev_poskytovatele=body.get("nazevPoskytovatele"),
                         pojistovna=body.get("pojistovna", "111"), priorita=body.get("priorita") or "routine",
-                        diagnoza=body.get("diagnoza"))
+                        diagnoza=body.get("diagnoza"),
+                        pacient_jmeno=body.get("pacientJmeno"), datum_narozeni=body.get("datumNarozeni"),
+                        cislo_pojistence=body.get("cisloPojistence"), odbornost=body.get("odbornost"),
+                        text_pozadavku=body.get("textPozadavku"), klinicka_otazka=body.get("klinickaOtazka"))
         if typ == "Z":
-            bundle = _fhir_order.kostra_z(**spolecne, vykon=(body.get("vykony") or [None])[0])
+            bundle = _fhir_order.kostra_z(**spolecne, vykon=(body.get("vykony") or [None])[0],
+                                          modalita=body.get("modalita"),
+                                          pokyny_pacientovi=body.get("pokynyPacientovi"))
         else:
             bundle = _fhir_order.kostra(
                 typ, **spolecne, zdravotnicky_pracovnik=body.get("zdravotnickyPracovnik"),
-                nazev_adresata=body.get("nazevAdresata"), text_pozadavku=body.get("textPozadavku"),
-                vykony=body.get("vykony") or None, klinicka_otazka=body.get("klinickaOtazka"),
-                cislo_pojistence=body.get("cisloPojistence"), odbornost=body.get("odbornost"),
-                pocet_procedur=body.get("pocetProcedur"),
-                pacient_jmeno=body.get("pacientJmeno"))
+                nazev_adresata=body.get("nazevAdresata"),
+                vykony=body.get("vykony") or None,
+                pocet_procedur=body.get("pocetProcedur"))
     except (ValueError, KeyError, TypeError) as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     v2 = _fhir_order.to_v2(bundle, zdravotnicky_pracovnik=body.get("zdravotnickyPracovnik"),
@@ -2925,6 +2992,8 @@ async def ez2_kostra(request: Request):
                            nadrizena_zadanka_id=body.get("nadrizenaZadankaId"))
     v2["typ"] = typ
     v2["vyhrady"] = EZadankyV2.zkontroluj_pozadavek(v2)
+    # Neblokující: co chybí proti povinným prvkům publikovaných IG (1.0.0)
+    v2["upozorneniIg"] = _fhir_order.vyhrady_ig(bundle)
     return JSONResponse(v2)
 
 
@@ -2986,7 +3055,7 @@ async def ez2_vyhledat(request: Request):
             if body.get("metoda"):
                 items = [z for z in items if any(m.get("kod") in body["metoda"] for m in z.get("metodaData") or [])]
             if body.get("uzavrena"):
-                items = [z for z in items if z["stav"]["kod"] in ("2", "3", "4")]
+                items = [z for z in items if z["stav"]["kod"] in _EZ_STAVY_KONCOVE]
             if body.get("datumOd"):
                 items = [z for z in items if (z.get("datumVytvoreni") or "") >= body["datumOd"]]
             if body.get("datumDo"):
@@ -3004,7 +3073,7 @@ async def ez2_vyhledat_aktivni(request: Request):
         if not (body.get("id") or body.get("rid") or body.get("kodZadanky")):
             return _ez_sim_err("Zadejte alespoň jedno z: id, rid, kodZadanky.", "E00400")
         try:
-            items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] in ("0", "5")]
+            items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] == "0"]
             if body.get("rid"):
                 items = [z for z in items if z["zasilka"].get("pacient") == body["rid"]]
             if body.get("id"):
@@ -3971,8 +4040,9 @@ async def szz2_action_typ(modul: str, typ: str, id_: str, akce: str, request: Re
 
 
 # ---------------------------------------------------------------------------
-# SZZ v3.0.0 (Standard EZ SZZ 3.0, platný od 29. 7. 2026)
-# Nové screeningy, opravený HPV typ a položka `samoplatce`; v2 běží dál.
+# SZZ v3 (Standard EZ SZZ 3.1, platný od 23. 10. 2026; swagger 3.0.5)
+# Položka `samoplatce`, účast ve screeningu jako samostatné záznamy
+# (/screeningy/*Ucast); v2 běží dál.
 # ---------------------------------------------------------------------------
 _SZZ3_MODULY = {"prevence", "screeningy", "emergentniZaznam"}
 
@@ -3991,15 +4061,21 @@ def _szz3_crud(modul: str, typ: str):
 async def szz3_katalog():
     """Přehled typů vyšetření, rozsahů hodnot a nových číselníků ve verzi 3."""
     from sez_api.client import SZZv2, SZZv3
-    nove = sorted(set(SZZv3.SCREENINGY_TYPY)
-                  - set(SZZv2.SCREENINGY_TYPY) - {"karcinomDeloznihoHrdlaHpv"})
+    nove = sorted(set(SZZv3.SCREENINGY_TYPY) - set(SZZv2.SCREENINGY_TYPY))
     return JSONResponse({"status": 200, "data": {
         "verzeApi": SZZv3.VERZE_API,
         "verzeStandardu": SZZv3.VERZE_STANDARDU,
-        "platneOd": "2026-07-29",
+        "platneOd": "2026-10-23",
         "prevence": SZZv3.PREVENCE_TYPY,
         "screeningy": SZZv3.SCREENINGY_TYPY,
         "screeningyNoveVeV3": nove,
+        "screeningyOdV2_0_4": list(SZZv2.SCREENINGY_OD_2_0_4),
+        "ucastVeScreeningu": {
+            typ: {**info, "operace": ["vytvor", "uprav", "zneplatnit",
+                                      "zpochybnit", "obnovit"],
+                  "cesta": f"/api/v3/screeningy/{typ}"}
+            for typ, info in SZZv3.UCAST_VE_SCREENINGU.items()},
+        "vplOdebranePolozky": list(SZZv3.VPL_ODEBRANE_POLOZKY),
         "emergentniZaznam": SZZv3.EMERGENTNI_TYPY,
         "rozsahy": {k: {"min": v[0], "max": v[1], "desetinnaMista": v[2]}
                     for k, v in SZZv3.ROZSAHY.items()},
@@ -4014,12 +4090,15 @@ async def szz3_katalog():
 
 @app.post("/api/szz3/zkontrolovat")
 async def szz3_zkontrolovat(request: Request):
-    """Klientská kontrola těla proti rozsahům z přílohy Validace SZZ 3.0."""
+    """Klientská kontrola těla proti rozsahům z přílohy Validace SZZ
+    (blokující ``vyhrady``) a změnám Standardu 3.1 (neblokující
+    ``upozorneni``)."""
     from sez_api.client import SZZv3
     body = await request.json()
     vyhrady = SZZv3.zkontroluj(body)
     return JSONResponse({"status": 200, "data": {
-        "validni": not vyhrady, "vyhrady": vyhrady}})
+        "validni": not vyhrady, "vyhrady": vyhrady,
+        "upozorneni": SZZv3.upozorneni(body)}})
 
 
 @app.get("/api/szz3/ciselniky")
@@ -4108,7 +4187,12 @@ async def szz3_search_typ(modul: str, typ: str, request: Request):
     if modul not in _SZZ3_MODULY:
         return error_response(f"Neznámý modul SZZ v3: {modul}")
     body = await request.json()
-    return timed_call(_szz3_crud(modul, typ)["vyhledat"], body)
+    ops = _szz3_crud(modul, typ)
+    if "vyhledat" not in ops:
+        return error_response(
+            f"Služba {typ} nemá operaci /vyhledat (Standard SZZ 3.1) – záznamy "
+            "účasti čtěte souhrnem POST /api/szz3/screeningy/vyhledat.", 405)
+    return timed_call(ops["vyhledat"], body)
 
 
 @app.put("/api/szz3/{modul}/{typ}/{id_}")
@@ -4690,7 +4774,7 @@ async def debug_jwt():
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyPsa", "desc": "SCREENING: karcinom prostaty – PSA"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyMri", "desc": "SCREENING: karcinom prostaty – MRI"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaCytologie", "desc": "SCREENING: karcinom děložního hrdla – cytologie"},
-                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV (cesta se dvěma D dle swaggeru)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV (swagger 2.0.1; ve swaggeru 2.0.7 karcinomDeloznihoHrdlaHpv – klient zkusí obě)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaExpertniKolposkopie", "desc": "SCREENING: karcinom děložního hrdla – expertní kolposkopie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuMamografie", "desc": "SCREENING: karcinom prsu – mamografie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuBiopsie", "desc": "SCREENING: karcinom prsu – biopsie"},
@@ -9584,8 +9668,7 @@ async def img_order_search(request: Request):
                 "resource": {
                     "resourceType": "ServiceRequest",
                     "id": zid,
-                    "status": "active" if stav in (None, "0", "1", "5") else
-                              ("revoked" if stav == "3" else "completed"),
+                    "status": _ez_stav_na_fhir(stav),
                     "intent": "order",
                     "priority": (upp.get("urgentnost") or {}).get("kod") or "routine",
                     "subject": {"identifier": {"system": _fhir_img.SYS_RID, "value": hl.get("pacient")}} if hl.get("pacient") else {},
@@ -9624,7 +9707,7 @@ async def img_order_search(request: Request):
             "resource": {
                 "resourceType": "ServiceRequest",
                 "id": zid,
-                "status": "active" if stav in (None, "0", "1") else "completed",
+                "status": _ez_stav_na_fhir(stav),
                 "intent": "order",
                 "priority": urgent,
                 "subject": {"identifier": {"system": _fhir_img.SYS_RID, "value": rid}} if rid else {},

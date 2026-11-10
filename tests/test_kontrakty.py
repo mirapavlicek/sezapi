@@ -9,7 +9,7 @@ volání (metoda, cesta, parametry). Ověřuje opravy z revize 2. 7. 2026:
   - Terminologie v1.1.0: GET /manifest.
   - EZCAValidace v1.0.0: POST /ezcaValidace/api/v1/dokumenty/validate.
   - SZZ v2: HPV screening děložního hrdla na cestě se dvěma "D"
-    (karcinomDDeloznihoHrdlaHpv) + alias s jedním "D".
+    (swagger 2.0.7: karcinomDeloznihoHrdlaHpv; původní zápis s dvojitým "D" je alias).
   - ELP v1: číselníky GET /api/v1/ciselniky.
 
 Spuštění:  python3 -m pytest tests/test_kontrakty.py -v
@@ -368,22 +368,24 @@ def test_ezca_validace_offline():
     assert body["prijmeni"] == "SVATÁ"
 
 
-# --- SZZ v2 – HPV screening (dvojité D dle swaggeru) ------------------------
+# --- SZZ v2 – HPV screening ---------------------------------------------------
+# Swagger 2.0.1 měl cestu s dvojitým D; swagger 2.0.7 ji má opravenou
+# (revize 10. 11. 2026). Klient volá opravenou cestu, starý zápis je alias.
 
-def test_szz2_hpv_screening_cesta_se_dvema_d():
+def test_szz2_hpv_screening_stary_zapis_je_alias():
     c = _FakeClient()
     szz2 = SZZv2(c)
     szz2.screening("karcinomDDeloznihoHrdlaHpv")["vytvor"]({"rid": "1"})
     assert c.last["path"] == \
-        "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv"
+        "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaHpv"
 
 
-def test_szz2_hpv_screening_alias_s_jednim_d():
+def test_szz2_hpv_screening_cesta_dle_swaggeru_2_0_7():
     c = _FakeClient()
     szz2 = SZZv2(c)
     szz2.screening("karcinomDeloznihoHrdlaHpv")["vyhledat"]({"rid": "1"})
     assert c.last["path"] == \
-        "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv/vyhledat"
+        "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaHpv/vyhledat"
 
 
 def test_szz2_neznamy_screening_vyhodi_chybu():
