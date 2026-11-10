@@ -86,7 +86,7 @@
         <div>
             <div class="form-group">
                 <label>Client ID</label>
-                <input type="text" id="cfg-clientid" value="" placeholder="25488627_KrajskaZdravotniVerejnyTest"/>
+                <input type="text" id="cfg-clientid" value="" placeholder="25488627_KrajskaZdravotniVerejnyTest04"/>
             </div>
             <div class="form-group">
                 <label>Client Secret (prázdný = private_key_jwt)</label>
@@ -131,7 +131,7 @@
                 <input type="text" id="cfg-gateway" value="gwy-ext-sec-t2.csez.cz" readonly/>
             </div>
             <div class="form-group">
-                <label>User-Agent (hlavička odesílaná na bránu, povinná od 1. 9. 2026)</label>
+                <label>User-Agent (hlavička odesílaná na bránu, doporučená od 1. 9. 2026, povinná od 1. 1. 2027)</label>
                 <input type="text" id="cfg-useragent" value="#($ZCONVERT(##class(SEZ.API.Config).UserAgent(),"O","HTML"))#" readonly/>
             </div>
             <button class="btn btn-primary" onclick="testConnection()">Otestovat připojení</button>

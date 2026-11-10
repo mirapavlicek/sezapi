@@ -14,6 +14,12 @@ Property LastResponse As %DynamicObject;
 /// Poslední surová odpověď
 Property LastRawResponse As %String(MAXLEN = "");
 
+/// X-Correlation-Id běžícího obchodního procesu. MZ ČR (3. 11. 2026): hodnotu
+/// generuje iniciátor JEDNOU pro celý proces a předává ji do všech navazujících
+/// volání (UUID v4+, nejvýše 128 znaků; hlavička je povinná od 1. 1. 2027).
+/// Prázdná hodnota = každé volání dostane vlastní UUID.
+Property CorrelationId As %String(MAXLEN = 128);
+
 Method %OnNew(pConfig As SEZ.API.Config) As %Status
 {
     Set ..Config = pConfig
@@ -51,6 +57,41 @@ Method Delete(pPath As %String, pBody As %DynamicAbstractObject = "", Output pRe
 {
     Set queryParams = ""
     Quit ..Execute("DELETE", pPath, .queryParams, pBody, .pResponse)
+}
+
+/// Provede HTTP QUERY požadavek – bezpečný a idempotentní dotaz s tělem.
+/// MZ ČR ji (prezentace 3. 11. 2026) plánuje pro vyhledávání v nových verzích
+/// služeb místo POST; k 10. 11. 2026 ji žádný publikovaný swagger nepoužívá.
+Method Query(pPath As %String, pBody As %DynamicAbstractObject = "", Output pResponse As %DynamicAbstractObject) As %Status
+{
+    Set queryParams = ""
+    Quit ..Execute("QUERY", pPath, .queryParams, pBody, .pResponse)
+}
+
+/// Zahájí obchodní proces: všechna další volání ponesou stejné X-Correlation-Id.
+/// Bez parametru se vygeneruje nové UUID; vrací použitou hodnotu.
+Method ZacniProces(pCorrelationId As %String = "") As %String
+{
+    If pCorrelationId = "" {
+        Set pCorrelationId = ##class(SEZ.API.Config).NewUUID()
+    }
+    Set ..CorrelationId = $Extract(pCorrelationId, 1, 128)
+    Quit ..CorrelationId
+}
+
+/// Ukončí obchodní proces – další volání dostanou opět vlastní X-Correlation-Id.
+Method UkonciProces()
+{
+    Set ..CorrelationId = ""
+}
+
+/// X-Correlation-Id pro právě odesílané volání.
+Method DejCorrelationId() As %String [ Private ]
+{
+    If ..CorrelationId '= "" {
+        Quit ..CorrelationId
+    }
+    Quit ##class(SEZ.API.Config).NewUUID()
 }
 
 /// Hlavní metoda pro vykonání HTTP požadavku (s automatickým retry při 401)
@@ -92,7 +133,7 @@ Method ExecuteInternal(pMethod As %String, pPath As %String, ByRef pQueryParams,
         Do req.SetHeader("Accept", "application/json")
         Do req.SetHeader("Accept-Language", ..Config.#DEFAULTLANG)
         Do req.SetHeader("User-Agent", ##class(SEZ.API.Config).UserAgent())
-        Do req.SetHeader("X-Correlation-Id", ##class(SEZ.API.Config).NewUUID())
+        Do req.SetHeader("X-Correlation-Id", ..DejCorrelationId())
         Do req.SetHeader("X-Trace-Id", ##class(SEZ.API.Config).NewUUID())
 
         If pETag '= "" {
@@ -123,6 +164,11 @@ Method ExecuteInternal(pMethod As %String, pPath As %String, ByRef pQueryParams,
             Set sc = req.Patch(pPath)
         } ElseIf pMethod = "DELETE" {
             Set sc = req.Delete(pPath)
+        } ElseIf pMethod = "QUERY" {
+            // %Net.HttpRequest nemá pro QUERY vlastní metodu – obecné Send()
+            Set sc = req.Send("QUERY", pPath)
+        } Else {
+            Set sc = $$$ERROR($$$GeneralError, "Nepodporovaná HTTP metoda: " _ pMethod)
         }
         If $$$ISERR(sc) Quit
 
@@ -204,7 +250,7 @@ Method GetBinaryInternal(pPath As %String, Output pStream As %Stream.TmpBinary, 
         Do req.SetHeader("Authorization", "Bearer "_token)
         Do req.SetHeader("Accept-Language", ..Config.#DEFAULTLANG)
         Do req.SetHeader("User-Agent", ##class(SEZ.API.Config).UserAgent())
-        Do req.SetHeader("X-Correlation-Id", ##class(SEZ.API.Config).NewUUID())
+        Do req.SetHeader("X-Correlation-Id", ..DejCorrelationId())
 
         Set sc = req.Get(pPath)
         If $$$ISERR(sc) Quit

@@ -53,7 +53,9 @@ def test_katalog_obsahuje_vsech_pet_typu():
 @pytest.mark.parametrize("kat", VSECHNY)
 def test_katalog_ma_dokumentaci_a_pozadavky(kat):
     t = next(x for x in katalog_zprav() if x["kategorie"] == kat)
-    assert t["ig_url"].startswith("https://build.fhir.org/ig/HL7-cz/")
+    # img a lab publikuje portál ig.ezdravi.gov.cz, ostatní jen CI build
+    assert t["ig_url"].startswith(("https://build.fhir.org/ig/HL7-cz/",
+                                   "https://ig.ezdravi.gov.cz/"))
     assert "444/2024" in t["legislativa"]
     assert t["composition_profile"].startswith("https://hl7.cz/fhir/")
     assert t["type_coding"]["code"]
@@ -143,12 +145,14 @@ def test_autor_jmeno_v_practitioner():
 
 def test_laboratorni_zprava_dle_cz_lab():
     meta = EZD_KATEGORIE["laboratorni-vysetreni"]
-    assert meta["ig"] == "hl7.fhir.cz.lab" and meta["ig_verze"] == "0.5.0"
-    assert meta["composition_profile"].endswith("/cz-composition-lab-report")
+    assert meta["ig"] == "hl7.fhir.cz.lab" and meta["ig_verze"] == "1.0.0"
+    assert meta["composition_profile"].endswith("/composition-cz-lab")
     b = ukazka_zpravy("laboratorni-vysetreni")
     comp = _composition(b)
-    # cz-composition-lab-report: language 1..1, section 1..*
+    # composition-cz-lab 1.0.0: identifier 1..1, category 11502-2, section 1..*
     assert comp["language"] == "cs"
+    assert comp["identifier"]["value"].startswith("urn:uuid:")
+    assert comp["category"][0]["coding"][0]["code"] == "11502-2"
     assert len(comp["section"]) >= 1
     # cz-bundle-lab: entry:diagnosticReport 1..1
     assert any(e["resource"]["resourceType"] == "DiagnosticReport"

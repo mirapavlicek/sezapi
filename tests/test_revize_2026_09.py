@@ -43,14 +43,15 @@ class _Zaznam:
 # --------------------------------------------------------------------------- #
 
 def test_krp_vychozi_verze_je_v3():
-    """Po 15. 9. 2026 brána v2 odmítá – výchozí prefix musí být /api/v3."""
+    """Výchozí prefix musí být /api/v3 – jediná verze, která zůstává podle
+    oznámení z 27. 8. 2026 i podle plánů z 3. 11. 2026."""
     c = _Zaznam()
     krp = KRP(c)
     assert krp.VERZE == "v3"
     krp.hledat_rid("2667873559")
     krp.hledat_jmeno_rc("Marie", "Dvořáková", "0303091234")
     krp.ciselnik("pohlavi")
-    krp.notifikace_zrusit({"x": 1}) if hasattr(krp, "notifikace_zrusit") else None
+    krp.notifikace_zrusit("5d1c8c0e-6f0b-4c53-9a54-3f1f5b0f6a11")
     assert all(p.startswith("/krp/api/v3/") for _, p in c.cesty), c.cesty
     assert ("POST", "/krp/api/v3/pacient/hledat/rid") in c.cesty
     assert ("POST", "/krp/api/v3/ciselnik/pohlavi") in c.cesty
@@ -201,7 +202,7 @@ def test_img_order_composition_type_ma_verzi_sct_cz_edice():
     from sez_api.fhir_imgorder import (EZadankaToImagingOrder, IG_DEPENDENCIES,
                                        IG_VERSION, SCT_CZ_EDITION)
 
-    assert IG_VERSION == "0.1.0"
+    assert IG_VERSION == "1.0.0"  # publikováno na ig.ezdravi.gov.cz (revize 10. 11. 2026)
     assert IG_DEPENDENCIES["hl7.fhir.cz.core"] == "1.0.0"
     b = EZadankaToImagingOrder(_ncez_zadanka()).to_bundle()
     comp = b["entry"][0]["resource"]

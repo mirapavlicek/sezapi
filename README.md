@@ -6,10 +6,10 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 
 | Služba | Popis |
 |--------|-------|
-| **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla (**API v3**; NCEZ vypnul v1 k 14. 8. 2026 a v1 i v2 vypíná k 15. 9. 2026) |
+| **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla (**API v3.0.6**, Standard KZR 1.3; v1 vypnuto 14. 8. 2026, o vypnutí v2 si zdroje odporují – viz Revize 10. 11. 2026) |
 | **KRZP / KRPZS** | Kmenové registry zdravotnických pracovníků a poskytovatelů (KRZP v2.0.7 a **nová v3.0.4** – přepínač `SEZ_KRZP_VERZE`; KRPZS v2.0.4) |
 | **DÚ** | Dočasné úložiště -- ukládání, vyhledávání a stahování zdravotnických zásilek |
-| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1.0.9, v2.0.7 a **v3.0.5** dle Standardu EZ SZZ 3.0) |
+| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1.0.9, v2.0.7 a **v3.0.5** dle Standardu EZ SZZ 3.1) |
 | **ELP** | Elektronické posudky -- vyhledávání a správa lékařských posudků |
 | **eŽádanky** | Elektronické žádanky mezi poskytovateli (**API v2.0.0** dle Standardu eŽádanka 2.0 – systémová hlavička + FHIR Bundle, platné od 1. 10. 2026; v1.11.25 deprecated) |
 | **Notifikace** | Notifikační služba -- kanály, šablony, zdroje |
@@ -156,6 +156,17 @@ git pull
 sudo ./deploy/install.sh
 ```
 
+#### Ověření po nasazení
+
+```bash
+python3 deploy/overeni.py                          # http://127.0.0.1:8004
+python3 deploy/overeni.py http://10.84.7.146:8004  # jiný server
+```
+
+Skript zkontroluje běžící verzi proti `pyproject.toml`, dashboard, pravidla KRP,
+katalogy SZZ a eŽádanek a validaci zpráv eZD. Bránu NCEZ nevolá a neposílá
+žádné údaje pacienta. Návratový kód 0 znamená, že vše prošlo.
+
 ---
 
 ## Instalace (stručný přehled)
@@ -200,7 +211,8 @@ Volitelné proměnné:
 | `SEZ_CERT_API_KEY` | (`SEZ_INTERNAL_API_KEY`) | Klíč pro API distribuce certifikátů |
 | `SEZ_INTERNAL_API_KEY` | (bez ochrany) | Klíč vyžadovaný interním API `/internal` |
 | `SEZ_GATEWAY` | `https://gwy-ext-sec-t2.csez.cz` | URL API Gateway |
-| `SEZ_KRP_VERZE` | `v3` | Verze API KRP pro hlavní rozhraní `/api/krp/*` (v1 i v2 jsou k 15. 9. 2026 vypnuty; `v2` jen pro ladění) |
+| `SEZ_KRP_VERZE` | `v3` | Verze API KRP pro hlavní rozhraní `/api/krp/*` (v1 je vypnuté; vypnutí v2 bylo oznámeno k 15. 9. 2026, plán z 3. 11. 2026 s v2 dál počítá) |
+| `SEZ_KRP_KONTROLA_JMEN` | `odmitnout` | Kontrola jména a příjmení před dotazem do KRP: `odmitnout` (interní API HTTP 422, `/api/krp/*` `status: 422` v těle), `varovat`, `vypnuto` |
 | `SEZ_INTERNAL_KRP_VERZE` | (`SEZ_KRP_VERZE`) | Verze API KRP pro interní ztotožnění |
 | `SEZ_HOST` | `0.0.0.0` | Adresa webového serveru |
 | `SEZ_PORT` | `8000` | Port webového serveru |
@@ -216,14 +228,20 @@ Rozhraní obsahuje sekci **SÚKL / eRecept** (skupina *Preskripce / SÚKL* v lev
 - **DLP -- léky** -- vyhledávání v databázi léčivých přípravků SÚKL (veřejná data)
 
 > **eRecept** je samostatný systém SÚKL (SOAP, verze rozhraní `202501A`,
+> ePoukaz `202605A`,
 > [epreskripce.gov.cz](https://epreskripce.gov.cz)) a vyžaduje **registraci SW u SÚKL
 > a certifikát**. Bez těchto přístupů běží v **režimu SIMULACE** (in-memory engine +
 > builder request obálek). Po doplnění `SUKL_REG_ID` a `SUKL_ERECEPT_ENDPOINT(_TEST)`
 > (viz `.env.example`) se přepne na **živé volání**.
 >
 > **DLP** (databáze léčivých přípravků) jsou **veřejná otevřená data**
-> ([opendata.sukl.cz](https://opendata.sukl.cz)) a fungují reálně i bez certifikátu;
+> ([opendata.sukl.gov.cz](https://opendata.sukl.gov.cz)) a fungují reálně i bez certifikátu;
 > při nedostupnosti se použije vestavěný vzorek přípravků.
+>
+> **Termíny SÚKL (stav k 10. 11. 2026):** portál otevřených dat je od 23. 10. 2026
+> jen na `opendata.sukl.gov.cz` (stará adresa katalogu už balík nenabízí);
+> „staré“ endpointy eReceptu se vypínají **30. 11. 2026**; ePoukaz od
+> **1. 12. 2026** přijímá jen verzi rozhraní `202605A`.
 
 Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
 
@@ -231,11 +249,12 @@ Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
 |----------|-------|
 | `SUKL_ENABLED` | Zapnutí sekce SÚKL (výchozí `true`) |
 | `SUKL_INTERFACE_VERSION` | Verze datového rozhraní eReceptu (výchozí `202501A`) |
+| `SUKL_EPOUKAZ_INTERFACE_VERSION` | Verze datového rozhraní ePoukazu (výchozí `202605A`) |
 | `SUKL_REG_ID` | Registrační ID SW přidělené SÚKL (prázdné = simulace) |
 | `SUKL_ERECEPT_ENDPOINT_TEST` / `SUKL_ERECEPT_ENDPOINT` | Endpoint SOAP rozhraní eReceptu |
 | `SUKL_CERT_PATH` / `SUKL_CERT_PASSWORD` | Certifikát pro mTLS k eReceptu (volitelné) |
 | `SUKL_DLP_URL` | Balík otevřených dat DLP – `auto` (výchozí) najde aktuální v katalogu, prázdné = vzorky |
-| `SUKL_DLP_KATALOG` | Katalog otevřených dat, ze kterého se `auto` odkaz zjišťuje |
+| `SUKL_DLP_KATALOG` | Stránka datové sady DLP, ze které se `auto` odkaz zjišťuje (výchozí na `opendata.sukl.gov.cz`) |
 | `SUKL_DLP_CACHE_DIR` | Lokální cache DLP (výchozí `/tmp/sukl_dlp`) |
 
 Živý režim SÚKL: pokud je prázdné `SUKL_CERT_PATH`, použije se pro mTLS certifikát
@@ -361,10 +380,27 @@ závazných standardů MZ – **pět typů zpráv**:
 | Typ zprávy | HL7 CZ IG | LOINC | Legislativa |
 |---|---|---|---|
 | Pacientský souhrn | `hl7.fhir.cz.ps` 0.0.1 | 60591-5 | vyhl. 444/2024 Sb., příl. 2 |
-| Propouštěcí zpráva | `hl7.fhir.cz.hdr` 0.1.0 | 34105-7 | příl. 1 bod 4 |
-| Zpráva z obrazového vyšetření | `hl7.fhir.cz.img` 0.1.0-ballot | 18748-4 | příl. 1 bod 3C |
-| Zpráva o výjezdu ZZS | `hl7.fhir.cz.ems` 0.0.2 | 67796-3 | příl. 1 bod 6B |
-| Laboratorní zpráva | `hl7.fhir.cz.lab` 0.5.0 | 11502-2 | příl. 1 bod 3B |
+| Propouštěcí zpráva | `hl7.fhir.cz.hdr` 0.1.0 (CI build 21. 9. 2026) | 34105-7 | příl. 1 bod 4 |
+| Zpráva z obrazového vyšetření | `hl7.fhir.cz.img` 1.0.0 (portál) | 18748-4 | příl. 1 bod 3C |
+| Zpráva o výjezdu ZZS | `hl7.fhir.cz.ems` 0.1.0 (CI build 5. 11. 2026) | 67796-3 | příl. 1 bod 6B |
+| Laboratorní zpráva | `hl7.fhir.cz.lab` 1.0.0 (portál) | 11502-2 | příl. 1 bod 3B |
+
+Verze odpovídají revizi z 10. 11. 2026. Závazným místem publikace je portál
+[ig.ezdravi.gov.cz](https://ig.ezdravi.gov.cz/); PS, HDR a EMS na něm nejsou,
+proto se u nich vychází z CI buildu. Co se proti předchozí verzi změnilo:
+
+| Typ zprávy | Bylo | Je |
+|---|---|---|
+| Propouštěcí zpráva | `identifier` 0..1, bez kategorie | `identifier` 1..1, `category` 11503-0 |
+| Obrazové vyšetření | 0.1.0-ballot, 3 povinné kategorie, `language`/`confidentiality` 1..1 | 1.0.0, 2 kategorie (85430-7 + Medical-Imaging), `language`/`confidentiality` 0..1 |
+| Výjezd ZZS | 0.0.2, `identifier` 0..1, sekce `significantProcedures`, časová osa textem | 0.1.0, `identifier` 1..1, sekce `presentIllness`, časové body 02/03/04/05/07 jako Observation |
+| Laboratorní zpráva | 0.5.0, profil `cz-composition-lab-report`, sekce `annotations`/`attachment` | 1.0.0, profil `composition-cz-lab`, sekce dle druhu vyšetření, `identifier` 1..1, `category` 11502-2 |
+
+Časová osa výjezdu ZZS se zadává po řádcích ve tvaru
+`<kód 01–08> <čas ISO 8601>`, např. `02 2026-07-18T18:42:00+02:00`.
+Builder z řádků vytvoří Observation časových bodů a Encounter výjezdu.
+Dokument ve stavu `final` se sekcí časové osy bez bodů 02, 03, 04, 05 a 07
+validací neprojde (invariant `mission-time-required`).
 
 Ovládání: vyberete typ (zobrazí se dokumentace profilu – povinné prvky,
 kanonické URL, kód pro DÚ), vyplníte údaje a sekce (povinné jsou vždy
@@ -422,9 +458,54 @@ dle [Metodiky testování EHR fáze I](https://mzcr.atlassian.net/wiki/spaces/EP
 - **Protokol o provedení testu** (povinný výstup testů) lze vygenerovat
   tlačítkem v záložce „Spustit vše" nebo přes `POST /api/irop/protokol`.
 
-## SZZ v3.0.0 (Standard EZ SZZ 3.0)
+## Revize 10. 11. 2026 – co se změnilo (bylo → je)
 
-Od 29. 7. 2026 platí nová verze API Sdíleného zdravotního záznamu. Klient ji
+Stejný přehled se zvýrazněním je na dashboardu aplikace (box „Revize 10. 11. 2026“).
+Brána T2 není z prostředí, kde revize vznikla, dostupná; změny vycházejí
+z dokumentace, standardů a swaggerů, ne z živého volání.
+
+| Oblast | Bylo | Je |
+|--------|------|----|
+| **SZZ – účast ve screeningu** | položky účasti uvnitř preventivní prohlídky VPL | tři služby `/api/v3/screeningy/karcinomProstatyUcast`, `karcinomPlicUcast`, `aneurysmaAbdominalniAortyUcast` (Standard SZZ 3.1, T2 od 20. 10. 2026) |
+| **SZZ – verze** | Standard 3.0, API 3.0.0 | Standard 3.1, API 3.0.5 (v2 na 2.0.7) |
+| **SZZ v2 – screeningy** | 10 typů | 15 typů (pět doplněných ve 2.0.4) |
+| **SZZ – rozsah PSA** | 1 000–12 000 | 0–200 µg/l |
+| **eŽádanky v2 – stavy** | 2 Vyřízená, 4 Neproveditelná, 5 Vrácená do oběhu | 2 Neproveditelná, 4 Dokončená, 5 Expirovaná; vrácení do oběhu → stav 0 bez adresáta |
+| **eŽádanky v2 – FHIR IG** | img-order 0.1.0 (CI build) | img-order 1.0.0 a order 1.0.0 z `ig.ezdravi.gov.cz` |
+| **X-Correlation-Id** | nové UUID pro každý požadavek | jedno UUID pro celý obchodní proces (`korelace()`) |
+| **User-Agent** | hodnota z konfigurace beze změny | bez diakritiky a řídicích znaků |
+| **KRP – dočasný RID** | „D“ + 9 náhodných číslic | „D“ + devítimístné číslo dělitelné 13 a nedělitelné 11 (Standard KZR 1.3) |
+| **KRP – hromadné ztotožnění** | bez omezení dávky | nejvýše 10 000 pacientů, větší soubor se dělí |
+| **KRP – jméno a příjmení** | bez kontroly | jen písmena, spojovník, apostrof a mezera; jinak chyba 422 (`SEZ_KRP_KONTROLA_JMEN`) |
+| **KRP – univerzální hledání** | dotaz i jen s datem narození | kombinace podle kap. 4.5.1 standardu |
+| **Zprávy eZD – výjezd ZZS** | IG 0.0.2, časová osa jako text | IG 0.1.0, časové body jako `Observation`, povinné 02/03/04/05/07 |
+| **Zprávy eZD – laboratoř** | IG 0.5.0 (CI build), sekce `annotations`, `attachment` | IG 1.0.0, profil `composition-cz-lab`, obě sekce zrušeny |
+| **Zprávy eZD – obrazové vyšetření** | IG 0.1.0-ballot, tři kategorie | IG 1.0.0, dvě kategorie |
+| **SÚKL DLP** | katalog na staré adrese | `opendata.sukl.gov.cz` |
+| **SÚKL ePoukaz** | verze rozhraní 202601A/B, 202604A | 202605A (starší se vypínají k 30. 11. 2026) |
+| **Terminologie (apio)** | specifikace v1.1.0 | „Terminologie v1.0.5“, nové parametry `displayLanguage`, `useSupplement` |
+| **Testovací client_id v ukázkách** | `25488627_KrajskaZdravotniVerejnyTest` | `25488627_KrajskaZdravotniVerejnyTest04` |
+
+Změny, které se projeví bez zásahu obsluhy: jméno se zástupnou hodnotou nebo
+nepovolenými znaky končí chybou 422, interní ztotožnění neposílá dotaz jen s datem
+narození, zpráva ZZS ve stavu `final` bez povinných časových bodů a laboratorní
+zpráva se zrušenou sekcí neprojdou validací.
+
+O vypnutí KRP v2 si zdroje odporují: Novinky z 27. 8. 2026 je oznamují
+k 15. 9. 2026, plán vývoje z 3. 11. 2026 počítá s provozem v2 i v3. Aplikace
+volá v3.
+
+## SZZ v3.0.5 (Standard EZ SZZ 3.1)
+
+Standard 3.1 (23. 10. 2026) vede **účast ve screeningu** jako samostatný
+záznam. `SZZv3.screening("karcinomProstatyUcast")` (a obdobně
+`karcinomPlicUcast`, `aneurysmaAbdominalniAortyUcast`) nabízí vytvoření,
+úpravu, zneplatnění, zpochybnění a obnovení; operaci `/vyhledat` standard
+u účasti neuvádí, záznamy vrací souhrn `POST /api/v3/screeningy/vyhledat`.
+Formulář prohlídky VPL ve v3 položky účasti neposílá. Swagger s těmito
+službami zatím zveřejněný není a datum nasazení na PROD není známé.
+
+Verze 3.0.0 platí od 29. 7. 2026. Klient ji
 obsluhuje třídou `SZZv3` a endpointy `/api/szz3/…`; verze v2 zůstává dostupná
 paralelně, takže přechod nemusí být skokový.
 

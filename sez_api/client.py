@@ -14,6 +14,10 @@ Flow:
 import time
 import uuid
 import logging
+import contextlib
+import contextvars
+import re
+import unicodedata
 import tempfile
 import os
 import base64
@@ -23,6 +27,8 @@ import requests
 from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.x509.extensions import SubjectKeyIdentifier
+
+from sez_api import kzr_pravidla as _kzr
 
 logger = logging.getLogger("sez_api")
 
@@ -127,8 +133,10 @@ class SEZConfig:
     ASSERTION_VALIDITY_SECONDS = 300
     ASSERTION_NBF_SKEW_SECONDS = 60
     ENVIRONMENT = "T2"
-    # Verze API KRP pro PZS. K 15. 9. 2026 NCEZ vypíná v1 i v2 (Novinky EZ,
-    # 27. 8. 2026); jediná provozovaná verze je v3.
+    # Verze API KRP pro PZS. Novinky EZ 27. 8. 2026 oznámily vypnutí v1 i v2
+    # k 15. 9. 2026; plány MZ ČR z 3. 11. 2026 naopak mluví o vypnutí jen v1
+    # "do konce roku" s tím, že v2 a v3 zůstanou. v3 zůstává podle obou zdrojů,
+    # proto je výchozí; dostupnost v2 je nutné ověřit na bráně.
     KRP_VERZE = os.environ.get("SEZ_KRP_VERZE", "v3").strip().lower() or "v3"
 
     @classmethod
@@ -360,8 +368,46 @@ class SEZClient:
         env_key = getattr(SEZConfig, "ENVIRONMENT", "T2")
         env = SEZ_ENVIRONMENTS.get(env_key, {})
         prostredi = "Prod" if env.get("base_env") == "PROD" else "Test"
+        nazev = SEZClient._ua_token(nazev) or "sez-api"
+        vyrobce = SEZClient._ua_text(vyrobce) or "neuvedeno"
+        poznamka = SEZClient._ua_text(poznamka)
         detail = f"{prostredi}; {vyrobce}" + (f"; {poznamka}" if poznamka else "")
-        return f"{nazev}/{_ver} ({detail})"
+        return f"{nazev}/{SEZClient._ua_token(_ver) or '0'} ({detail})"
+
+    @staticmethod
+    def _ua_ascii(text) -> str:
+        """Hlavička smí nést jen tisknutelné ASCII – diakritika se odstraní."""
+        t = unicodedata.normalize("NFKD", str(text or ""))
+        t = "".join(ch for ch in t if not unicodedata.combining(ch))
+        return "".join(ch for ch in t if 32 <= ord(ch) < 127)
+
+    @staticmethod
+    def _ua_token(text) -> str:
+        """Název / verze produktu: RFC 9110 ``token`` (bez mezer, lomítek, závorek)."""
+        t = re.sub(r"\s+", "-", SEZClient._ua_ascii(text).strip())
+        return re.sub(r"[^A-Za-z0-9!#$%&'*+.^_`|~-]", "", t)
+
+    @staticmethod
+    def _ua_text(text) -> str:
+        """Položka komentáře: bez středníku a závorek, které by rozbily formát
+        ``název/verze (Test|Prod; výrobceSW; další_informace)``."""
+        t = re.sub(r"[;()\\]", " ", SEZClient._ua_ascii(text))
+        return re.sub(r"\s+", " ", t).strip()
+
+    def pruvodni_hlavicky(self) -> dict:
+        """User-Agent + X-Correlation-Id (+ X-Trace-Id) pro volání, která si
+        hlavičky skládají sama (multipart upload, DÚ, JSU). Korelační id se
+        bere z běžícího obchodního procesu – viz :func:`korelace`."""
+        return {
+            "User-Agent": self.user_agent(),
+            "X-Correlation-Id": aktualni_correlation_id() or nove_correlation_id(),
+            "X-Trace-Id": str(uuid.uuid4()),
+        }
+
+    @staticmethod
+    def korelace(correlation_id: str = None):
+        """Kontext jednoho obchodního procesu – viz modulovou :func:`korelace`."""
+        return korelace(correlation_id)
 
     @staticmethod
     def traceparent() -> str:
@@ -410,6 +456,7 @@ class SEZClient:
             resp = self.session.post(
                 self.config.TOKEN_AUDIENCE,
                 data=data,
+                headers=self.pruvodni_hlavicky(),
                 timeout=30,
             )
             try:
@@ -463,14 +510,13 @@ class SEZClient:
         # od 1. 1. 2027 (UUID v4+, max 128 znaků; formát UA viz user_agent()).
         # Zdroj: API endpointy (Manuál EZ pro PZS), aktualizace 31. 8. 2026
         # (znění z 21. 7. uvádělo UA povinný už od 1. 9. 2026).
+        # Korelační id je společné pro celý obchodní proces (viz korelace()).
         h = {
             "Authorization": f"Bearer {self.auth.build_assertion()}",
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "User-Agent": self.user_agent(),
-            "X-Correlation-Id": str(uuid.uuid4()),
-            "X-Trace-Id": str(uuid.uuid4()),
+            **self.pruvodni_hlavicky(),
         }
         # traceparent (W3C) je volitelný – posílá se jen při zapnutí
         # SEZ_SEND_TRACEPARENT, aby se nikdy neodeslal neplatný formát.
@@ -628,17 +674,35 @@ class SEZClient:
 
         return resp
 
-    def get(self, path, params=None, timeout=None):
+    def get(self, path, params=None, timeout=None, extra_headers=None):
         kw = {"params": params}
         if timeout is not None:
             kw["timeout"] = timeout
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
         return self._request("GET", path, **kw)
 
-    def post(self, path, body=None, timeout=None):
+    def post(self, path, body=None, timeout=None, extra_headers=None):
         kw = {"json": body}
         if timeout is not None:
             kw["timeout"] = timeout
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
         return self._request("POST", path, **kw)
+
+    def query(self, path, body=None, timeout=None, extra_headers=None):
+        """HTTP metoda ``QUERY`` – bezpečný a idempotentní dotaz s tělem.
+
+        MZ ČR ji (prezentace 3. 11. 2026) plánuje pro vyhledávací operace
+        **nových verzí** služeb místo POST. K 10. 11. 2026 ji žádný
+        publikovaný swagger nepoužívá – metoda je připravená, stávající
+        moduly dál volají POST."""
+        kw = {"json": body}
+        if timeout is not None:
+            kw["timeout"] = timeout
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
+        return self._request("QUERY", path, **kw)
 
     def patch(self, path, body=None, params=None, **kwargs):
         return self._request("PATCH", path, json=body, params=params, **kwargs)
@@ -646,8 +710,11 @@ class SEZClient:
     def put(self, path, body=None, params=None, **kwargs):
         return self._request("PUT", path, json=body, params=params, **kwargs)
 
-    def delete(self, path, body=None):
-        return self._request("DELETE", path, json=body)
+    def delete(self, path, body=None, extra_headers=None):
+        kw = {"json": body}
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
+        return self._request("DELETE", path, **kw)
 
     def get_external(self, url: str, timeout: int = 30,
                       params: dict = None, headers: dict = None) -> requests.Response:
@@ -685,19 +752,129 @@ class SEZClient:
 # API moduly
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# X-Correlation-Id jednoho obchodního procesu
+# ---------------------------------------------------------------------------
+# Prezentace MZ ČR „HTTP hlavičky a metoda QUERY“ (3. 11. 2026): hodnotu
+# X-Correlation-Id generuje iniciátor JEDNOU pro celý obchodní proces a předává
+# ji do všech navazujících volání (UUID v4 a vyšší, nejvýše 128 znaků). Hlavička
+# bude povinná od 1. 1. 2027. ContextVar drží hodnotu pro právě běžící proces
+# (HTTP požadavek na tuto aplikaci, dávku, scénář); mimo proces dostane každé
+# volání vlastní UUID jako dosud.
+_KORELACE: contextvars.ContextVar = contextvars.ContextVar("sez_korelace", default=None)
+CORRELATION_ID_MAX = 128
+
+
+def correlation_id_platne(hodnota) -> bool:
+    """UUID verze 4 nebo vyšší v kanonickém zápisu, nejvýše 128 znaků."""
+    if not isinstance(hodnota, str) or not hodnota or len(hodnota) > CORRELATION_ID_MAX:
+        return False
+    try:
+        u = uuid.UUID(hodnota)
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return (u.version or 0) >= 4 and str(u) == hodnota.lower()
+
+
+def nove_correlation_id() -> str:
+    return str(uuid.uuid4())
+
+
+def aktualni_correlation_id() -> "str | None":
+    """Korelační id právě běžícího obchodního procesu (nebo None)."""
+    return _KORELACE.get()
+
+
+@contextlib.contextmanager
+def korelace(correlation_id: str = None):
+    """Všechna volání brány uvnitř bloku ponesou stejné X-Correlation-Id.
+
+    Bez parametru se převezme id nadřazeného procesu, jinak se vygeneruje
+    nové UUID v4. Neplatná hodnota (jiná než UUID v4+, delší než 128 znaků)
+    vyvolá ``ValueError`` – bránu by od 1. 1. 2027 stejně odmítla."""
+    if correlation_id is None:
+        correlation_id = _KORELACE.get() or nove_correlation_id()
+    elif not correlation_id_platne(correlation_id):
+        raise ValueError("X-Correlation-Id musí být UUID verze 4 nebo vyšší "
+                         f"(nejvýše {CORRELATION_ID_MAX} znaků).")
+    token = _KORELACE.set(correlation_id)
+    try:
+        yield correlation_id
+    finally:
+        _KORELACE.reset(token)
+
+
+def _podej_po_davkach(krp, file_bytes, filename, ucel, registrovat_odber, limit) -> list:
+    """Společná implementace ``ztotozneni_zadost_po_davkach`` pro KRP i KRPv3."""
+    if isinstance(file_bytes, (bytes, bytearray)):
+        raw = file_bytes.decode("utf-8-sig")
+    else:
+        raw = str(file_bytes)
+    xml_text = KRP.to_davka_xml(raw)
+    casti = _kzr.rozdel_davku(xml_text, limit or _kzr.DAVKA_MAX_PACIENTU)
+    base = (filename or "davka").rsplit(".", 1)[0] or "davka"
+    vysledky, pokracovat = [], True
+    for i, cast in enumerate(casti, start=1):
+        nazev = f"{base}_{i:02d}.xml" if len(casti) > 1 else f"{base}.xml"
+        polozka = {"poradi": i, "pocetPacientu": _kzr.pocet_pacientu(cast),
+                   "soubor": nazev, "status": None,
+                   "hromadneZtotozneniID": None, "odpoved": None}
+        if pokracovat:
+            resp = krp.ztotozneni_zadost(cast.encode("utf-8"), nazev, ucel,
+                                         registrovat_odber)
+            polozka["status"] = resp.status_code
+            try:
+                telo = resp.json()
+            except Exception:
+                telo = getattr(resp, "text", "")
+            polozka["odpoved"] = telo
+            if isinstance(telo, dict):
+                od = telo.get("odpovedData")
+                if isinstance(od, dict):
+                    polozka["hromadneZtotozneniID"] = (
+                        od.get("hromadneZtotozneniID") or od.get("hromadneZtotozneniId")
+                        or od.get("idZadosti"))
+            pokracovat = resp.status_code < 400
+        vysledky.append(polozka)
+    return vysledky
+
+
 class KRP:
     """KRP – Kmenový registr pacientů (rozhraní pro PZS).
 
     Cesty i tělo požadavků jsou u v2 a v3 shodné (liší se jen prefix
     ``/api/v2`` vs. ``/api/v3``; v3 navíc nemá ``ztotoznihromadne/vykonani``),
-    proto třída pouze parametrizuje verzi. NCEZ vypnul v1 k 14. 8. 2026 a
-    **v1 i v2 vypíná k 15. 9. 2026** (Novinky EZ, 27. 8. 2026) – výchozí je
-    proto ``v3``; starší verzi vrátí ``SEZ_KRP_VERZE=v2`` nebo parametr
-    ``verze`` (jen pro ladění, po 15. 9. 2026 vrací brána chybu)."""
+    proto třída pouze parametrizuje verzi. Výchozí je ``v3``.
+
+    Stav starších verzí (revize 10. 11. 2026) není jednoznačný: Novinky EZ
+    z 27. 8. 2026 oznámily vypnutí **v1 i v2 k 15. 9. 2026**, plány MZ ČR
+    z 3. 11. 2026 uvádějí „do konce roku vypnout v1, zůstane v2 a v3“ a stránka
+    KZR z téhož dne swagger ``KRP_v2`` dál odkazuje. v2 proto zůstává
+    přepínatelná (``SEZ_KRP_VERZE=v2`` nebo parametr ``verze``); zda na ni
+    brána odpovídá, se z této sítě ověřit nedalo.
+
+    Pravidla Standardu EZ Kmenové registry 1.3 (platnost 3. 11. 2026) drží
+    modul :mod:`sez_api.kzr_pravidla`."""
 
     BASE = "/krp"
+    # Datum z oznámení 27. 8. 2026 (viz docstring – plán z 3. 11. 2026 mu odporuje).
     VYPNUTI_V2 = "2026-09-15"
+    VYPNUTI_V2_POTVRZENO = False
     VERZE = "v3"  # výchozí; instance ji může přepsat (viz __init__)
+    STANDARD_VERZE = _kzr.STANDARD_VERZE
+    DRID_ZASOBA = _kzr.DRID_ZASOBA
+    DAVKA_MAX_PACIENTU = _kzr.DAVKA_MAX_PACIENTU
+    DAVKA_DOBA_ZPRACOVANI_MIN = _kzr.DAVKA_DOBA_ZPRACOVANI_MIN
+    NOTIFIKACE_UDALOSTI = _kzr.NOTIFIKACE_UDALOSTI
+    NOTIFIKACE_OBJEKTY_ZMENY = _kzr.NOTIFIKACE_OBJEKTY_ZMENY
+
+    drid_platny = staticmethod(_kzr.drid_platny)
+    rid_platny = staticmethod(_kzr.rid_platny)
+    kontrola_jmena = staticmethod(_kzr.kontrola_jmena)
+    uni_kombinace = staticmethod(_kzr.uni_kombinace)
+    rozdel_davku = staticmethod(_kzr.rozdel_davku)
+    notifikace_odber = staticmethod(_kzr.notifikace_odber)
+    notifikace_zprava = staticmethod(_kzr.notifikace_zprava)
 
     def __init__(self, client: SEZClient, verze: str | None = None):
         self.c = client
@@ -741,14 +918,35 @@ class KRP:
                            self._envelope(ucel, {"jmeno": jmeno, "prijmeni": prijmeni, "rodneCislo": rc}))
 
     def generovat_docasny_rid(self, pocet: int = 1, ucel="LECBA"):
+        """Vygeneruje dočasné RID (DRID) – Standard KZR 1.3, kap. 4.4.3.
+
+        DRID slouží k interní evidenci pacienta s neznámou totožností (občan ČR
+        i cizinec), při výpadku sítě nebo traumaplánu; **neslouží k založení
+        novorozence**. Zásoba předgenerovaných DRID je stanovena na 50 ks."""
+        try:
+            n = int(pocet)
+        except (TypeError, ValueError):
+            raise ValueError("Počet DRID musí být celé číslo.") from None
+        if n < 1:
+            raise ValueError("Počet DRID musí být alespoň 1.")
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/generovat/docasny_rid",
-                           self._envelope(ucel, {"pocet": pocet}))
+                           self._envelope(ucel, {"pocet": n}))
 
     def priradit_docasny_rid(self, docasny_rid: str, rid: str, ucel="LECBA"):
+        """Přiřadí použitý DRID k trvalému RID (kap. 4.4.4). DRID se špatným
+        tvarem (jiným než ``D`` + 9 číslic) se na bránu neposílá. Kontrolní
+        pravidlo verze 1.3 (dělitelnost 13, ne 11) se nevynucuje – DRID vydané
+        před 3. 11. 2026 ho splňovat nemusí; viz ``kzr_pravidla.drid_upozorneni``."""
+        drid = str(docasny_rid or "").strip().upper()
+        chyba = _kzr.drid_chyba(drid)
+        if chyba:
+            raise ValueError(chyba)
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/priradit/docasny_rid",
-                           self._envelope(ucel, {"docasnyRID": docasny_rid, "rid": rid}))
+                           self._envelope(ucel, {"docasnyRID": drid, "rid": str(rid or "").strip()}))
 
     def mapovani_rid(self, rid: str, jen_aktualni: bool = False, ucel="LECBA"):
+        """Aktuální RID nebo historie („rodokmen“) RID. Vstupem může být
+        libovolný vyhledatelný RID i DRID (Standard KZR 1.3, kap. 4.4.4)."""
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/mapovani_rid",
                            self._envelope(ucel, {"rid": rid, "jenAktualni": jen_aktualni}))
 
@@ -793,6 +991,11 @@ class KRP:
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/niabsi", body)
 
     def hledat_uni(self, ucel="LECBA", **kwargs):
+        """Univerzální vyhledání (``VyhledejUni``). Standard KZR 1.3, kap. 4.5.1,
+        uvádí pět kombinací, vždy jméno + příjmení a k tomu rodné číslo, číslo
+        pojištěnce, datum narození, adresu pobytu nebo doklad
+        (``kzr_pravidla.UNI_KOMBINACE``). Swagger 3.0.6 je nevynucuje, proto se
+        zde nekontrolují – upozornění vrací ``kzr_pravidla.uni_upozorneni``."""
         data = {k: v for k, v in kwargs.items() if v is not None}
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/uni",
                            self._envelope(ucel, data))
@@ -882,6 +1085,10 @@ class KRP:
         base = (filename or "davka").rsplit(".", 1)[0] or "davka"
         xml_text = self.to_davka_xml(raw)
         out_name = base + ".xml"
+        # Standard KZR 1.3, kap. 4.4.5: dávka nejvýše 10 000 pacientů.
+        chyba = _kzr.davka_chyba(_kzr.pocet_pacientu(xml_text))
+        if chyba:
+            raise ValueError(chyba + " Viz ztotozneni_zadost_po_davkach().")
 
         url = self.c.config.GATEWAY + f"{self.BASE}/api/{self.VERZE}/pacient/ztotoznihromadne/zadost"
         assertion = self.c.auth.build_assertion()
@@ -889,8 +1096,7 @@ class KRP:
             "Authorization": f"Bearer {assertion}",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "X-Correlation-Id": str(uuid.uuid4()),
-            "X-Trace-Id": str(uuid.uuid4()),
+            **self.c.pruvodni_hlavicky(),
         }
         form_data = {
             "ZadostInfo.Datum": self._now(),
@@ -907,6 +1113,17 @@ class KRP:
         except Exception:
             self.c.last_response = resp.text
         return resp
+
+    def ztotozneni_zadost_po_davkach(self, file_bytes, filename: str = "ztotozneni.csv",
+                                     ucel="LECBA", registrovat_odber: bool = False,
+                                     limit: int | None = None) -> list:
+        """Podá hromadné ztotožnění po dávkách nejvýše 10 000 pacientů
+        (Standard KZR 1.3, kap. 4.4.5) a vrátí seznam
+        ``{poradi, pocetPacientu, soubor, status, hromadneZtotozneniID, odpoved}``
+        – jednu položku za každou podanou dávku. Po první neúspěšné dávce se
+        další nepodávají (zbytek má ``status`` ``None``)."""
+        return _podej_po_davkach(self, file_bytes, filename, ucel,
+                                 registrovat_odber, limit)
 
     def ztotozneni_vykonani(self, id_zadosti, ucel="LECBA"):
         """POZOR: endpoint /ztotoznihromadne/vykonani NENÍ v dokumentaci API KRP
@@ -967,11 +1184,15 @@ class KRP:
         return out
 
     def ztotozneni_cekat_na_vysledky(self, id_zadosti, ucel="LECBA",
-                                      max_wait_s: float = 300,
+                                      max_wait_s: float = _kzr.DAVKA_CEKANI_S,
                                       interval_s: float = 10) -> dict:
         """Polluje /vysledky, dokud hromadneZtotozneniDokonceno != True
         (nebo do vypršení max_wait_s). Vrací poslední stav ze
-        :meth:`ztotozneni_stav` doplněný o počet pokusů a celkový čas."""
+        :meth:`ztotozneni_stav` doplněný o počet pokusů a celkový čas.
+
+        Výchozí čekání je 45 minut: MZ ČR (3. 11. 2026) uvádí, že zpracování
+        jedné dávky do 10 000 pacientů trvá cca 30 minut (dřív zde bylo 5 min
+        a čekání skončilo dřív než zpracování)."""
         t0 = time.monotonic()
         pokusy = 0
         while True:
@@ -1357,27 +1578,66 @@ class KRP:
             w.writerow(flat)
         return out.getvalue()
 
-    def notifikace_vyhledat(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="LECBA"):
-        data = {"kanalTyp": kanal_typ}
+    # --- Notifikace z KRP (Standard KZR 1.3, kap. 4.5.3) ---------------------
+    # Těla odpovídají swaggeru KRP 3.0.6 (schémata mají additionalProperties:
+    # false): založení ``predmet[].rid`` + ``prijemci.url`` + ``subjektId``,
+    # vyhledání ``idSubskripce`` a/nebo ``subjektId`` (IČO), zrušení jedno
+    # ``idSubskripce``. Dřívější pole ``kanalTyp``, ``subjektTyp``,
+    # ``typyUdalosti`` a ``cil`` ve schématu nejsou a už se neposílají.
+
+    def notifikace_vyhledat(self, kanal_typ=None, subjekt_id=None, subjekt_typ=None,
+                            ucel="LECBA", id_subskripce=None):
+        """Vyhledá odběry notifikací. ``subjekt_id`` je IČO subjektu (vrátí
+        všechny jeho aktivní odběry), ``id_subskripce`` GUID konkrétního
+        odběru. Alespoň jeden z nich musí být zadán (kap. 4.5.3.3).
+
+        ``kanal_typ`` a ``subjekt_typ`` zůstávají jen kvůli starším voláním
+        a ignorují se – schéma je nezná (kanál je „nyní pouze API“)."""
+        data = {}
+        if id_subskripce:
+            data["idSubskripce"] = str(id_subskripce).strip()
         if subjekt_id:
-            data["subjektId"] = subjekt_id
-        if subjekt_typ:
-            data["subjektTyp"] = subjekt_typ
+            data["subjektId"] = str(subjekt_id).strip()
+        if not data:
+            raise ValueError("Pro vyhledání odběru notifikací zadejte idSubskripce "
+                             "nebo subjektId (IČO).")
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/vyhledat/odber",
                            self._envelope(ucel, data))
 
-    def notifikace_zalozit(self, nastaveni, ucel="LECBA"):
+    def notifikace_zalozit(self, nastaveni=None, ucel="LECBA", *, rid=None,
+                           url=None, subjekt_id=None):
+        """Založí odběr notifikací o změnách pacienta/pacientů.
+
+        Buď pojmenované parametry (``rid`` – jeden nebo seznam, ``url`` –
+        nepovinná adresa listeneru, ``subjekt_id`` – IČO), nebo slovník
+        ``nastaveni``; starší tvary slovníku se převedou
+        (``kzr_pravidla.notifikace_odber_z_volneho_tela``). Bez URL použije KRP
+        výchozí adresu poskytovatele z KRPZS. Odpověď nese
+        ``zalozeneNotifikace[].idSubskripce`` a ``predmetId``."""
+        if rid is not None:
+            data = _kzr.notifikace_odber(rid, url, subjekt_id)
+        else:
+            data = _kzr.notifikace_odber_z_volneho_tela(nastaveni or {})
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/zalozit/odber",
-                           self._envelope(ucel, nastaveni))
+                           self._envelope(ucel, data))
 
     def notifikace_zrusit(self, id_subskripce=None, subjekt_id=None, ucel="LECBA"):
-        data = {}
-        if id_subskripce:
-            data["idSubskripce"] = id_subskripce
-        if subjekt_id:
-            data["subjektId"] = subjekt_id
-        return self.c.delete(f"{self.BASE}/api/{self.VERZE}/notifikace/zrusit/odber",
-                             self._envelope(ucel, data))
+        """Zruší odběr podle ``idSubskripce`` (GUID vrácený při založení).
+
+        Standard 1.3 uvádí násobnost [1..*], swagger 3.0.6 jeden řetězec –
+        seznam se proto ruší po jednom a vrací se odpověď posledního volání.
+        ``subjekt_id`` se ignoruje (zrušení ho ve schématu nemá)."""
+        if isinstance(id_subskripce, dict):
+            id_subskripce = (id_subskripce.get("idSubskripce")
+                             or id_subskripce.get("OdberId"))
+        idcka = [str(i).strip() for i in _kzr._seznam(id_subskripce) if str(i).strip()]
+        if not idcka:
+            raise ValueError("Pro zrušení odběru notifikací zadejte idSubskripce.")
+        resp = None
+        for jedno in idcka:
+            resp = self.c.delete(f"{self.BASE}/api/{self.VERZE}/notifikace/zrusit/odber",
+                                 self._envelope(ucel, {"idSubskripce": jedno}))
+        return resp
 
 
 class DocasneUloziste:
@@ -1549,7 +1809,8 @@ class DocasneUloziste:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "X-Correlation-Id": str(uuid.uuid4()),
+            "User-Agent": SEZClient.user_agent(),
+            "X-Correlation-Id": aktualni_correlation_id() or nove_correlation_id(),
             "X-Trace-Id": str(uuid.uuid4()),
         }
 
@@ -1614,8 +1875,7 @@ class DocasneUloziste:
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                     "Accept-Language": "cs",
-                    "X-Correlation-Id": str(uuid.uuid4()),
-                    "X-Trace-Id": str(uuid.uuid4()),
+                    **self.c.pruvodni_hlavicky(),
                 }
                 try:
                     if method == "GET":
@@ -2327,7 +2587,7 @@ class ELPv2:
 
 
 class ELPv3:
-    """ELP v3.0.1 – Elektronické posudky pro řidičská oprávnění (path /api/v3)."""
+    """ELP v3.0.3 – Elektronické posudky pro řidičská oprávnění (path /api/v3)."""
     BASE = "/elektronickePosudky"
 
     def __init__(self, client: SEZClient):
@@ -2640,11 +2900,45 @@ class EZadankyV2:
                "specifikace": "Funkční specifikace eŽádanky typu FT v7.0"},
     }
 
-    #: Stavy žádanky (číselník stav-zadanky).
+    #: Stavy žádanky – číselník ``stav-zadanky`` v1.0.0 (Standard systému
+    #: eŽádanka v2.0, Tabulka 9; ověřeno ``CodeSystem/$lookup`` na produkčním
+    #: TermX 10. 11. 2026 a testovací sadou Postman MZ ČR z 15. 10. 2026,
+    #: která po ``vyridit`` čeká stav "4").
+    #: Do revize 10. 11. 2026 zde byly kódy 2/4 prohozené a kód 5 vedený jako
+    #: „Vrácená do oběhu“ – vrácení do oběhu ale není stav: žádanka se vrací
+    #: do stavu 0 (Nová) a ztrácí adresáta. Kód 5 (Expirovaná) uvádí Standard,
+    #: v produkčním TermX zatím není.
     STAVY = {
-        "0": "Nová", "1": "Přijatá", "2": "Vyřízená",
-        "3": "Stornovaná", "4": "Neproveditelná", "5": "Vrácená do oběhu",
+        "0": "Nová", "1": "Přijatá", "2": "Neproveditelná",
+        "3": "Stornovaná", "4": "Dokončená", "5": "Expirovaná",
     }
+    #: Název stavu 4 v uživatelském rozhraní (Standard: „Dokončená“ = vyřízená).
+    STAV_NOVA, STAV_PRIJATA, STAV_NEPROVEDITELNA = "0", "1", "2"
+    STAV_STORNOVANA, STAV_DOKONCENA, STAV_EXPIROVANA = "3", "4", "5"
+    #: Stavy, ve kterých žádanka čeká na příjemce / je rozpracovaná.
+    STAVY_AKTIVNI = ("0", "1")
+    #: Koncové stavy – nad žádankou už nelze provést procesní operaci.
+    STAVY_KONCOVE = ("2", "3", "4", "5")
+    #: Procesní operace → výsledný stav.
+    PRECHODY = {
+        "0": {"prijmout": "1", "stornovat": "3"},
+        "1": {"vyridit": "4", "stornovat": "3",
+              "zaznacitNeproveditelnost": "2", "vratitDoObehu": "0"},
+    }
+
+    @staticmethod
+    def etag_na_verzi(etag) -> "str | None":
+        """Hodnota ``verzeZaznamu`` z hlavičky ETag: odstraní příznak slabého
+        validátoru ``W/`` i uvozovky (stejně jako testovací sada Postman
+        MZ ČR, která před použitím v If-Match odřízne předponu ``W/``
+        a krajní uvozovky)."""
+        if not etag:
+            return None
+        v = str(etag).strip()
+        if v[:2].upper() == "W/":
+            v = v[2:]
+        v = v.strip().strip('"')
+        return v or None
 
     def __init__(self, client: SEZClient):
         self.c = client
@@ -2658,7 +2952,7 @@ class EZadankyV2:
                 "Procesní operace eŽádanky v2 vyžaduje verzeZaznamu "
                 "(hlavička If-Match) – hodnota z hlavicka.verzeZaznamu "
                 "nebo z ETag poslední odpovědi.")
-        return {"If-Match": str(verze_zaznamu)}
+        return {"If-Match": EZadankyV2.etag_na_verzi(verze_zaznamu) or str(verze_zaznamu)}
 
     @staticmethod
     def verze_zaznamu(resp) -> "str | None":
@@ -2674,7 +2968,7 @@ class EZadankyV2:
                 return v
         headers = getattr(resp, "headers", None) or {}
         etag = headers.get("ETag") or headers.get("etag")
-        return etag.strip('"') if etag else None
+        return EZadankyV2.etag_na_verzi(etag)
 
     @staticmethod
     def _polozka(kod):
@@ -3014,6 +3308,80 @@ class EZadankyV2:
 
     vyrid = vyridit
 
+    @staticmethod
+    def sestav_vysledek(obsah, *, nazev_souboru: str, autor: str, poskytovatel: str,
+                        pacient: str, zdravotnicky_pracovnik: str = None,
+                        mime: str = "text/plain", typ: str = "721964003",
+                        klasifikace: str = "57133-1", jazyk: str = "cs-CZ",
+                        duvernost: str = "N",
+                        format_kod: str = "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        nazev: str = "Výsledek zobrazovacího vyšetření") -> dict:
+        """Zásilka s výsledkem pro :meth:`vyridit` ve tvaru testovací sady
+        Postman MZ ČR (15. 10. 2026): jeden dokument, ``hash`` = SHA-256
+        (hex) **bajtů** souboru, ``soubor.soubor`` = base64, jazyk ``cs-CZ``,
+        formát ``urn:ihe:iti:xds:2017:mimeTypeSufficient``.
+
+        Autor i poskytovatel výsledku jsou **příjemce** žádanky (ten, kdo
+        vyšetření provedl), ne žadatel. Výchozí ``typ``/``klasifikace``
+        odpovídají žádance Z z testovací sady – pro jiné typy je předejte."""
+        import base64 as _b64
+        import hashlib as _hl
+        data = obsah.encode("utf-8") if isinstance(obsah, str) else bytes(obsah or b"")
+        if not data:
+            raise ValueError("sestav_vysledek: soubor s výsledkem je prázdný.")
+        spolecne = {"autor": str(autor), "poskytovatel": str(poskytovatel),
+                    "pacient": str(pacient)}
+        return {
+            "nazev": nazev,
+            "typ": {"kod": typ},
+            "klasifikace": {"kod": klasifikace},
+            "autor": str(autor),
+            "zdravotnickyPracovnik": str(zdravotnicky_pracovnik or autor),
+            "poskytovatel": str(poskytovatel),
+            "pacient": str(pacient),
+            "dokument": [{
+                "nazev": nazev_souboru,
+                "typ": {"kod": typ},
+                "jazyk": {"kod": jazyk},
+                "klasifikace": {"kod": klasifikace},
+                "duvernost": {"kod": duvernost},
+                "format": {"kod": format_kod},
+                "mime": {"kod": mime},
+                **spolecne,
+                "hash": _hl.sha256(data).hexdigest(),
+                "soubor": {"soubor": _b64.b64encode(data).decode("ascii")},
+            }],
+        }
+
+    @classmethod
+    def stav_po_operaci(cls, stav: str, operace: str) -> "str | None":
+        """Výsledný stav po procesní operaci, nebo ``None``, pokud operaci
+        ve výchozím stavu provést nelze (Standard systému eŽádanka v2.0)."""
+        return cls.PRECHODY.get(str(stav), {}).get(operace)
+
+    #: Kroky scénáře „životní cyklus eŽádanky“ dle testovací sady Postman
+    #: MZ ČR (kolekce 01–03, 15. 10. 2026) – kdo krok volá a jaký stav čeká.
+    ZIVOTNI_CYKLUS = [
+        {"krok": 1, "kdo": "žadatel", "operace": "uloz",
+         "volani": "POST /api/v2/zadanka", "http": 201, "stav": "0"},
+        {"krok": 2, "kdo": "žadatel", "operace": "nacist",
+         "volani": "POST /api/v2/zadanka/{id}/nacist", "http": 200, "stav": "0"},
+        {"krok": 3, "kdo": "příjemce", "operace": "vyhledat_aktivni",
+         "volani": "POST /api/v2/zadanka/vyhledatAktivni", "http": 200, "stav": "0",
+         "poznamka": "tělo jen rid NEBO jen kodZadanky + strankovani {page: 0, size: 20}"},
+        {"krok": 4, "kdo": "příjemce", "operace": "nacist",
+         "volani": "POST /api/v2/zadanka/{id}/nacist", "http": 200, "stav": "0",
+         "poznamka": "s cisloDokladu nebo kodZadanky – zpřístupní Bundle ne-adresátovi"},
+        {"krok": 5, "kdo": "příjemce", "operace": "prijmout",
+         "volani": "PATCH /api/v2/zadanka/{id}/prijmout", "http": 200, "stav": "1"},
+        {"krok": 6, "kdo": "příjemce", "operace": "vyridit",
+         "volani": "PATCH /api/v2/zadanka/{id}/vyridit", "http": 200, "stav": "4",
+         "poznamka": "zpusobVyrizeniZadanky.kod \"1\", zásilka viz sestav_vysledek()"},
+        {"krok": 7, "kdo": "příjemce", "operace": "nacist",
+         "volani": "POST /api/v2/zadanka/{id}/nacist", "http": 200, "stav": "4",
+         "poznamka": "hlavicka.zasilkyVysledku obsahuje id zásilky v DÚ"},
+    ]
+
     def uprav(self, *args, **kwargs):
         raise NotImplementedError(
             "UpravZadanku ve verzi 2 neexistuje – vystavenou eŽádanku nelze upravit, "
@@ -3223,14 +3591,18 @@ class Terminologie:
     def metadata(self):
         """``GET /metadata`` – CapabilityStatement serveru.
 
-        Pozn.: ve swaggeru v1.1.0 už není uveden (zůstává funkční jako
-        standardní FHIR interakce)."""
+        Pozn.: veřejný swagger (apio, soubor Terminologie_v1.0.5.json
+        z 8. 10. 2026) tuto cestu neuvádí a veřejná adresa
+        ``https://apio.csez.gov.cz/terminologie/metadata`` vrací 404
+        (ověřeno 10. 11. 2026). Přes bránu (mTLS) nebylo ověřeno; výčet
+        číselníků dává spolehlivě :meth:`manifest`."""
         return self._request("GET", "/metadata")
 
     def manifest(self, *, lastUpdate: str = None, effectiveDate: str = None):
         """``GET /manifest`` – manifest obsahu terminologického serveru.
 
-        Přidáno ve swaggeru Terminologie v1.1.0 (apio.csez.gov.cz).
+        Přidáno ve swaggeru Terminologie v1.1.0 (apio.csez.gov.cz); katalog
+        apio stejný veřejný řez od 8. 10. 2026 vede pod názvem v1.0.5.
         Volitelné filtry ``lastUpdate`` a ``effectiveDate`` (datum)."""
         return self._request("GET", "/manifest",
                              params={"lastUpdate": lastUpdate,
@@ -3297,18 +3669,35 @@ class Terminologie:
         return self._request("PUT", f"/CodeSystem/{id}", body=body)
 
     def codesystem_lookup(self, *, code: str, system: str = None, id: str = None,
-                            version: str = None, property: str = None, **extra):
+                            version: str = None, property: str = None,
+                            displayLanguage: str = None,
+                            useSupplement: str = None, **extra):
+        """``GET /CodeSystem[/{id}]/$lookup``.
+
+        ``displayLanguage`` (např. ``cs``) a ``useSupplement`` (canonical
+        doplňku pro designations a properties) jsou volitelné parametry
+        doplněné ve veřejném swaggeru z 8. 10. 2026."""
         params = {"code": code, "system": system, "version": version,
-                   "property": property, **extra}
+                   "property": property, "displayLanguage": displayLanguage,
+                   "useSupplement": useSupplement, **extra}
         if id:
             return self._request("GET", f"/CodeSystem/{id}/$lookup", params=params)
         return self._request("GET", "/CodeSystem/$lookup", params=params)
 
     def codesystem_validate_code(self, *, code: str, url: str = None, id: str = None,
                                    system: str = None, version: str = None,
-                                   display: str = None, **extra):
+                                   display: str = None,
+                                   displayLanguage: str = None,
+                                   useSupplement: str = None, **extra):
+        """``GET /CodeSystem[/{id}]/$validate-code``.
+
+        ``displayLanguage`` a ``useSupplement`` (doplněk použitý při
+        ověření display a properties) jsou volitelné – veřejný swagger
+        z 8. 10. 2026."""
         params = {"code": code, "url": url, "system": system,
-                   "version": version, "display": display, **extra}
+                   "version": version, "display": display,
+                   "displayLanguage": displayLanguage,
+                   "useSupplement": useSupplement, **extra}
         if id:
             return self._request("GET", f"/CodeSystem/{id}/$validate-code", params=params)
         return self._request("GET", "/CodeSystem/$validate-code", params=params)
@@ -3906,14 +4295,16 @@ class KRPv3:
             raw = str(file_bytes)
         base = (filename or "davka").rsplit(".", 1)[0] or "davka"
         xml_text = KRP.to_davka_xml(raw)
+        chyba = _kzr.davka_chyba(_kzr.pocet_pacientu(xml_text))
+        if chyba:
+            raise ValueError(chyba + " Viz ztotozneni_zadost_po_davkach().")
         url = self.c.config.GATEWAY + f"{self.BASE}/api/v3/pacient/ztotoznihromadne/zadost"
         assertion = self.c.auth.build_assertion()
         headers = {
             "Authorization": f"Bearer {assertion}",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "X-Correlation-Id": str(uuid.uuid4()),
-            "X-Trace-Id": str(uuid.uuid4()),
+            **self.c.pruvodni_hlavicky(),
         }
         form_data = {
             "ZadostInfo.Datum": self._now(),
@@ -3930,6 +4321,14 @@ class KRPv3:
         except Exception:
             self.c.last_response = resp.text
         return resp
+
+    def ztotozneni_zadost_po_davkach(self, file_bytes, filename="ztotozneni.csv",
+                                     ucel="LECBA", registrovat_odber=False,
+                                     limit=None) -> list:
+        """Jako :meth:`KRP.ztotozneni_zadost_po_davkach` – dávky po nejvýše
+        10 000 pacientech, jedna žádost za každou."""
+        return _podej_po_davkach(self, file_bytes, filename, ucel,
+                                 registrovat_odber, limit)
 
     # zpětná kompatibilita (JSON varianta – některé starší volání)
     def hrom_zadost(self, body):
@@ -4045,27 +4444,47 @@ class SZZv2:
         "preventivniProhlidkyPldd",        # praktický lékař pro děti a dorost
     ]
 
-    # Známé typy v modulu /screeningy
-    # Pozn.: HPV screening děložního hrdla je ve swaggeru v2.0.1 veden s dvojitým
-    # "D" – /screeningy/karcinomDDeloznihoHrdlaHpv (překlep v API, ale reálná
-    # cesta). Jednoduché "karcinomDeloznihoHrdlaHpv" přijímáme jako alias.
+    # Známé typy v modulu /screeningy – dle swaggeru SZZ 2.0.7 (T2, 13. 10. 2026).
+    # Verze 2.0.4 (červen 2026) doplnila i do v2 pět
+    # samostatných screeningů (koloskopie, vstupní PSA, urologické a bioptické
+    # vyšetření prostaty, pneumologické vyšetření) – viz SCREENINGY_OD_2_0_4.
+    # HPV screening děložního hrdla byl ve swaggeru v2.0.1 veden s dvojitým "D"
+    # (/screeningy/karcinomDDeloznihoHrdlaHpv); swagger 2.0.7 už má opravenou
+    # cestu karcinomDeloznihoHrdlaHpv (changelog opravu neuvádí, takže není
+    # jasné, od které verze platí). Klient proto volá opravenou cestu a při
+    # HTTP 404 zkusí původní zápis (HPV_CESTA_PUVODNI) – funguje tak proti
+    # novému i staršímu nasazení. Starý zápis přijímáme jako alias.
     SCREENINGY_TYPY = [
         "aneurysmaAbdominalniAortyUsg",
-        "karcinomDDeloznihoHrdlaHpv",
         "karcinomDeloznihoHrdlaCytologie",
         "karcinomDeloznihoHrdlaExpertniKolposkopie",
+        "karcinomDeloznihoHrdlaHpv",
         "karcinomPlicLdct",
+        "karcinomPlicPneumologickeVysetreni",
+        "karcinomProstatyBioptickeVysetreni",
         "karcinomProstatyMri",
         "karcinomProstatyPsa",
+        "karcinomProstatyUrologickeVysetreni",
+        "karcinomProstatyVstupniPsa",
         "karcinomPrsuBiopsie",
         "karcinomPrsuMamografie",
+        "kolorektalniKarcinomKoloskopie",
         "kolorektalniKarcinomToks",
     ]
 
+    SCREENINGY_OD_2_0_4 = (
+        "karcinomPlicPneumologickeVysetreni",
+        "karcinomProstatyBioptickeVysetreni",
+        "karcinomProstatyUrologickeVysetreni",
+        "karcinomProstatyVstupniPsa",
+        "kolorektalniKarcinomKoloskopie",
+    )
+
     # Aliasy typů → cesta dle swaggeru
     SCREENINGY_ALIASY = {
-        "karcinomDeloznihoHrdlaHpv": "karcinomDDeloznihoHrdlaHpv",
+        "karcinomDDeloznihoHrdlaHpv": "karcinomDeloznihoHrdlaHpv",
     }
+    HPV_CESTA_PUVODNI = "karcinomDDeloznihoHrdlaHpv"
 
     # Emergentní záznam v2 – stejná podmnožina jako v1 (alergie bez CasZjisteni)
     EMERGENTNI_TYPY = [
@@ -4090,13 +4509,23 @@ class SZZv2:
     def _crud(self, modul: str, typ: str):
         """Vrátí slovník metod pro daný modul/typ."""
         base = f"{self.BASE}/api/v2/{modul}/{typ}"
+        puvodni = None
+        if modul == "screeningy" and typ == "karcinomDeloznihoHrdlaHpv":
+            puvodni = f"{self.BASE}/api/v2/{modul}/{self.HPV_CESTA_PUVODNI}"
+
+        def volej(metoda, pripona, body):
+            r = metoda(f"{base}{pripona}", body)
+            if puvodni and getattr(r, "status_code", None) == 404:
+                return metoda(f"{puvodni}{pripona}", body)
+            return r
+
         return {
-            "vytvor": lambda body: self.c.post(base, body),
-            "vyhledat": lambda body: self.c.post(f"{base}/vyhledat", body),
-            "uprav": lambda id_, body: self.c.put(f"{base}/{id_}", body),
-            "obnovit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/obnovit", body or {}),
-            "zneplatnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zneplatnit", body or {}),
-            "zpochybnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zpochybnit", body or {}),
+            "vytvor": lambda body: volej(self.c.post, "", body),
+            "vyhledat": lambda body: volej(self.c.post, "/vyhledat", body),
+            "uprav": lambda id_, body: volej(self.c.put, f"/{id_}", body),
+            "obnovit": lambda id_, body=None: volej(self.c.patch, f"/{id_}/obnovit", body or {}),
+            "zneplatnit": lambda id_, body=None: volej(self.c.patch, f"/{id_}/zneplatnit", body or {}),
+            "zpochybnit": lambda id_, body=None: volej(self.c.patch, f"/{id_}/zpochybnit", body or {}),
         }
 
     def prevence(self, typ: str):
@@ -4159,19 +4588,24 @@ class SZZv2:
 
 
 # ===========================================================================
-# SZZ v3.0.0 – Sdílený zdravotní záznam (Standard EZ SZZ 3.0, 29. 7. 2026).
-# Proti v2: cesty /api/v3, pět nových screeningů (koloskopie, vstupní PSA,
-# navazující urologické a bioptické vyšetření, pneumologické vyšetření),
-# opravený překlep v HPV screeningu děložního hrdla a nová položka
-# `samoplatce` u všech preventivních i screeningových vyšetření.
+# SZZ v3 – Sdílený zdravotní záznam (Standard EZ SZZ 3.1, 23. 10. 2026;
+# swagger 3.0.5 z T2).
+# Proti v2: cesty /api/v3 a nová položka `samoplatce` u všech preventivních
+# i screeningových vyšetření.
+# Standard 3.1 (wiki 23. 10. 2026, Novinky T2 20. 10. 2026): účast ve
+# screeningových programech (prostata, plíce, AAA) se vede jako samostatné
+# záznamy /api/v3/screeningy/*Ucast a z preventivní prohlídky VPL byly
+# položky ucastVeScreeningu* odebrány.
 # v2 zůstává dostupná paralelně.
 # ===========================================================================
 class SZZv3:
-    """SZZ v3.0.0 – /api/v3 s moduly /prevence, /screeningy, /emergentniZaznam."""
+    """SZZ v3 – /api/v3 s moduly /prevence, /screeningy, /emergentniZaznam."""
 
     BASE = "/sdilenyZdravotniZaznam"
-    VERZE_API = "3.0.0"
-    VERZE_STANDARDU = "3.0"
+    #: Poslední verze swaggeru ověřená na T2 (13. 10. 2026). Standard 3.1 je
+    #: dle wiki „platný pro SZZ od verze 3.0.5“.
+    VERZE_API = "3.0.5"
+    VERZE_STANDARDU = "3.1"
 
     PREVENCE_TYPY = [
         "kardiovaskularniRizika",
@@ -4200,7 +4634,54 @@ class SZZv3:
         "karcinomPrsuMamografie",
         "kolorektalniKarcinomKoloskopie",
         "kolorektalniKarcinomToks",
+        # Standard SZZ 3.1, kap. 6 – účast ve screeningu jako samostatný záznam
+        "aneurysmaAbdominalniAortyUcast",
+        "karcinomPlicUcast",
+        "karcinomProstatyUcast",
     ]
+
+    #: Samostatné záznamy účasti ve screeningovém programu (Standard SZZ 3.1,
+    #: Novinky EZ 20. 10. 2026). Standard u nich uvádí jen POST, PUT a PATCH
+    #: zneplatnit/zpochybnit/obnovit – operaci ``…/vyhledat`` NE; záznamy se
+    #: čtou souhrnem ``POST /api/v3/screeningy/vyhledat``.
+    #: Hodnoty: číselník (TermX id), kódy výkonů (číselníky SZZ v3.0 – verze
+    #: 3.1 je na wiki jen jako odkaz), cílová skupina a odbornost dle
+    #: přílohy 7.2 Standardu 3.1.
+    UCAST_VE_SCREENINGU = {
+        "karcinomProstatyUcast": {
+            "nazev": "Účast ve screeningu karcinomu prostaty",
+            "ciselnik": "szz-ucast-ve-screeningu-karcinomu-prostaty",
+            "kody": {"01131": "souhlasí s účastí", "01132": "souhlasí s účastí",
+                     "01133": "souhlasí s účastí", "01134": "nesouhlasí s účastí"},
+            "cilova_skupina": "muži 50–69 let",
+            "pohlavi": "M", "vek_od": 50, "vek_do": 69,
+            "odbornost": "L44",
+            "vpl_polozka": "ucastVeScreeninguKarcinomuProstaty",
+        },
+        "aneurysmaAbdominalniAortyUcast": {
+            "nazev": "Účast ve screeningu aneurysmatu abdominální aorty",
+            "ciselnik": "szz-ucast-ve-screeningu-aaa",
+            "kody": {"01135": "souhlasí s účastí", "01136": "nesouhlasí s účastí"},
+            "cilova_skupina": "muži 65–67 let",
+            "pohlavi": "M", "vek_od": 65, "vek_do": 67,
+            "odbornost": "L44",
+            "max_platnych_zaznamu": 1,
+            "vpl_polozka": "ucastVeScreeninguAaa",
+        },
+        "karcinomPlicUcast": {
+            "nazev": "Účast ve screeningu karcinomu plic",
+            "ciselnik": "szz-ucast-ve-screeningu-karcinomu-plic",
+            "kody": {"01196": "souhlasí s účastí", "01197": "nesouhlasí s účastí"},
+            "cilova_skupina": "muži i ženy 55–74 let",
+            "pohlavi": None, "vek_od": 55, "vek_do": 74,
+            "odbornost": "L44",
+            "vpl_polozka": "ucastVeScreeninguKarcinomuPlic",
+        },
+    }
+
+    #: Položky, které Standard 3.1 odebral z preventivní prohlídky VPL (v3).
+    VPL_ODEBRANE_POLOZKY = tuple(
+        v["vpl_polozka"] for v in UCAST_VE_SCREENINGU.values())
 
     # Ve v2 byl HPV screening veden s dvojitým "D" (karcinomDDeloznihoHrdlaHpv);
     # v3 je překlep opravený, starý zápis přijímáme jako alias.
@@ -4223,9 +4704,16 @@ class SZZv3:
         "obvodPasu": (10, 400, 3),
         "hladinaToksUgG": (0, 500, 2),
         "vysledekBbps": (0, 9, 0),
-        "hladinaPsa": (1000, 12000, 2),
+        # swagger 3.0.5: HladinaPsaUgL „z původních 1 000 až 12 000 na 0 až 200 µg/l“.
+        # Klíče jsou názvy JSON polí dle swaggeru 3.0.5 (hladinaPsaUgL,
+        # objemProstatyMl, psaVelocity); dřívější zápisy bez jednotky
+        # zůstávají jako aliasy.
+        "hladinaPsaUgL": (0, 200, 2),
+        "hladinaPsa": (0, 200, 2),
+        "objemProstatyMl": (0, 1000, 2),
         "objemProstaty": (0, 1000, 2),
         "psaDenzita": (0, 10, 2),
+        "psaVelocity": (0, 10, 2),
         "psaVelocita": (0, 10, 2),
         "pocetLetZanechaniKoureni": (0, 120, 1),
     }
@@ -4233,10 +4721,13 @@ class SZZv3:
     # Maximální délka volných textů (poznámky, popisy) dle validací v3.
     MAX_TEXT = 300
 
-    # Číselníky, které v3 přinesla nad rámec v2.
+    # Číselníky, které v3 přinesla nad rámec v2. Kódy dle Standardu SZZ 3.1
+    # a listu „Přehled“ přílohy Číselníky SZZ (ne zkrácené názvy listů
+    # xlsx – Excel je ořezává na 31 znaků, odtud dřívější
+    # „szz-ucast-karcinom-plic“ a „urologie-vysledek-biopt-vys“).
     NOVE_CISELNIKY = [
-        "szz-ucast-karcinom-plic",
-        "szz-ucast-karcinom-prostaty",
+        "szz-ucast-ve-screeningu-karcinomu-plic",
+        "szz-ucast-ve-screeningu-karcinomu-prostaty",
         "szz-ucast-ve-screeningu-aaa",
         "gastro-typ-koloskopie",
         "gastro-kompletnost-koloskopie",
@@ -4245,12 +4736,19 @@ class SZZv3:
         "urologie-klinicke-vysetreni",
         "urologie-dalsi-vysetreni",
         "urologie-typ-biopsie",
-        "urologie-vysledek-biopt-vys",
+        "urologie-vysledek-biopt-vysetreni",
         "pneumologie-koureni",
         "pneumologie-fyzikalni-vysetreni",
         "pneumologie-rtg-plic",
         "pneumologie-funkcni-vysetreni",
     ]
+
+    @staticmethod
+    def termx_id(ciselnik: str) -> str:
+        """Id ValueSetu číselníku SZZ v TermX (manifest apio.csez.gov.cz,
+        10. 11. 2026): všechny číselníky SZZ tam nesou předponu ``szz-``
+        (např. ``szz-gastro-typ-koloskopie``)."""
+        return ciselnik if ciselnik.startswith("szz-") else f"szz-{ciselnik}"
 
     def __init__(self, client: SEZClient):
         self.c = client
@@ -4268,7 +4766,7 @@ class SZZv3:
     # --- Generický CRUD pro prevence/screeningy/emergentní záznam ---
     def _crud(self, modul: str, typ: str):
         base = f"{self.BASE}/api/v3/{modul}/{typ}"
-        return {
+        ops = {
             "vytvor": lambda body: self.c.post(base, body),
             "vyhledat": lambda body: self.c.post(f"{base}/vyhledat", body),
             "uprav": lambda id_, body: self.c.put(f"{base}/{id_}", body),
@@ -4276,6 +4774,32 @@ class SZZv3:
             "zneplatnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zneplatnit", body or {}),
             "zpochybnit": lambda id_, body=None: self.c.patch(f"{base}/{id_}/zpochybnit", body or {}),
         }
+        if modul == "screeningy" and typ in self.UCAST_VE_SCREENINGU:
+            del ops["vyhledat"]
+        return ops
+
+    @classmethod
+    def ocisti_vpl(cls, body: dict | None) -> dict:
+        """Odstraní z těla preventivní prohlídky VPL položky účasti ve
+        screeningu, které Standard SZZ 3.1 ve v3 zrušil (účast se zadává
+        výhradně službami ``/screeningy/*Ucast``). Vrací kopii těla."""
+        return {k: v for k, v in (body or {}).items()
+                if k not in cls.VPL_ODEBRANE_POLOZKY}
+
+    @classmethod
+    def ucast_mimo_cilovou_skupinu(cls, typ: str, vek: int | None = None,
+                                   pohlavi: str | None = None) -> str | None:
+        """Upozornění, pokud pacient nespadá do cílové skupiny programu
+        (Novinky EZ 20. 10. 2026). Závaznou kontrolu dělá server; ``None`` =
+        bez výhrad nebo nelze posoudit."""
+        info = cls.UCAST_VE_SCREENINGU.get(typ)
+        if not info:
+            return None
+        if pohlavi and info["pohlavi"] and pohlavi.upper()[:1] != info["pohlavi"]:
+            return f"{info['nazev']}: program je určen pro {info['cilova_skupina']}."
+        if vek is not None and not (info["vek_od"] <= vek <= info["vek_do"]):
+            return f"{info['nazev']}: program je určen pro {info['cilova_skupina']} (věk {vek})."
+        return None
 
     def prevence(self, typ: str):
         if typ not in self.PREVENCE_TYPY:
@@ -4413,6 +4937,18 @@ class SZZv3:
             vyhrady.append("samoplatce: očekává se true/false.")
         return vyhrady
 
+    @classmethod
+    def upozorneni(cls, telo: dict) -> list:
+        """Neblokující upozornění k tělu požadavku v3 (Standard SZZ 3.1)."""
+        if not isinstance(telo, dict):
+            return []
+        return [
+            f"{k}: Standard SZZ 3.1 položku z preventivní prohlídky VPL ve v3 "
+            f"odebral – účast zadejte službou /api/v3/screeningy/{typ}."
+            for typ, info in cls.UCAST_VE_SCREENINGU.items()
+            for k in [info["vpl_polozka"]] if k in telo
+        ]
+
 
 # ===========================================================================
 # Registr oprávnění NCPeH v1.0.7 – samostatná služba pro přeshraniční
@@ -4448,7 +4984,8 @@ class RegistrOpravneniNcpeh:
 # ===========================================================================
 # SÚKL – eRecept / CÚER a Databáze léčivých přípravků (DLP)
 # ---------------------------------------------------------------------------
-# eRecept je samostatný systém SÚKL (SOAP web services, verze rozhraní 202501A,
+# eRecept je samostatný systém SÚKL (SOAP web services, verze rozhraní 202501A;
+# ePoukaz 202605A,
 # dokumentace na epreskripce.gov.cz). Vyžaduje registraci SW u SÚKL + certifikát.
 # Bez těchto přístupů běží integrace v režimu SIMULACE (viz simulační engine
 # v sez_api/app.py). DLP jsou veřejná otevřená data (opendata.sukl.cz).
@@ -4467,7 +5004,8 @@ SUKL_ENVIRONMENTS = {
 
 
 class SUKLDLP:
-    """Databáze léčivých přípravků SÚKL – veřejná otevřená data (opendata.sukl.cz).
+    """Databáze léčivých přípravků SÚKL – veřejná otevřená data
+    (opendata.sukl.gov.cz; do 23. 10. 2026 opendata.sukl.cz).
 
     Líné stažení + rozbalení + cache CSV; fulltext lookup nad indexem v paměti.
     Když stažení selže (offline), použije vestavěné vzorky z configu
@@ -4484,7 +5022,7 @@ class SUKLDLP:
 
     # Kandidátní názvy sloupců (schéma DLP se mezi verzemi liší) – zkusí se po
     # řadě. První v seznamu je název podle datového rozhraní DLP
-    # (opendata.sukl.cz/soubory/DLP_datove_rozhrani<datum>.csv).
+    # (opendata.sukl.gov.cz/soubory/DLP_datove_rozhrani<datum>.csv).
     _COLS = {
         "kod": ["KOD_SUKL", "KODSUKL", "KOD"],
         "nazev": ["NAZEV", "NÁZEV", "NAZ"],
@@ -4572,17 +5110,26 @@ class SUKLDLP:
         katalog = getattr(_cfg, "SUKL_DLP_KATALOG", "")
         if not katalog:
             return "", "SUKL_DLP_KATALOG není nastavena"
-        try:
-            resp = requests.get(katalog, timeout=30)
-            resp.raise_for_status()
-        except Exception as exc:
-            return "", f"katalog DLP nedostupný: {str(exc)[:150]}"
-        odkazy = re.findall(
-            r"https?://[^\"'\s]+/soubory/SOD\d{8}/DLP\d{8}\.zip", resp.text)
-        if not odkazy:
-            return "", "v katalogu DLP nebyl nalezen odkaz na balík"
-        # Datum je součástí názvu, takže nejnovější balík je lexikograficky poslední.
-        return sorted(set(odkazy))[-1], None
+        # Nasazení s ručně nastavenou starou adresou (opendata.sukl.cz/?q=…)
+        # by po přesunu portálu skončilo na vzorcích – zkusí se i výchozí.
+        vychozi = getattr(_cfg, "SUKL_DLP_KATALOG_VYCHOZI", "")
+        kandidati = [katalog] + ([vychozi] if vychozi and vychozi != katalog else [])
+        chyba = None
+        for adresa in kandidati:
+            try:
+                resp = requests.get(adresa, timeout=30)
+                resp.raise_for_status()
+            except Exception as exc:
+                chyba = chyba or f"katalog DLP nedostupný: {str(exc)[:150]}"
+                continue
+            odkazy = re.findall(
+                r"https?://[^\"'\s]+/soubory/SOD\d{8}/DLP\d{8}\.zip", resp.text)
+            if odkazy:
+                # Datum je součástí názvu, takže nejnovější balík je
+                # lexikograficky poslední.
+                return max(set(odkazy), key=lambda u: u.rsplit("/", 1)[-1]), None
+            chyba = chyba or "v katalogu DLP nebyl nalezen odkaz na balík"
+        return "", chyba
 
     def _doplnit_ciselniky(self, zf, records: list) -> None:
         """Přeloží zkratky (držitel, stav registrace, výdej) na názvy z číselníků
@@ -4781,10 +5328,22 @@ class SUKLeRecept:
     def mode(self) -> str:
         return self._cfg().sukl_mode(SEZConfig.ENVIRONMENT)
 
-    def _hlavicka(self, kontext: dict | None = None) -> dict:
+    # Operace ePoukazu – mají vlastní verzi datového rozhraní
+    OPERACE_EPOUKAZ = ("ZalozeniEPoukazu", "NahledNaEPoukaz")
+
+    def verze_rozhrani(self, operace: str = None) -> str:
+        """Verze datového rozhraní pro danou operaci: eRecept a doplňkové
+        služby CÚER ``SUKL_INTERFACE_VERSION`` (202501A), ePoukaz
+        ``SUKL_EPOUKAZ_INTERFACE_VERSION`` (od 1. 12. 2026 jen 202605A)."""
+        cfg = self._cfg()
+        if operace in self.OPERACE_EPOUKAZ:
+            return cfg.SUKL_EPOUKAZ_INTERFACE_VERSION
+        return cfg.SUKL_INTERFACE_VERSION
+
+    def _hlavicka(self, kontext: dict | None = None, operace: str = None) -> dict:
         cfg = self._cfg()
         h = {
-            "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
+            "verzeRozhrani": self.verze_rozhrani(operace),
             "identifikaceVyrobce": cfg.SUKL_VYROBCE,
             "registracniId": cfg.SUKL_REG_ID or None,
             "casVytvoreni": _iso_now(),
@@ -4798,7 +5357,7 @@ class SUKLeRecept:
                        kontext: dict | None = None) -> dict:
         return {
             "operace": operace,
-            "hlavicka": self._hlavicka(kontext),
+            "hlavicka": self._hlavicka(kontext, operace),
             "telo": telo or {},
         }
 
@@ -4934,6 +5493,21 @@ class SUKLeRecept:
             "enabled": cfg.SUKL_ENABLED,
             "mode": self.mode(),
             "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
+            "verzeRozhraniEPoukaz": cfg.SUKL_EPOUKAZ_INTERFACE_VERSION,
+            "terminy": [
+                {"datum": cfg.SUKL_ERECEPT_VYPNUTI_STARYCH_ENDPOINTU,
+                 "co": "eRecept: vypnutí „starých“ endpointů – živé volání "
+                       "musí mířit na nové URL (SUKL_ERECEPT_ENDPOINT)"},
+                {"datum": cfg.SUKL_EPOUKAZ_VYPNUTI_STARYCH,
+                 "co": "ePoukaz: vypnutí verzí "
+                       + ", ".join(cfg.SUKL_EPOUKAZ_VERZE_VYPINANE)
+                       + " – od 1. 12. 2026 jen 202605A"},
+            ],
+            "upozorneni": (
+                [f"SUKL_EPOUKAZ_INTERFACE_VERSION={cfg.SUKL_EPOUKAZ_INTERFACE_VERSION} "
+                 f"se k {cfg.SUKL_EPOUKAZ_VYPNUTI_STARYCH} vypíná"]
+                if cfg.SUKL_EPOUKAZ_INTERFACE_VERSION in cfg.SUKL_EPOUKAZ_VERZE_VYPINANE
+                else []),
             "endpoint": cfg.sukl_erecept_endpoint(env) or "(nenastaveno – simulace)",
             "registracniId": bool(cfg.SUKL_REG_ID),
             "certifikat": bool(cert),

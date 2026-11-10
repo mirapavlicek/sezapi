@@ -5,18 +5,18 @@ Podporované služby:
   - KRP (Kmenový registr pacientů)
   - KRZP (Kmenový registr zdravotnických pracovníků)
   - DÚ (Dočasné úložiště)
-  - SZZ (Sdílený zdravotní záznam – v1, v2.0.1 a NOVĚ v3.0.0 dle
-      Standardu EZ SZZ 3.0: nové screeningy, položka samoplatce,
-      rozsahy hodnot z přílohy Validace 3.0)
+  - SZZ (Sdílený zdravotní záznam – v1, v2.0.7 a v3.0.5 dle
+      Standardu EZ SZZ 3.1: screeningy vč. samostatných záznamů účasti,
+      položka samoplatce, rozsahy hodnot z přílohy Validace 3.0)
   - ELP (Elektronické posudky v1)
   - ELPv2 (Elektronické posudky v2)
-  - ELPv3 (Elektronické posudky v3.0.1)
+  - ELPv3 (Elektronické posudky v3.0.3)
   - eŽádanky (vč. simulačního enginu)
   - Zprávy eZD (builder dokumentů dle HL7 CZ IG – 5 typů: pacientský
       souhrn, propouštěcí zpráva, zpráva z obrazového vyšetření, zpráva
       o výjezdu ZZS, laboratorní zpráva; katalog sekcí, ukázky, L1 validace)
-  - FHIR Imaging Order (HL7-cz img-order IG v0.1.0, CI build 2026-08-28, R4 → /eZadanky bridge)
-      • závislosti: cz-core 0.3.0, cz-terminology 0.2.0, eu.base 2.0.0
+  - FHIR Imaging Order (HL7-cz img-order IG 1.0.0 z ig.ezdravi.gov.cz, R4 → /eZadanky bridge)
+      • závislosti: cz-core 1.0.0, cz-terminology 0.3.0 (přes cz-core), eu.base 2.0.1
       • taxonomie (ValueSets) napojené na živý TermX (public mirror) –
         cz-modality, cz-imagingProcedureVs, mkn-10 (Mkn10_5), mobility;
         bodySite/qualifier vedeny jako pomocné (mimo IG)
@@ -63,6 +63,45 @@ ObjectScript, který tutéž zprávu sestaví, zvaliduje dle L1 a uloží do DÚ
 třídu SEZ.EZD.Builder (Sestav / Validuj / ZasilkaProDU / SestavAOdesli,
 zná všech 5 kategorií vč. povinných i volitelných sekcí).
 API: /api/zpravy/iris-kod, /api/zpravy/iris-builder.
+
+Revize NCEZ zdrojů 2026-11-10 (celý Manuál EZ pro PZS vč. historie stránek
+a příloh, standardy SZZ 3.1 a KZR 1.3, Standard eŽádanka 2.0 + testovací sada
+MZ ČR, HL7 CZ IG z ig.ezdravi.gov.cz, katalog apio, SÚKL, ÚZIS). Brána T2 není
+z prostředí revize dostupná – vše níže vychází z dokumentů a swaggerů, ne
+z živého volání. Přehled „bylo → je“ je na dashboardu (box Revize 10. 11. 2026).
+SZZ: Standard 3.1 (23. 10. 2026, platný od API 3.0.5) – účast ve screeningu
+prostaty, plic a AAA jako samostatné služby /api/v3/screeningy/*Ucast (T2 od
+20. 10.; POST, PUT, PATCH zneplatnit/zpochybnit/obnovit, bez /vyhledat),
+z prohlídky VPL ve v3 položky účasti odebrány (SZZv3.UCAST_VE_SCREENINGU,
+ocisti_vpl); SZZv2 doplněno o pět screeningů z 2.0.4; rozsah PSA 0–200 µg/l.
+eŽádanky v2: číselník stav-zadanky opraven (2 Neproveditelná, 4 Dokončená,
+5 Expirovaná; vrácení do oběhu → stav 0 bez adresáta), If-Match bez W/,
+EZadankyV2.sestav_vysledek, kostry K/FT/Z dle publikovaných IG order a
+img-order 1.0.0.
+HTTP vrstva: X-Correlation-Id jedno pro celý obchodní proces (korelace(),
+middleware přebírá příchozí hodnotu), User-Agent bez diakritiky, SEZClient.query()
+pro plánovanou metodu QUERY (v žádném swaggeru zatím není).
+KRP: Standard KZR 1.3 (3. 11. 2026) – modul kzr_pravidla: DRID „D“ + 9 číslic
+dělitelných 13 a nedělitelných 11 (tvar se vynucuje, pravidlo 13/11 je jen
+upozornění), dávka hromadného ztotožnění nejvýše 10 000 pacientů s automatickým
+dělením, kontrola jména a příjmení před dotazem (SEZ_KRP_KONTROLA_JMEN =
+odmitnout | varovat | vypnuto; výchozí odmitnout → chyba 422), kombinace
+univerzálního hledání dle kap. 4.5.1 (samotné datum narození se neposílá),
+odběry notifikací dle swaggeru 3.0.6, /api/krp/pravidla,
+/api/krp/notifikace-zprava, /api/krp/notifikace-vzor. O vypnutí KRP v2 si
+zdroje odporují (Novinky 27. 8.: k 15. 9. 2026; plán 3. 11.: v2 a v3 zůstávají).
+Zprávy eZD: EMS 0.1.0 (časové body 01–08 jako Observation + Encounter, povinné
+02/03/04/05/07, Composition.identifier), lab 1.0.0 (profil composition-cz-lab,
+kategorie 11502-2, sekce annotations a attachment zrušeny), img 1.0.0 (dvě
+kategorie, jazyk a důvěrnost doporučené), HDR (kategorie 11503-0, identifier).
+SÚKL: otevřená data DLP na opendata.sukl.gov.cz, ePoukaz verze rozhraní
+202605A (starší SÚKL vypíná k 30. 11. 2026). Terminologie: apio vede
+specifikaci jako v1.0.5, $lookup/$validate-code mají displayLanguage a
+useSupplement. Ukázky a katalog služeb: client_id testovacího certifikátu 04,
+verze DÚ 1.11.27, ELP 3.0.3, Notifikace 1.0.9, EZCA2 Správa 1.0.8, KRPZS 2.0.4,
+nová položka katalogu SZZ_v3. Jen plán (neimplementováno): RO
+Osoby/Opravnujici/{rid}, client_id ve tvaru IČO_CERT, FHIR podepisování,
+modul RÚIAN, vypnutí SZZ v1.
 
 Revize NCEZ zdrojů 2026-10-13 (Manuál EZ pro PZS, 20 swaggerů z brány T2):
 eŽádanky API v2.0.0 (Standard eŽádanka 2.0; T2 od 25. 9., platné od 1. 10.
@@ -323,7 +362,7 @@ from sez_api.client import (
 from sez_api import fhir_order  # noqa: E402  (typy Z/K/FT, kostry, příprava Bundle)
 from sez_api import terminologie_index  # noqa: E402  (fulltext MKN-10 / SNOMED CT pro kostru)
 
-__version__ = "2.37.0"
+__version__ = "2.38.0"
 
 __all__ = [
     "SEZ_ENVIRONMENTS",

@@ -5,7 +5,7 @@
 /// vrací (HTTP status, tělo odpovědi) – pro debug a dokumentaci testu.
 ///
 /// Použití (terminál):
-///   Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest")
+///   Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest04")
 ///   Set config.P12CertFile = "/opt/certs/krajska_zdravotni.pfx"
 ///   Set config.P12CertPassword = "…"
 ///   Set runner = ##class(SEZ.IROP.TestRunner).%New(config)

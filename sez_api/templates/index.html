@@ -169,6 +169,20 @@ input[type="date"], input[type="datetime-local"], input[type="time"] {
 .date-quick button:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
 /* JSON viewer */
+/* Zvýraznění rozdílů v revizích: bylo → je */
+.rev-diff { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; border-radius: var(--radius); padding: 10px 12px; color: #78350f; }
+.rev-old { background: #fee2e2; color: #991b1b; text-decoration: line-through; text-decoration-color: rgba(153,27,27,.55); border-radius: 3px; padding: 0 3px; }
+.rev-new { background: #dcfce7; color: #166534; font-weight: 600; border-radius: 3px; padding: 0 3px; }
+.rev-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; border-radius: 3px; padding: 1px 5px; margin-right: 4px; }
+.rev-tag.nove { background: #dcfce7; color: #166534; }
+.rev-tag.zmena { background: #fef3c7; color: #92400e; }
+.rev-tag.oprava { background: #dbeafe; color: #1e40af; }
+.rev-tag.zruseno { background: #fee2e2; color: #991b1b; }
+.rev-tag.neovereno { background: #f3f4f6; color: #4b5563; }
+.rev-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rev-table th { text-align: left; padding: 6px 8px; background: #f1f5f9; border-bottom: 2px solid #cbd5e1; font-size: 11px; color: #334155; }
+.rev-table td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; line-height: 1.5; }
+.rev-table tr.rev-sekce td { background: #eff6ff; font-weight: 700; color: #1e3a8a; }
 .json-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6; overflow: auto; max-height: 600px; white-space: pre-wrap; word-break: break-all; }
 details[open] > summary span:first-child { display:inline-block; transform: rotate(90deg); }
 .json-key { color: #0550ae; }
@@ -538,7 +552,7 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
         Oficiální testovací aplikace<br>
         <strong style="color:var(--fg2)">TestovaciPZS (.NET 9)</strong>
       </div>
-      <div class="ds-field"><label>Client ID</label><input value="25488627_KrajskaZdravotniVerejnyTest" readonly style="color:var(--fg2);background:var(--bg2)"></div>
+      <div class="ds-field"><label>Client ID</label><input value="25488627_KrajskaZdravotniVerejnyTest04" readonly style="color:var(--fg2);background:var(--bg2)"></div>
       <div class="ds-field"><label>Audience (JSU)</label><input value="https://jsuint-auth-t2.csez.cz/connect/token" readonly style="color:var(--fg2);background:var(--bg2);font-size:9px"></div>
       <div class="ds-field"><label>Gateway T2</label><input value="https://gwy-ext-sec-t2.csez.cz" readonly style="color:var(--fg2);background:var(--bg2)"></div>
       <div class="ds-field"><label>Certifikát (PFX)</label><input value="Certifikat_systémový_Krajská_zdravotní_ICO_25488627.pfx" readonly style="color:var(--fg2);background:var(--bg2);font-size:9px"></div>
@@ -756,6 +770,86 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
       </div>
       <div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);border-color:#bfdbfe">
         <div class="card-title" style="color:#1e3a8a">Aktuální verze API a poslední změny</div>
+        <div class="rev-diff" id="revize-2026-11" style="margin-bottom:12px;font-size:12px;line-height:1.55">
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px">Revize 10. 11. 2026 – co se změnilo proti revizi 13. 10. 2026</div>
+          <div style="margin-bottom:8px">
+            Prošli jsme celý Manuál EZ pro PZS (včetně historie stránek a příloh), standardy SZZ 3.1 a KZR 1.3, Standard eŽádanka 2.0 s testovací sadou MZ ČR, publikované HL7 CZ IG, PROD katalog <code>apio.csez.gov.cz</code>, SÚKL a ÚZIS.
+            Původní stav je <span class="rev-old">červeně přeškrtnutý</span>, nový <span class="rev-new">zeleně</span>.
+            Štítky: <span class="rev-tag nove">nové</span><span class="rev-tag zmena">změna</span><span class="rev-tag oprava">oprava</span><span class="rev-tag zruseno">zrušeno</span><span class="rev-tag neovereno">neověřeno</span>
+          </div>
+          <div style="margin-bottom:8px;padding:6px 8px;background:#fff;border:1px solid #fcd34d;border-radius:4px">
+            <strong>Čtyři změny, které mění chování aplikace bez zásahu obsluhy:</strong>
+            (1) jméno nebo příjmení s nepovolenými znaky nebo se zástupnou hodnotou („Test“, „Neuvedeno“) aplikace do KRP neodešle a vrátí chybu 422 – interní API <code>/internal</code> jako HTTP 422, rozhraní <code>/api/krp/*</code> jako <code>status: 422</code> v těle odpovědi (<code>SEZ_KRP_KONTROLA_JMEN=varovat</code> dotaz odešle s upozorněním, <code>vypnuto</code> kontrolu vypne);
+            (2) interní ztotožnění už neposílá dotaz jen s datem narození;
+            (3) zpráva o výjezdu ZZS ve stavu <code>final</code> bez pěti povinných časových bodů neprojde validací;
+            (4) laboratorní zpráva se sekcí <code>annotations</code> nebo <code>attachment</code> neprojde validací.
+          </div>
+          <table class="rev-table">
+            <thead><tr><th style="width:17%">Oblast</th><th style="width:30%">Bylo</th><th>Je</th></tr></thead>
+            <tbody>
+              <tr class="rev-sekce"><td colspan="3">SZZ – Standard EZ SZZ 3.1 (23. 10. 2026), služby účasti na T2 od 20. 10. 2026</td></tr>
+              <tr><td><span class="rev-tag nove">nové</span>Účast ve screeningu</td><td><span class="rev-old">položky účasti uvnitř preventivní prohlídky VPL</span></td><td><span class="rev-new">tři samostatné služby <code>/api/v3/screeningy/karcinomProstatyUcast</code>, <code>karcinomPlicUcast</code>, <code>aneurysmaAbdominalniAortyUcast</code></span> (POST, PUT, zneplatnit, zpochybnit, obnovit; bez <code>/vyhledat</code>). Formulář prohlídky VPL je ve v3 už neposílá; vlastní volání může tělo očistit přes <code>SZZv3.ocisti_vpl()</code>.</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Verze</td><td><span class="rev-old">Standard 3.0, API 3.0.0</span></td><td><span class="rev-new">Standard 3.1, API 3.0.5</span> (v2 na 2.0.7)</td></tr>
+              <tr><td><span class="rev-tag oprava">oprava</span>SZZ v2</td><td><span class="rev-old">10 typů screeningů, pět červnových klient odmítal</span></td><td><span class="rev-new">15 typů</span> (koloskopie, vstupní PSA, urologické a bioptické vyšetření prostaty, pneumologie); cesta HPV podle swaggeru 2.0.7, při 404 původní zápis</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Rozsah PSA</td><td><span class="rev-old">1 000–12 000</span></td><td><span class="rev-new">0–200 µg/l</span> (popis swaggeru 3.0.5; schéma mez neuvádí)</td></tr>
+
+              <tr class="rev-sekce"><td colspan="3">eŽádanky v2 – Standard eŽádanka 2.0, publikované IG 1.0.0</td></tr>
+              <tr><td><span class="rev-tag oprava">oprava</span>Kódy stavů</td><td><span class="rev-old">2 Vyřízená, 4 Neproveditelná, 5 Vrácená do oběhu</span></td><td><span class="rev-new">2 Neproveditelná, 4 Dokončená (v UI „Vyřízená“), 5 Expirovaná</span>; vrácení do oběhu vrací žádanku do stavu 0 a maže adresáta</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>FHIR IG</td><td><span class="rev-old">img-order 0.1.0 (CI build), order CI build</span></td><td><span class="rev-new">img-order 1.0.0 a order 1.0.0 z <a href="https://ig.ezdravi.gov.cz/" target="_blank" rel="noopener">ig.ezdravi.gov.cz</a></span> – profily <code>KOrderBundleCz</code> / <code>FTOrderBundleCz</code>, jazyk, důvěrnost, sekce úhrady, modalita</td></tr>
+              <tr><td><span class="rev-tag nove">nové</span>Vyřízení</td><td><span class="rev-old">zásilku s výsledkem si volající skládal sám</span></td><td><span class="rev-new"><code>EZadankyV2.sestav_vysledek()</code> – zásilka s výsledkem včetně SHA-256</span>; hodnota <code>ETag</code> se slabým validátorem <code>W/</code> se pro <code>If-Match</code> očistí</td></tr>
+
+              <tr class="rev-sekce"><td colspan="3">HTTP hlavičky (stránka API endpointy, plán vývoje 3. 11. 2026)</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>X-Correlation-Id</td><td><span class="rev-old">nové UUID pro každý požadavek</span></td><td><span class="rev-new">jedno UUID pro celý proces</span> (kontext <code>korelace()</code>, i volání JSU, uploady a DÚ); backend převezme platnou příchozí hodnotu a vrací ji v odpovědi</td></tr>
+              <tr><td><span class="rev-tag oprava">oprava</span>User-Agent</td><td><span class="rev-old">hodnota z konfigurace beze změny</span></td><td><span class="rev-new">bez diakritiky a řídicích znaků</span>; povinný od 1. 1. 2027 stejně jako X-Correlation-Id</td></tr>
+              <tr><td><span class="rev-tag nove">nové</span>Metoda QUERY</td><td><span class="rev-old">nebyla</span></td><td><span class="rev-new"><code>SEZClient.query()</code>, v IRIS <code>HttpClient.Query</code></span> – připraveno; v žádném publikovaném swaggeru zatím není</td></tr>
+
+              <tr class="rev-sekce"><td colspan="3">KRP – Standard EZ Kmenové registry 1.3 (platnost od 3. 11. 2026)</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Dočasný RID</td><td><span class="rev-old">„D“ + 9 náhodných číslic</span></td><td><span class="rev-new">„D“ + devítimístné číslo dělitelné 13 a nedělitelné 11</span>. Tvar se vynucuje, kontrolní pravidlo je jen upozornění (dříve vydané DRID ho nesplňují). DRID neslouží k založení novorozence.</td></tr>
+              <tr><td><span class="rev-tag nove">nové</span>Hromadné ztotožnění</td><td><span class="rev-old">bez omezení velikosti dávky</span></td><td><span class="rev-new">nejvýše 10 000 pacientů v dávce</span>; větší soubor se podá po částech, čekání na výsledek 45 minut</td></tr>
+              <tr><td><span class="rev-tag nove">nové</span>Jméno a příjmení</td><td><span class="rev-old">bez kontroly</span></td><td><span class="rev-new">jen písmena, spojovník, apostrof a mezera</span>; jiné znaky a zástupné hodnoty končí chybou 422 ještě před dotazem do KRP</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Univerzální hledání</td><td><span class="rev-old">dotaz i jen s datem narození</span></td><td><span class="rev-new">kombinace podle kap. 4.5.1</span>; samotné datum narození se neposílá, ostatní nepovolené kombinace vracejí upozornění</td></tr>
+              <tr><td><span class="rev-tag nove">nové</span>Notifikace KRP</td><td><span class="rev-old">těla odběrů podle starší verze swaggeru</span></td><td><span class="rev-new">těla podle swaggeru 3.0.6</span> (<code>predmet</code>, <code>prijemci</code>, <code>subjektId</code>, <code>idSubskripce</code>), rozbor zprávy <code>KZR.Notifikace</code>; <code>/api/krp/pravidla</code>, <code>/api/krp/notifikace-zprava</code>, <code>/api/krp/notifikace-vzor</code></td></tr>
+
+              <tr class="rev-sekce"><td colspan="3">Zprávy eZD – HL7 CZ IG (závazný portál ig.ezdravi.gov.cz, wiki 3.–4. 11. 2026)</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Výjezd ZZS (EMS)</td><td><span class="rev-old">0.0.2; časová osa jako volný text</span></td><td><span class="rev-new">0.1.0 (CI build 5. 11. 2026)</span>: časové body 01–08 jako <code>Observation</code> + <code>Encounter</code>, povinné 02, 03, 04, 05 a 07, povinný <code>Composition.identifier</code>; sekce <code>significantProcedures</code> sloučena do <code>procedure</code></td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Laboratorní zpráva</td><td><span class="rev-old">0.5.0 (CI build), profil <code>cz-composition-lab-report</code>, sekce <code>annotations</code> a <code>attachment</code></span></td><td><span class="rev-new">1.0.0 z portálu, profil <code>composition-cz-lab</code></span>, kategorie LOINC 11502-2, povinný identifikátor, povinná sekce laboratorního nálezu (26436-6 nebo oborová); <span class="rev-tag zruseno">zrušeno</span>sekce <code>annotations</code> a <code>attachment</code></td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Obrazové vyšetření</td><td><span class="rev-old">0.1.0-ballot (CI build), tři kategorie, jazyk a důvěrnost povinné</span></td><td><span class="rev-new">1.0.0 z portálu, dvě kategorie</span> (85430-7 a Medical-Imaging); jazyk a důvěrnost doporučené</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Propouštěcí zpráva</td><td><span class="rev-old">bez kategorie a identifikátoru</span></td><td><span class="rev-new">kategorie LOINC 11503-0 a povinný <code>Composition.identifier</code></span> (CI build 21. 9. 2026)</td></tr>
+
+              <tr class="rev-sekce"><td colspan="3">SÚKL a Terminologie</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>SÚKL DLP</td><td><span class="rev-old">katalog otevřených dat na staré adrese</span></td><td><span class="rev-new"><code>opendata.sukl.gov.cz</code></span>; klient zkusí nastavenou adresu a potom výchozí. Ověřeno živě: balíček <code>DLP20261027</code>.</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>ePoukaz</td><td><span class="rev-old">verze rozhraní 202601A, 202601B, 202604A</span></td><td><span class="rev-new">202605A</span> (<code>SUKL_EPOUKAZ_INTERFACE_VERSION</code>); starší verze SÚKL vypíná k 30. 11. 2026, stejně jako „staré“ endpointy eReceptu</td></tr>
+              <tr><td><span class="rev-tag zmena">změna</span>Terminologie na apio</td><td><span class="rev-old">specifikace pojmenovaná v1.1.0</span></td><td><span class="rev-new">od 8. 10. 2026 „Terminologie v1.0.5“</span> – stejné cesty, navíc volitelné <code>displayLanguage</code> a <code>useSupplement</code> u <code>$lookup</code> a <code>$validate-code</code>; <code>/metadata</code> na apio vrací 404, <code>/manifest</code> 200</td></tr>
+
+              <tr class="rev-sekce"><td colspan="3">Opravy textů a ukázek v aplikaci</td></tr>
+              <tr><td><span class="rev-tag oprava">oprava</span>Testovací client_id</td><td><span class="rev-old"><code>25488627_KrajskaZdravotniVerejnyTest</code></span> (certifikát platil do 21. 4. 2026)</td><td><span class="rev-new"><code>25488627_KrajskaZdravotniVerejnyTest04</code></span> (7. 10. 2026 – 7. 1. 2027) ve všech ukázkách; nastavený <code>SEZ_CLIENT_ID</code> se nemění</td></tr>
+              <tr><td><span class="rev-tag oprava">oprava</span>Tabulka verzí a katalog</td><td><span class="rev-old">RO 1.0.8, SZZ 3.0.0, ELP 3.0.2, DÚ 1.11.20 (katalog 1.11.17), Notifikace 1.0.6, EZCA Správa 1.0.4</span></td><td><span class="rev-new">RO 1.0.7, SZZ 3.0.5, ELP 3.0.3, DÚ 1.11.27, Notifikace 1.0.9, EZCA Správa 1.0.8</span> podle swaggerů brány T2 z 13. 10. 2026</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:8px">
+            <strong><span class="rev-tag neovereno">neověřeno</span>Co se z tohoto prostředí ověřit nepodařilo:</strong>
+            brána T2 odsud neodpovídá (omezení podle země), takže chování brány u nových pravidel KRP (tvar DRID, limit 10 000, kombinace hledání, znaky ve jméně) a nové služby účasti SZZ nejsou vyzkoušené živě;
+            názvy polí účasti jsou podle standardu 3.1, swagger s nimi zatím není zveřejněný a datum nasazení na PROD není známé;
+            číselníky SZZ 3.1 (xlsx) nebyly ke stažení;
+            NRPZS a <code>api.uzis.cz</code> neodpověděly (časový limit TLS);
+            nové adresy endpointů eReceptu SÚKL v článcích nezveřejnil;
+            třídy IRIS prošly jen statickou kontrolou, v IRIS se nekompilovaly.
+          </div>
+          <div style="margin-top:6px">
+            <strong>Rozpor ve zdrojích – KRP v2:</strong> Novinky z 27. 8. 2026 oznamují vypnutí v1 i v2 k 15. 9. 2026, plán vývoje z 3. 11. 2026 píše „do konce roku vypnout v1, zůstane v2 a v3“ a přehled dostupnosti PROD z 10. 11. 2026 vede KRP v2.0 jako běžící. Aplikace volá v3; v2 lze zapnout přes <code>SEZ_KRP_VERZE</code>.
+          </div>
+          <div style="margin-top:6px">
+            <strong>Jen plán, v aplikaci zatím není:</strong> RO <code>GET /api/v1/Osoby/Opravnujici/{rid}</code> (do konce roku 2026, kontrakt nezveřejněn), jednotný <code>client_id</code> ve tvaru IČO_CERT, FHIR podepisování a ADES, samostatný modul RÚIAN, vypnutí SZZ v1.
+          </div>
+          <div style="margin-top:6px">
+            Provozní odkazy:
+            <a href="https://www.ezdravi.gov.cz/katalog-sluzeb/dostupnost" target="_blank" rel="noopener">dostupnost služeb</a> ·
+            <a href="https://www.ezdravi.gov.cz/statistiky" target="_blank" rel="noopener">statistiky</a> ·
+            <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/1044774914" target="_blank" rel="noopener">plánované výpadky T2 a PROD</a> ·
+            <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/1040646145" target="_blank" rel="noopener">plán vývoje (3. 11. 2026)</a> ·
+            <a href="https://ig.ezdravi.gov.cz/" target="_blank" rel="noopener">portál HL7 CZ IG</a>
+          </div>
+        </div>
         <p style="font-size:11px;color:var(--fg3);margin:0 0 10px">
           <strong>Revize 13. 10. 2026</strong> (Manuál EZ pro PZS, 20 aktuálních swaggerů z brány T2): <strong>eŽádanky API v2.0.0</strong> (Standard eŽádanka 2.0; T2 od 25. 9., platné od 1. 10. 2026, <strong>v1.11.25 deprecated</strong>) – datová věta hlavička + FHIR Bundle, cesty <code>/api/v2/zadanka</code>, If-Match, bez UpravZadanku; nově <strong>KRZP v3.0.4</strong> (shodné cesty, oprava <code>ztotoznenaOsoba</code>); patch verze DÚ 1.11.27, ELP 3.0.3, SZZ 3.0.5, Notifikace 1.0.9, KRP 3.0.6, KRPZS 2.0.4, EZCA2 Správa 1.0.8. Souhrnné vyhledání SZZ v3 opraveno na skutečné cesty <code>/prevence/vyhledat</code> + <code>/screeningy/vyhledat</code>. Testovací certifikát T2 vyměněn za <strong>„krajska zdravotni verejny test 04“</strong> (platnost do 7. 1. 2027).<br>
           <strong>Revize 9. 9. 2026</strong> dle veřejné dokumentace: <strong>KRP k 15. 9. 2026 vypíná API v1 i v2</strong> (oznámení 27. 8.) – celé rozhraní KRP včetně hlavní sekce nyní volá <strong>v3</strong>; KRP 21. 8. provedl <strong>rollback úpravy duplicitního pacienta</strong> (opět až 5 kandidátů); stránka API endpointy (31. 8.) vrátila User-Agent na „doporučený od 1. 9. 2026, povinný od 1. 1. 2027“; HL7 CZ <strong>img-order IG</strong> (build 28. 8., cz-core 1.0.0) přidal <code>Composition.type.coding.version</code> a přejmenoval profily/ValueSety – viz box níže. PROD katalog <code>apio.csez.gov.cz/apidoc</code> i obě specifikace (EZCA Validace v1.0.0, Terminologie v1.1.0) jsou bitově shodné se snapshoty.
@@ -773,21 +867,21 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
         <table style="font-size:12px">
           <thead><tr><th>Služba</th><th>Verze</th><th>Poslední změna</th></tr></thead>
           <tbody>
-            <tr><td>KRP – Kmenový registr pacientů</td><td><code>v3</code> <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">v1 + v2 VYPNUTO k 15. 9. 2026</span></td><td><strong>27. 8. 2026: k 15. 9. 2026 bude vypnuto API KRP pro PZS v1 i v2</strong> (v1 vypnuto už 14. 8.) – k dispozici zůstává jen <strong>v3</strong>. Klient: hlavní rozhraní <code>/api/krp/*</code> i interní ztotožnění volají v3 (<code>SEZ_KRP_VERZE</code> / <code>SEZ_INTERNAL_KRP_VERZE</code>, výchozí <code>v3</code>; tělo požadavků je u v2 a v3 shodné). <strong>21. 8. 2026:</strong> rollback úpravy duplicitního pacienta z 30. 7. (T2 i PROD opět vrací až 5 pacientů, úprava přijde ve V4) – pole <code>jednoznacne</code>/<code>upozorneni</code> se odvozují z počtu kandidátů, takže platí dál; opravy AISV (občanství, datum úmrtí, adresa). 31. 8.: nové API pro zdravotní pojišťovny (netýká se PZS). <strong>v3:</strong> bez diakritiky v atributech, snake_case cesty, bez <code>ztotoznihromadne/vykonani</code></td></tr>
+            <tr><td>KRP – Kmenový registr pacientů</td><td><code>v3.0.6</code> <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">v1 VYPNUTO 14. 8. 2026</span> <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">v2: ROZPOR ZDROJŮ</span></td><td><strong>3. 11. 2026: Standard KZR 1.3</strong> – struktura DRID, limit dávky 10 000, povolené znaky ve jméně, kombinace univerzálního hledání, notifikace (viz rozdíly nahoře). <strong>Vypnutí v2:</strong> Novinky 27. 8. je oznámily k 15. 9. 2026, plán z 3. 11. počítá s provozem v2 i v3 a přehled dostupnosti PROD z 10. 11. vede v2.0 jako běžící – živý stav brány odsud není ověřen. <strong>27. 8. 2026: k 15. 9. 2026 bude vypnuto API KRP pro PZS v1 i v2</strong> (v1 vypnuto už 14. 8.) – k dispozici zůstává jen <strong>v3</strong>. Klient: hlavní rozhraní <code>/api/krp/*</code> i interní ztotožnění volají v3 (<code>SEZ_KRP_VERZE</code> / <code>SEZ_INTERNAL_KRP_VERZE</code>, výchozí <code>v3</code>; tělo požadavků je u v2 a v3 shodné). <strong>21. 8. 2026:</strong> rollback úpravy duplicitního pacienta z 30. 7. (T2 i PROD opět vrací až 5 pacientů, úprava přijde ve V4) – pole <code>jednoznacne</code>/<code>upozorneni</code> se odvozují z počtu kandidátů, takže platí dál; opravy AISV (občanství, datum úmrtí, adresa). 31. 8.: nové API pro zdravotní pojišťovny (netýká se PZS). <strong>v3:</strong> bez diakritiky v atributech, snake_case cesty, bez <code>ztotoznihromadne/vykonani</code></td></tr>
             <tr><td>KRZP – Kmenový registr zdrav. prac.</td><td><code>v2.0.7</code> + <code>v3.0.4</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ VERZE</span></td><td><strong>13. 10. 2026:</strong> brána publikuje novou <strong>v3.0.4</strong> vedle v2.0.7 – shodné cesty (<code>/api/v3/…</code>), v3 jen opravuje název pole <code>ztotozenaOsoba → ztotoznenaOsoba</code>. Klient <code>KRZP(verze=…)</code> / <code>SEZ_KRZP_VERZE</code> (výchozí v2), odpovědi sjednocuje <code>normalizuj_odpoved</code>. Dříve patch v2.0.1→v2.0.2</td></tr>
-            <tr><td>KRPZS – Kmenový registr poskytovatelů</td><td><code>v2.0.4</code></td><td>hledat-misto + krajKod (povinné), URL notifikace, capitalized cesty. Patch v2.0.2→v2.0.3</td></tr>
-            <tr><td>RO – Registr oprávnění</td><td><code>v1.0.8</code></td><td><strong>23. 6. 2026 (v1.0.8):</strong> oprava vytvoření osoby „Tvůrce oprávnění" (dopad na administraci RO a MFE RO). 20. 4. 2026: rozšíření Over o EHS osoby + opt-in/out (BC), v PROD dočasně bez Osoby/Opravnujici/{rid}</td></tr>
+            <tr><td>KRPZS – Kmenový registr poskytovatelů</td><td><code>v2.0.4</code></td><td>hledat-misto + krajKod (povinné), URL notifikace, capitalized cesty. Patch v2.0.2→v2.0.4; Standard KZR 1.3 kapitolu KRPZS věcně nemění</td></tr>
+            <tr><td>RO – Registr oprávnění</td><td><code>v1.0.7</code></td><td><strong>API 1.0.7</strong> (swagger brány 13. 10. 2026); „verze 1.0.8“ z Novinek 23. 6. 2026 je verze aplikace – oprava vytvoření osoby „Tvůrce oprávnění" (dopad na administraci RO a MFE RO). Plán 3. 11. 2026: <code>GET /api/v1/Osoby/Opravnujici/{rid}</code> se má vrátit do konce roku 2026 s jiným významem (osoby, které pacient zastupuje) – kontrakt zatím není zveřejněn, klient metodu nemá. 20. 4. 2026: rozšíření Over o EHS osoby + opt-in/out (BC), v PROD dočasně bez Osoby/Opravnujici/{rid}</td></tr>
             <tr><td>RO NCPeH <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.7</code></td><td><strong>(květen 2026):</strong> samostatná služba pro přeshraniční (Pacient ↔ StátEHP), Over bez IdSluzbyEZ/rolí, výchozí size=1000</td></tr>
-            <tr><td>SZZ – Sdílený zdravotní záznam</td><td><code>v3.0.0</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ VERZE</span> (+ v1.0.9, v2.0.4)</td><td><strong>29. 7. 2026: Standard EZ SZZ 3.0 → API 3.0.0</strong> (aplikace na T1/T2 od 28. 7.). Cesty <code>/api/v3</code>; <strong>5 nových screeningů</strong> (kolorektální koloskopie, prostata – vstupní PSA / urologické / bioptické, plíce – pneumologické), HPV screening bez dvojitého „D“, nová položka <code>samoplatce</code> (bool) u všech prevencí i screeningů a <code>genotypyHpvTestu</code>, souhrnné <code>/zdravotniZaznamy/vyhledat</code>, 15 nových číselníků a upravené rozsahy (NT-proBNP 0–100 000, PSA 1 000–12 000 µg/l, BBPS 0–9, výška/váha na 3 des. místa). Klient: <code>SZZv3</code>, <code>/api/szz3/…</code>, katalog a kontrola rozsahů; v UI přepínač verze. v2 běží paralelně</td></tr>
-            <tr><td>ELP – Elektronické posudky</td><td><code>v1.0.7</code> + <code>v2.0.11</code> + <code>v3.0.2</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">3 VERZE</span></td><td><strong>std. 3.0 (30. 4. 2026):</strong> na gateway nyní 3 paralelní verze – v1.0.7, v2.0.11 a v3.0.2 (novější patch než publikované API 2.0.10); zpřísněné validace data, 70+, 300 znaků</td></tr>
-            <tr><td>DÚ – Dočasné úložiště</td><td><code>v1.11.20</code> <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">PATCH</span></td><td><strong>23. 6. 2026 (v1.11.20 na T2):</strong> chybová hláška validace adresáta vůči KZR uvádí konkrétní element pole; 17. 6. (v1.11.19 na PROD) oprava DejSoubor. Dříve patch v1.11.13→v1.11.17. <strong>5.–12. 6. 2026:</strong> Popis API DÚ v1.2 + Standard DÚ 1.0 – doplněna služba ZpochybniZasilku, opravena cesta ZmenZasilku (parametry v query), sjednoceno „Zasilka" v cestách. 5. 5. 2026: zpřesnění validací (BC), 22. 4. 2026: notifikace</td></tr>
+            <tr><td>SZZ – Sdílený zdravotní záznam</td><td><code>v3.0.5</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">STANDARD 3.1</span> (+ v1.0.9, v2.0.7)</td><td><strong>23. 10. 2026: Standard EZ SZZ 3.1</strong> (platný od API 3.0.5) – účast ve screeningu prostaty, plic a AAA jako tři samostatné služby <code>/api/v3/screeningy/…Ucast</code> (T2 od 20. 10. 2026), z prohlídky VPL ve v3 položky účasti odebrány. Plán 3. 11.: vypnutí v1 „do konce roku“, bez termínu. <strong>29. 7. 2026: Standard EZ SZZ 3.0 → API 3.0.0</strong> (aplikace na T1/T2 od 28. 7.). Cesty <code>/api/v3</code>; <strong>5 nových screeningů</strong> (kolorektální koloskopie, prostata – vstupní PSA / urologické / bioptické, plíce – pneumologické), HPV screening bez dvojitého „D“, nová položka <code>samoplatce</code> (bool) u všech prevencí i screeningů a <code>genotypyHpvTestu</code>, souhrnné <code>/zdravotniZaznamy/vyhledat</code>, 15 nových číselníků a upravené rozsahy (NT-proBNP 0–100 000, PSA 1 000–12 000 µg/l, BBPS 0–9, výška/váha na 3 des. místa). Klient: <code>SZZv3</code>, <code>/api/szz3/…</code>, katalog a kontrola rozsahů; v UI přepínač verze. v2 běží paralelně</td></tr>
+            <tr><td>ELP – Elektronické posudky</td><td><code>v1.0.7</code> + <code>v2.0.11</code> + <code>v3.0.3</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">3 VERZE</span></td><td><strong>9. 11. 2026 (PROD):</strong> upraven formát validačních hlášek offline validace a do registru řidičů se nově přenášejí i neplatné a zneplatněné posudky – podle Novinek bez dopadu na funkčnost, klient text hlášek nerozebírá. <strong>std. 3.0 (30. 4. 2026):</strong> na gateway nyní 3 paralelní verze – v1.0.7, v2.0.11 a v3.0.2 (novější patch než publikované API 2.0.10); zpřísněné validace data, 70+, 300 znaků</td></tr>
+            <tr><td>DÚ – Dočasné úložiště</td><td><code>v1.11.27</code> <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">PATCH</span></td><td><strong>v1.11.27</strong> podle swaggeru brány T2 z 13. 10. 2026 (Novinky naposledy uvádějí 1.11.20). <strong>23. 6. 2026 (v1.11.20 na T2):</strong> chybová hláška validace adresáta vůči KZR uvádí konkrétní element pole; 17. 6. (v1.11.19 na PROD) oprava DejSoubor. Dříve patch v1.11.13→v1.11.17. <strong>5.–12. 6. 2026:</strong> Popis API DÚ v1.2 + Standard DÚ 1.0 – doplněna služba ZpochybniZasilku, opravena cesta ZmenZasilku (parametry v query), sjednoceno „Zasilka" v cestách. 5. 5. 2026: zpřesnění validací (BC), 22. 4. 2026: notifikace</td></tr>
             <tr><td>eŽádanky</td><td><code>v2.0.0</code> <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ VERZE</span> (+ v1.11.25 <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">DEPRECATED</span>)</td><td><strong>13. 10. 2026: Standard eŽádanka 2.0 → API 2.0.0</strong> (T2 od 25. 9., platnost od 1. 10. 2026; v1 deprecated). Datová věta = <strong>systémová hlavička</strong> (typZadanky, zadatel, pacient, adresát) + <strong>FHIR Bundle</strong> typu document dle HL7 CZ IG (img-order / k-order), strukturované DTO zmizely. Zdrojové cesty <code>/api/v2/zadanka[/{id}/&lt;operace&gt;]</code>, <code>If-Match</code> = <code>verzeZaznamu</code> (409), uložení 201, <strong>UpravZadanku zrušeno</strong>, vyřízení vyžaduje zásilku s dokumentem, stránkování od 0, User-Agent povinný. Klient <code>EZadankyV2</code>, backend <code>/api/ezadanky/v2/*</code>, GUI záložka „eŽádanky v2“, simulátor i FHIR most img-order (<code>?api=v2</code> výchozí). Dříve: ostrý provoz v1 od 1. 1. 2026, 23. 6. 2026 v1.11.20</td></tr>
-            <tr><td>FHIR Img Order (HL7-cz IG)</td><td><code>0.1.0</code> (R4) <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">BUILD 28. 8. 2026</span></td><td>CI build „Updates before publication“ (2026-08-28). Závislosti: <strong>cz-core <code>1.0.0</code></strong> (29. 7. 2026), cz-terminology <code>0.3.0</code>, eu.base <code>2.0.0</code>, eu.laboratory <code>2.0.0</code>. Nově <code>Composition.type.coding</code> 1..1 s <code>version</code> = SNOMED CT CZ edice, sekce clinicalQuestion → <code>cz-conditionClinicalQuestion</code>, přejmenované profily z cz-core, nové URL ValueSetů (<code>imaging-procedures</code>, <code>cz-mobility-type/-value</code>, <code>cz-diagnosis-condition</code> s MKN-10 + ORPHA). Builder doplňuje version, povinnou sekci clinicalQuestion a <code>ServiceRequest.identifier</code>. Bridge na /eŽádanky UlozZadanku</td></tr>
+            <tr><td>FHIR Img Order (HL7-cz IG)</td><td><code>1.0.0</code> (R4) <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">PUBLIKOVÁNO</span></td><td><strong>IG 1.0.0</strong> na <a href="https://ig.ezdravi.gov.cz/" target="_blank" rel="noopener" style="color:#1e40af">ig.ezdravi.gov.cz</a> (závazné místo publikace dle wiki 3.–4. 11. 2026), společně s order 1.0.0, cz-core 1.0.0, lab 1.0.0 a img 1.0.0. Starší stav: CI build „Updates before publication“ (2026-08-28). Závislosti: <strong>cz-core <code>1.0.0</code></strong> (29. 7. 2026), cz-terminology <code>0.3.0</code>, eu.base <code>2.0.0</code>, eu.laboratory <code>2.0.0</code>. Nově <code>Composition.type.coding</code> 1..1 s <code>version</code> = SNOMED CT CZ edice, sekce clinicalQuestion → <code>cz-conditionClinicalQuestion</code>, přejmenované profily z cz-core, nové URL ValueSetů (<code>imaging-procedures</code>, <code>cz-mobility-type/-value</code>, <code>cz-diagnosis-condition</code> s MKN-10 + ORPHA). Builder doplňuje version, povinnou sekci clinicalQuestion a <code>ServiceRequest.identifier</code>. Bridge na /eŽádanky UlozZadanku</td></tr>
             <tr><td>SZZ – emergentní dataset</td><td>—</td><td><strong>Spuštěn 1. 1. 2026</strong>; v portálu EZKarta od 1. 5. 2026. Obsah: EZZ (krev. skupina, alergie, NÚL) + prevence/screeningy. Pacient může zavést nesouhlas přes RO</td></tr>
-            <tr><td>Notifikace</td><td><code>v1.0.6</code></td><td>patch v1.0.5→v1.0.6. <strong>22. 7. 2026:</strong> MFE Notifikace 1.0.5 a Žurnál činností 1.0.6 (T2 i PROD) – bez dopadu na API</td></tr>
+            <tr><td>Notifikace</td><td><code>v1.0.9</code></td><td>patch v1.0.5→v1.0.9 (swagger brány 13. 10. 2026). <strong>22. 7. 2026:</strong> MFE Notifikace 1.0.5 a Žurnál činností 1.0.6 (T2 i PROD) – bez dopadu na API</td></tr>
             <tr><td>EZCA II</td><td><code>v1.0.7</code> <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">BREAKING</span></td><td><strong>(květen 2026):</strong> certifikáty přesunuty: <code>/api/certificates/certificate/{id}</code>→<code>/api/content/certificate/{id}</code>, <code>/api/certificates/validatecertificate</code>→<code>/api/validate/certificate</code> (sync+async). Nové: <code>/api/stamp/proxytimestamp</code></td></tr>
-            <tr><td>EZCA II – Správa certifikátů <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.4</code></td><td><strong>(2026):</strong> samostatná služba pro životní cyklus systémových cert. (vystavit, preregistrovat, obnovit, revokovat, stav, stáhnout, seznam, CRL). v1.0.4: stránkování a řazení v <code>/seznam</code> + filtry v <code>/crl-list</code></td></tr>
-            <tr><td>TermX – Terminologie (NTS)</td><td><code>v1.0.5</code> (T2) / <code>v1.1.0</code> (apio) <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">MINOR</span></td><td><strong>2. 7. 2026 ověřeno živě:</strong> PROD katalog <code>apio.csez.gov.cz/apidoc</code> publikuje <strong>v1.1.0</strong> – nový <code>GET /manifest</code>, swagger zúžen na read-only operace ($lookup/$expand/$validate-code/$subsumes/$translate; $translate parametry <code>sourceCode</code>/<code>targetSystem</code>). PROD FHIR báze <code>apio.csez.gov.cz/terminologie</code> (vyžaduje klientský cert)</td></tr>
+            <tr><td>EZCA II – Správa certifikátů <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.8</code></td><td><strong>v1.0.8</strong> podle swaggeru brány T2 z 13. 10. 2026. <strong>(2026):</strong> samostatná služba pro životní cyklus systémových cert. (vystavit, preregistrovat, obnovit, revokovat, stav, stáhnout, seznam, CRL). v1.0.4: stránkování a řazení v <code>/seznam</code> + filtry v <code>/crl-list</code></td></tr>
+            <tr><td>TermX – Terminologie (NTS)</td><td><code>v1.0.5</code> (T2 i apio) <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">MINOR</span></td><td><strong>8. 10. 2026:</strong> PROD katalog apio specifikaci přejmenoval z v1.1.0 na „Terminologie v1.0.5“ – cesty beze změny, přibyly volitelné <code>displayLanguage</code> a <code>useSupplement</code>; <code>/metadata</code> na apio vrací 404. <strong>2. 7. 2026 ověřeno živě:</strong> PROD katalog <code>apio.csez.gov.cz/apidoc</code> publikuje <strong>v1.1.0</strong> – nový <code>GET /manifest</code>, swagger zúžen na read-only operace ($lookup/$expand/$validate-code/$subsumes/$translate; $translate parametry <code>sourceCode</code>/<code>targetSystem</code>). PROD FHIR báze <code>apio.csez.gov.cz/terminologie</code> (vyžaduje klientský cert)</td></tr>
             <tr><td>EZCA Validace <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600">NOVÁ</span></td><td><code>v1.0.0</code></td><td><strong>2. 7. 2026 ověřeno živě (apio):</strong> nová služba <code>/ezcaValidace</code> – online/offline validace dokumentů (zatím ELP): <code>POST /api/v1/dokumenty/validate</code> (online = dokumentId+hash SHA-512, offline = dokumentId+datumVystaveni+datumNarozeni+prijmeni)</td></tr>
           </tbody>
         </table>
@@ -811,7 +905,7 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           <em>Předchozí kontrola 8. 6. 2026:</em> od 3. 6. se změnilo pouze <strong>KRP → v2.0.4 / v3.0.3</strong> (4. 6., jen změna kontaktního e-mailu, bez dopadu na rozhraní). Ostatní beze změny: ELP 3 paralelní verze (v1.0.7 / v2.0.11 / v3.0.2), DÚ/eŽádanky v1.11.17, KRPZS v2.0.3, KRZP v2.0.2, Notifikace v1.0.6, SZZ v1.0.9+v2.0.3 (nyní v2.0.4), EZCA II v1.0.7 + Správa v1.0.4, RO i RO NCPeH <code>v1.0.7</code>, TermX v1.0.5.
           <strong>Hlavní akce pro PZS:</strong>
           (1) <strong>EZCA II v1.0.7</strong> – pokud používáte <code>/api/certificates/certificate/{id}</code> nebo <code>/api/certificates/validatecertificate</code>, MUSÍTE migrovat na nové cesty <code>/api/content/certificate/{id}</code> a <code>/api/validate/certificate</code> (i v async variantě).
-          (2) <strong>SZZ v2</strong> a <strong>KRP v3</strong> jsou paralelní k v1/v2 – existující implementace funguje dál, ale doporučujeme začít používat nové pro rozšířenou funkcionalitu.
+          (2) <strong>SZZ v2 a v3</strong> běží vedle v1 (plán z 3. 11. 2026 chce v1 vypnout do konce roku). U <strong>KRP</strong> je v1 vypnuté od 14. 8. 2026 a aplikace volá v3; o provozu v2 si zdroje odporují (viz Revize 10. 11. 2026 nahoře).
           (3) <strong>EZCA II Správa certifikátů</strong> je nová služba pro automatickou správu certifikátů – plně nahradí manuální výměnu PFX souborů.
         </div>
         <div style="margin-top:10px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;line-height:1.6">
@@ -972,6 +1066,13 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             </div>
           </div>
           <div class="sub-panel" id="krp-univ">
+            <div class="rev-diff" style="font-size:12px;line-height:1.6;margin-bottom:10px">
+              <strong>Standard KZR 1.3 (3. 11. 2026), kap. 4.5.1 – povolené kombinace <code>VyhledejUni</code>:</strong>
+              vždy <strong>jméno + příjmení</strong> a k tomu rodné číslo, číslo pojištěnce, datum narození, adresa pobytu nebo doklad.
+              <span class="rev-old">Samotné RID, samotný doklad, rodné příjmení místo příjmení, občanství + č. pojištěnce</span>
+              už mezi kombinacemi nejsou – použijte záložky RID, Doklady a Cizinec + ČP.
+              Jiná kombinace se odešle s upozorněním v odpovědi (swagger 3.0.6 ji nevynucuje).
+            </div>
             <div class="form-row">
               <div class="form-group"><label>Jméno</label><input id="krpUnivJ" placeholder="Jméno"></div>
               <div class="form-group"><label>Příjmení</label><input id="krpUnivP" placeholder="Příjmení"></div>
@@ -985,20 +1086,27 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           </div>
           <div class="sub-panel" id="krp-drid-gen">
             <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">
-              Vygeneruje požadovaný počet dočasných RID (DRID) pro pacienty, kteří zatím nemají přidělené stálé RID (cizinci, novorozenci apod.).
+              Vygeneruje dočasné RID (DRID) pro <strong>interní evidenci pacienta, jehož totožnost není známa</strong> a je mu nutné poskytnout péči
+              (občan ČR i cizinec), a dále pro výpadek sítě nebo vyhlášení traumaplánu.
             </p>
+            <div class="rev-diff" style="font-size:12px;line-height:1.6;margin-bottom:10px">
+              <strong>Standard KZR 1.3 (3. 11. 2026), kap. 1.3.1 a 4.4.3:</strong>
+              <strong style="color:#b91c1c">DRID neslouží k založení novorozence v KRP</strong> – novorozenec se zakládá ve Správě pacientů (<code>zalozit/pacient</code>).
+              Každý DRID smí být použit jen jednou. Struktura: <span class="rev-old">D + 9 náhodných číslic</span> → <span class="rev-new">D + devítimístné číslo dělitelné 13 a nedělitelné 11</span>.
+              Zásoba předgenerovaných DRID: <span class="rev-old">desítky až stovky ks</span> → <span class="rev-new">50 ks</span>.
+            </div>
             <div class="form-row">
-              <div class="form-group"><label>Počet DRID</label><input type="number" id="dridPocet" value="1" min="1" max="100"></div>
+              <div class="form-group"><label>Počet DRID (zásoba max. 50)</label><input type="number" id="dridPocet" value="1" min="1" max="50"></div>
               <button class="btn btn-primary" onclick="dridGenerovat()">Generovat</button>
             </div>
             <div id="dridGenResult" style="margin-top:12px"></div>
           </div>
           <div class="sub-panel" id="krp-drid-map">
             <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">
-              Zjistí aktuální RID pacienta a jeho historické (sloučené / nahrazené) RIDy.
+              Zjistí aktuální RID pacienta a jeho historické (sloučené / nahrazené) RIDy. Vstupem může být libovolný vyhledatelný <strong>RID i DRID</strong> (Standard KZR 1.3, kap. 4.4.4).
             </p>
             <div class="form-row">
-              <div class="form-group"><label>RID</label><input id="dridMapRid" placeholder="např. 7653800856"></div>
+              <div class="form-group"><label>RID nebo DRID</label><input id="dridMapRid" placeholder="např. 7653800856 nebo D000000013"></div>
               <div class="form-group">
                 <label><input type="checkbox" id="dridMapAktualni"> Jen aktuální</label>
               </div>
@@ -1008,10 +1116,12 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           </div>
           <div class="sub-panel" id="krp-drid-assign">
             <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">
-              Přiřadí existující dočasný RID (DRID) ke skutečnému (stálému) RID pacienta – typicky po ztotožnění cizince nebo novorozence.
+              Přiřadí použitý dočasný RID (DRID) ke skutečnému (stálému) RID pacienta – po zjištění jeho totožnosti. Pokud pacient v KRP není,
+              nejprve se založí nová identita a DRID se přiřadí k ní. Přiřadit může i jiný poskytovatel než ten, který DRID vydal.
+              DRID s jiným tvarem než <code>D</code> + 9 číslic se neodešle; nesplněné kontrolní pravidlo verze 1.3 je jen upozornění (starší DRID ho splňovat nemusí).
             </p>
             <div class="form-row">
-              <div class="form-group"><label>Dočasný RID (DRID)</label><input id="dridDocasny" placeholder="Dočasný RID"></div>
+              <div class="form-group"><label>Dočasný RID (DRID)</label><input id="dridDocasny" placeholder="D + 9 číslic" maxlength="10" oninput="dridKontrola(this, 'dridDocasnyInfo')"><div id="dridDocasnyInfo" style="font-size:11px;margin-top:3px;min-height:14px"></div></div>
               <div class="form-group"><label>Skutečný RID</label><input id="dridSkutecny" placeholder="Skutečný RID"></div>
               <button class="btn btn-primary" onclick="dridPriradit()">Přiřadit</button>
             </div>
@@ -1374,12 +1484,14 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
         <div class="card" style="background:#fffbeb;border-color:#fcd34d">
           <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:6px">Proč „to dlouho nic nevrací" – asynchronní rozhraní a nedokumentované části</div>
           <div style="font-size:12px;color:#78350f;line-height:1.7">
-            <strong>Dávka je asynchronní</strong> (dokumentace API KRP: „Metoda pro <em>asynchronní</em> hromadné (dávkové) ztotožnění"). <code>POST …/ztotoznihromadne/zadost</code> vrátí <em>okamžitě</em> jen <code>hromadneZtotozneniID</code> – žádné výsledky. KRP nic „nepošle zpět"; stav je nutné <strong>opakovaně dotazovat</strong> přes <code>POST …/ztotoznihromadne/vysledky</code> a čekat na <code>hromadneZtotozneniDokonceno=true</code>. U větších dávek to na T2 trvá jednotky až desítky minut.<br>
+            <strong>Dávka je asynchronní</strong> (dokumentace API KRP: „Metoda pro <em>asynchronní</em> hromadné (dávkové) ztotožnění"). <code>POST …/ztotoznihromadne/zadost</code> vrátí <em>okamžitě</em> jen <code>hromadneZtotozneniID</code> – žádné výsledky. KRP nic „nepošle zpět"; stav je nutné <strong>opakovaně dotazovat</strong> přes <code>POST …/ztotoznihromadne/vysledky</code> a čekat na <code>hromadneZtotozneniDokonceno=true</code>. <span class="rev-new">MZ ČR (3. 11. 2026): zpracování jedné dávky do 10 000 pacientů trvá cca 30 minut</span> – UI proto čeká až 45 minut (dřív 10).<br>
+            <strong>Limit dávky:</strong> <span class="rev-old">soubor do 2 GB, doporučeno do 1 milionu záznamů</span> → <span class="rev-new">nejvýše 10 000 pacientů v jedné dávce</span> (Standard KZR 1.3, kap. 4.4.5; v provozu od 17. 9. 2026). Větší soubor aplikace sama rozdělí a podá jako více žádostí.<br>
+            <strong>Jména:</strong> záznamy se zástupným jménem (<em>Test, Pacient, Neuvedeno, Neví…</em>) nebo s jinými znaky než písmena, spojovník, apostrof a mezera se do KRP neposílají – dávka se nepodá a vadné záznamy se vypíšou.<br>
             <strong>Nedokumentované / jen ve swaggeru:</strong>
             (1)&nbsp;<code>…/vykonani</code> na wiki v metodách pro PZS vůbec není (odpověď má ve swaggeru schéma „…Interní") – pro PZS flow ho není potřeba volat, zpracování startuje samo po podání žádosti;
             (2)&nbsp;pokud odpověď <code>/vysledky</code> má <code>dataVSouboru=true</code>, výsledky <em>nejsou</em> v JSON poli <code>souborHromadnehoZtotozneni</code> a je nutné je stáhnout přes <code>…/vysledky/soubor</code>;
             (3)&nbsp;<code>base64Data</code> z <code>/vysledky/soubor</code> je ve skutečnosti <strong>ZIP archiv</strong> s <code>KRP_ZTOTOZNENI_&lt;id&gt;.JSON</code> uvnitř (UI ho umí rozbalit);
-            (4)&nbsp;formát XML dávky je popsán jen ve <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55902489" target="_blank" style="color:#92400e">Standardu EZ KZR 1.2 + vzorovém XSD</a> (29. 5. 2026), ne ve swaggeru (tam je jen <code>file: binary</code>).
+            (4)&nbsp;formát XML dávky je popsán jen ve <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55902489" target="_blank" style="color:#92400e">Standardu EZ KZR 1.3 + vzorovém XSD</a> (3. 11. 2026; dřív 1.2 z 29. 5. 2026), ne ve swaggeru (tam je jen <code>file: binary</code>).
           </div>
         </div>
 
@@ -1481,10 +1593,20 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             Systém notifikací umožňuje PZS <strong>odebírat změny</strong> u vybraných pacientů.
             Pokud se změní údaje pacienta, na jehož odběr jste přihlášeni, obdržíte notifikaci.
             <div style="margin-top:6px;font-size:12px;color:var(--fg3)">
-              <strong>Typické použití:</strong> registrující lékař odebírá změny u svých pacientů (změna pojišťovny, adresy, úmrtí).
-              Notifikace přichází přes kanál, který si zvolíte při registraci odběru.
+              <strong>Typické použití:</strong> registrující lékař odebírá změny u svých pacientů (změna pojišťovny, adresy, úmrtí, změna RID).
+              Notifikace přichází jako HTTP zpráva <code>KZR.Notifikace</code> na URL listeneru poskytovatele; odběr lze založit i při hromadném ztotožnění.
             </div>
           </div>
+        </div>
+
+        <div class="card rev-diff" style="font-size:12px;line-height:1.7">
+          <strong>Standard KZR 1.3 (3. 11. 2026), kap. 4.5.3 – přepracovaná administrace notifikací:</strong><br>
+          <span class="rev-old">kritérium <code>KRP?rid=…</code>, typ kanálu (webová služba / e-mail / datová schránka), výběr typů událostí při založení</span> →
+          <span class="rev-new">RID pacienta/pacientů + nepovinné URL listeneru + nepovinné IČO subjektu</span>.
+          Kanál je jen <code>API</code> (HTTP listener poskytovatele); bez URL se použije výchozí adresa z KRPZS.
+          Typy událostí se při založení nevybírají – jsou obsahem doručené zprávy
+          (<code>ZmenaUdaje</code>, <code>UmrtiPacienta</code>, <code>Reklamace</code>, <code>ZmenaRid</code>).
+          Odběr se ruší a hledá podle <code>idSubskripce</code> (GUID vrácený při založení).
         </div>
 
         <!-- Vyhledat odběry -->
@@ -1493,18 +1615,11 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">🔍</span> Vyhledat existující odběry
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Zobrazí seznam aktivních odběrů notifikací pro vaše PZS. Filtrovat můžete podle typu kanálu nebo ID subjektu (RID pacienta).
+            Podle <strong>IČO subjektu</strong> vrátí všechny jeho aktivní odběry, podle <strong>ID subskripce</strong> jeden konkrétní. Alespoň jedno pole musí být vyplněné.
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end">
-            <div class="form-group"><label>Typ kanálu</label>
-              <select id="krpNotifKanalTyp">
-                <option value="">-- všechny --</option>
-                <option value="WEBSERVICE">Webová služba</option>
-                <option value="EMAIL">E-mail</option>
-                <option value="DATOVA_SCHRANKA">Datová schránka</option>
-              </select>
-            </div>
-            <div class="form-group"><label>ID subjektu (RID)</label><input id="krpNotifSubjektId" placeholder="RID pacienta"></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krpNotifSubjektId" placeholder="IČO poskytovatele (předvyplní se vlastní)"></div>
+            <div class="form-group"><label>ID subskripce</label><input id="krpNotifVyhSubId" placeholder="GUID odběru"></div>
             <button class="btn btn-primary" onclick="krpNotifVyhledat()">Vyhledat</button>
           </div>
         </div>
@@ -1515,33 +1630,17 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">➕</span> Založit odběr notifikací
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Registruje nový odběr notifikací na změny dat u konkrétního pacienta (RID).
-            Při změně údajů pacienta budete upozorněni zvoleným kanálem.
+            Registruje odběr změn u jednoho nebo více pacientů. Na zadané URL musí běžet HTTP listener, který notifikaci přijme.
+            Odpověď vrací pro každý RID <code>idSubskripce</code> a <code>predmetId</code>.
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-            <div class="form-group"><label>RID pacienta *</label><input id="krpNotifZalRid" placeholder="RID pacienta, jehož změny chcete sledovat"></div>
-            <div class="form-group"><label>Typ kanálu *</label>
-              <select id="krpNotifZalKanal">
-                <option value="">-- vyberte --</option>
-                <option value="WEBSERVICE">Webová služba (callback URL)</option>
-                <option value="EMAIL">E-mail</option>
-                <option value="DATOVA_SCHRANKA">Datová schránka</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Cíl (URL / e-mail / ID DS)</label><input id="krpNotifZalCil" placeholder="Kam posílat notifikace"></div>
+            <div class="form-group"><label>RID pacienta/pacientů *</label><input id="krpNotifZalRid" placeholder="RID; více oddělte čárkou"></div>
+            <div class="form-group"><label>URL listeneru</label><input id="krpNotifZalCil" placeholder="https://… (prázdné = výchozí URL z KRPZS)"></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krpNotifZalIco" placeholder="nepovinné"></div>
           </div>
           <details style="margin-top:8px">
-            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Typy sledovaných událostí</summary>
-            <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtZmena" checked style="width:auto"> Změna osobních údajů</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtPojist" checked style="width:auto"> Změna pojištění</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtUmrti" checked style="width:auto"> Úmrtí</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtSlouceni" style="width:auto"> Sloučení záznamu</label>
-            </div>
-          </details>
-          <details style="margin-top:8px">
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Vlastní JSON (pokročilé)</summary>
-            <div class="form-group" style="margin-top:6px"><textarea id="krpNotifZalozitJson" rows="5" placeholder='{"kanalTyp":"WEBSERVICE","subjektId":"…","callbackUrl":"https://…"}'></textarea></div>
+            <div class="form-group" style="margin-top:6px"><textarea id="krpNotifZalozitJson" rows="5" placeholder='{"predmet":[{"rid":"…"}],"prijemci":{"url":"https://…"},"subjektId":"IČO"}'></textarea></div>
           </details>
           <div style="margin-top:12px"><button class="btn btn-primary" onclick="krpNotifZalozit()">Založit odběr</button></div>
         </div>
@@ -1552,13 +1651,29 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">🔕</span> Zrušit odběr
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Zruší existující odběr notifikací. ID subskripce naleznete ve výsledcích vyhledávání odběrů výše.
+            Zruší odběr podle <code>idSubskripce</code> – GUID vrácený při založení (najdete ho i ve výsledcích vyhledávání).
           </p>
-          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end">
-            <div class="form-group"><label>ID subskripce *</label><input id="krpNotifZrusSubId" placeholder="ID z výsledků vyhledávání"></div>
-            <div class="form-group"><label>ID subjektu (RID)</label><input id="krpNotifZrusSubjId" placeholder="RID pacienta"></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:flex-end">
+            <div class="form-group"><label>ID subskripce *</label><input id="krpNotifZrusSubId" placeholder="GUID odběru"></div>
             <button class="btn" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="krpNotifZrusit()">Zrušit odběr</button>
           </div>
+        </div>
+
+        <!-- Příchozí zpráva -->
+        <div class="card">
+          <div class="card-title" style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">📨</span> Příchozí zpráva <code>KZR.Notifikace</code> – kontrola
+          </div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Zprávu posílá KRP na URL listeneru. Kontrola ověří pravidla Standardu KZR 1.3 (kap. 4.5.3.4–4.5.3.6): seznam <code>data</code> není prázdný,
+            všechny události se týkají téhož RID, úmrtí a změna RID mají právě jednu položku. Bránu nevolá – slouží k vývoji vlastního listeneru.
+          </p>
+          <div class="form-group"><textarea id="krpNotifZprava" rows="9" spellcheck="false" placeholder="Vložte JSON zprávy nebo načtěte vzor"></textarea></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" onclick="krpNotifVzor()">Načíst vzor</button>
+            <button class="btn btn-primary" onclick="krpNotifZkontrolovat()">Zkontrolovat zprávu</button>
+          </div>
+          <div id="krpNotifZpravaInfo" style="margin-top:10px;font-size:12px;line-height:1.7"></div>
         </div>
 
         <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krpNotifResult">-</div></div>
@@ -2045,7 +2160,7 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <button class="btn" style="background:#b45309;color:#fff;border:none" onclick="duZpochybni()">Zpochybnit zásilku</button>
           </div>
           <p style="font-size:11px;color:var(--fg3);margin-top:8px">
-            V aktuálním DÚ <code>v1.11.17</code> používají zneplatnění, potvrzení vyzvednutí i <strong>zpochybnění</strong> (Popis API DÚ v1.2, 5.&nbsp;6.&nbsp;2026) kombinaci <code>Id + VerzeRadku</code> v query parametrech.
+            V aktuálním DÚ <code>v1.11.27</code> používají zneplatnění, potvrzení vyzvednutí i <strong>zpochybnění</strong> (Popis API DÚ v1.2, 5.&nbsp;6.&nbsp;2026) kombinaci <code>Id + VerzeRadku</code> v query parametrech.
           </p>
         </div>
         <div class="card"><div class="card-header"><span class="card-title">Výsledek</span><button class="btn-dasta" onclick="exportDasta('duResult','du')" title="Export do DASTA DS4 XML">DASTA</button><button class="btn-iris" onclick="irisGenerate('duResult','du')" title="Generovat IRIS ObjectScript kód">IRIS</button></div><div class="json-box" id="duResult">-</div></div>
@@ -3145,8 +3260,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
               <div class="form-group"><label>Stav (stav-zadanky)</label>
                 <select id="ez2SrcStav">
                   <option value="">Všechny</option>
-                  <option value="0">0 – Nová</option><option value="1">1 – Přijatá</option><option value="2">2 – Vyřízená</option>
-                  <option value="3">3 – Stornovaná</option><option value="4">4 – Neproveditelná</option><option value="5">5 – Vrácená do oběhu</option>
+                  <option value="0">0 – Nová</option><option value="1">1 – Přijatá</option><option value="2">2 – Neproveditelná</option>
+                  <option value="3">3 – Stornovaná</option><option value="4">4 – Dokončená (vyřízená)</option><option value="5">5 – Expirovaná</option>
                 </select>
               </div>
               <div class="form-group"><label>Typ (referralorder-types)</label>
@@ -3158,7 +3273,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
                 </select>
               </div>
               <div class="form-group"><label>Priorita</label>
-                <select id="ez2SrcPriorita"><option value="">Libovolná</option><option value="routine">routine</option><option value="urgent">urgent</option><option value="asap">asap</option><option value="stat">stat</option></select>
+                <select id="ez2SrcPriorita" title="Číselník request-priority-cz v1.1.0 má jen dvě hodnoty"><option value="">Libovolná</option><option value="routine">routine (rutina)</option><option value="stat">stat (STATIM)</option></select>
               </div>
               <div class="form-group"><label>Metoda (čárkami)</label><input id="ez2SrcMetoda" placeholder="např. RAD, CT"></div>
               <div class="form-group"><label><input type="checkbox" id="ez2SrcUzavrena"> Jen uzavřené</label></div>
@@ -3237,6 +3352,19 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
               <div class="form-group" style="margin:0;position:relative"><label>Kostra: diagnóza MKN-10 <span style="font-weight:400;color:var(--fg3)">(38 934 kódů, ÚZIS 2025-01)</span></label><input id="ez2KoDg" autocomplete="off" placeholder="hledat název nebo kód – např. bolest zad, M54.5, zlomenina kotník"><div id="ez2KoDgAc" class="ez2-ac" style="display:none"></div><div id="ez2KoDgInfo" style="font-size:10px;color:var(--fg3);min-height:12px"></div></div>
               <div class="form-group" style="margin:0"><label>Kostra: priorita</label><select id="ez2KoPriorita"><option value="routine">routine (rutina)</option><option value="stat">stat (STATIM)</option></select></div>
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:12px;margin-bottom:8px">
+              <div class="form-group" style="margin:0"><label>Kostra: příjmení pacienta</label><input id="ez2KoPrijmeni" placeholder="Patient.name.family"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: jméno pacienta</label><input id="ez2KoJmeno" placeholder="Patient.name.given"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: datum narození</label><input type="text" class="date-cs" id="ez2KoNarozeni" placeholder="dd.mm.rrrr" title="cz-patient-core 1.0.0: Patient.birthDate 1..1"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: číslo pojištěnce</label><input id="ez2KoCpoj" placeholder="sid/cpoj + Coverage.subscriberId"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: odbornost žadatele</label><input id="ez2KoOdbornost" placeholder="např. 001" title="PractitionerRole.specialty – číselník vzp-smluvni-odbornost (practitionerrole-cz-order 1..1)"></div>
+              <div class="form-group" style="margin:0"><label>Kostra: modalita (jen Z)</label><input id="ez2KoModalita" list="ez2ModalitaList" placeholder="DX, CT, MR, US…" title="img-order 1.0.0: ServiceRequest.orderDetail 1..* (DICOM DCM)"><datalist id="ez2ModalitaList"><option value="DX"><option value="CR"><option value="CT"><option value="MR"><option value="US"><option value="MG"><option value="NM"><option value="PT"><option value="XA"><option value="RF"></datalist></div>
+            </div>
+            <div style="padding:6px 10px;background:#fef3c7;border-left:3px solid #f59e0b;font-size:11px;color:#78350f;margin-bottom:8px">
+              <strong>Revize 10. 11. 2026 – publikované IG 1.0.0</strong> (<a href="https://ig.ezdravi.gov.cz/" target="_blank" rel="noopener">ig.ezdravi.gov.cz</a>): kostra nově nese <code>Composition.language/confidentiality/identifier</code>, sekci úhrady, <code>Patient.name</code> + <code>birthDate</code>, odbornost žadatele a u typu Z <code>ServiceRequest.code</code>, <code>orderDetail</code> (modalita) a narativ; K/FT používají profily <code>KOrderBundleCz</code> / <code>FTOrderBundleCz</code>.
+              <br><strong>Odbornost na T2:</strong> v číselníku <code>vzp-smluvni-odbornost</code> jsou na testovacím prostředí jen hodnoty z veřejné verze 2010 (Manuál EZ – eŽádanky, 6. 11. 2026) – testovací sada MZ ČR používá <code>001</code>.
+            </div>
+            <div id="ez2IgUpozorneni" style="font-size:11px;color:#92400e;margin-bottom:6px;display:none"></div>
             <div id="ez2PripravaInfo" style="font-size:11px;color:var(--fg3);margin-bottom:6px;display:none"></div>
             <textarea id="ez2CrBundle" rows="16" style="width:100%;box-sizing:border-box;font-size:11px;font-family:var(--mono)" placeholder='{"resourceType":"Bundle","type":"document","entry":[{"resource":{"resourceType":"Composition", ...}}]}'></textarea>
           </div>
@@ -3280,6 +3408,7 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
               <div class="form-group"><label>Výsledek – zásilka s ≥ 1 dokumentem (JSON) <button class="btn btn-outline" style="padding:0 6px;font-size:10px" onclick="ez2VysledekSkeleton()">kostra</button></label>
                 <textarea id="ez2WfVysledek" rows="7" style="font-size:10px;font-family:var(--mono)" placeholder='{"nazev":"...","typ":{"kod":"..."},"autor":"krzpId","zdravotnickyPracovnik":"krzpId","poskytovatel":"IČO","pacient":"RID","dokument":[{...}]}'></textarea>
               </div>
+              <div style="font-size:10px;color:var(--fg3)">Dle testovací sady MZ ČR (15. 10. 2026): způsob vyřízení <code>1</code>, autor a poskytovatel výsledku = <strong>příjemce</strong>, jazyk <code>cs-CZ</code>, <code>hash</code> = SHA-256 (hex) obsahu, formát <code>urn:ihe:iti:xds:2017:mimeTypeSufficient</code>. Po vyřízení je stav <strong>4 – Dokončená</strong>.</div>
               <button class="btn btn-primary" style="margin-top:8px" onclick="ez2Wf('vyridit')">Vyřídit</button>
             </div>
             <div class="card">
@@ -3292,8 +3421,8 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
               <div class="card-title" style="color:var(--orange)">&#8634; Vrátit do oběhu / Neproveditelnost</div>
               <div class="form-group"><label>Akce</label>
                 <select id="ez2WfExtraAkce" onchange="ez2ExtraChanged()">
-                  <option value="vratitDoObehu">Vrátit do oběhu – /vratitDoObehu (duvod-vraceni)</option>
-                  <option value="zaznacitNeproveditelnost">Zaznačit neproveditelnost – /zaznacitNeproveditelnost (duvod-odmitnuti)</option>
+                  <option value="vratitDoObehu">Vrátit do oběhu – /vratitDoObehu (duvod-vraceni) → stav 0 Nová, bez adresáta</option>
+                  <option value="zaznacitNeproveditelnost">Zaznačit neproveditelnost – /zaznacitNeproveditelnost (duvod-odmitnuti) → stav 2</option>
                 </select>
               </div>
               <div class="form-group"><label>Důvod (kód)</label><input id="ez2WfExtraDuvod" list="ez2ExtraList" placeholder="kód z číselníku"><datalist id="ez2ExtraList"></datalist></div>
@@ -3358,10 +3487,10 @@ K                     4.3         mmol/l       3.5 – 5.1</textarea>
                 <option value="">Všechny stavy</option>
                 <option value="0">0 – Nová</option>
                 <option value="1">1 – Přijatá</option>
-                <option value="2">2 – Vyřízená</option>
+                <option value="2">2 – Neproveditelná</option>
                 <option value="3">3 – Stornovaná</option>
-                <option value="4">4 – Neproveditelná</option>
-                <option value="5">5 – Vrácená do oběhu</option>
+                <option value="4">4 – Dokončená (vyřízená)</option>
+                <option value="5">5 – Expirovaná</option>
               </select>
             </div>
             <div class="form-group"><label>Priorita</label>
@@ -5063,11 +5192,15 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
             <thead><tr><th>Prioritní kategorie eZD</th><th>Legislativní rámec</th><th>Technický standard (IG)</th><th>Profil Composition</th></tr></thead>
             <tbody>
               <tr><td>Pacientský souhrn</td><td>vyhl. č. 444/2024 Sb., příloha č. 2</td><td><a href="https://build.fhir.org/ig/HL7-cz/ps/" target="_blank">HL7-cz/ps</a> (0.0.1)</td><td><code>cz-composition-ps</code> (LOINC 60591-5)</td></tr>
-              <tr><td>Propouštěcí zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 4</td><td><a href="https://build.fhir.org/ig/HL7-cz/hdr/" target="_blank">HL7-cz/hdr</a> (0.1.0)</td><td><code>cz-composition-hdr</code> (LOINC 34105-7, encounter + sekce Průběh hospitalizace povinné)</td></tr>
-              <tr><td>Zpráva z obrazového vyšetření</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3C</td><td><a href="https://build.fhir.org/ig/HL7-cz/img/" target="_blank">HL7-cz/img</a> (0.1.0-ballot)</td><td><code>cz-composition-imaging</code> (3 kategorie, 4 povinné sekce, DiagnosticReport v Bundle)</td></tr>
-              <tr><td>Zpráva o výjezdu ZZS</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 6B</td><td><a href="https://build.fhir.org/ig/HL7-cz/cz-ems/" target="_blank">HL7-cz/cz-ems</a> (0.0.2)</td><td><code>cz-composition-ems</code> (LOINC 67796-3)</td></tr>
+              <tr><td>Propouštěcí zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 4</td><td><a href="https://build.fhir.org/ig/HL7-cz/hdr/" target="_blank">HL7-cz/hdr</a> (0.1.0, build <span class="rev-old">10. 7. 2026</span> → <span class="rev-new">21. 9. 2026</span>)</td><td><code>composition-cz-hdr</code> (LOINC 34105-7, encounter + sekce Průběh hospitalizace povinné; <span class="rev-new">nově identifier 1..1 a kategorie 11503-0</span>)</td></tr>
+              <tr><td>Zpráva z obrazového vyšetření</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3C</td><td><a href="https://ig.ezdravi.gov.cz/img/" target="_blank">hl7.fhir.cz.img</a> (<span class="rev-old">0.1.0-ballot</span> → <span class="rev-new">1.0.0, portál</span>)</td><td><code>cz-composition-imaging</code> (<span class="rev-old">3 kategorie</span> → <span class="rev-new">2 kategorie: 85430-7 + Medical-Imaging</span>, 4 povinné sekce, DiagnosticReport v Bundle)</td></tr>
+              <tr><td>Zpráva o výjezdu ZZS</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 6B</td><td><a href="https://build.fhir.org/ig/HL7-cz/cz-ems/" target="_blank">HL7-cz/cz-ems</a> (<span class="rev-old">0.0.2</span> → <span class="rev-new">0.1.0, build 5. 11. 2026</span>)</td><td><code>cz-composition-ems</code> (LOINC 67796-3; <span class="rev-new">identifier 1..1, časové body výjezdu 02/03/04/05/07 jako Observation</span>)</td></tr>
+              <tr><td>Laboratorní zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3B</td><td><a href="https://ig.ezdravi.gov.cz/lab/" target="_blank">hl7.fhir.cz.lab</a> (<span class="rev-old">0.5.0</span> → <span class="rev-new">1.0.0, portál</span>)</td><td><span class="rev-old"><code>cz-composition-lab-report</code></span> → <span class="rev-new"><code>composition-cz-lab</code></span> (LOINC 11502-2; identifier 1..1, kategorie 11502-2, sekce dle druhu vyšetření)</td></tr>
             </tbody>
           </table>
+          <p style="font-size:11px;color:var(--fg3);margin:8px 0 0">
+            <span class="rev-tag zmena">Revize 10. 11. 2026</span> Závazným místem publikace IG je portál <a href="https://ig.ezdravi.gov.cz/" target="_blank" style="color:#1e40af">ig.ezdravi.gov.cz</a> (core 1.0.0, terminology 0.3.0, img 1.0.0, lab 1.0.0, order 1.0.0, img-order 1.0.0). PS, HDR a EMS na portálu nejsou – platí pro ně CI build. Podrobné rozdíly ukazuje builder v záložce Zprávy eZD.
+          </p>
         </div>
         <div class="card" style="background:linear-gradient(135deg,#f5f3ff 0%,#f8fafc 100%);border-color:#ddd6fe">
           <div class="card-title" style="color:#5b21b6">InterSystems IRIS – třídy pro testovací volání</div>
@@ -5075,7 +5208,7 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
             Pro každý krok testu je v detailu k dispozici <strong>ObjectScript ukázka volání</strong> (rozbalovací sekce „InterSystems IRIS"). Kompletní připravené třídy: <code>SEZ.IROP.TestRunner</code> (spouští scénáře stejnými voláními jako toto UI) a <code>SEZ.IROP.VolaniLog</code> (persistentní debug log – u každého volání ukládá metodu, URL, query, tělo požadavku, HTTP status a tělo odpovědi; <code>SELECT * FROM SEZ_IROP.VolaniLog</code>).
             Zdroj: <code>docs/analytics/src/cls/SEZ/IROP/</code> | Stažení: <a href="/api/codegen/iris/irop" target="_blank" style="color:#5b21b6">/api/codegen/iris/irop</a>. Závisí na referenčních třídách <code>SEZ.API.*</code> (Config, HttpClient, …).
           </p>
-          <pre class="json-box" style="font-size:10px;max-height:120px">Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest")
+          <pre class="json-box" style="font-size:10px;max-height:120px">Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest04")
 Set config.P12CertFile = "/opt/certs/krajska_zdravotni.pfx"
 Set runner = ##class(SEZ.IROP.TestRunner).%New(config)
 Do runner.RunAll()                                  ; spustí scénáře
@@ -5125,7 +5258,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
           <div style="font-size:12px;line-height:1.8;color:#78350f">
             <ul style="margin:0;padding-left:18px">
               <li><strong>Podání žádosti MZdr</strong> – k dispozici od NCEZ, po kompletaci i na MV</li>
-              <li><strong>KR – novorozenci a cizinci</strong> – testuje se založení nového RID u novorozenců a DRID u cizinců</li>
+              <li><strong>KR – novorozenci a cizinci</strong> – testuje se založení nového RID u novorozenců (<code>zalozit/pacient</code>). DRID je podle Standardu KZR 1.3 určen jen pro pacienta s neznámou totožností, výpadek sítě a traumaplán – <strong>novorozence nezakládá</strong></li>
               <li><strong>Dokumenty na DÚ</strong> – odesílání typů dokumentů z žádosti, ověření správného FHIR formátu (čitelné, uložené na DÚ)</li>
               <li><strong>Screenshoty</strong> – pro prokazování jsou nutné screenshoty z testování</li>
               <li><strong>Prohlášení o shodě</strong> – místo testování PZS lze využít prohlášení o shodě SW se standardy EZ (Medicalc ho má)</li>
@@ -5819,17 +5952,23 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
 
       <!-- DRID -->
       <div class="sub-panel" id="krp3-drid-panel">
+        <div class="card rev-diff" style="font-size:12px;line-height:1.7">
+          <strong>Standard KZR 1.3 (3. 11. 2026):</strong> DRID je provizorní identifikátor pro interní evidenci pacienta s neznámou totožností (občan ČR i cizinec),
+          pro výpadek sítě a traumaplán. <strong style="color:#b91c1c">Neslouží k založení novorozence v KRP.</strong> Smí být použit jen jednou.
+          Struktura: <span class="rev-old">D + 9 náhodných číslic</span> → <span class="rev-new">D + devítimístné číslo dělitelné 13 a nedělitelné 11</span>;
+          zásoba: <span class="rev-old">desítky až stovky</span> → <span class="rev-new">50 ks</span>.
+        </div>
         <div class="card">
           <div class="card-title">Generovat dočasný RID (POST /api/v3/pacient/generovat/docasny_rid)</div>
           <div class="form-row">
-            <div class="form-group"><label>Počet</label><input type="number" id="krp3DridPocet" value="1" min="1" max="100"></div>
+            <div class="form-group"><label>Počet (zásoba max. 50)</label><input type="number" id="krp3DridPocet" value="1" min="1" max="50"></div>
             <button class="btn btn-primary" onclick="krp3DridGenerovat()">Generovat</button>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Přiřadit dočasný RID ke skutečnému (POST /api/v3/pacient/priradit/docasny_rid)</div>
           <div class="form-row">
-            <div class="form-group"><label>Dočasný RID</label><input id="krp3DridDocasny" placeholder="DRID"></div>
+            <div class="form-group"><label>Dočasný RID</label><input id="krp3DridDocasny" placeholder="D + 9 číslic" maxlength="10" oninput="dridKontrola(this, 'krp3DridDocasnyInfo')"><div id="krp3DridDocasnyInfo" style="font-size:11px;margin-top:3px;min-height:14px"></div></div>
             <div class="form-group"><label>Skutečný RID</label><input id="krp3DridSkutecny" placeholder="RID"></div>
             <button class="btn btn-primary" onclick="krp3DridPriradit()">Přiřadit</button>
           </div>
@@ -5837,7 +5976,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">Mapování RID (POST /api/v3/pacient/hledat/mapovani_rid)</div>
           <div class="form-row">
-            <div class="form-group"><label>RID</label><input id="krp3MapRid" placeholder="RID"></div>
+            <div class="form-group"><label>RID nebo DRID</label><input id="krp3MapRid" placeholder="RID nebo DRID"></div>
             <button class="btn btn-primary" onclick="krp3MapovaniRid()">Zjistit mapování</button>
           </div>
         </div>
@@ -5849,29 +5988,36 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">📡 Notifikace v3 – odběry změn pacientů</div>
           <p style="font-size:12px;color:var(--fg3);margin-bottom:8px">
-            v3 přidává <code>DELETE /api/v3/notifikace/zrusit/odber</code>. Pro vyhledání a založení použijte POST.
+            Těla dle swaggeru KRP 3.0.6 a Standardu KZR 1.3 (kap. 4.5.3). Zrušení je <code>DELETE /api/v3/notifikace/zrusit/odber</code>, vyhledání a založení POST.
           </p>
+          <div class="rev-diff" style="font-size:12px;line-height:1.6">
+            Založení: <span class="rev-old"><code>{"Rid", "CallbackUrl"}</code></span> → <span class="rev-new"><code>{"predmet":[{"rid"}], "prijemci":{"url"}, "subjektId"}</code></span>;
+            zrušení: <span class="rev-old"><code>{"OdberId"}</code></span> → <span class="rev-new"><code>{"idSubskripce"}</code></span>;
+            vyhledání: <span class="rev-new"><code>idSubskripce</code> a/nebo <code>subjektId</code> (IČO)</span>. Starší tvary backend převede.
+          </div>
         </div>
         <div class="card">
           <div class="card-title">Vyhledat odběry (POST)</div>
           <div class="form-row">
-            <div class="form-group" style="flex:1"><label>Body (JSON)</label><textarea id="krp3NotifVyhBody" rows="3">{}</textarea></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krp3NotifVyhIco" placeholder="IČO"></div>
+            <div class="form-group"><label>ID subskripce</label><input id="krp3NotifVyhId" placeholder="GUID"></div>
             <button class="btn btn-primary" onclick="krp3NotifVyhledat()">Vyhledat</button>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Založit odběr (POST)</div>
           <div class="form-row">
-            <div class="form-group"><label>RID pacienta</label><input id="krp3NotifZalRid" placeholder="RID"></div>
-            <div class="form-group"><label>URL pro notifikace</label><input id="krp3NotifZalUrl" placeholder="https://..."></div>
+            <div class="form-group"><label>RID pacienta/pacientů</label><input id="krp3NotifZalRid" placeholder="RID; více oddělte čárkou"></div>
+            <div class="form-group"><label>URL listeneru</label><input id="krp3NotifZalUrl" placeholder="https://… (prázdné = výchozí z KRPZS)"></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krp3NotifZalIco" placeholder="nepovinné"></div>
           </div>
-          <textarea id="krp3NotifZalBody" rows="3" placeholder='{} = sestaví se z polí'></textarea>
+          <textarea id="krp3NotifZalBody" rows="3" placeholder='vlastní zadostData; prázdné = sestaví se z polí'></textarea>
           <button class="btn btn-primary" onclick="krp3NotifZalozit()" style="margin-top:8px">Založit</button>
         </div>
         <div class="card">
           <div class="card-title">Zrušit odběr (DELETE)</div>
           <div class="form-row">
-            <div class="form-group" style="flex:1"><label>Body (JSON s ID odběru)</label><textarea id="krp3NotifZrusBody" rows="3">{"OdberId":""}</textarea></div>
+            <div class="form-group" style="flex:1"><label>ID subskripce</label><input id="krp3NotifZrusId" placeholder="GUID vrácený při založení"></div>
             <button class="btn btn-primary" onclick="krp3NotifZrusit()">Zrušit (DELETE)</button>
           </div>
         </div>
@@ -6248,13 +6394,13 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
          ==================================================================== -->
     <div class="section" id="sec-szz2">
       <div class="card" style="background:linear-gradient(135deg,#dbeafe 0%,#eff6ff 100%);border-color:#93c5fd;margin-bottom:16px">
-        <div style="font-weight:700;font-size:14px;color:#1e40af;margin-bottom:8px">SZZ v2.0.1 – Prevence + Screeningy + Emergentní záznam v2</div>
+        <div style="font-weight:700;font-size:14px;color:#1e40af;margin-bottom:8px">SZZ v2 / v3 – Prevence + Screeningy + Emergentní záznam (Standard SZZ 3.1)</div>
         <div style="font-size:13px;color:#1e3a8a;line-height:1.7">
           Nová majoritní verze SZZ s oddělenými moduly. Volá se přes <code>/api/szz2/*</code>, gateway <code>/sdilenyZdravotniZaznam/api/v2/*</code>.
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 16px;margin-top:8px;font-size:12px">
             <span><strong>Souhrnné</strong> — všechny záznamy pacienta dle RID</span>
             <span><strong>Prevence (5)</strong> — KV rizika, HPV, prev. prohlídky 3×</span>
-            <span><strong>Screeningy (10)</strong> — onkologie, USG aorty</span>
+            <span><strong>Screeningy (15 + 3× účast ve v3)</strong> — onkologie, USG aorty</span>
             <span><strong>Emerg. záznam v2</strong> — alergie bez CasZjisteni</span>
             <span><strong>Životní cyklus</strong> — vytvořit / upravit / obnovit / zneplatnit / zpochybnit</span>
             <span><strong>Číselníky</strong> — typy alergií, screeningů…</span>
@@ -6282,7 +6428,8 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">Souhrnné vyhledání všech záznamů pacienta</div>
           <p style="font-size:12px;color:var(--fg3);margin-bottom:12px">
-            POST <code>/api/v2/{prevence|screeningy|emergentniZaznam}/vyhledat</code> – načte VŠECHNY záznamy daného typu pro pacienta.
+            POST <code>/api/{v2|v3}/{prevence|screeningy|emergentniZaznam}/vyhledat</code> – načte VŠECHNY záznamy daného typu pro pacienta.
+            Verze se řídí přepínačem „Verze API“ v záložce Prevence / Screeningy (výchozí <strong>v3</strong>). Záznamy účasti ve screeningu (Standard 3.1) se čtou jen takto.
           </p>
           <div class="form-row">
             <div class="form-group"><label>RID pacienta</label>
@@ -6350,10 +6497,14 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <div class="form-group"><label>Tlak systolický</label><input type="number" id="szz2PpSys" placeholder="mmHg"></div>
               <div class="form-group"><label>Tlak diastolický</label><input type="number" id="szz2PpDia" placeholder="mmHg"></div>
             </div>
-            <div class="form-row">
-              <div class="form-group"><label>Účast – screening plic (číselník)</label><input id="szz2PpScrPlic" placeholder="kód nebo kód@verze"></div>
-              <div class="form-group"><label>Účast – screening prostaty (číselník)</label><input id="szz2PpScrProstata" placeholder="kód nebo kód@verze"></div>
-              <div class="form-group"><label>Účast – screening AAA (číselník)</label><input id="szz2PpScrAaa" placeholder="kód nebo kód@verze"></div>
+            <div id="szz2PpUcastV3Info" style="padding:6px 10px;background:#fef3c7;border-left:3px solid #f59e0b;font-size:11px;color:#78350f;margin-bottom:8px">
+              <strong>Standard SZZ 3.1 (23. 10. 2026):</strong> ve verzi <code>v3</code> už preventivní prohlídka VPL <strong>neobsahuje</strong> účast ve screeningu plic / prostaty / AAA.
+              Účast se zadává samostatně v záložce <em>Screeningy → Účast – prostata / plíce / AAA</em> (<code>/api/v3/screeningy/*Ucast</code>). Pole níže se odesílají jen při verzi <code>v2</code>.
+            </div>
+            <div class="form-row" id="szz2PpUcastV2Row">
+              <div class="form-group"><label>Účast – screening plic (číselník, jen v2)</label><input id="szz2PpScrPlic" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Účast – screening prostaty (číselník, jen v2)</label><input id="szz2PpScrProstata" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Účast – screening AAA (číselník, jen v2)</label><input id="szz2PpScrAaa" placeholder="kód nebo kód@verze"></div>
             </div>
             <div class="form-group"><label>Poznámka</label><input id="szz2PpPozn" placeholder="poznámka"></div>
           </div>
@@ -6387,13 +6538,13 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
           <div class="card-title">Akce na záznamu prevence</div>
           <div class="form-row">
             <div class="form-group" style="flex:0 0 190px"><label>Verze API</label>
-              <select id="szz2ApiVerze">
-                <option value="v3" selected>v3 (Standard SZZ 3.0)</option>
+              <select id="szz2ApiVerze" onchange="szz2SyncVerze(this)">
+                <option value="v3" selected>v3 (Standard SZZ 3.1)</option>
                 <option value="v2">v2 (starší)</option>
               </select>
             </div>
             <div class="form-group" style="flex:0 0 220px"><label>&nbsp;</label>
-              <label style="font-weight:400;font-size:12px"><input type="checkbox" id="szz2Samoplatce"> samoplátce ✦ (v3)</label>
+              <label style="font-weight:400;font-size:12px"><input type="checkbox" id="szz2Samoplatce" onchange="szz2SyncVerze(this)"> samoplátce ✦ (v3)</label>
             </div>
           </div>
           <div class="form-row">
@@ -6436,13 +6587,16 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
             <div class="sub-tab" data-panel="szz2-scr-urol">Prostaty urologické ✦</div>
             <div class="sub-tab" data-panel="szz2-scr-biopp">Prostaty bioptické ✦</div>
             <div class="sub-tab" data-panel="szz2-scr-pneu">Plic pneumologické ✦</div>
+            <div class="sub-tab" data-panel="szz2-scr-ucast-prostata">Účast – prostata ★</div>
+            <div class="sub-tab" data-panel="szz2-scr-ucast-plice">Účast – plíce ★</div>
+            <div class="sub-tab" data-panel="szz2-scr-ucast-aaa">Účast – AAA ★</div>
           </div>
           <div style="padding:6px 10px;background:var(--bg2);border-left:3px solid var(--ok, #27ae60);font-size:11px;color:var(--fg3);margin-bottom:8px">
-            ✦ = nové ve <strong>verzi API 3.0.0</strong> (Standard EZ SZZ 3.0, platný od 29. 7. 2026).
-            Vyžadují přepnutí verze na <code>v3</code> v kartě „Akce na záznamu screeningu“.
+            ✦ = samostatné screeningy doplněné v červnu–červenci 2026 (API <strong>v2 od 2.0.4</strong> i <strong>v3</strong>).
+            ★ = <strong>nové ve Standardu EZ SZZ 3.1</strong> (23. 10. 2026; T2 od 20. 10. 2026) – účast ve screeningovém programu jako samostatný záznam, <strong>jen v3</strong>.
           </div>
           <div style="padding:6px 10px;background:var(--bg2);border-left:3px solid var(--accent);font-size:11px;color:var(--fg3);margin-bottom:8px">
-            Pole dle DTO <code>v2.0.3</code>. Výsledky/typy jsou číselníkové – zadávejte <code>kód</code> (volitelně <code>kód@verze</code>). <code>krzpId</code> z DASTA configu.
+            Pole dle DTO swaggeru <code>3.0.5</code> / <code>2.0.7</code>. Výsledky/typy jsou číselníkové – zadávejte <code>kód</code> (volitelně <code>kód@verze</code>). <code>krzpId</code> z DASTA configu.
           </div>
           <div class="sub-panel active" id="szz2-scr-toks">
             <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Kolorektální karcinom – TOKS (<code>kolorektalniKarcinomToks</code>).</p>
@@ -6503,7 +6657,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
             <div class="form-row">
               <div class="form-group"><label>Genotypy HPV testu ✦ (v3, při pozitivním výsledku)</label><input id="szz2HpvscrGenotypy" placeholder="např. HPV 16, HPV 18"></div>
             </div>
-            <div style="font-size:11px;color:var(--fg3)">Ve verzi v3 je cesta <code>karcinomDeloznihoHrdlaHpv</code>; v2 používala <code>karcinomDDeloznihoHrdlaHpv</code> (dvojité D) – klient převede automaticky.</div>
+            <div style="font-size:11px;color:var(--fg3)">Cesta je <code>karcinomDeloznihoHrdlaHpv</code> ve v3 i ve swaggeru v2.0.7; swagger v2.0.1 měl <code>karcinomDDeloznihoHrdlaHpv</code> (dvojité D) – klient volá opravenou cestu a při 404 zkusí původní.</div>
           </div>
           <div class="sub-panel" id="szz2-scr-kolp">
             <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Děložní hrdlo – expertní kolposkopie (<code>karcinomDeloznihoHrdlaExpertniKolposkopie</code>).</p>
@@ -6581,7 +6735,9 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <div class="form-group"><label>Počet adenomů a pilovitých lézí</label><input type="number" step="1" id="szz2KoloAdenomy" placeholder="počet"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Další doporučené vyšetření (<code>gastro-zaver</code>)</label><input id="szz2KoloZaver" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Patologie – jiná (text, <code>patologieNalezJine</code>)</label><input id="szz2KoloPatologieJine" placeholder="volný text"></div>
+              <div class="form-group"><label>Závěr (<code>gastro-zaver</code>, pole <code>zaver</code>)</label><input id="szz2KoloZaver" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Závěr – jiný (text, <code>zaverJiny</code>)</label><input id="szz2KoloZaverJiny" placeholder="volný text"></div>
             </div>
           </div>
           <div class="sub-panel" id="szz2-scr-vpsa">
@@ -6590,7 +6746,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <div class="form-group"><label>RID *</label><input id="szz2VpsaRid" placeholder="RID" value="8754287763"></div>
               <div class="form-group"><label>KRZP ID</label><input id="szz2VpsaKrzp" placeholder="z DASTA configu"></div>
               <div class="form-group"><label>Datum provedení *</label><input type="text" class="date-cs" id="szz2VpsaDatum" placeholder="dd.mm.rrrr"></div>
-              <div class="form-group"><label>Hladina screeningového PSA (µg/l) *</label><input type="number" step="0.01" id="szz2VpsaHladina" placeholder="1000-12000"></div>
+              <div class="form-group"><label>Hladina screeningového PSA (µg/l) *</label><input type="number" step="0.01" id="szz2VpsaHladina" placeholder="0–200 (od API 3.0.5)"></div>
             </div>
           </div>
           <div class="sub-panel" id="szz2-scr-urol">
@@ -6602,7 +6758,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               <div class="form-group"><label>Klinické vyšetření (<code>urologie-klinicke-vysetreni</code>)</label><input id="szz2UrolKlinicke" placeholder="kód nebo kód@verze"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Hladina PSA (µg/l)</label><input type="number" step="0.01" id="szz2UrolPsa" placeholder="1000-12000"></div>
+              <div class="form-group"><label>Hladina PSA (µg/l)</label><input type="number" step="0.01" id="szz2UrolPsa" placeholder="0–200 (od API 3.0.5)"></div>
               <div class="form-group"><label>Objem prostaty (ml, 0–1000)</label><input type="number" step="0.01" id="szz2UrolObjem" placeholder="ml"></div>
               <div class="form-group"><label>PSA denzita (0–10)</label><input type="number" step="0.01" id="szz2UrolDenzita" placeholder="PSAD"></div>
               <div class="form-group"><label>PSA velocita (0–10)</label><input type="number" step="0.01" id="szz2UrolVelocita" placeholder="ng/ml/rok"></div>
@@ -6620,7 +6776,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
             </div>
             <div class="form-row">
               <div class="form-group"><label>Typ biopsie * (<code>urologie-typ-biopsie</code>)</label><input id="szz2BioppTyp" placeholder="kód nebo kód@verze"></div>
-              <div class="form-group"><label>Výsledek * (<code>urologie-vysledek-biopt-vys</code>)</label><input id="szz2BioppVysl" placeholder="kód nebo kód@verze"></div>
+              <div class="form-group"><label>Výsledek * (<code>urologie-vysledek-biopt-vysetreni</code>)</label><input id="szz2BioppVysl" placeholder="kód nebo kód@verze"></div>
             </div>
           </div>
           <div class="sub-panel" id="szz2-scr-pneu">
@@ -6647,19 +6803,58 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
               </div>
             </div>
           </div>
+          <!-- Standard SZZ 3.1 – účast ve screeningovém programu (samostatné záznamy) -->
+          <div class="sub-panel" id="szz2-scr-ucast-prostata">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Účast ve screeningu karcinomu prostaty (<code>karcinomProstatyUcast</code>), odbornost L44, <strong>muži 50–69 let</strong>. ★ Standard 3.1, jen v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2UcProRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2UcProKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum zadání účasti *</label><input type="text" class="date-cs" id="szz2UcProDatum" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Kód výkonu * (<code>szz-ucast-ve-screeningu-karcinomu-prostaty</code>)</label>
+                <select id="szz2UcProKod"><option value="">–</option><option value="01131">01131 – souhlasí</option><option value="01132">01132 – souhlasí</option><option value="01133">01133 – souhlasí</option><option value="01134">01134 – nesouhlasí</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-ucast-plice">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Účast ve screeningu karcinomu plic (<code>karcinomPlicUcast</code>), odbornost L44, <strong>55–74 let</strong>. ★ Standard 3.1, jen v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2UcPliRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2UcPliKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum zadání účasti *</label><input type="text" class="date-cs" id="szz2UcPliDatum" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Kód výkonu * (<code>szz-ucast-ve-screeningu-karcinomu-plic</code>)</label>
+                <select id="szz2UcPliKod"><option value="">–</option><option value="01196">01196 – souhlasí</option><option value="01197">01197 – nesouhlasí</option></select>
+              </div>
+            </div>
+          </div>
+          <div class="sub-panel" id="szz2-scr-ucast-aaa">
+            <p style="font-size:12px;color:var(--fg3);margin:0 0 8px">Účast ve screeningu aneurysmatu abdominální aorty (<code>aneurysmaAbdominalniAortyUcast</code>), odbornost L44, <strong>muži 65–67 let</strong>, nejvýše jeden platný záznam. ★ Standard 3.1, jen v3</p>
+            <div class="form-row">
+              <div class="form-group"><label>RID *</label><input id="szz2UcAaaRid" placeholder="RID" value="8754287763"></div>
+              <div class="form-group"><label>KRZP ID</label><input id="szz2UcAaaKrzp" placeholder="z DASTA configu"></div>
+              <div class="form-group"><label>Datum zadání účasti *</label><input type="text" class="date-cs" id="szz2UcAaaDatum" placeholder="dd.mm.rrrr"></div>
+              <div class="form-group"><label>Kód výkonu * (<code>szz-ucast-ve-screeningu-aaa</code>)</label>
+                <select id="szz2UcAaaKod"><option value="">–</option><option value="01135">01135 – souhlasí</option><option value="01136">01136 – nesouhlasí</option></select>
+              </div>
+            </div>
+          </div>
+          <div id="szz2UcastPozn" style="padding:6px 10px;background:#fef3c7;border-left:3px solid #f59e0b;font-size:11px;color:#78350f;margin:8px 0">
+            <strong>Účast ve screeningu (★):</strong> Standard 3.1 definuje operace POST, PUT <code>/{id}</code> a PATCH <code>/{id}/zneplatnit|zpochybnit|obnovit</code> – <strong>bez</strong> <code>/vyhledat</code> (čtení přes „Souhrnné → Všechny screeningy“).
+            Standard uvádí dvě povinné položky (datum zadání účasti, kód výkonu); <strong>názvy JSON polí zatím neznáme</strong> – swagger s těmito službami nebyl z této sítě dostupný (T2 je geo-blokovaná).
+            Formulář posílá odhad <code>datumProvedeni</code> + <code>ucastVeScreeningu {kod, verze}</code>; případně tělo upravte v poli „Vlastní body“.
+          </div>
         </div>
 
         <div class="card">
           <div class="card-title">Akce na záznamu screeningu</div>
           <div class="form-row">
             <div class="form-group" style="flex:0 0 190px"><label>Verze API</label>
-              <select id="szz2ApiVerze">
-                <option value="v3" selected>v3 (Standard SZZ 3.0)</option>
+              <select id="szz2ApiVerzeScr" onchange="szz2SyncVerze(this)">
+                <option value="v3" selected>v3 (Standard SZZ 3.1)</option>
                 <option value="v2">v2 (starší)</option>
               </select>
             </div>
             <div class="form-group" style="flex:0 0 220px"><label>&nbsp;</label>
-              <label style="font-weight:400;font-size:12px"><input type="checkbox" id="szz2Samoplatce"> samoplátce ✦ (v3)</label>
+              <label style="font-weight:400;font-size:12px"><input type="checkbox" id="szz2SamoplatceScr" onchange="szz2SyncVerze(this)"> samoplátce ✦ (v3)</label>
             </div>
           </div>
           <div class="form-row">
@@ -7281,9 +7476,18 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
           léčivých přípravků (DLP)</strong>.
           <div style="margin-top:6px;font-size:12px;color:var(--fg3)">
             eRecept je samostatný systém SÚKL (SOAP, verze <span id="suklVerzeInline">202501A</span>,
+            ePoukaz <span id="suklEpoukazVerzeInline">202605A</span>,
             <a href="https://epreskripce.gov.cz" target="_blank" style="color:var(--accent)">epreskripce.gov.cz</a>)
             a vyžaduje registraci SW u SÚKL + certifikát. Bez těchto přístupů běží v <strong>režimu SIMULACE</strong>.
             DLP jsou <strong>veřejná otevřená data</strong> a fungují reálně (offline fallback = vzorky).
+          </div>
+          <div class="rev-diff" style="margin-top:8px;font-size:12px;line-height:1.7">
+            <span class="rev-tag zmena">Revize 10. 11. 2026</span>
+            <strong>Otevřená data DLP:</strong> <span class="rev-old">opendata.sukl.cz/?q=katalog/…</span> →
+            <span class="rev-new">opendata.sukl.gov.cz/katalog-otevrenych-dat/…</span> (od 23. 10. 2026; stará adresa už balík nenabízí, aktuální balík DLP20261027 platí 1.–30. 11. 2026).<br>
+            <strong>ePoukaz:</strong> verze rozhraní <span class="rev-old">202601A, 202601B, 202604A</span> →
+            <span class="rev-new">jen 202605A od 1. 12. 2026</span> (starší se vypínají 30. 11. 2026).<br>
+            <strong>eRecept:</strong> SÚKL prodloužil termín vypnutí „starých“ endpointů <span class="rev-new">do 30. 11. 2026</span>; živé napojení musí mířit na nové URL z dokumentace SÚKL (SOAP ani struktura volání se nemění).
           </div>
         </div>
       </div>
@@ -9532,8 +9736,29 @@ async function krpHledatJmeno() {
 // ---------------------------------------------------------------------------
 // DRID – Dočasný RID
 // ---------------------------------------------------------------------------
+// Standard KZR 1.3: DRID = "D" + devítimístné číslo dělitelné 13 a nedělitelné 11.
+// Tvar je podmínka odeslání; kontrolní pravidlo jen upozornění (DRID vydané
+// před 3. 11. 2026 byly náhodné číslice).
+function dridStav(h) {
+  const v = String(h || '').trim().toUpperCase();
+  if (!/^D\d{9}$/.test(v)) return 'tvar';
+  const n = parseInt(v.slice(1), 10);
+  return (n % 13 === 0 && n % 11 !== 0) ? 'ok' : 'pravidlo';
+}
+function dridKontrola(input, infoId) {
+  const el = document.getElementById(infoId);
+  if (!el) return;
+  const v = input.value.trim();
+  if (!v) { el.textContent = ''; return; }
+  const st = dridStav(v);
+  if (st === 'ok') { el.style.color = '#15803d'; el.textContent = 'DRID odpovídá Standardu KZR 1.3'; }
+  else if (st === 'pravidlo') { el.style.color = '#b45309'; el.textContent = 'Tvar je v pořádku, ale číslo nesplňuje pravidlo 1.3 (dělitelné 13, ne 11) – u DRID vydaných před 3. 11. 2026 je to možné'; }
+  else { el.style.color = '#b91c1c'; el.textContent = 'DRID musí mít tvar D + 9 číslic'; }
+}
+
 async function dridGenerovat() {
   const pocet = parseInt(document.getElementById('dridPocet').value) || 1;
+  if (pocet > 50 && !confirm('Standard KZR 1.3 stanovuje zásobu předgenerovaných DRID na 50 ks. Opravdu požádat o ' + pocet + '?')) return;
   const data = await api('POST', '/api/krp/drid/generovat', { pocet });
   showResult('krpResult', data);
   const box = document.getElementById('dridGenResult');
@@ -9596,8 +9821,10 @@ async function dridPriradit() {
   const docasny = document.getElementById('dridDocasny').value.trim();
   const skutecny = document.getElementById('dridSkutecny').value.trim();
   if (!docasny || !skutecny) return toast('Zadejte oba RIDy', true);
+  if (dridStav(docasny) === 'tvar') return toast('DRID musí mít tvar D + 9 číslic', true);
   const data = await api('POST', '/api/krp/drid/priradit', { docasny_rid: docasny, rid: skutecny });
   showResult('krpResult', data);
+  if (data && data.odeslano === false) return toast(data.error || 'Požadavek se neodeslal', true);
   const resp = data.data || data;
   const info = resp.odpovedInfo || {};
   if (info.stav === 'OK') {
@@ -9660,8 +9887,12 @@ async function krpHledatUniv() {
   if (dn) body.datumNarozeni = dn;
   if (cp) body.cisloPojistence = cp;
   if (!Object.keys(body).length) return toast('Vyplňte alespoň jedno pole', true);
+  // Standard KZR 1.3, kap. 4.5.1: vždy jméno + příjmení + další údaj.
+  if (!(j && p && (rc || dn || cp)) &&
+      !confirm('Standard KZR 1.3 uvádí u univerzálního hledání jen kombinace jméno + příjmení + (rodné číslo | číslo pojištěnce | datum narození | adresa | doklad). Přesto odeslat?')) return;
   const data = await api('POST', '/api/krp/hledat-uni', body);
   showResult('krpResult', data);
+  if (data && data.odeslano === false) toast(data.error || 'Dotaz se neodeslal', true);
 }
 
 // ---------------------------------------------------------------------------
@@ -10100,14 +10331,22 @@ async function krpNacistPacienta() {
   const rid = _val('krpSprZmenRid');
   if (!rid) return toast('Zadejte RID pacienta', true);
   toast('Načítám data pacienta…');
-  const data = await api('POST', '/api/krp/hledat-uni', { rid });
+  // Samotné RID už mezi kombinacemi univerzálního hledání není (Standard KZR
+  // 1.3, kap. 4.5.1) – pacient se načítá metodou hledat/rid.
+  const data = await api('POST', '/api/krp/hledat-rid', { rid });
   showResult('krpSpravaResult', data);
-  const pac = data?.data?.odpovedData?.pacient || data?.data?.pacient || {};
+  const od = data?.data?.odpovedData;
+  const zaznam = Array.isArray(od) ? (od[0] || {}) : (od?.pacient || od || data?.data?.pacient || {});
+  const pac = {};
+  ['jmeno', 'prijmeni', 'rodnePrijmeni', 'rodneCislo', 'datumNarozeni'].forEach(k => {
+    const v = zaznam[k];
+    pac[k] = (v && typeof v === 'object' && 'hodnota' in v) ? v.hodnota : v;
+  });
   if (pac.jmeno) document.getElementById('krpSprZmenJmeno').value = pac.jmeno;
   if (pac.prijmeni) document.getElementById('krpSprZmenPrijmeni').value = pac.prijmeni;
   if (pac.rodnePrijmeni) document.getElementById('krpSprZmenRodPrijmeni').value = pac.rodnePrijmeni;
   if (pac.rodneCislo) document.getElementById('krpSprZmenRc').value = pac.rodneCislo;
-  if (pac.datumNarozeni) _setDate('krpSprZmenDatNar', pac.datumNarozeni.substring(0,10));
+  if (pac.datumNarozeni) _setDate('krpSprZmenDatNar', String(pac.datumNarozeni).substring(0,10));
   toast('Data načtena, upravte co potřebujete');
 }
 
@@ -10355,6 +10594,25 @@ async function krpHromNahrat() {
     _qDone(qi, resp.status, null);
     showResult('krpHromadneResult', data);
 
+    if (data && data.odeslano === false) {
+      // dávka se nepodala – zjevně chybná jména (MZ ČR, 3. 11. 2026)
+      const vadna = (data.vadnaJmena || []).slice(0, 8).map(v => `#${v.poradi}${v.sourceId ? ' (' + v.sourceId + ')' : ''}`).join(', ');
+      _showHromStatus((data.error || 'Dávka se nepodala') + (vadna ? ' Záznamy: ' + vadna + (data.pocetVadnychJmen > 8 ? ' …' : '') : ''), 'red');
+      toast('Dávka se nepodala – opravte označené záznamy', true);
+      return;
+    }
+    if (data && data.rozdeleno) {
+      // Standard KZR 1.3: max. 10 000 pacientů v dávce – podáno po částech
+      const davky = data?.data?.davky || [];
+      const ids = davky.filter(d => d.hromadneZtotozneniID).map(d => d.hromadneZtotozneniID);
+      _showHromStatus(`Dávka má ${data.pocetPacientu} pacientů (limit ${data.limitDavky}) – podáno ${ids.length} z ${davky.length} částí. ID žádostí: ${ids.join(', ') || '—'}. Stav každé zjistíte zvlášť přes „Zjistit stav".`, ids.length === davky.length ? 'orange' : 'red');
+      if (ids.length) {
+        document.getElementById('krpHromZadostId').value = ids[0];
+        toast(`Podáno ${ids.length} dávek, sleduji první (${ids[0]})`);
+        krpHromAutoPoll(ids[0]);
+      }
+      return;
+    }
     const respData = data?.data?.odpovedData || data?.odpovedData || data?.data || {};
     const hzId = respData.hromadneZtotozneniID || '';
     if (hzId) {
@@ -10418,7 +10676,9 @@ async function krpHromVysledky() {
 let _hromPollTimer = null;
 let _hromPollStart = 0;
 const HROM_POLL_INTERVAL_MS = 10000;
-const HROM_POLL_MAX_MS = 10 * 60 * 1000;
+// MZ ČR (3. 11. 2026): zpracování dávky do 10 000 pacientů trvá cca 30 minut;
+// dřív se čekalo jen 10 minut a sledování skončilo dřív než zpracování.
+const HROM_POLL_MAX_MS = 45 * 60 * 1000;
 
 function krpHromStopPoll() {
   if (_hromPollTimer) { clearTimeout(_hromPollTimer); _hromPollTimer = null; }
@@ -10449,7 +10709,7 @@ async function krpHromAutoPoll(id) {
     }
     if (Date.now() - _hromPollStart > HROM_POLL_MAX_MS) {
       krpHromStopPoll();
-      _showHromStatus(`Zpracování stále běží po ${Math.round(HROM_POLL_MAX_MS / 60000)} min – dávka může být velká, zkuste „Zjistit stav" později`, 'orange');
+      _showHromStatus(`Zpracování stále běží po ${Math.round(HROM_POLL_MAX_MS / 60000)} min – KRP uvádí cca 30 min na dávku do 10 000 pacientů, zkuste „Zjistit stav" později`, 'orange');
       return;
     }
     _hromPollTimer = setTimeout(tick, HROM_POLL_INTERVAL_MS);
@@ -10583,21 +10843,36 @@ function _downloadText(text, filename, mime) {
 function _showHromStatus(msg, color) {
   const bar = document.getElementById('krpHromStatusBar');
   bar.style.display = 'block';
-  bar.style.background = color === 'green' ? '#e8f5e9' : color === 'orange' ? '#fff3e0' : 'var(--bg2)';
-  bar.style.color = color === 'green' ? '#2e7d32' : color === 'orange' ? '#e65100' : 'var(--fg)';
-  bar.style.border = `1px solid ${color === 'green' ? '#a5d6a7' : color === 'orange' ? '#ffcc80' : 'var(--border)'}`;
+  bar.style.background = color === 'green' ? '#e8f5e9' : color === 'orange' ? '#fff3e0' : color === 'red' ? '#fef2f2' : 'var(--bg2)';
+  bar.style.color = color === 'green' ? '#2e7d32' : color === 'orange' ? '#e65100' : color === 'red' ? '#b91c1c' : 'var(--fg)';
+  bar.style.border = `1px solid ${color === 'green' ? '#a5d6a7' : color === 'orange' ? '#ffcc80' : color === 'red' ? '#fecaca' : 'var(--border)'}`;
   bar.textContent = msg;
 }
 
 // ---------------------------------------------------------------------------
 // KRP – notifikace
 // ---------------------------------------------------------------------------
+// Těla dle swaggeru KRP 3.0.6 a Standardu KZR 1.3 (kap. 4.5.3): založení
+// rid + url + subjektId (IČO), vyhledání idSubskripce a/nebo subjektId,
+// zrušení idSubskripce. Typ kanálu ani typy událostí se neposílají.
+function _krpNotifIco() {
+  return (typeof CLIENT_ICO !== 'undefined' && CLIENT_ICO) ? CLIENT_ICO : '';
+}
+function _krpRidy(text) {
+  return String(text || '').split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
+}
 async function krpNotifVyhledat() {
-  const typ = _val('krpNotifKanalTyp');
-  const subj = _val('krpNotifSubjektId');
+  const subj = _val('krpNotifSubjektId') || '';
+  const subId = _val('krpNotifVyhSubId') || '';
   const body = {};
-  if (typ) body.kanalTyp = typ;
+  if (subId) body.idSubskripce = subId;
   if (subj) body.subjektId = subj;
+  if (!subId && !subj) {
+    const ico = _krpNotifIco();
+    if (!ico) return toast('Zadejte IČO subjektu nebo ID subskripce', true);
+    body.subjektId = ico;
+    document.getElementById('krpNotifSubjektId').value = ico;
+  }
   const data = await api('POST', '/api/krp/notifikace-vyhledat', body);
   showResult('krpNotifResult', data);
 }
@@ -10607,32 +10882,57 @@ async function krpNotifZalozit() {
   if (jsonEl && jsonEl.value.trim()) {
     try { body = JSON.parse(jsonEl.value); } catch { return toast('Neplatný JSON', true); }
   } else {
-    const rid = _val('krpNotifZalRid');
-    const kanal = _val('krpNotifZalKanal');
-    const cil = _val('krpNotifZalCil');
-    if (!rid) return toast('RID pacienta je povinný', true);
-    if (!kanal) return toast('Vyberte typ kanálu', true);
-    body = { subjektId: rid, kanalTyp: kanal };
-    if (cil) body.cil = cil;
-    const udalosti = [];
-    if (document.getElementById('krpNotifEvtZmena')?.checked) udalosti.push('ZMENA_UDAJU');
-    if (document.getElementById('krpNotifEvtPojist')?.checked) udalosti.push('ZMENA_POJISTENI');
-    if (document.getElementById('krpNotifEvtUmrti')?.checked) udalosti.push('UMRTI');
-    if (document.getElementById('krpNotifEvtSlouceni')?.checked) udalosti.push('SLOUCENI');
-    if (udalosti.length) body.typyUdalosti = udalosti;
+    const ridy = _krpRidy(_val('krpNotifZalRid'));
+    const url = _val('krpNotifZalCil');
+    const ico = _val('krpNotifZalIco');
+    if (!ridy.length) return toast('RID pacienta je povinný', true);
+    if (url && !/^https?:\/\//i.test(url)) return toast('URL listeneru musí začínat http:// nebo https://', true);
+    body = { rid: ridy };
+    if (url) body.url = url;
+    if (ico) body.subjektId = ico;
   }
   const data = await api('POST', '/api/krp/notifikace-zalozit', body);
   showResult('krpNotifResult', data);
-  const subId = data?.data?.odpovedData?.subskripceId || data?.data?.subskripceId;
-  if (subId) toast(`Odběr založen, ID: ${subId}`);
+  if (data && data.odeslano === false) return toast(data.error || 'Požadavek se neodeslal', true);
+  const zalozene = data?.data?.odpovedData?.zalozeneNotifikace || [];
+  if (zalozene.length) {
+    document.getElementById('krpNotifZrusSubId').value = zalozene[0].idSubskripce || '';
+    toast(`Odběr založen (${zalozene.length}×), ID: ${zalozene.map(z => z.idSubskripce).join(', ')}`);
+  }
 }
 async function krpNotifZrusit() {
   const subId = _val('krpNotifZrusSubId');
-  const subjId = _val('krpNotifZrusSubjId');
   if (!subId) return toast('Zadejte ID subskripce', true);
   if (!confirm('Opravdu zrušit tento odběr notifikací?')) return;
-  const data = await api('POST', '/api/krp/notifikace-zrusit', { idSubskripce: subId, subjektId: subjId });
+  const data = await api('POST', '/api/krp/notifikace-zrusit', { idSubskripce: subId });
   showResult('krpNotifResult', data);
+}
+async function krpNotifVzor() {
+  const r = await fetch('/api/krp/notifikace-vzor');
+  const d = await r.json();
+  document.getElementById('krpNotifZprava').value = JSON.stringify(d.zprava, null, 2);
+  document.getElementById('krpNotifZpravaInfo').innerHTML =
+    '<span style="color:var(--fg3)">' + esc(d.poznamka || '') + '</span>';
+}
+async function krpNotifZkontrolovat() {
+  const box = document.getElementById('krpNotifZpravaInfo');
+  let zprava;
+  try { zprava = JSON.parse(document.getElementById('krpNotifZprava').value); }
+  catch { box.innerHTML = '<span style="color:#b91c1c">Text není platný JSON.</span>'; return; }
+  const r = await fetch('/api/krp/notifikace-zprava', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(zprava) });
+  const d = await r.json();
+  showResult('krpNotifResult', d);
+  const radky = [];
+  radky.push(d.platna
+    ? '<strong style="color:#15803d">Zpráva odpovídá pravidlům Standardu KZR 1.3.</strong>'
+    : '<strong style="color:#b91c1c">Zpráva pravidlům neodpovídá.</strong>');
+  (d.chyby || []).forEach(c => radky.push('<span style="color:#b91c1c">✗ ' + esc(c) + '</span>'));
+  (d.upozorneni || []).forEach(c => radky.push('<span style="color:#b45309">! ' + esc(c) + '</span>'));
+  if (d.rid) radky.push('RID: <code>' + esc(d.rid) + '</code>');
+  (d.udalosti || []).forEach(u => radky.push(
+    '<code>' + esc(u.typUdalosti || '?') + '</code> – ' + esc((u.objektZmeny || []).join(', ') || '—') +
+    ': <span class="rev-old">' + esc(String(u.puvodniHodnota ?? '—')) + '</span> → <span class="rev-new">' + esc(String(u.novaHodnota ?? '—')) + '</span>'));
+  box.innerHTML = radky.join('<br>');
 }
 
 // ---------------------------------------------------------------------------
@@ -12558,8 +12858,10 @@ async function elp2LoadPolozky() {
 // ---------------------------------------------------------------------------
 // eŽádanky – Search
 // ---------------------------------------------------------------------------
-const EZ_STAVY = {'0':'Nová','1':'Přijatá','2':'Vyřízená','3':'Stornovaná','4':'Neproveditelná','5':'Vrácená do oběhu'};
-const EZ_STAV_COLORS = {'0':'var(--accent)','1':'var(--green)','2':'#0550ae','3':'var(--red)','4':'var(--orange)','5':'#8250df'};
+// Číselník stav-zadanky v1.0.0 (Standard systému eŽádanka v2.0, Tabulka 9; TermX PROD 10. 11. 2026).
+// Vrácení do oběhu není stav – žádanka se vrací do 0 (Nová) bez adresáta.
+const EZ_STAVY = {'0':'Nová','1':'Přijatá','2':'Neproveditelná','3':'Stornovaná','4':'Dokončená (vyřízená)','5':'Expirovaná'};
+const EZ_STAV_COLORS = {'0':'var(--accent)','1':'var(--green)','2':'var(--orange)','3':'var(--red)','4':'#0550ae','5':'#8250df'};
 
 function ezBuildSearchBody() {
   // eŽádanky číslují stránky od 1 (0 → E01001 „Číslo stránky musí být větší než nula").
@@ -13115,8 +13417,7 @@ function _ezWfToast(data, okMsg) {
       document.getElementById('ezWfVerze').value = data.data.verzeRadku || '';
       const newStav = data.data?.stav?.kod;
       if (newStav !== undefined) {
-        const stavNames = {'0':'Nová','1':'Přijatá','2':'Vyřízená','3':'Stornovaná','4':'Neproveditelná','5':'Vrácená do oběhu'};
-        toast('Nový stav: ' + (stavNames[newStav] || newStav));
+        toast('Nový stav: ' + (EZ_STAVY[newStav] || newStav));
       }
     }
     return;
@@ -13543,7 +13844,18 @@ async function ez2Kostra() {
   const vyk = _ez2TermHodnota('ez2KoVykon'), dg = _ez2TermHodnota('ez2KoDg');
   if (vyk) body.vykony = [vyk];
   if (dg) body.diagnoza = dg;
+  if (_ez2Val('ez2KoPrijmeni') || _ez2Val('ez2KoJmeno')) body.pacientJmeno = {family: _ez2Val('ez2KoPrijmeni') || undefined, given: _ez2Val('ez2KoJmeno') ? [_ez2Val('ez2KoJmeno')] : undefined};
+  body.datumNarozeni = _csDateToIso(_ez2Val('ez2KoNarozeni')) || null;
+  body.cisloPojistence = _ez2Val('ez2KoCpoj') || null;
+  body.odbornost = _ez2Val('ez2KoOdbornost') || null;
+  if (typ === 'Z') body.modalita = _ez2Val('ez2KoModalita') || null;
   const data = await api('POST', '/api/ezadanky/v2/kostra', body);
+  const igBox = document.getElementById('ez2IgUpozorneni');
+  if (igBox) {
+    const up = (data && data.upozorneniIg) || [];
+    igBox.style.display = up.length ? '' : 'none';
+    igBox.innerHTML = up.length ? '<strong>Proti publikovanému IG 1.0.0 v kostře chybí</strong> (brána T2 to 13. 10. 2026 nevyžadovala – neblokuje odeslání):<ul style="margin:4px 0 0 18px">' + up.map(u => '<li>' + escHtml(u) + '</li>').join('') + '</ul>' : '';
+  }
   if (!_ez2ApplyBody(data)) return toast('Kostru se nepodařilo sestavit: ' + (data?.error || data?.data?.error || '?'), true);
   _ez2ShowPriprava(data, 'Kostra ' + typ + ' sestavena (' + (data.fhirBundle.entry || []).length + ' entry) – doplňte klinický obsah dle IG');
   toast('Kostra Bundle ' + typ + ' vytvořena');
@@ -13744,17 +14056,23 @@ async function ez2WfExtra() {
   else { body.duvodNeproveditelnostiZadanky = {kod:duvod}; if (_ez2Val('ez2WfExtraText')) body.duvodNeproveditelnostiUpresneni = _ez2Val('ez2WfExtraText'); if (_ez2Val('ez2WfExtraKod')) body.kodZadanky = _ez2Val('ez2WfExtraKod'); }
   return ez2Wf(akce, body);
 }
-function ez2VysledekSkeleton() {
+async function ez2VysledekSkeleton() {
+  // Tvar dle testovací sady Postman MZ ČR (15. 10. 2026): autor i poskytovatel
+  // výsledku = PŘÍJEMCE žádanky, jazyk cs-CZ, hash = SHA-256 (hex) bajtů souboru.
   const id = _ez2Val('ez2WfId');
   const hl = (document.getElementById('ez2DetailCard')?._lastHl) || {};
-  const rid = hl.pacient || _ez2Val('ez2CrPacient') || 'RID', krzp = _ez2Val('ez2CrAutor') || 'KRZPID', ico = _ez2Val('ez2CrPoskytovatel') || ((typeof CLIENT_ICO !== 'undefined' && CLIENT_ICO) || '25488627');
-  const txt = 'Výsledek vyšetření k žádance ' + (id || '') + '\n';
-  const b64 = btoa(unescape(encodeURIComponent(txt)));
-  const z = {nazev:'Výsledek vyšetření', typ:{kod:'11488-4'}, klasifikace:{kod:'11488-4'}, autor:krzp, zdravotnickyPracovnik:krzp, poskytovatel:ico, pacient:rid,
-    dokument:[{nazev:'Zprava.txt', typ:{kod:'11488-4'}, klasifikace:{kod:'11488-4'}, duvernost:{kod:'N'}, format:{kod:'urn:ihe:iti:xds:2017:mimeTypeSufficient'}, mime:{kod:'text/plain'}, jazyk:{kod:'cs'},
-               autor:krzp, poskytovatel:ico, pacient:rid, hash:'<SHA-256 hex obsahu>', soubor:{soubor:b64}}]};
-  document.getElementById('ez2WfVysledek').value = JSON.stringify(z, null, 2);
-  toast('Kostra zásilky vložena – doplňte hash (SHA-256) a kódy z číselníků document-category / format-code');
+  const rid = hl.pacient || _ez2Val('ez2CrPacient') || '';
+  const krzp = _val('dsCfgKrzp') || _ez2Val('ez2CrAutor') || '';
+  const ico = hl.adresat || ((typeof CLIENT_ICO !== 'undefined' && CLIENT_ICO) || '');
+  const typ = hl.typZadanky?.kod || '721964003';
+  const r = await api('POST', '/api/ezadanky/v2/vysledek-kostra', {
+    text: 'Výsledek vyšetření k žádance ' + (id || '') + '\n', nazevSouboru: 'vysledek.txt',
+    autor: krzp || 'KRZPID', poskytovatel: ico || 'ICO_PRIJEMCE', pacient: rid || 'RID', typ: typ,
+  });
+  if (!r || r.status !== 200) { toast((r && r.error) || 'Kostru zásilky se nepodařilo sestavit', true); return; }
+  document.getElementById('ez2WfVysledek').value = JSON.stringify(r.data, null, 2);
+  if (!_ez2Val('ez2WfZpusob')) document.getElementById('ez2WfZpusob').value = '1';
+  toast('Kostra zásilky vložena (hash SHA-256 spočten) – autor a poskytovatel musí být příjemce žádanky');
 }
 
 // --- Diagnostika & katalog ---------------------------------------------------
@@ -14703,7 +15021,7 @@ function iropIrisSnippet(req) {
   const method = (req.method || 'GET').toUpperCase();
   let s = '// InterSystems IRIS – volání přes SEZ.API.HttpClient (mTLS + JWT)\n';
   s += '// Kompletní runner scénářů: SEZ.IROP.TestRunner, log: SEZ.IROP.VolaniLog\n';
-  s += 'Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest")\n';
+  s += 'Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest04")\n';
   s += 'Set client = ##class(SEZ.API.HttpClient).%New(config)\n';
   if (req.params && Object.keys(req.params).length) {
     Object.entries(req.params).forEach(([k, v]) => {
@@ -16900,12 +17218,16 @@ async function krp3HromSoubor() {
 
 // KRP v3 – DRID
 async function krp3DridGenerovat() {
-  const body = _krp3Env({ pocet: parseInt(_val('krp3DridPocet') || '1', 10) });
+  const pocet = parseInt(_val('krp3DridPocet') || '1', 10);
+  if (pocet > 50 && !confirm('Standard KZR 1.3 stanovuje zásobu předgenerovaných DRID na 50 ks. Opravdu požádat o ' + pocet + '?')) return;
+  const body = _krp3Env({ pocet });
   const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/generovat/docasny_rid', body });
   _showJson('krp3DridResult', r);
 }
 async function krp3DridPriradit() {
-  const body = _krp3Env({ docasnyRID: _val('krp3DridDocasny'), rid: _val('krp3DridSkutecny') });
+  const drid = (_val('krp3DridDocasny') || '').trim().toUpperCase();
+  if (dridStav(drid) === 'tvar') return toast('DRID musí mít tvar D + 9 číslic', true);
+  const body = _krp3Env({ docasnyRID: drid, rid: _val('krp3DridSkutecny') });
   const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/priradit/docasny_rid', body });
   _showJson('krp3DridResult', r);
 }
@@ -16916,19 +17238,27 @@ async function krp3MapovaniRid() {
 
 // KRP v3 – Notifikace
 async function krp3NotifVyhledat() {
-  let body; try { body = _parseJson('krp3NotifVyhBody', {}); } catch { return; }
-  const r = await api('POST', '/api/krp3/notifikace/vyhledat', body);
+  const data = _krp3Clean({ idSubskripce: _val('krp3NotifVyhId'), subjektId: _val('krp3NotifVyhIco') || _krpNotifIco() });
+  const r = await api('POST', '/api/krp3/notifikace/vyhledat', _krp3Env(data));
   _showJson('krp3NotifResult', r);
 }
 async function krp3NotifZalozit() {
-  const built = { Rid: _val('krp3NotifZalRid'), CallbackUrl: _val('krp3NotifZalUrl') };
-  let body; try { body = _bodyOrOverride('krp3NotifZalBody', built); } catch { return; }
+  const built = _krp3Clean({
+    predmet: _krpRidy(_val('krp3NotifZalRid')).map(rid => ({ rid })),
+    prijemci: _val('krp3NotifZalUrl') ? { url: _val('krp3NotifZalUrl') } : null,
+    subjektId: _val('krp3NotifZalIco'),
+  });
+  let data; try { data = _bodyOrOverride('krp3NotifZalBody', built); } catch { return; }
+  const body = (data && data.zadostData) ? data : _krp3Env(data);
   const r = await api('POST', '/api/krp3/notifikace/zalozit', body);
   _showJson('krp3NotifResult', r);
+  const z = r?.data?.odpovedData?.zalozeneNotifikace || [];
+  if (z.length) document.getElementById('krp3NotifZrusId').value = z[0].idSubskripce || '';
 }
 async function krp3NotifZrusit() {
-  let body; try { body = _parseJson('krp3NotifZrusBody', {}); } catch { return; }
-  const r = await api('POST', '/api/krp3/notifikace/zrusit', body);
+  const id = _val('krp3NotifZrusId');
+  if (!id) return toast('Zadejte ID subskripce', true);
+  const r = await api('POST', '/api/krp3/notifikace/zrusit', _krp3Env({ idSubskripce: id }));
   _showJson('krp3NotifResult', r);
 }
 
@@ -16992,9 +17322,10 @@ async function zpravyInit() {
   const el = document.getElementById('zpravyTypy');
   el.innerHTML = _zpTypy.map(t => {
     const povinnych = t.sekce.filter(s => s.povinna).length;
+    const zmena = t.zmeny_verze ? ' <span class="rev-tag zmena" title="Změna IG proti předchozí verzi">změna IG</span>' : '';
     return '<div class="zp-typ" data-kat="' + esc(t.kategorie) + '" onclick="zpravyVybrat(\'' + esc(t.kategorie) + '\')" ' +
       'style="cursor:pointer;padding:12px;border:2px solid var(--border);border-radius:8px;background:var(--bg2);transition:all .15s">' +
-      '<div style="font-weight:700;font-size:13px;margin-bottom:4px">' + esc(t.nazev) + '</div>' +
+      '<div style="font-weight:700;font-size:13px;margin-bottom:4px">' + esc(t.nazev) + zmena + '</div>' +
       '<div style="font-size:11px;color:var(--fg3);font-family:var(--mono)">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</div>' +
       '<div style="font-size:11px;color:var(--fg3);margin-top:4px">LOINC <code>' + esc(t.type_coding.code) + '</code> · ' +
       t.sekce.length + ' sekcí (' + povinnych + ' povinných)</div></div>';
@@ -17018,18 +17349,31 @@ function zpravyVybrat(kat) {
   if (p.identifier) pozadavky.push('identifier');
   if (p.confidentiality) pozadavky.push('confidentiality');
   if (p.diagnosticReport) pozadavky.push('DiagnosticReport v Bundle');
+  if ((p.category || []).length) pozadavky.push('category ' + p.category.join(' + '));
+  if ((p.casoveBodyVyjezdu || []).length) pozadavky.push('časové body výjezdu ' + p.casoveBodyVyjezdu.join(', ') + ' (je-li sekce časové osy)');
+  const tagy = { nove: 'nové', zmena: 'změna', zruseno: 'zrušeno', oprava: 'oprava' };
+  let zmeny = '';
+  if (t.zmeny_verze && (t.zmeny_verze.polozky || []).length) {
+    zmeny = '<div class="rev-diff" style="margin-top:8px;font-size:12px"><strong>Změny IG:</strong> ' +
+      '<span class="rev-old">' + esc(t.zmeny_verze.z) + '</span> → <span class="rev-new">' + esc(t.zmeny_verze.na) + '</span>' +
+      '<table class="rev-table" style="margin-top:6px"><thead><tr><th>Prvek</th><th>Bylo</th><th>Je</th></tr></thead><tbody>' +
+      t.zmeny_verze.polozky.map(z => '<tr><td><span class="rev-tag ' + esc(z.typ) + '">' + esc(tagy[z.typ] || z.typ) + '</span>' + esc(z.prvek) +
+        '</td><td><span class="rev-old">' + esc(z.bylo) + '</span></td><td><span class="rev-new">' + esc(z.je) + '</span></td></tr>').join('') +
+      '</tbody></table></div>';
+  }
   const doc = document.getElementById('zpravyDoc');
   doc.style.display = 'block';
   doc.innerHTML =
     '<div style="font-weight:700;color:#5b21b6;margin-bottom:6px">' + esc(t.nazev) + '</div>' +
-    '<strong>Standard:</strong> <a href="' + esc(t.ig_url) + '" target="_blank">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</a> · ' +
+    '<strong>Standard:</strong> <a href="' + esc(t.ig_url) + '" target="_blank">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</a>' +
+    ' <span style="color:var(--fg3)">(' + esc(t.ig_zdroj || 'CI build') + (t.ig_build ? ', ' + esc(t.ig_build) : '') + ')</span> · ' +
     '<strong>Legislativa:</strong> ' + esc(t.legislativa) + '<br>' +
     '<strong>Composition profil:</strong> <code>' + esc(t.composition_profile) + '</code><br>' +
     '<strong>Bundle profil:</strong> <code>' + esc(t.bundle_profile) + '</code><br>' +
     '<strong>Typ dokumentu:</strong> LOINC <code>' + esc(t.type_coding.code) + '</code> ' + esc(t.type_coding.display || '') +
     ' · <strong>kód pro DÚ:</strong> <code>' + esc(t.du_typ_kod) + '</code><br>' +
     '<strong>Povinné prvky profilu:</strong> ' + (pozadavky.length ? esc(pozadavky.join(', ')) : 'jen základní hlavička') +
-    ' · minimálně <strong>' + p.min_sekci + '</strong> sekcí';
+    ' · minimálně <strong>' + p.min_sekci + '</strong> sekcí' + zmeny;
   document.getElementById('zpravyFormCard').style.display = '';
   document.getElementById('zpravySekceCard').style.display = '';
   document.getElementById('zpravyVysledekCard').style.display = '';
@@ -17055,6 +17399,7 @@ function zpravyRenderSekce() {
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' + badge +
       '<strong style="font-size:12px">' + esc(s.title) + '</strong>' +
       '<code style="font-size:10px;color:var(--fg3)">LOINC ' + esc(s.code) + ' · ' + esc(s.slice) + '</code></div>' +
+      (s.napoveda ? '<div style="font-size:11px;color:#92400e;margin-bottom:4px">' + esc(s.napoveda) + '</div>' : '') +
       '<textarea data-slice="' + esc(s.slice) + '" oninput="zpravySekceInput(this)" rows="2" ' +
       'style="width:100%;font-size:12px;font-family:inherit" ' +
       'placeholder="Každý řádek = jedna položka sekce">' + esc(val) + '</textarea></div>';
@@ -17362,19 +17707,19 @@ async function ncpehValidovat() {
 async function szz2VyhledatPrevence() {
   const rid = _val('szz2RidSouhrn');
   if (!rid) { toast('Zadejte RID pacienta', true); return; }
-  const r = await api('POST', '/api/szz2/prevence/vyhledat', { rid });
+  const r = await api('POST', '/api/' + _szz2Prefix() + '/prevence/vyhledat', { rid });
   _showJson('szz2SouhrnResult', r);
 }
 async function szz2VyhledatScreeningy() {
   const rid = _val('szz2RidSouhrn');
   if (!rid) { toast('Zadejte RID pacienta', true); return; }
-  const r = await api('POST', '/api/szz2/screeningy/vyhledat', { rid });
+  const r = await api('POST', '/api/' + _szz2Prefix() + '/screeningy/vyhledat', { rid });
   _showJson('szz2SouhrnResult', r);
 }
 async function szz2VyhledatEmergentni() {
   const rid = _val('szz2RidSouhrn');
   if (!rid) { toast('Zadejte RID pacienta', true); return; }
-  const r = await api('POST', '/api/szz2/emergentni/vyhledat', { rid });
+  const r = await api('POST', '/api/' + _szz2Prefix() + '/emergentni/vyhledat', { rid });
   _showJson('szz2SouhrnResult', r);
 }
 async function szz2EmergentniPdf() {
@@ -17470,9 +17815,12 @@ function _szz2BuildPrevenceBody() {
       poznamka: _val('szz2PpPozn') || undefined,
       vyska: _szz2Int('szz2PpVyska'), vaha: _szz2Num('szz2PpVaha'), obvodPasu: _szz2Int('szz2PpObvod'),
       tlakSystolicky: _szz2Int('szz2PpSys'), tlakDiastolicky: _szz2Int('szz2PpDia'),
-      ucastVeScreeninguKarcinomuPlic: _szz2Cis('szz2PpScrPlic'),
-      ucastVeScreeninguKarcinomuProstaty: _szz2Cis('szz2PpScrProstata'),
-      ucastVeScreeninguAaa: _szz2Cis('szz2PpScrAaa'),
+      // Standard SZZ 3.1: účast ve screeningu je ve v3 samostatný záznam (/screeningy/*Ucast)
+      ...(_szz2Verze() === 'v2' ? {
+        ucastVeScreeninguKarcinomuPlic: _szz2Cis('szz2PpScrPlic'),
+        ucastVeScreeninguKarcinomuProstaty: _szz2Cis('szz2PpScrProstata'),
+        ucastVeScreeninguAaa: _szz2Cis('szz2PpScrAaa'),
+      } : {}),
     }) }),
     'szz2-prev-ppg': () => ({ typ: 'preventivniProhlidkyGynekologie', body: _szz2Clean({
       ..._szz2Base('szz2PpgRid', 'szz2PpgKrzp', 'szz2PpgDatum'),
@@ -17498,27 +17846,39 @@ function _szz2BuildScreeningBody() {
       denzitaPrsniTkaneTabar: _szz2Cis('szz2MamoTabar'), denzitaPrsniTkaneBirads: _szz2Cis('szz2MamoBirads'),
       denzitaPrsniTkaneImplantaty: _szz2Cis('szz2MamoImpl'), vysledekMamografie: _szz2Cis('szz2MamoVysl'),
     }) }),
-    // Screeningy nové ve verzi API 3.0.0 (Standard EZ SZZ 3.0)
+    // Standard SZZ 3.1 – účast ve screeningovém programu (jen v3). Názvy polí
+    // jsou odhad podle ostatních DTO; swagger s těmito službami zatím nemáme.
+    'szz2-scr-ucast-prostata': () => ({ typ: 'karcinomProstatyUcast', body: _szz2Clean({
+      ..._szz2Base('szz2UcProRid', 'szz2UcProKrzp', 'szz2UcProDatum'), ucastVeScreeningu: _szz2Cis('szz2UcProKod'),
+    }) }),
+    'szz2-scr-ucast-plice': () => ({ typ: 'karcinomPlicUcast', body: _szz2Clean({
+      ..._szz2Base('szz2UcPliRid', 'szz2UcPliKrzp', 'szz2UcPliDatum'), ucastVeScreeningu: _szz2Cis('szz2UcPliKod'),
+    }) }),
+    'szz2-scr-ucast-aaa': () => ({ typ: 'aneurysmaAbdominalniAortyUcast', body: _szz2Clean({
+      ..._szz2Base('szz2UcAaaRid', 'szz2UcAaaKrzp', 'szz2UcAaaDatum'), ucastVeScreeningu: _szz2Cis('szz2UcAaaKod'),
+    }) }),
+    // Samostatné screeningy doplněné v červnu–červenci 2026 (v2 od 2.0.4 i v3); pole dle swaggeru 3.0.5
     'szz2-scr-kolo': () => ({ typ: 'kolorektalniKarcinomKoloskopie', body: _szz2Clean({
       ..._szz2Base('szz2KoloRid', 'szz2KoloKrzp', 'szz2KoloDatum'),
       typKoloskopie: _szz2Cis('szz2KoloTyp'), kompletnostKoloskopie: _szz2Cis('szz2KoloKompl'),
       vysledekBbps: _szz2Int('szz2KoloBbps'), normalniNalez: _szz2Bool('szz2KoloNormal'),
-      patologieNalez: _szz2Cis('szz2KoloPatologie'), pocetAdenomuAPilovitychLezi: _szz2Int('szz2KoloAdenomy'),
-      dalsiDoporuceneVysetreni: _szz2Cis('szz2KoloZaver'),
+      patologieNalez: _szz2Cis('szz2KoloPatologie'), patologieNalezJine: _val('szz2KoloPatologieJine') || undefined,
+      pocetAdenomuAPilovitychLezi: _szz2Int('szz2KoloAdenomy'),
+      zaver: _szz2Cis('szz2KoloZaver'), zaverJiny: _val('szz2KoloZaverJiny') || undefined,
     }) }),
     'szz2-scr-vpsa': () => ({ typ: 'karcinomProstatyVstupniPsa', body: _szz2Clean({
       ..._szz2Base('szz2VpsaRid', 'szz2VpsaKrzp', 'szz2VpsaDatum'),
-      hladinaPsa: _szz2Num('szz2VpsaHladina'),
+      hladinaPsaUgL: _szz2Num('szz2VpsaHladina'),
     }) }),
     'szz2-scr-urol': () => ({ typ: 'karcinomProstatyUrologickeVysetreni', body: _szz2Clean({
       ..._szz2Base('szz2UrolRid', 'szz2UrolKrzp', 'szz2UrolDatum'),
-      vysledekKlinickehoVysetreni: _szz2Cis('szz2UrolKlinicke'), hladinaPsa: _szz2Num('szz2UrolPsa'),
-      objemProstaty: _szz2Num('szz2UrolObjem'), psaDenzita: _szz2Num('szz2UrolDenzita'),
-      psaVelocita: _szz2Num('szz2UrolVelocita'), dalsiDoporuceneVysetreni: _szz2Cis('szz2UrolDalsi'),
+      vysledekKlinickehoVysetreni: _szz2Cis('szz2UrolKlinicke'), hladinaPsaUgL: _szz2Num('szz2UrolPsa'),
+      objemProstatyMl: _szz2Num('szz2UrolObjem'), psaDenzita: _szz2Num('szz2UrolDenzita'),
+      psaVelocity: _szz2Num('szz2UrolVelocita'), dalsiVysetreni: _szz2Cis('szz2UrolDalsi'),
     }) }),
     'szz2-scr-biopp': () => ({ typ: 'karcinomProstatyBioptickeVysetreni', body: _szz2Clean({
       ..._szz2Base('szz2BioppRid', 'szz2BioppKrzp', 'szz2BioppDatum'),
-      typBiopsie: _szz2Cis('szz2BioppTyp'), vysledekBioptickehoVysetreni: _szz2Cis('szz2BioppVysl'),
+      typProvedeneBiopsie: _szz2Cis('szz2BioppTyp'), vysledekVysetreni: _szz2Cis('szz2BioppVysl'),
     }) }),
     'szz2-scr-pneu': () => ({ typ: 'karcinomPlicPneumologickeVysetreni', body: _szz2Clean({
       ..._szz2Base('szz2PneuRid', 'szz2PneuKrzp', 'szz2PneuDatum'),
@@ -17526,7 +17886,7 @@ function _szz2BuildScreeningBody() {
       pocetLetKoureni: _szz2Int('szz2PneuLetKoureni'), pocetBalickoroku: _szz2Num('szz2PneuBalickoroky'),
       vysledekFyzikalnihoVysetreni: _szz2Cis('szz2PneuFyzikalni'), vysledekRtgPlic: _szz2Cis('szz2PneuRtg'),
       vysledekFunkcnihoVysetreni: _szz2Cis('szz2PneuFunkcni'),
-      doporuceniScreeningovehoLdct: _szz2Bool('szz2PneuLdct'),
+      doporucitLdct: _szz2Bool('szz2PneuLdct'),
     }) }),
     'szz2-scr-biop': () => ({ typ: 'karcinomPrsuBiopsie', body: _szz2Clean({
       ..._szz2Base('szz2BiopRid', 'szz2BiopKrzp', 'szz2BiopDatum'),
@@ -17605,15 +17965,36 @@ function _szz2BuildEmergBody() {
   return map[sub] ? map[sub]() : { typ: 'alergie', body: {} };
 }
 
-// Verze API SZZ zvolená v UI. v3 = Standard EZ SZZ 3.0 (nové screeningy,
-// samoplatce, opravený název HPV screeningu); v2 zůstává pro starší nasazení.
+// Verze API SZZ zvolená v UI. v3 = Standard EZ SZZ 3.1 (samoplatce, účast ve
+// screeningu jako samostatný záznam); v2 zůstává pro starší nasazení.
 function _szz2Verze() { return _val('szz2ApiVerze') === 'v2' ? 'v2' : 'v3'; }
 function _szz2Prefix() { return _szz2Verze() === 'v2' ? 'szz2' : 'szz3'; }
+const SZZ3_UCAST_TYPY = ['karcinomProstatyUcast', 'karcinomPlicUcast', 'aneurysmaAbdominalniAortyUcast'];
 
-// Ve v2 měl HPV screening děložního hrdla v cestě dvojité „D".
+// Přepínač verze a zaškrtávátko samoplátce jsou v kartě Prevence i Screeningy –
+// drží se synchronně, aby obě záložky volaly stejnou verzi API.
+function szz2SyncVerze(el) {
+  const pary = [['szz2ApiVerze', 'szz2ApiVerzeScr'], ['szz2Samoplatce', 'szz2SamoplatceScr']];
+  for (const par of pary) {
+    if (!par.includes(el.id)) continue;
+    const druhy = document.getElementById(par.find(x => x !== el.id));
+    if (!druhy) continue;
+    if (el.type === 'checkbox') druhy.checked = el.checked; else druhy.value = el.value;
+  }
+  const v2 = _szz2Verze() === 'v2';
+  const row = document.getElementById('szz2PpUcastV2Row');
+  if (row) row.style.display = v2 ? '' : 'none';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('szz2ApiVerze');
+  if (el) szz2SyncVerze(el);
+});
+
+// Swagger v2.0.1 měl u HPV screeningu děložního hrdla v cestě dvojité „D";
+// swagger 2.0.7 má cestu opravenou i ve v2. Backend volá opravenou cestu
+// a při 404 zkusí původní zápis.
 function _szz2TypDleVerze(typ) {
-  if (typ !== 'karcinomDeloznihoHrdlaHpv' && typ !== 'karcinomDDeloznihoHrdlaHpv') return typ;
-  return _szz2Verze() === 'v2' ? 'karcinomDDeloznihoHrdlaHpv' : 'karcinomDeloznihoHrdlaHpv';
+  return typ === 'karcinomDDeloznihoHrdlaHpv' ? 'karcinomDeloznihoHrdlaHpv' : typ;
 }
 
 // Položka samoplatce existuje až ve v3 – do v2 se neposílá.
@@ -17629,6 +18010,10 @@ async function _szz2DoCall(modul, builder, idSel, akceSel, overrideId, resultSel
   const built = builder();
   const typ = _szz2TypDleVerze(built.typ);
   const pref = _szz2Prefix();
+  if (SZZ3_UCAST_TYPY.includes(typ)) {
+    if (_szz2Verze() === 'v2') { toast('Účast ve screeningu jako samostatný záznam existuje jen ve v3 (Standard SZZ 3.1). Ve v2 se zadává v preventivní prohlídce VPL.', true); return; }
+    if (akce === 'vyhledat') { toast('Služby *Ucast nemají operaci /vyhledat – použijte Souhrnné → Všechny screeningy.', true); return; }
+  }
   let body;
   try { body = _bodyOrOverride(overrideId, built.body); } catch { return; }
   let path, method;
@@ -18612,6 +18997,7 @@ async function suklInit() {
   const ver = st.sukl_interface_version || '202501A';
   const vb = document.getElementById('suklVerzeBadge'); if (vb) vb.textContent = 'rozhraní ' + ver;
   const vi = document.getElementById('suklVerzeInline'); if (vi) vi.textContent = ver;
+  const ve = document.getElementById('suklEpoukazVerzeInline'); if (ve && st.sukl_epoukaz_interface_version) ve.textContent = st.sukl_epoukaz_interface_version;
   suklPatientChips();
   suklRenderRecent();
 }
@@ -18641,7 +19027,7 @@ async function suklDlpHledat() {
   const r = await api('GET', '/api/sukl/dlp/hledat?' + qs.toString());
   showResult('suklDlpResult', r);
   const src = document.getElementById('suklDlpSource');
-  if (src) src.textContent = 'zdroj: ' + (r?.data?.zdroj === 'opendata' ? 'opendata.sukl.cz' : 'vzorky (offline)') + ' · nalezeno ' + (r?.data?.pocet || 0);
+  if (src) src.textContent = 'zdroj: ' + (r?.data?.zdroj === 'opendata' ? 'opendata.sukl.gov.cz' : 'vzorky (offline)') + ' · nalezeno ' + (r?.data?.pocet || 0);
   const box = document.getElementById('suklDlpTable');
   const rows = r?.data?.vysledky || [];
   if (!rows.length) { box.style.display = 'none'; return; }

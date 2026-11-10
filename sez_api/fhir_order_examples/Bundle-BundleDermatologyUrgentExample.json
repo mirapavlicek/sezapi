@@ -1,619 +1,802 @@
 {
-  "resourceType" : "Bundle",
-  "id" : "BundleDermatologyUrgentExample",
-  "meta" : {
-    "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/BundleOrderCz"]
+  "resourceType": "Bundle",
+  "id": "BundleDermatologyUrgentExample",
+  "meta": {
+    "profile": [
+      "https://hl7.cz/fhir/order/StructureDefinition/KOrderBundleCz"
+    ]
   },
-  "language" : "cs",
-  "identifier" : {
-    "system" : "https://hospital.example.cz/korder",
-    "value" : "KORD-DERM-2026-0001"
+  "language": "cs",
+  "identifier": {
+    "system": "https://hospital.example.cz/korder",
+    "value": "KORD-DERM-2026-0001"
   },
-  "type" : "document",
-  "timestamp" : "2026-09-02T09:15:00+02:00",
-  "entry" : [{
-    "fullUrl" : "https://example.cz/fhir/Composition/DermatologyCompositionExample",
-    "resource" : {
-      "resourceType" : "Composition",
-      "id" : "DermatologyCompositionExample",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/k-order-composition-cz"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_DermatologyCompositionExample\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition DermatologyCompositionExample</b></p><a name=\"DermatologyCompositionExample\"> </a><a name=\"hcDermatologyCompositionExample\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-k-order-composition-cz.html\">Composition: K-order (Zadanka) (CZ)</a></p></div><p><b>identifier</b>: KORD-DERM-COMP-2026-0001</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">žádanka o vyšetření</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-02 09:15:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>title</b>: Urgentni dermatologicka zadanka pro pigmentovy utvar</p></div>"
-      },
-      "identifier" : {
-        "value" : "KORD-DERM-COMP-2026-0001"
-      },
-      "status" : "final",
-      "type" : {
-        "coding" : [{
-          "system" : "http://loinc.org",
-          "code" : "57133-1"
-        }],
-        "text" : "žádanka o vyšetření"
-      },
-      "category" : [{
-        "coding" : [{
-          "system" : "http://loinc.org",
-          "code" : "57133-1"
-        }]
-      }],
-      "subject" : {
-        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
-      },
-      "date" : "2026-09-02T09:15:00+02:00",
-      "author" : [{
-        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
-      }],
-      "title" : "Urgentni dermatologicka zadanka pro pigmentovy utvar",
-      "section" : [{
-        "title" : "Requested orderInformation",
-        "code" : {
-          "coding" : [{
-            "system" : "http://loinc.org",
-            "code" : "57133-1"
-          }]
+  "type": "document",
+  "timestamp": "2026-09-02T09:15:00+02:00",
+  "entry": [
+    {
+      "fullUrl": "https://example.cz/fhir/Composition/DermatologyCompositionExample",
+      "resource": {
+        "resourceType": "Composition",
+        "id": "DermatologyCompositionExample",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/order/StructureDefinition/k-order-composition-cz"
+          ]
         },
-        "text" : {
-          "status" : "generated",
-          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Požadováno urgentní dermatologické konziliární vyšetření v pigmentové poradně pro rychle se měnící pigmentový útvar na zádech.</p></div>"
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Composition_DermatologyCompositionExample\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Composition DermatologyCompositionExample</b></p><a name=\"DermatologyCompositionExample\"> </a><a name=\"hcDermatologyCompositionExample\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-k-order-composition-cz.html\">Composition: K-order (Zadanka) (CZ)</a></p></div><p><b>identifier</b>: KORD-DERM-COMP-2026-0001</p><p><b>status</b>: Final</p><p><b>type</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">žádanka o vyšetření</span></p><p><b>category</b>: <span title=\"Codes:{http://loinc.org 57133-1}\">Referral note</span></p><p><b>date</b>: 2026-09-02 09:15:00+0200</p><p><b>author</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>title</b>: Urgentni dermatologicka zadanka pro pigmentovy utvar</p></div>"
         },
-        "entry" : [{
-          "reference" : "ServiceRequest/DermatologyServiceRequest-Urgent"
-        }]
-      },
-      {
-        "title" : "Podpůrné klinické informace",
-        "code" : {
-          "coding" : [{
-            "system" : "http://loinc.org",
-            "code" : "55752-0"
-          }]
+        "identifier": {
+          "value": "KORD-DERM-COMP-2026-0001"
         },
-        "text" : {
-          "status" : "generated",
-          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Rychle se měnící pigmentový útvar na zádech se změnou velikosti a pigmentace. Diferenciální diagnóza: novotvar nejistého nebo neznámého chování kůže.</p></div>"
-        },
-        "entry" : [{
-          "reference" : "Condition/DermatologyCondition-PigmentedLesion"
-        }]
-      },
-      {
-        "title" : "coverage",
-        "code" : {
-          "coding" : [{
-            "system" : "http://loinc.org",
-            "code" : "87520-3"
-          }]
-        },
-        "text" : {
-          "status" : "generated",
-          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Číslo pojištěnce: 8506151234.</p></div>"
-        },
-        "entry" : [{
-          "reference" : "Coverage/KOrderCoverage-Example"
-        }]
-      },
-      {
-        "title" : "Attachments",
-        "code" : {
-          "coding" : [{
-            "system" : "http://loinc.org",
-            "code" : "55107-7"
-          }]
-        },
-        "text" : {
-          "status" : "generated",
-          "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Přiložena klinická fotografie pigmentového útvaru na zádech s označením lokalizace, pořízená dne 2. září 2026.</p></div>"
-        },
-        "entry" : [{
-          "reference" : "DocumentReference/DermatologyLesionPhoto"
-        }]
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0",
-    "resource" : {
-      "resourceType" : "Patient",
-      "id" : "48a9d440-4194-42c1-87ad-b5a39020a4d0",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Patient_48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient 48a9d440-4194-42c1-87ad-b5a39020a4d0</b></p><a name=\"48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><a name=\"hc48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-patient-core.html\">Patient (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/rid</code>/1597778923\u00a0(use:\u00a0official)</li><li><code>https://ncez.mzcr.cz/fhir/sid/cpoj</code>/1118506151234</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420777111222\">+420777111222</a></li><li><a href=\"mailto:novak@example.com\">novak@example.com</a></li><li>Pavlovova 1424/11, 568 02 Svitavy - Predmesti(home)</li></ul></td></tr></table></div>"
-      },
-      "identifier" : [{
-        "use" : "official",
-        "system" : "https://ncez.mzcr.cz/fhir/sid/rid",
-        "value" : "1597778923"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/rcis",
-        "value" : "8506151234"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/cpoj",
-        "value" : "1118506151234"
-      }],
-      "name" : [{
-        "text" : "Ing. Petr Novak, Ph.D.",
-        "family" : "Novak",
-        "given" : ["Petr",
-        "Pavel"]
-      }],
-      "telecom" : [{
-        "system" : "phone",
-        "value" : "+420777111222"
-      },
-      {
-        "system" : "email",
-        "value" : "novak@example.com"
-      }],
-      "gender" : "male",
-      "birthDate" : "1985-06-15",
-      "address" : [{
-        "use" : "home",
-        "text" : "Pavlovova 1424/11, 568 02 Svitavy - Predmesti",
-        "line" : ["Pavlovova 1424/11"],
-        "city" : "Svitavy - Predmesti",
-        "postalCode" : "56802",
-        "country" : "CZ",
-        "_country" : {
-          "extension" : [{
-            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
-            "valueCoding" : {
-              "system" : "urn:iso:std:iso:3166",
-              "code" : "CZ"
+        "status": "final",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "57133-1"
             }
-          }]
-        }
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
-    "resource" : {
-      "resourceType" : "Practitioner",
-      "id" : "a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a</b></p><a name=\"a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><a name=\"hca81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</p><hr/></div>"
-      },
-      "identifier" : [{
-        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
-        "value" : "100000001"
-      }],
-      "name" : [{
-        "text" : "MUDr. Ivan Andel",
-        "family" : "Andel",
-        "given" : ["Ivan"]
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849",
-    "resource" : {
-      "resourceType" : "PractitionerRole",
-      "id" : "2b7e9637-5018-4542-9faf-d5abdee7b849",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xml:lang=\"cs\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\"><a name=\"PractitionerRole_2b7e9637-5018-4542-9faf-d5abdee7b849\"> </a>MUDr. Ivan Andel, vseobecny prakticky lekar</div>"
-      },
-      "practitioner" : {
-        "reference" : "Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
-        "display" : "MUDr. Ivan Andel"
-      },
-      "organization" : {
-        "reference" : "Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
-        "display" : "Ordinace praktickeho lekare"
-      },
-      "code" : [{
-        "coding" : [{
-          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
-          "code" : "L1",
-          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
-        }]
-      }],
-      "specialty" : [{
-        "coding" : [{
-          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
-          "code" : "001",
-          "display" : "Pracoviště praktického lékaře pro dospělé"
-        }],
-        "text" : "Vseobecne prakticke lekarstvi"
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
-    "resource" : {
-      "resourceType" : "Organization",
-      "id" : "ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169</b></p><a name=\"ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><a name=\"hcace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345679</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123456\">+420800123456</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
-      },
-      "identifier" : [{
-        "system" : "https://ncez.mzcr.cz/fhir/sid/krpzs",
-        "value" : "100000001"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
-        "value" : "12345679"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
-        "value" : "42001000"
-      }],
-      "type" : [{
-        "coding" : [{
-          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
-          "code" : "102",
-          "display" : "Nemocnice"
-        }]
-      }],
-      "name" : "Nemocnice Pod Lipou, a.s.",
-      "telecom" : [{
-        "system" : "phone",
-        "value" : "+420800123456",
-        "use" : "work"
-      }],
-      "address" : [{
-        "use" : "work",
-        "type" : "both",
-        "line" : ["Ukazkova 1"],
-        "city" : "Praha",
-        "postalCode" : "10000",
-        "country" : "CZ",
-        "_country" : {
-          "extension" : [{
-            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
-            "valueCoding" : {
-              "system" : "urn:iso:std:iso:3166",
-              "code" : "CZ",
-              "display" : "Czechia"
+          ],
+          "text": "žádanka o vyšetření"
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "57133-1"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+        },
+        "date": "2026-09-02T09:15:00+02:00",
+        "author": [
+          {
+            "reference": "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+          }
+        ],
+        "title": "Urgentni dermatologicka zadanka pro pigmentovy utvar",
+        "section": [
+          {
+            "title": "Requested orderInformation",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "57133-1"
+                }
+              ]
+            },
+            "text": {
+              "status": "generated",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Požadováno urgentní dermatologické konziliární vyšetření v pigmentové poradně pro rychle se měnící pigmentový útvar na zádech.</p></div>"
+            },
+            "entry": [
+              {
+                "reference": "ServiceRequest/DermatologyServiceRequest-Urgent"
+              }
+            ]
+          },
+          {
+            "title": "Podpůrné klinické informace",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "55752-0"
+                }
+              ]
+            },
+            "text": {
+              "status": "generated",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Rychle se měnící pigmentový útvar na zádech se změnou velikosti a pigmentace. Diferenciální diagnóza: novotvar nejistého nebo neznámého chování kůže.</p></div>"
+            },
+            "entry": [
+              {
+                "reference": "Condition/DermatologyCondition-PigmentedLesion"
+              }
+            ]
+          },
+          {
+            "title": "coverage",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "87520-3"
+                }
+              ]
+            },
+            "text": {
+              "status": "generated",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Úhrada z veřejného zdravotního pojištění. Číslo pojištěnce: 8506151234.</p></div>"
+            },
+            "entry": [
+              {
+                "reference": "Coverage/KOrderCoverage-Example"
+              }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "55107-7"
+                }
+              ]
+            },
+            "text": {
+              "status": "generated",
+              "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\" xml:lang=\"cs\"><p>Přiložena klinická fotografie pigmentového útvaru na zádech s označením lokalizace, pořízená dne 2. září 2026.</p></div>"
+            },
+            "entry": [
+              {
+                "reference": "DocumentReference/DermatologyLesionPhoto"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "48a9d440-4194-42c1-87ad-b5a39020a4d0",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Patient_48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Patient 48a9d440-4194-42c1-87ad-b5a39020a4d0</b></p><a name=\"48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><a name=\"hc48a9d440-4194-42c1-87ad-b5a39020a4d0\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-patient-core.html\">Patient (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/rid</code>/1597778923 (use: official)</li><li><code>https://ncez.mzcr.cz/fhir/sid/cpoj</code>/1118506151234</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420777111222\">+420777111222</a></li><li><a href=\"mailto:novak@example.com\">novak@example.com</a></li><li>Pavlovova 1424/11, 568 02 Svitavy - Predmesti(home)</li></ul></td></tr></table></div>"
+        },
+        "identifier": [
+          {
+            "use": "official",
+            "system": "https://ncez.mzcr.cz/fhir/sid/rid",
+            "value": "1597778923"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/rcis",
+            "value": "8506151234"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/cpoj",
+            "value": "1118506151234"
+          }
+        ],
+        "name": [
+          {
+            "text": "Ing. Petr Novak, Ph.D.",
+            "family": "Novak",
+            "given": [
+              "Petr",
+              "Pavel"
+            ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "+420777111222"
+          },
+          {
+            "system": "email",
+            "value": "novak@example.com"
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1985-06-15",
+        "address": [
+          {
+            "use": "home",
+            "text": "Pavlovova 1424/11, 568 02 Svitavy - Predmesti",
+            "line": [
+              "Pavlovova 1424/11"
+            ],
+            "city": "Svitavy - Predmesti",
+            "postalCode": "56802",
+            "country": "CZ",
+            "_country": {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+                  "valueCoding": {
+                    "system": "urn:iso:std:iso:3166",
+                    "code": "CZ"
+                  }
+                }
+              ]
             }
-          }]
-        }
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
-    "resource" : {
-      "resourceType" : "Organization",
-      "id" : "af2b3114-e872-43b9-9875-cceb39122f7f",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization af2b3114-e872-43b9-9875-cceb39122f7f</b></p><a name=\"af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><a name=\"hcaf2b3114-e872-43b9-9875-cceb39122f7f\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001352</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123457\">+420800123457</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
-      },
-      "identifier" : [{
-        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
-        "value" : "12345679"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
-        "value" : "42001000"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
-        "value" : "42001352"
-      }],
-      "name" : "Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare",
-      "telecom" : [{
-        "system" : "phone",
-        "value" : "+420800123457",
-        "use" : "work"
-      }],
-      "address" : [{
-        "use" : "work",
-        "type" : "both",
-        "line" : ["Ukazkova 1"],
-        "city" : "Praha",
-        "postalCode" : "10000",
-        "country" : "CZ",
-        "_country" : {
-          "extension" : [{
-            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
-            "valueCoding" : {
-              "system" : "urn:iso:std:iso:3166",
-              "code" : "CZ"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a</b></p><a name=\"a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><a name=\"hca81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Ivan Andel (https://ncez.mzcr.cz/fhir/sid/krzp#100000001)</p><hr/></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/krzp",
+            "value": "100000001"
+          }
+        ],
+        "name": [
+          {
+            "text": "MUDr. Ivan Andel",
+            "family": "Andel",
+            "given": [
+              "Ivan"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849",
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "2b7e9637-5018-4542-9faf-d5abdee7b849",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xml:lang=\"cs\" xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"cs\"><a name=\"PractitionerRole_2b7e9637-5018-4542-9faf-d5abdee7b849\"> </a>MUDr. Ivan Andel, vseobecny prakticky lekar</div>"
+        },
+        "practitioner": {
+          "reference": "Practitioner/a81e74c9-fe94-4eb1-9233-4c8f0b2d4e3a",
+          "display": "MUDr. Ivan Andel"
+        },
+        "organization": {
+          "reference": "Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+          "display": "Ordinace praktickeho lekare"
+        },
+        "code": [
+          {
+            "coding": [
+              {
+                "system": "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+                "code": "L1",
+                "display": "Lékař po absolvování odborné způsobilosti (L1)"
+              }
+            ]
+          }
+        ],
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+                "code": "001",
+                "display": "Pracoviště praktického lékaře pro dospělé"
+              }
+            ],
+            "text": "Vseobecne prakticke lekarstvi"
+          },
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "version": "http://snomed.info/sct/11000279109",
+                "code": "408443003"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169</b></p><a name=\"ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><a name=\"hcace081ba-e0a8-4b89-a4a7-c5b7cd3c8169\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. (Nemocnice) (https://ncez.mzcr.cz/fhir/sid/krpzs#100000001)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The kind(s) of organization that this is\">Type:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/drzar 102}\">Nemocnice</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345679</li><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123456\">+420800123456</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/krpzs",
+            "value": "100000001"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/ico",
+            "value": "12345679"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/icz",
+            "value": "42001000"
+          }
+        ],
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "https://ncez.mzcr.cz/terminology/CodeSystem/drzar",
+                "code": "102",
+                "display": "Nemocnice"
+              }
+            ]
+          }
+        ],
+        "name": "Nemocnice Pod Lipou, a.s.",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "+420800123456",
+            "use": "work"
+          }
+        ],
+        "address": [
+          {
+            "use": "work",
+            "type": "both",
+            "line": [
+              "Ukazkova 1"
+            ],
+            "city": "Praha",
+            "postalCode": "10000",
+            "country": "CZ",
+            "_country": {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+                  "valueCoding": {
+                    "system": "urn:iso:std:iso:3166",
+                    "code": "CZ",
+                    "display": "Czechia"
+                  }
+                }
+              ]
             }
-          }]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Organization/af2b3114-e872-43b9-9875-cceb39122f7f",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "af2b3114-e872-43b9-9875-cceb39122f7f",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization af2b3114-e872-43b9-9875-cceb39122f7f</b></p><a name=\"af2b3114-e872-43b9-9875-cceb39122f7f\"> </a><a name=\"hcaf2b3114-e872-43b9-9875-cceb39122f7f\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001352</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the organization\">Contact Detail</td><td colspan=\"3\"><ul><li><a href=\"tel:+420800123457\">+420800123457</a></li><li>Ukazkova 1 Praha 10000 CZ (work)</li></ul></td></tr></table></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/ico",
+            "value": "12345679"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/icz",
+            "value": "42001000"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/icp",
+            "value": "42001352"
+          }
+        ],
+        "name": "Nemocnice Pod Lipou, a.s. - ambulance praktickeho lekare",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "+420800123457",
+            "use": "work"
+          }
+        ],
+        "address": [
+          {
+            "use": "work",
+            "type": "both",
+            "line": [
+              "Ukazkova 1"
+            ],
+            "city": "Praha",
+            "postalCode": "10000",
+            "country": "CZ",
+            "_country": {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/iso21090-codedString",
+                  "valueCoding": {
+                    "system": "urn:iso:std:iso:3166",
+                    "code": "CZ"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "partOf": {
+          "reference": "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+          "display": "Nemocnice Pod Lipou, a.s."
         }
-      }],
-      "partOf" : {
-        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
-        "display" : "Nemocnice Pod Lipou, a.s."
       }
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Organization/Organization-Insurance111",
-    "resource" : {
-      "resourceType" : "Organization",
-      "id" : "Organization-Insurance111",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
-      },
-      "identifier" : [{
-        "system" : "https://ncez.mzcr.cz/fhir/sid/kp",
-        "value" : "111"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
-        "value" : "12345687"
-      }],
-      "name" : "Zdravotni pojistovna Modra reka"
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Coverage/KOrderCoverage-Example",
-    "resource" : {
-      "resourceType" : "Coverage",
-      "id" : "KOrderCoverage-Example",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_KOrderCoverage-Example\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage KOrderCoverage-Example</b></p><a name=\"KOrderCoverage-Example\"> </a><a name=\"hcKOrderCoverage-Example\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>subscriberId</b>: 8506151234</p><p><b>beneficiary</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
-      },
-      "status" : "active",
-      "type" : {
-        "coding" : [{
-          "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-          "code" : "HIP"
-        }]
-      },
-      "subscriberId" : "8506151234",
-      "beneficiary" : {
-        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
-      },
-      "payor" : [{
-        "reference" : "Organization/Organization-Insurance111"
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Condition/DermatologyCondition-PigmentedLesion",
-    "resource" : {
-      "resourceType" : "Condition",
-      "id" : "DermatologyCondition-PigmentedLesion",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_DermatologyCondition-PigmentedLesion\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition DermatologyCondition-PigmentedLesion</b></p><a name=\"DermatologyCondition-PigmentedLesion\"> </a><a name=\"hcDermatologyCondition-PigmentedLesion\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status differential}\">Differential</span></p><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 D485}\">Rychle se měnící pigmentový útvar na zádech</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p></div>"
-      },
-      "verificationStatus" : {
-        "coding" : [{
-          "system" : "http://terminology.hl7.org/CodeSystem/condition-ver-status",
-          "code" : "differential"
-        }]
-      },
-      "code" : {
-        "coding" : [{
-          "system" : "https://uzis.cz/terminology/CodeSystem/mkn-10",
-          "code" : "D485",
-          "display" : "Novotvar NNCH - kůže"
-        }],
-        "text" : "Rychle se měnící pigmentový útvar na zádech"
-      },
-      "subject" : {
-        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Organization/Organization-Insurance111",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "Organization-Insurance111",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-Insurance111\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-Insurance111</b></p><a name=\"Organization-Insurance111\"> </a><a name=\"hcOrganization-Insurance111\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Id (see the one above)\">Other Id:</td><td colspan=\"3\"><code>https://ncez.mzcr.cz/fhir/sid/ico</code>/12345687</td></tr></table></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/kp",
+            "value": "111"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/ico",
+            "value": "12345687"
+          }
+        ],
+        "name": "Zdravotni pojistovna Modra reka"
       }
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Practitioner/Practitioner-Dermatologist",
-    "resource" : {
-      "resourceType" : "Practitioner",
-      "id" : "Practitioner-Dermatologist",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_Practitioner-Dermatologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-Dermatologist</b></p><a name=\"Practitioner-Dermatologist\"> </a><a name=\"hcPractitioner-Dermatologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003)</p><hr/></div>"
-      },
-      "identifier" : [{
-        "system" : "https://ncez.mzcr.cz/fhir/sid/krzp",
-        "value" : "100000003"
-      }],
-      "name" : [{
-        "text" : "MUDr. Eva Cerná",
-        "family" : "Cerna",
-        "given" : ["Eva"]
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/PractitionerRole/PractitionerRole-Dermatologist",
-    "resource" : {
-      "resourceType" : "PractitionerRole",
-      "id" : "PractitionerRole-Dermatologist",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-Dermatologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Dermatologist</b></p><a name=\"PractitionerRole-Dermatologist\"> </a><a name=\"hcPractitionerRole-Dermatologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-Practitioner-Dermatologist.html\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-Organization-DermatologyClinic.html\">Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 404}\">Dermatovenerologie</span></td></tr></table></div>"
-      },
-      "practitioner" : {
-        "reference" : "Practitioner/Practitioner-Dermatologist"
-      },
-      "organization" : {
-        "reference" : "Organization/Organization-DermatologyClinic"
-      },
-      "code" : [{
-        "coding" : [{
-          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
-          "code" : "L1",
-          "display" : "Lékař po absolvování odborné způsobilosti (L1)"
-        }]
-      }],
-      "specialty" : [{
-        "coding" : [{
-          "system" : "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
-          "code" : "404",
-          "display" : "Pracoviště dermatovenerologie"
-        }],
-        "text" : "Dermatovenerologie"
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/Organization/Organization-DermatologyClinic",
-    "resource" : {
-      "resourceType" : "Organization",
-      "id" : "Organization-DermatologyClinic",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-DermatologyClinic\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-DermatologyClinic</b></p><a name=\"Organization-DermatologyClinic\"> </a><a name=\"hcOrganization-DermatologyClinic\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001353</li></ul></td></tr></table></div>"
-      },
-      "identifier" : [{
-        "system" : "https://ncez.mzcr.cz/fhir/sid/ico",
-        "value" : "12345679"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/icz",
-        "value" : "42001000"
-      },
-      {
-        "system" : "https://ncez.mzcr.cz/fhir/sid/icp",
-        "value" : "42001353"
-      }],
-      "name" : "Nemocnice Pod Lipou, a.s. - pigmentova poradna",
-      "partOf" : {
-        "reference" : "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
-        "display" : "Nemocnice Pod Lipou, a.s."
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Coverage/KOrderCoverage-Example",
+      "resource": {
+        "resourceType": "Coverage",
+        "id": "KOrderCoverage-Example",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/order/StructureDefinition/cz-coverage-order"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Coverage_KOrderCoverage-Example\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Coverage KOrderCoverage-Example</b></p><a name=\"KOrderCoverage-Example\"> </a><a name=\"hcKOrderCoverage-Example\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-cz-coverage-order.html\">Coverage: General Order (CZ)</a></p></div><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/v3-ActCode HIP}\">health insurance plan policy</span></p><p><b>subscriberId</b>: 8506151234</p><p><b>beneficiary</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>payor</b>: <a href=\"Organization-Organization-Insurance111.html\">Zdravotni pojistovna Modra reka (https://ncez.mzcr.cz/fhir/sid/kp#111)</a></p></div>"
+        },
+        "status": "active",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "HIP"
+            }
+          ]
+        },
+        "subscriberId": "8506151234",
+        "beneficiary": {
+          "reference": "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+        },
+        "payor": [
+          {
+            "reference": "Organization/Organization-Insurance111"
+          }
+        ]
       }
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/ServiceRequest/DermatologyServiceRequest-Urgent",
-    "resource" : {
-      "resourceType" : "ServiceRequest",
-      "id" : "DermatologyServiceRequest-Urgent",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/order/StructureDefinition/KOrderServiceRequestCz"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_DermatologyServiceRequest-Urgent\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest DermatologyServiceRequest-Urgent</b></p><a name=\"DermatologyServiceRequest-Urgent\"> </a><a name=\"hcDermatologyServiceRequest-Urgent\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-KOrderServiceRequestCz.html\">K-order (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: <code>urn:ietf:rfc:4122</code>/KORD-DERM-2026-0001</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>priority</b>: Urgent</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 185387006}\">Urgentni dermatologicke konziliarni vysetreni</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>authoredOn</b>: 2026-09-02 09:10:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-Dermatologist.html\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>reasonReference</b>: <a href=\"Condition-DermatologyCondition-PigmentedLesion.html\">Condition Rychle se měnící pigmentový útvar na zádech</a></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 77568009}\">Kuže zad</span></p><p><b>note</b>: </p><blockquote><div><p>Rychla zmena velikosti a pigmentace; prilozena fotodokumentace s oznacenim lokalizace.</p>\n</div></blockquote></div>"
-      },
-      "identifier" : [{
-        "system" : "urn:ietf:rfc:4122",
-        "value" : "KORD-DERM-2026-0001"
-      }],
-      "status" : "active",
-      "intent" : "order",
-      "priority" : "urgent",
-      "code" : {
-        "coding" : [{
-          "system" : "http://snomed.info/sct",
-          "version" : "http://snomed.info/sct/11000279109",
-          "code" : "185387006",
-          "display" : "konzultace s novým pacientem"
-        }],
-        "text" : "Urgentni dermatologicke konziliarni vysetreni"
-      },
-      "subject" : {
-        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
-      },
-      "authoredOn" : "2026-09-02T09:10:00+02:00",
-      "requester" : {
-        "reference" : "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
-      },
-      "performer" : [{
-        "reference" : "PractitionerRole/PractitionerRole-Dermatologist"
-      }],
-      "reasonReference" : [{
-        "reference" : "Condition/DermatologyCondition-PigmentedLesion"
-      }],
-      "bodySite" : [{
-        "coding" : [{
-          "system" : "http://snomed.info/sct",
-          "code" : "77568009"
-        }],
-        "text" : "Kuže zad"
-      }],
-      "note" : [{
-        "text" : "Rychla zmena velikosti a pigmentace; prilozena fotodokumentace s oznacenim lokalizace."
-      }]
-    }
-  },
-  {
-    "fullUrl" : "https://example.cz/fhir/DocumentReference/DermatologyLesionPhoto",
-    "resource" : {
-      "resourceType" : "DocumentReference",
-      "id" : "DermatologyLesionPhoto",
-      "meta" : {
-        "profile" : ["https://hl7.cz/fhir/core/StructureDefinition/cz-attachment"]
-      },
-      "language" : "cs",
-      "text" : {
-        "status" : "generated",
-        "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"DocumentReference_DermatologyLesionPhoto\"> </a><p class=\"res-header-id\"><b>Generated Narrative: DocumentReference DermatologyLesionPhoto</b></p><a name=\"DermatologyLesionPhoto\"> </a><a name=\"hcDermatologyLesionPhoto\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-attachment.html\">Attachment (CZ core)</a></p></div><p><b>status</b>: Current</p><p><b>type</b>: <span title=\"Codes:\">Klinicka fotodokumentace pigmentoveho utvaru</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><blockquote><p><b>content</b></p><h3>Attachments</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>ContentType</b></td><td><b>Url</b></td><td><b>Title</b></td><td><b>Creation</b></td></tr><tr><td style=\"display: none\">*</td><td>image/jpeg</td><td><a href=\"https://example.cz/fhir/Binary/dermatology-lesion-photo\">https://example.cz/fhir/Binary/dermatology-lesion-photo</a></td><td>Pigmentovy utvar na zadech - klinicka fotografie</td><td>2026-09-02 09:05:00+0200</td></tr></table></blockquote><h3>Contexts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Related</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"ServiceRequest-DermatologyServiceRequest-Urgent.html\">ServiceRequest Urgentni dermatologicke konziliarni vysetreni</a></td></tr></table></div>"
-      },
-      "status" : "current",
-      "type" : {
-        "text" : "Klinicka fotodokumentace pigmentoveho utvaru"
-      },
-      "subject" : {
-        "reference" : "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
-      },
-      "content" : [{
-        "attachment" : {
-          "contentType" : "image/jpeg",
-          "url" : "https://example.cz/fhir/Binary/dermatology-lesion-photo",
-          "title" : "Pigmentovy utvar na zadech - klinicka fotografie",
-          "creation" : "2026-09-02T09:05:00+02:00"
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Condition/DermatologyCondition-PigmentedLesion",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "DermatologyCondition-PigmentedLesion",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/condition-cz-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Condition_DermatologyCondition-PigmentedLesion\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Condition DermatologyCondition-PigmentedLesion</b></p><a name=\"DermatologyCondition-PigmentedLesion\"> </a><a name=\"hcDermatologyCondition-PigmentedLesion\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-condition-cz-core.html\">Condition (CZ core)</a></p></div><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status differential}\">Differential</span></p><p><b>code</b>: <span title=\"Codes:{https://uzis.cz/terminology/CodeSystem/mkn-10 D485}\">Rychle se měnící pigmentový útvar na zádech</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p></div>"
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "differential"
+            }
+          ]
+        },
+        "code": {
+          "coding": [
+            {
+              "system": "https://uzis.cz/terminology/CodeSystem/mkn-10",
+              "code": "D485",
+              "display": "Novotvar NNCH - kůže"
+            }
+          ],
+          "text": "Rychle se měnící pigmentový útvar na zádech"
+        },
+        "subject": {
+          "reference": "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
         }
-      }],
-      "context" : {
-        "related" : [{
-          "reference" : "ServiceRequest/DermatologyServiceRequest-Urgent"
-        }]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Practitioner/Practitioner-Dermatologist",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "Practitioner-Dermatologist",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-practitioner-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Practitioner_Practitioner-Dermatologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Practitioner Practitioner-Dermatologist</b></p><a name=\"Practitioner-Dermatologist\"> </a><a name=\"hcPractitioner-Dermatologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-practitioner-core.html\">Practitioner (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003)</p><hr/></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/krzp",
+            "value": "100000003"
+          }
+        ],
+        "name": [
+          {
+            "text": "MUDr. Eva Cerná",
+            "family": "Cerna",
+            "given": [
+              "Eva"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/PractitionerRole/PractitionerRole-Dermatologist",
+      "resource": {
+        "resourceType": "PractitionerRole",
+        "id": "PractitionerRole-Dermatologist",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/practitionerrole-cz-order"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"PractitionerRole_PractitionerRole-Dermatologist\"> </a><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PractitionerRole-Dermatologist</b></p><a name=\"PractitionerRole-Dermatologist\"> </a><a name=\"hcPractitionerRole-Dermatologist\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-practitionerrole-cz-order.html\">Practitioner Role (CZ order)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The practitioner who is able to provide the services in this role\">Practitioner:</td><td colspan=\"3\"><a href=\"Practitioner-Practitioner-Dermatologist.html\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The organization where the practitioner performs the roles\">Organization:</td><td colspan=\"3\"><a href=\"Organization-Organization-DermatologyClinic.html\">Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Roles which this practitioner is authorized to perform for the organization\">Role:</td><td colspan=\"3\"><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani L1}\">Lékař po absolvování odborné způsobilosti (L1)</span></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The specialties of the practitioner in this role\">Specialty:</td><td colspan=\"3\"><ul><li><span title=\"Codes:{https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost 404}\">Dermatovenerologie</span></li><li><span title=\"Codes:{http://snomed.info/sct 394582007}\">dermatologie</span></li></ul></td></tr></table></div>"
+        },
+        "practitioner": {
+          "reference": "Practitioner/Practitioner-Dermatologist"
+        },
+        "organization": {
+          "reference": "Organization/Organization-DermatologyClinic"
+        },
+        "code": [
+          {
+            "coding": [
+              {
+                "system": "https://ncez.mzcr.cz/terminology/CodeSystem/nrzp-povolani",
+                "code": "L1",
+                "display": "Lékař po absolvování odborné způsobilosti (L1)"
+              }
+            ]
+          }
+        ],
+        "specialty": [
+          {
+            "coding": [
+              {
+                "system": "https://ncez.mzcr.cz/terminology/CodeSystem/vzp-smluvni-odbornost",
+                "code": "404",
+                "display": "Pracoviště dermatovenerologie"
+              }
+            ],
+            "text": "Dermatovenerologie"
+          },
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "version": "http://snomed.info/sct/11000279109",
+                "code": "394582007"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Organization/Organization-DermatologyClinic",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "Organization-DermatologyClinic",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-organization-core"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"Organization_Organization-DermatologyClinic\"> </a><p class=\"res-header-id\"><b>Generated Narrative: Organization Organization-DermatologyClinic</b></p><a name=\"Organization-DermatologyClinic\"> </a><a name=\"hcOrganization-DermatologyClinic\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-organization-core.html\">Organization (CZ core)</a></p></div><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\">Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"The organization of which this organization forms a part\">Part Of:</td><td colspan=\"3\"><a href=\"Organization-ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169.html\">Nemocnice Pod Lipou, a.s.</a></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Ids:</td><td colspan=\"3\"><ul><li><code>https://ncez.mzcr.cz/fhir/sid/icz</code>/42001000</li><li><code>https://ncez.mzcr.cz/fhir/sid/icp</code>/42001353</li></ul></td></tr></table></div>"
+        },
+        "identifier": [
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/ico",
+            "value": "12345679"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/icz",
+            "value": "42001000"
+          },
+          {
+            "system": "https://ncez.mzcr.cz/fhir/sid/icp",
+            "value": "42001353"
+          }
+        ],
+        "name": "Nemocnice Pod Lipou, a.s. - pigmentova poradna",
+        "partOf": {
+          "reference": "Organization/ace081ba-e0a8-4b89-a4a7-c5b7cd3c8169",
+          "display": "Nemocnice Pod Lipou, a.s."
+        }
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/ServiceRequest/DermatologyServiceRequest-Urgent",
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "id": "DermatologyServiceRequest-Urgent",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/order/StructureDefinition/KOrderServiceRequestCz"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"ServiceRequest_DermatologyServiceRequest-Urgent\"> </a><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest DermatologyServiceRequest-Urgent</b></p><a name=\"DermatologyServiceRequest-Urgent\"> </a><a name=\"hcDermatologyServiceRequest-Urgent\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-KOrderServiceRequestCz.html\">K-order (CZ) – ServiceRequest</a></p></div><p><b>identifier</b>: KORD-DERM-2026-0001</p><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>priority</b>: Urgent</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 185387006}\">Urgentni dermatologicke konziliarni vysetreni</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><p><b>authoredOn</b>: 2026-09-02 09:10:00+0200</p><p><b>requester</b>: <a href=\"PractitionerRole-2b7e9637-5018-4542-9faf-d5abdee7b849.html\">MUDr. Ivan Andel: Lékař po absolvování odborné způsobilosti (L1) at Ordinace praktickeho lekare</a></p><p><b>performer</b>: <a href=\"PractitionerRole-PractitionerRole-Dermatologist.html\">MUDr. Eva Cerná (https://ncez.mzcr.cz/fhir/sid/krzp#100000003): Lékař po absolvování odborné způsobilosti (L1) at Nemocnice Pod Lipou, a.s. - pigmentova poradna (https://ncez.mzcr.cz/fhir/sid/ico#12345679)</a></p><p><b>reasonReference</b>: <a href=\"Condition-DermatologyCondition-PigmentedLesion.html\">Condition Rychle se měnící pigmentový útvar na zádech</a></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 77568009}\">Kuže zad</span></p><p><b>note</b>: </p><blockquote><div><p>Rychla zmena velikosti a pigmentace; prilozena fotodokumentace s oznacenim lokalizace.</p>\n</div></blockquote></div>"
+        },
+        "identifier": [
+          {
+            "value": "KORD-DERM-2026-0001"
+          }
+        ],
+        "status": "active",
+        "intent": "order",
+        "priority": "urgent",
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "version": "http://snomed.info/sct/11000279109",
+              "code": "185387006",
+              "display": "konzultace s novým pacientem"
+            }
+          ],
+          "text": "Urgentni dermatologicke konziliarni vysetreni"
+        },
+        "subject": {
+          "reference": "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+        },
+        "authoredOn": "2026-09-02T09:10:00+02:00",
+        "requester": {
+          "reference": "PractitionerRole/2b7e9637-5018-4542-9faf-d5abdee7b849"
+        },
+        "performer": [
+          {
+            "reference": "PractitionerRole/PractitionerRole-Dermatologist"
+          }
+        ],
+        "reasonReference": [
+          {
+            "reference": "Condition/DermatologyCondition-PigmentedLesion"
+          }
+        ],
+        "bodySite": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "77568009"
+              }
+            ],
+            "text": "Kuže zad"
+          }
+        ],
+        "note": [
+          {
+            "text": "Rychla zmena velikosti a pigmentace; prilozena fotodokumentace s oznacenim lokalizace."
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/DocumentReference/DermatologyLesionPhoto",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "DermatologyLesionPhoto",
+        "meta": {
+          "profile": [
+            "https://hl7.cz/fhir/core/StructureDefinition/cz-attachment"
+          ]
+        },
+        "language": "cs",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"cs\" lang=\"cs\"><a name=\"DocumentReference_DermatologyLesionPhoto\"> </a><p class=\"res-header-id\"><b>Generated Narrative: DocumentReference DermatologyLesionPhoto</b></p><a name=\"DermatologyLesionPhoto\"> </a><a name=\"hcDermatologyLesionPhoto\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Language: cs</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://hl7.cz/fhir/core/1.0.0/StructureDefinition-cz-attachment.html\">Attachment (CZ core)</a></p></div><p><b>status</b>: Current</p><p><b>type</b>: <span title=\"Codes:\">Klinicka fotodokumentace pigmentoveho utvaru</span></p><p><b>subject</b>: <a href=\"Patient-48a9d440-4194-42c1-87ad-b5a39020a4d0.html\">Ing. Petr Novak, Ph.D. Male, DoB: 1985-06-15 ( https://ncez.mzcr.cz/fhir/sid/rcis#8506151234)</a></p><blockquote><p><b>content</b></p><h3>Attachments</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>ContentType</b></td><td><b>Url</b></td><td><b>Title</b></td><td><b>Creation</b></td></tr><tr><td style=\"display: none\">*</td><td>image/jpeg</td><td><a href=\"Bundle-BundleDermatologyUrgentExample.html#https-//example.cz/fhir/Binary/dermatology-lesion-photo\">Binary: image/jpeg (61424 bytes base64)</a></td><td>Pigmentový útvar na zádech – fiktivní ukázka</td><td>2026-09-02 09:05:00+0200</td></tr></table></blockquote><h3>Contexts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Related</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"ServiceRequest-DermatologyServiceRequest-Urgent.html\">ServiceRequest Urgentni dermatologicke konziliarni vysetreni</a></td></tr></table></div>"
+        },
+        "status": "current",
+        "type": {
+          "text": "Klinicka fotodokumentace pigmentoveho utvaru"
+        },
+        "subject": {
+          "reference": "Patient/48a9d440-4194-42c1-87ad-b5a39020a4d0"
+        },
+        "content": [
+          {
+            "attachment": {
+              "contentType": "image/jpeg",
+              "url": "https://example.cz/fhir/Binary/dermatology-lesion-photo",
+              "title": "Pigmentový útvar na zádech – fiktivní ukázka",
+              "creation": "2026-09-02T09:05:00+02:00"
+            }
+          }
+        ],
+        "context": {
+          "related": [
+            {
+              "reference": "ServiceRequest/DermatologyServiceRequest-Urgent"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "fullUrl": "https://example.cz/fhir/Binary/dermatology-lesion-photo",
+      "resource": {
+        "resourceType": "Binary",
+        "id": "dermatology-lesion-photo",
+        "contentType": "image/jpeg",
+        "securityContext": {
+          "reference": "DocumentReference/DermatologyLesionPhoto"
+        },
+        "data": "/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAACAKADAAQAAAABAAACAAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgCAAIAAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgICBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAIP/aAAwDAQACEQMRAD8A++vK2ZJP5VFICo3F9p7Y71YUptDMeD696aY4yuTz9K/AWj+g0+5SgN2NxmkC+lWFMjjJ6nrVeaSXbs2HHY1PC1y+E4UYxyOTUp62LmnYhb/WcjOfWmFUU5ZgCPSprmN4xHswB3J9KiCQY3x5571TepKISZZSMIcDvThEvQ547VPGydA/H0xUUkjMvCdagrpYryQJ/AMHvWe0TK2ACB6k1fdnyNylRimFgflxwOpNNlRuZypKX4+Yfyp0iOSG3YPpU2FZzu47DBqVljTC5HTvS6De5mlDuOMA/wAqhdUb+PkelXGDAcYJPamjyivzIAx9Khq5ak0Z+TghjkdKjZWB3AcValty6bYzj6UkNszLtZiT79KqPYT7lCSJWwRkGs6SBy3oa3JIGVsrkY/GotscoYk8p17U5RuEZ2OblhlfKhh9Kpyx7Rt2EEdMHNdJJDGn75eRWZL9nkBIJPPbqKRopXOecKCQRtI5NUZUUkkZ57107WoYFjgnsKy5LcZ+XKii5SZiSB8epqrJCJeR1HWtuS0fO9cMKpSWgyzrkE04sTMFoNnzEEEfkarSRrcISg5HUGuh+zzjlSHB7Gs2dBC5YxlG/Q1omRa5wOo6DG7GaA7G6nHQ17P8E/Fn2GSTwhqj7AxL2xPqeqf1FcVIkUoJQhT3rIktWiuI54yY5YmDIw4II6EGvaynM5Yaqqi26+h4ec5VHFUXSfy9T7lIPekry/wZ8RrHVYotN1lhbX6gKGPCSe4PY+1eo8Gv17CYynXgqlJ3R+K43BVcPUdOqrMbQM0pFJ+tdJzEnIPWkJ5pvtTsUBYXmkx+VFFMQe1LSZozSGLx1pKM4pM0ALxQM4o60vFMBCMmgDFLSUDFJ7UlJ3pfcUgA0lLSdKBC5NJ0ozR1oAXFIKWgjigBBS9qTpRmgLCj0pRTe+aWgLDutJSUc0ALwKT60ZpufWgLDxRntTc5ooELQBmm06gdj//Q+91SCbLDqOAO35UnlmMAhsnvmp5oxAhcYU46dSapQv5wZfut6mvwGTSdnuf0HFNq62LJffjHAFBvPLAVFy3rTGQRcs4P86jVFduAWJ5z2olcI2EdBKwklyCO1SCUBCoUgAdxSsyoOe3Yc1AZI2PzN96hKw27jHeHKts5HUGq4u7RH2+YuTxt3d6vKYzlGHHrXJf2JBHfllLMmd34/Ws6nMrOJdJRldSdjoJbgv8A6rjI9c1VSwBfzS5bOOKuIVix8oweKWWSIEopO72pyjfVhGTWiGuoCngKD3rPkt94K7uT0PrU6wCXIlJalEKrjBOV4GO1Nq62BOz3IVjMaYkIJqJ1XdvdfLP86kkkk3BGYFvXrSuq5DO2TSjroN3KpKhSzLtH86jhuVYFIxux+VTtEGx2B7U1mijBhVQoPp1o1Q9GRfv2JZgFA6VTe2GSS3PX61d2yomeg6jNQF335cHnoe1O19wXkVWjIGE79sVTa0hdTh9knbHFaBSXduH/ANY0KVc+aQNyD0pWRSbRiG1KAbgGPfJqGSEEkuu1e+OlbjkSqJSRVKdhIrBFPPHoKqysHM2zAkCx53cj25qvtDZkT5lHqK1TZh/upsK9+xpWgkjwVQE9+wqOprpYxWtVLebFkZ7dqpTwxP8ALLwTW/JA2fNTj15pGiLqSAH9qsm9jhLywC4O3IPpWQ1s6qdjZPo1d9LAqkkLtx1XFUZrZMB40B+vFXsS9ThpYs/KVIb9K77w18R9Z0HbaX2b6zXsx/eKPZu/0NZUlqkmYzx3warNpoI7fXvXdg8xq0Jc9KVmefjstoYiHJVjdf1sfSmh+LtB8RRg2FwBL3if5XH4Hr+FdMBXxwbJlcEDY46EHBz7Guz0bx54n0fbFPIL6BeNsv3h9GHP5191l/GUJe7iI2fdbfcfn+ZcD1I3lhpXXZ7/AH7fkfSuKDXnekfE7w7fkQ3pbT5j2kGUz/vDj8672K4guUE1vIssbdGUhgfyr6/DYylWXNSkmfF4rBVqEuWrFonoz+dJnNGa6TlEJo70ZzRQMWj3o+tHXpQIWl4ptLQAueaKSjNMdxaSj3FJSELRikxRQNCEUClozQFwpabnNJQAvJo4pfeigBKO9FAoAd9KPpSA0ewoEHHWiiigAxQeKUntSHFACU8Cm9KcPWgD/9H78EbOweVgTUvkKmCvfrUbyojeUg3n9BSMMJnJzngV+BaH9BakN2A/VQcHjmmRmVSd5yhHGP8A61SJB8waTIYfxE//AKqkfcfkTBHTJ/pSkuo0+hXaS327i3Q1X8uRsGIDr39KuJaHDAkIGqv9mcHAkwueSaST6oq8e44wqU5bLe1V2QlgiYXvn1qxhI2OWJz6dKbI8bYKjZn2zketEgiNMbgAA598VG25FGwZb19asgxsoLtk+4wPyqqXDty25egXHWm2hK4xm/v/ACE9xUZf5RgbiffGamcuF+WPp684+lQIZBIZcZJA69KV7FWuQGIxvukXG7pSkxjIlcAH8TVrdLM3yhcD1qFIiNzn72ep5qVHsVzdysGPzSKMKDgZzTTCCVyMt71LPIVZWVsEEZA6YNYOp+IY7abyBGZGX6DH40pVIxXvMuFOUn7qNdy6oQybsDjmqbumVWaMqGGM1FaX8OoRh4ASw6r0Kmr6tgHzBuPbPanGopbMTpuO6KhmhJ2pnI6E5qF4nK4L5Hcjg1fVSMtt3fhULokh34x6Y7U7dwTKqq0fzBsr79vaoWaQNlwMHI4q00cb5TeWPSnRW0bMq53Y4555oTeyG0t2UV8l1+bj68E1BImFz0A6YrWnt0d/K5U/SqX2OWNyyneBwQeKbTEpIoJHEwZYiHY9cVBc2skahlHlt3A5q81m3mZjJjJ5OBSossbHzSZVI49qSvs0U2t0zIEcrgSL8w9SKo3FtdDPlAH2rfJto5Nzkr7YpJVjKl7c5zyD2pp36hqtbHMmONwd67GX171SaVBkFenYDmupkheTl2BPrVRrYx/ONuPXpTuxWRzTBXyVXgdNwxVOaJnB8tea66TzehiAz07iqP2eY4LEKp68dKpSCxyL2EjDcRzS2dzqelTeZp1zJbN6IxA/LpXRyWFxKCYmwT2zVFtPcH99HtI79q1p1pwfNF2MqlGE1yzSZ1GnfE3XrMCPUoUvU/vfcf8AMcH8q9A034h+H70AXTPZSHtKPl/76GRXiT2q7cdD+dVGQ7cDkD0FfRYTivF0tJPmXn/nufM4zhDB1tYrlfl/lsfVVrfWV8oeznSdT3Rg38quelfIsUTwOJreRoW65Q7T+ldZZeLfFVhtWG+89OwmXf8Arwf1r6TC8a0paVYNemp8xi+Ba0daM0/XT/M+jDSivHrH4nXKHbq2n5x1eBv/AGVv8a7PTvHPhjUGCLdiCQ/wzDYfzPFfQ4bOsLW0hUV/PT8z5vFZFi6Os6bt3Wv5HX0meKRJI5EEkbB0PQqcj9KWvUPJEp31opKBXF70e1NzTqACk6UtJQMM0lH6UUBYKPeilpgFHuaKXNIQUmKX6UuPwoAaRRzTsUH0oGNoFApDQK44UUn1ozg0AOBzTgDTB1p4NAH/0vvtQBJ5gBI6Y9aQk9WOSPTtVwxP5bbvlH06VAIwp2uN74yABxX4I0f0ApDAA+dxLA85ankqAACCe3NQTNKEJhTcx4wBx9abFGykiX5gRwCf61m5a2NErq5OQWGSN5HXFUAAsoPJLdAKvo5KFV2kjsD0/Gqv2hhNsMWFX+LNU7WJV72ACRAd7bB6+1RQyQO2VlyV4ORzUrzyyEJF0PdqieIIgLIH57YFT6F27k7fOwCLkjvUAcAmK44OeD2qQjzcKo27e3X8zVW+S5jtnni+QKOmKJtpXCEVomShQeV5BPTpRJEeVJGT0xxWBo+qXeoT+RKgGBncB0+ldK8flkhAXGOTwMn61NKopxuiq0HCVmUI8xj5mAOcdqbMFJMec+oxgipZbWGQ85Uj34py24UZBGarXYWm5nTpbIuGyc9hWLL4fgmLSNmMnHXvXUpbhpd7puPtx0pXuDIMbRwcelS6MZfEjSFeUfhMKzsFsgUjTGPT+tWnLp94AIR17itIRMW3gAZ4471UllUJsYD05pqCS0JdRyd3qQEB1BDHnjnvTfJY8A9ew5qcnyYmlJOF5+U9hXNWHi3TtQvfsscMqtzhiBjI9hzRKpFWUmVGlKSbitjdMRgG9iAW4ApRCkK78ct3FXFkFyxDP07EVAEjj3RRkHjg44I/CtEkZcz6lJEKu0kczSA8YPNQtZhn3ZKEe/BNaIQEBhgn2qIPksNv5+9RZLQu7epnESBwGIKnoevFMEKvwG5B6dKtPbNEN3B78dzTIUmfcGBI/wBrr+FNPWzKa0uiv5YX5HwcevNV5tyYEMe4dTj0rV8hdpYj8/WooRj5AMMc4NNxJUzEj2ykoYm2nsRg5p7xJGvKED3FXCWjy04AweOfWnLJ9oj2BGXnGfWpXZlvyMTEUxIXdkdetSrbsOFYEEdCc81otaGP5g+NvSq1wrTcQrsb+8KL2WwWTejMx7VSdzDy2J6/Sqsi9VkJZPQ1riC7KHzdrnsT1p2fLw82WDDHbFNT67Ctr3OSmtrYv50eVz1wP50/7G8qlrVl3Y7jFdK0UHWMKCPas9ln3hmiHplfSqTSDVmQ1lGqETDaw6kdKgwjqSnzhOtacgijfc2SSOhqu6bDlIWAb0p3DlKhVXT7uPwqq9pBKuJAD9OtavlSRkclYj69eaZHEhUkjoevWnzi5Oxm2r6lpp8zSrySDHZWIH5dK7Gw+JGu2ACatbLeKP4l+R/04/Suej+ZyoAP86a4iciMnB969HB5viKP8ObS/D7jy8bk2Gr/AMWmn59fvR7HpHj3w7qu1DP9kmP8E3y/k3Q/nXZo6OoZDuB6Ecivlua1hOYZFBpdO1bWtDO7Srt41B5jY7kP/ATxX12C40a0xEfmv8j4zH8DJ3eGn8n/AJn1JjNGK8b0v4pyqyxa3Zcd5IT/ADU/0Nejaf4s8O6oQtpepvP8DnY35NX1mDzjDV/4c1ft1Pj8bkuKw/8AFg7d9195vds0lOPTI5B700Yr0zyxaMd6d0pDQMTilxR0pe1AhKSnYpMUDuFLSe9FAC5pO1LSY9KBXE6UUY45ooGFFLjNJQAc04U2nCgR/9P75luGtU3kMy/w4/rSCd2Qz7SGPQn0FTGFnG2Rt2TSujrwFyPWvwNxd7rY/oHmVgWaOQl9wAx+tMaVFPytuIH+RQkXB2kKoHGKciKFJP8AhmqV3oLRFZM3DkYKduO9OZEttynl255qydiDC4zjOOtRKFY/vFBzzk+tZuJfN9wyIq+GxgLxg1D5U0o2yEBBnpU87IGIzngcDmkgJlX5VCY9etXpsTd7ixqIkK5yB0IBz9BUJTzF3biwbs2QP1pHQ+YMtuA7g1KHX7g3D+RNEdQl3Krx+QwMZCqeuAMj8u1K7yKiyON3bmrIjlxkjj6dai8wquJCu0dj/KptZl3uIzy/eRQR9eaYVNw2XPlKfSrEGwglgeexHH4UrwsfnDBF/nTtdCbsyiWLfu/NKqOPfFSRrCF2t8ufbP605YCz7jkkUk+1ELlSPxGDSirag9bIa8SYJj/MnpVR4FkO4jBHQnNWYlZj5gGQfUY4ptzOElRQCQePlGf5UOStdlqLvZERIjXZGvmFuuBnb9arW9ha27NMkSxyNnJC881pRoqEvjZnk8c0r7XAkUHC/jV8q3ZHM9kUJQXxhS3PBAAqN5JomC4V1bjjrVwrLJGDEd271GMCpBbLtAb5SP5UtXsVotzKbepAJCfX/GnKPLOW5HsavMkbAjkp6npVLlTtHK/ypDvcikO8hgxUAd+lCcEDOQfwqwYzIRhf8+5qIwK3ysOVPWhp9AUl1IxKjghFyQcEVBKnnHBUx47g/rV5VijATgfSlMJZiwI6DrR01BWvoZptUdNjjf8AWmLALdgYnwDxtznFXmJVCx4b/Pao0UMqmXBPt70WXQd31M+7dpCsLcg9SKYF+zDbyw9avSJFuLrn3PU1B5DBAS5I9aEtQurWKpO/nH4iozEI0Ysc7j90nFW3t5HBCsefSnqkYAV0APqep+tVZsV0jFe5hiXZLkn3GaVI45BuQFM9O3FX5rRFPmpnI5GOahVpHbZOoU9iBUt2dmVZNXRnSRMjZK5GOCOaqmISHcrHI/CtaSO5JxGRsHfpUbWSBC2/lu+eKH5DTRitmSUpHIV/vDFPaKSFdo24PbHWtBIY0Jkfbk4G4dKd5cWC2cEdD2zQl3BvsYMMUTHgbXbrVGceTJxg5PSt9Uk3M86jA6Ed6fLb28ke4qCe2aXQd9TnjFIxErLkVWmVSN/r+dbccQkBtyCmO3b8DUbWvk8j5vrRzPdBypOzMAwvId6LwR361WNiGyZB09a6cW0iqHR8+x4qrJBcu2cImPcjNWnbUiUblOz1DV9PwdOv5YlH8IbK/kciultPH3ia1IFwYrpf9pNp/Nf8KwnsQQGVtrDv61XaG4UfOA6g/wAPWvRw+b4mlpCbR5uIybDVvjgn8v1PSrb4pQqQuoadIvq0TBx+Rwa6a08eeGL3H+l+QzdpVKfr0rwx7MgF1BX1FRvApUnbz3r3MPxjio/HaX9eR4OJ4Jwk9YNx+f8AmfT9vd2t0u+1mSYeqMGH6VZxXygLKSJhcWpaBx3QlT+ldDZeK/FWnKBHeNIo/hmG8fmef1r28NxrSelWDXpr/keFiuBa0daNRP10/wAz6Porxiz+Kl1CANV08SDu0DYP/fLf4122m+PvC2p4VbsW8h/gmGw/meP1r6HC53ha2kKiv56fmfNYvIcZR1nTdvLX8jsDSURukqCSJgynoQcj9Kca9U8kbiloxScUCDmikyBShqAF+tIfag+1J1oAKcPWkpwoBs//1P0BGSwZmIY0ruvKYLMRULSOg3DPUDGOuashOUyMA5PpzX4Mfv8A5jPsp8rBYHI6D1qNGJG1Y+V4znHI71NtZpFEZABJ/GmNGScqcKOTUuy1QRbe4gR9+7O3n8frTWSMnKEtg9WHShnJwrnn2/rUyFEUlzg/Shajd0QNCsUOQ2d3Tjk1WhhdzuC4AGOTz+VXld3ceaPkPA4p67EZkJGAfxpJJjcrEWFVTEq8kdsZFRiJ1O0E8dPp9asEIZMuOnQcg0xzFvK+YOOcCtOUz5iNklA/fDA64B6YqoIkOVAwOx4q8PnHOR7dvxqPyi5PQn1qXEqMiuAjAALj3FWfLkUKzYKjjnH8qrG3uBgIRj3/AMadmTeAykj17e+Km3ct+TCSdR+7VCw9RxSPC5Gdx556dKtkNhdxGB0HWo3M2Q0JBJOOnaq5WtWJNPREUTI3yjt1GKR4d7bhxjsRT5Ytr723Ag5zSLOBgMQWPGCMYqk+jFbrEhIjy21csOPSoZLUNGdgCjPY1dBj5KLuY+9RtuClpMbV647e1DS6jTa2KqQi1ACAtkY4qBpbtCQCFVumeSP/AK1aKyAxltv+f61A24/KoHP6VPKuhab6ogkZsrE3zsccg8cexpmVj7GTORgqMCpxbRHmU5Ydx2pFznbyC3ryKSTG7FNy42qqYJ4x2x6099hAUkqemR61fbyYxmQYI71EZhgkgH3p8tt2F77IpI8EjlQMv05Hcd//ANVRT23muOScVOVDybzhc9OOT/n61aaMBeGJH60ct1Zg3yvQoOqEqsnJ9cVVMYfplVHXnmrbKEBOfocYpUQvhCoyRyTihxDmKSypHlXOe2D1qMNKG6AAc49fxq55CodxA4/zzT5F3KVAzgdSKjlfcrmj2KEYLElRx2GeRmntlUDkbyTjB4x+NT28AjZx0B55ps4dc7slfTvVrzJe+hmyKjuRkrj0oMbbQinoKtrCpl7x7uWJ9PrUxOwFSd4PHv8AnT6ag9HoU1twsQ2cqevaqz2eGWRmwvOBwRUk1lNv8yMuo+vA/wDrVckiYhVY9PSs029LDaS1TMuaziuhsb5RjJ6c+9V5rX7MoSDJUcnHb8K1DGySb0AOex4pzhdwLko/XH+NVyq9xczMx7VLldrjI/KqZt1D7AvCcAdsitRy6ks3BPTbQsKSrlCd3XJpNJspXSM2SM7MRoN4HFVxnaFm+9jJ4rQkinziN/m6YPFMEV5GrRvhh274FUJamaI1ELfLufOQPaqEsFw6Apjb6NWtLbyvsG7g8HjBqq1rcQOCCZE7etQ35GkV5mPJarHmQhkbj7vzD8qmit4mjZ+GHfsRW0VjJUxj5j2NE4jXGAM9MHjNFg529DnmUtzC547GnJayFt3mfe6qwrYht887cMp4PtUMgkMo2rkdOKSKMx7RgcEFvp1qs1mGydxAXsa3FtXlyVbj9RTEsNhI37gOcnrRcTZy81o5+THPrVKWySTORyOoHeuzMKOxHBA7H19qqyQW0Z25IJ9RxVXe4rrY5+w1LUtLYNpt5LbH0B+X8VORXd6X8UNTtmWLW7QXKf8APSL5X+pU8H9K5KSPPDpvCnHA/WmXFsmOAfoetepgs7xFD+HN27bo8rH5FhsR/Ehr32f3n0FpHijRNbAWxuVMveN/lcfgf6VvGvkee2KYcEowPBB5H4iuu0T4g65o+IL8/b7ZeMN/rAPZu/419xlvGNOfu4hWfdbHwWZ8E1IXlhpcy7Pf+vuPog+1JWDoniTSvEEPmafNuYD5o24dfqP61vDBr7GlVjOKlB3R8TVpShJxmrNBn8qWjGBRVkBTxTBUg6UAz//V/QJowFAb5vp0pG3GN2CfOBge31NKZFCbM7SemeT/APqqHzJZBsUZDY+g/wAa/B5tH79G4kPmQL5jcs3T0FWd7ZCt1I6Ad/ejZ5SYXqPWgSBGAdtxHQVCjyobldjdn2fDP+8fqCeAB6mmLjeU6k9CaQq5EjHJc9M9CBTXlEbYb5Nw7ZyKLrcepawgBYHO3rn17VDIC6hYAFc8lm5NSIyYCgcdefapHfcylMccfnVuKaM1JpkLgqpDjceOfWkB38GNUX+LPpTyyyjrkDv6VFMCnGeR0IHAoY4kU+pWNsA9zN5IOR061PbzWtzGJrZxIvOMD8+tY1/ZC/Q5bcQOO9T6VaJZWnkRp5hBJJBx8x9axU581nsbunDkunqaDMAuViyOmcYqNo/MZZG+THv/AEqcSHo6FaFaIDGMH/GtdGZK5CZDEhG3eWPUHihZnBD7cBeOnf61Z/dld4II+tMEoYYCkEdwOKtepPyI5ZpZPw5x2qs8Xz7yefpmrrOgUFuvv/SoGWN/mB/pSaT3Li7bEPJyqrgdyO9CRR5LbeSO/wDSpwsoGUGeevSodkg+aQE89SaUkVciKMDtLPjtxTJNwI6E+mMdKs4yDtyCPb+tRImcljz2PPFFuw0+4LG7KGJAz19/oab5YjUvkZJ53VWu9TtNNCm4mCb+FOTyf8+tSWt9FqMfnQkSK3fPA/8Ar1LlG9r6j5ZW5raEqAMvznJH4g/pVXbGxKxNgEnI9/0q3IirgKvA7VWKgvuiITPUEfz7U7dGJd0PjVkQqUzjv0qL7QyKq7N6DGM9asM0rbc8g/wgU4gEncgGP0/KlKL6MakuqKjqpyDnB59KZ6gD5f1qyLcECQnOPwpCrFxtGFH5H/CjUV10IWQDYcnH6j2NTNt5GM/p+tPjRHLYYEjseKjUCMENwQefSriyJFSR5i6gICo7nrTvnXLSLkZwOegqc7WYA5yT37+1JJJ5bJn6cHB+lJqzvcpO+iRUnUrgLkFuCQe1RrEEzuJLHuBg1fVZZEBIH161n3UMjn5Tg5xj2pT01HDX3SdpdowRx9KoqSWIVuO3t+FXQFChJTnHBwetVTbwqpZDgjgcUpNhFJEZh8xMMxb19qRhKsinAZeAcjmrXkTnhefp3BoiAQbZj83UfSl6jImhKneE3KfTtVedVRDKg24HFW0JclRkf4U9wACp4x+Wapak7bmPG8rt+9hIUdD15ps9xsCuE3c4I7itFwWYYJGPT1qN4sL8/J/WnZ2HeN9ihIyyxeZGuQfX3qqrLKwjc+W3+10+laflbAQgznsf6VGI45FG8Y/3v6Gk7jTVjLnRRkN8zr0K/wBaeUEiDIyp6AevvVuNWD7HAI6U6W3RSSB+XX61O7uVtoZMKLIDt/dOpxtPQ1OIyjAMMEDtz+HrV0gJ5ZbDOe/eoZ4mmRyf3bD9anZaFp3ZnNbzbmktzkDnHekEQkUgjB9DWh5BIcq5DKBke9V9rP8Au5AQQMgioKuZ4s7aAfPxuP8Anmka3Qgpjcjdu+a02tPNiEbkE1FBbzIjb2w3bPana3QXNfW5ky2zoAI+COlUJkMI85oy+3qR2zW/5UyMVJyh5z71lyyXMcnzx5jY4+lEtrlwd3Yzf3LpvGcMevpVOSzErMEwf0NdE9vHgFRgN1Aqu8QVRIPmHqKpSZDiuhyRiuLWQXVm7Qyxn5XU4Ir1Hwx8SkBWx8S/ITwtwBxn/bHb61x13EJAHXnHHHFYsloJgcDkcHPBr18tzmthZXpvTt0Z42Z5JQxULVVr36o+qkljmRZYnDo4yGU5BHsafjivm7w94m1TwxII1JnsyfnhJ6e6Ht9Ole+6TrWna1aLeafKJEPUfxKfRh2NfqOU53Sxcfd0l1R+UZxkVbBy97WPR/1saop4HFNHrThXsniH/9b76i2zY3fSpidrAJ/n8KrLGqh33E46AfzqyGG1Ao5fHXrX4Nqfv73IyzPliuMdqmEYdhtGMc/Wo7hBtAL7cnikDiOIIxbLcZAzUydtGNa7Ehckbc8juc/nUSoXcSSAZ7f/AKqkVj1X5RjAJ6mkmlBeJCQCD0o0tqLW+g7D8HdkD1HaoTE+7zQevA9M1bZSx+dsbjgAHjinII14LbtvXHT6Vo4dyVOxAV2HYerDBI9adGqFeQWbpn2qbySrb1G4+h96eHWOPAwCOx/xpWsHNdaFP7oVFBGeTikeSJSwA+/VqR4QpZjuAHP1plq8Hl+ZGoA6+/0pyV9LiTtrYAm1QFY4I9KgCfvCORjr2FNcyfNLuwgPTr9cVZBGw7c/jwaTVx6orIgQ7B8qnPaphGOWYnJ5AH86Ug9sgY554qrE7u5QpkgcdqbRW+pYeIN34pkY8pTlge1TfIo28jHc9Kr7Vkckcbe/c/hQvIr1G/aYPMMQlG4cbf6Z6U8vKcAAqPr1qRYomPmFArHjPf61Gy5YFjnHTkCiPN1B8vQe2QQeg6Y9agkWf1AX3zz7daUOHRieCp4+tIRNKMFCqgfeB/X61W4lochq+gvq0481wkYGMqOc/njvW3pFpJpdqtszByxyAFC5+vQVphdvy8sO2fWm4EzkSZ46D/PFYKhGMubqdEsRKUeR7AG+cuUx2I6io2Dkb0QZPtQInaVipIx+op+3e3yNyvHTn+da6nPZIquZVAKjgdsY/DvUjB/lYELjnAqwUB4YbT7cj8cUFSRgDAOPfPFCQ3IavLcDPrjv+dJIqjIztJ5/z+NNELR/NsGR2Bx+VBfzhz8uOMHvVPURB/q22gBi/Oe350q55YoCDj8PyqeMKqlXJx6H/wCtUgymQRxjt6VKiDlcgMaSfdHB/L+lVpUjjXCDDEg89QfarQjT75BB6YppWPBEpwT0yKd7oLWZDE0hVVbBOevT+VRy74cn747A8frUc19BaER3CEk85Xjj/PpV2KJZVMhXKtyM+hqYzTfKOUGlzMoiNpP3q8HGcdRj0qIlN4KfLxzxnr9KteWkZYkleeg6CmwhIQXZwQSe3H60SQ4sUq5yC3Tr6VWnAZlRxkjHNWgjIxf7ytnv0/OlVMnAO4j16j8qdroS0dxiyKEII3cfT/JqjcBhLtjyR1H0FW5QEIABHbI6c007GBBJZlzk/hQ1cI6FRiqAMoIOOeKzrn7TKR5AAKnnPetWBYIsiNiec4PI+ntURxLNuj52jnHepu2tSlZPQpxJvUeZyw/OlKsoBU7hnGD/AI1I7pCWkK4Xvn196hs7q1ujIySBthxgHmp5ktOpo4t3fQlEKqCxGSetMJidWB+XHfvViUqq5jYk44rNEDRz5LZRx930NEm09EKKutWE0yR7W6qO/t3qyNnlcKNvUHqRVpUQLh1GOvHSqyHEpj2gI3HHUVVrMnRoz5o9kgf7u7qR0xTpY8sjR5yP5H1rQeFMFWyPrUUUZ2hT0PQ1HKXzmZLaSh1uISSB1HYU2UTzrmM7XHar6xFC4iJAA6HvVVt0iqi/K4PXoaSRTZUjknbKy7VKdfWq8xk8woeUbvWjL5b5z8zAYIqpCdpYFCFPY84+lJvowSvqkUipiysx4PIPSgGIJ8oyO2K0JgJcLGvTsfSqLRtbSfKuAeoFGxW/qZ7Q4kzu+VuOfWq9xC0Z3YDDofWtmYM+QmCCP1qvHFlc4KkdRTE+5z1zZ5USI2az7DU9R8P6h9u09tjcb1P3XX0IrbuFeNtw5Q9qz54I7pcxnlfX+Vb4fETpzU4OzRhiMPCpBwqK8We/eGvEth4ksvtFo2yZOJIifmQ/4ehrpcZr5Htr+98PXq6lpzeXNEeV7MvdT6ivpbwx4lsvE2mJfWvyuOJIz95G9Pp6Gv1jIc9jiocs9Jr8fM/IOIeH5YSXPDWD/DyZ/9f798nYS/BVeBjt/n1qVY3A3nO1f0yaSR5Ag3+oJ9DgdqejNLEzoCvXFfgy3P31vQVFSac5IYL3ND7Xc+3THtVMxyIhckgiptxaPbwpx6Z/ChO+6KlG2zJGYIMKcBuOfWqL2qmVZD8pXB56VahRnIDAsf0+tTD5SyHGc4xj8KHHm3Epcuw1z5g3bvu8gduKjMxzgruye3I/GkiLklGXbt4yT1q58iKVDAZ/CnZsm6RDF5pIDkFMfU/QmpJED4wv3aQr/Dt3Fh1pIniT5W4YcCmopaMbbeqIdqtGN3CN/P8ACrIWIxhdvyryOf61CdqZIOcevTmmRTl2wx+Vf1pppMTTaCSDH+pBGPypQVbOwEn8qrT3cUavKx+7zj2/+vTLa+trj/UsWBxjHX8qjnjexryStexdDKeMbfXtU+2PbhVA+nWqrxbnV43yevI6fjTdsvHmSZAIwAOKvmI5b7E7iOVsk5xyAOhI74pFYCP7oU+/p+FTR7FAbGaSePewO7kDpzQoPdBzdGIf3uCGynoP6CmyoHYFTlQOSR1pHZkJ8xi/A9uvtTowS2duAB+f0q93YSelyCSKIDaDwPeojLIG8vqi9+1XCu1QxXqfx/CogrNyVGc9e2KTVtilruO3OY8hfl6ZHNRvviPzEf5+lDyeThCfvHJ59amMbGMuUOQfz/WgVrFFXJXzH4x6dacUJjBfAPPGf6duKm8okhuEHoaZs2uWYgDtUWL5iErjgHO0cdqkUlgjHoPXtUqkNGwGCwrLkvGiARkbv7f06UOajqwUXLRF5gsrGN+T14qKS3H3jwBz9arxTR8OOGx/F0/p/Krh+bacZA9Dz/SqjaWpLTjoNIjYcEYHp2pFkizyQVGO2cH3pZEXy9qqVP0qJIIQS+3YxGD9Kcr7CVrDpmaYAxPwD6fpTFADMSSQencZ+lSgAE7TjPf/APVUTb0b58EepODil6j8iO4txPjeodVPHt60gkMeFUEA9ieMfhU5OBnkDpnvVVw0RDqd/fI96Uklqhq7VmTbojkyKPQkEnjtSvEEI8rBU4HHQ5oSOKRd0TFM4/yaDHtIlPzAcHafWqXmT6FJoj5gUEqD144PoaniVgQDkAdGH9asKys5jI689OmOtV5QSdqdOTketLltqh819GOkSOXj+I/rVTAR+DyeCe1T7XYD96HY9abGNxAJO9c013DbQpzJJF/DnNEYSBCQCN3PryavKS42Srz2PY/4VXk/dg5OcdAe9K1tR3voY+p2stxbls4LelctpmlXlvf+echFIyT/ABA13pXcFYdD/Tio3Qg4THY49fp71hUwyk1I6KeKcE4rqIU2BWfp1qLaxc54z0q9Oqm3xnggYqmyAtlRuHTOa0bMYlUyHzCAcKRz25qSS3VwOMZ6H3qZrbg45z+lPQsMRuvQYz9KSj0Y3LqiCZ1ePD9RwarKWjTEZO3+lWiqh1VjkE88U2dTCmwDIJzwKGC0KzvnakindjOexqGaJSpQoScflVllIbKcgYNSRIZk3btrjNJIbkZqxQDgKA7dz1NJNHF90NzjippyyvlcZPrUDp5ieYeGQ8E/rUyRce7KoLKgPcdKRwGA8zqOhFSykCQOeAOuOlNYMGIKgo3INJaDfcgWLGVZunNR52uSvIPX3q30XKLvU9KrFSYy6jHPSqsSn3M64URKZIhuXPIrHeBS/mwLgnqvrW+RlST+IqjKMhDGMZPWgo5i6iS5U7Rh17HrVLQ9dvfCuqpfWwLRkhZY+zJ/iO1bl4sgmJVckjPFYF9AJFE2Mcc11YXFSpTU4OzRyYvCxqwdOaumf//Q/QFWOzD9hyKrvK4hzb5IHUVYEpCksuVPf1+tABERMfINfhDVz9+Wm4qTiWESNgE9jxQAz4KNUbIrKM89BSrF5ZLgHPp70Xb3JslsWlfCYJ4HHHemb1bO0ZPYe9UcziXezgrx+lSGeKAs8jgIvcnFVzIOUlO7eXLYHXOKVRuXcBgd91R2t1b3aBoJA6txkVbKgbeSDjv3Bo3Vw2dmLlVYeoHJ9KbtRgCRkn+I1HhAd2Sc9T2ApM5I2DBPSlcLDWiEipsOcZHsRT1iaMkucY5z6etNQvHnrtx37U8OHK7zgH1+lKKSG2zL1KwS7tWgViDKc+mMVT0fTYtPzG3Ljq3cn61ukKGJTnH9eahUoX8tzt6nHoRUOmuZSNY1Zcrj0LRdwAIyAAcHj/PFNfDR/d3fTilDoWKEYfAJX+gpJDuYHO0dh6it9zFIZGQ/7rmMfTgmrIEkanKjIGcnmo+RypHNJLvLIQxB+nGKSVitwMizHaBlhzg0bWTO1ePQHqaBHKFy7k49AOBRHGxO4MWx05x+lO3cT8hWZmZWO4duelLg7dwPzDI680Fm2tGykEdD/WoV80sf4lXA/L2psSRKEidg0xzt6/59fpVPaqSED7rcAc4H0qyZD0kIUcYHr7UpEbKAWGc5wBSdi15jYgwcqDkH+9yPzNNMQXOOeeAB0x6VDbTSPOQzgjrjnjHrmr5WYuMZbnr6CiLUlcUrxepBIykbTgbufpWbcWjMymPsOpz0+gq8yS+Z1wozjv0qBnkV+Pveh9v50pRUtyotrYqW1rsPmONzcjCnsPb/AOvV6WNmYP5ZII5B6E0KIwN2OwyRTmnYsWIKgHpj19aIxSVkKc23cjjfDbFBAUdO1NO5m3K4HPfIHvVtSwYZIIwBjNQy+WZAcYzz04OKuxKZHERkDhjnOMdakmYy5UjAz1xkZpqxbmU/cYYIxzSup3HYSQR0/HmjpYT3KvluhZg2R25pQhYFt2GGfbjtUpdY25HHJ/D2x+tMwoYqpIJGf/1+1RypF8zZCZWjcLMNpPG4Dj2zUrBwOBuXHboR65p7I7oRIm4du1VtsmNqZwuTg9MHii2uoK1h6ysuC/JXjr6dOaTcMluORyDxz2PFPEbspJao/LIcg9wCfQimKyGPCn8Q2q3PHTNRsC0igdiOParjfvEUrzjp9PpUWwhQSPmAz9aTXRDTtuIfkdmPCj8cH61RlWNhz659/pirZd5Vxkrk8H0xTSCUBAxk4NPyBdyq23KeWeD1P+elIFL/ADEbsnGfSnyRyiQ7SDxnHWmEqWGTge3FSn0KaJNy5KspGPx/yKrwwFOWweeD6VaVFQ7iSRVeXcNojJH1780muokIHJC84HQ59RUWWik3E/d6nPanQpJsUsoKk4/HrUj/ADRtuAORjp/Kjdahs7EBYM5GPb6+lIjncA5xx17ce1MijPlmQkhvfoadKqEFgetC11Q5aOxA4ZCxU4b19a4LXNbv9N1BYYuYiASDxn1r0RI8qATnbnqO9Z93pNjeY+0xiQgE5PWsK9Jyj7rN8PXjGXvq46yWO6gjnIx5qg4PvUc0ca7gMg4zjsRVyOER2yxQHiMAAdgBSTLlVBX7wx9M1pGOhi56mXAqoWEgCh+cHpQ6/Kqr09e4qWcSKijHI7j2qDDyAg8Hggj0qUuhbfUVkMQfyz8rdPrSTMohJIwwwcUKoePDHnkYqGBi8kil8tjGDRqhNFCTl/nGFOPxqoxMUhUrlM/Ka0psk+UwwT0NQtH5u5GHKDiixTkYl0sxyycEHIFYV2Hch1wM53CurmidlwDyBzWHPCCcr0PIptDTP//R++M+W4WTJU9AematbCF2nC55AHaq4iG/O7IHB9xU5cBlkQfLj5u9fhK03P3167A/yKpXO4nB3dKRZB0lIBpsc6OzpCwcn1HH602SHzGBc7s9/SjzQW6MlZn2F4QM8ZJ9/Qd65vX7C6vrbEYLgH7mcbuK6FFCqNvQ9cmmbmmUoxIxxxxRKN1ZhCfLLmRzvhi0u7KOSS7BTeQVX0x6+n0rqkuAQGJ3H36VGu1B5bHoP1p2IyVVk6AGnTjyqyHWqc8uZj5gTFtT72c+maSB9yKrD5wKU7nwo4pjsY2CBfm6896bj1JT0sSyOi/Lgbjwf8aiJWPGWyAM/hSfMQTJhgc4IquiiR38w7BnA3DGamRcUi2Jc4K4I6g0u1CrljyfT/GoHdE2gcAcfnUkMxcEoOtUn0Ja6gsQWRtn3zxmrGCGBIy1MDlTkAZx6UpLmP5W56jjOM0NW2C9xcA5LgDqevJpx3lcIcnvn9KiC7UR5X+b07H0qUMpzgZYflmtEyWhI1RchwST+WaVSgRnIPAJwO9HmKgCr1784/WmFRtwRtA5xQhNj0Y4V4+/XPb2pJDwFU4b1z1qpNfQ2A865LIh4yFLZPpgd6ZaXdvqG65tnyoyMYx09qn2i+HqX7N/FbQ0AM53kDHqe1QLLG7fIvXvzjipgscigMd5+nPH1qFIyrFUXBPXn/Cq9CEyLYBuYlVcHggYJ9qVHV3BWXaMdMgcinNAGYZO4N1zTWtkjAVF56jA7d6nla1Lck9GKJSQNo6dTRGiv83GDzx6H0pWjfhymc9D/SoyzA/Kow2D6Y/Cq9Rb7E5jU8r0zj8KhYgK27kflwP8ai3kvvYlSpzjrk9veolnkdyjAgk8EjOaHJAosk3Rtgcrxx/hUrBgVaXBIHy7eDj6UpERVhINrp3H881G6uw2qehwWI5welKwkxkjRwMZM/KOff8Az61Da3DXA+RcE8nB9+BmpmAA8tjvJBBzyMetVocW+beNcAYIJ/rWdmpeRpdOPmW2hZJGDMCT1B5x9M1EiKqjfyDkZ7Z9KcTtZQW2qfUDrnrnrUfILLnCg9eo61rdGauOaWPeEXPzcHPTPb6UgQBcgk49SelOMaq2xxu2jr9femMIwSqjpjHPp6VNikWH4HOAPXB6U1412lhyR+dRSbgQnQY/XtUu9UQqQSSME+9PQRGvyqIwcDH3vr7U6PEy4AOUBz68elQlmHyP1GenpTYhtZpG4B4B6fjUXdyraEZQjGCcr1pEVHLADIIyKnllKqCcHcCTx+dV0fy1L7cL3+hp9R20GIZNxzjIOOfSkaFnkBGOMj86mO0HJwxIyex9qEKtGB1OTz6U2ugrlZFGc5PHbtxQxBA3Af1pz7tvu5NOi2fL5yZJJ98fSp8g8xYh5S4HRueRUUjfK6kjcfXoPSnu4CtznaeSKqqxaQEjK5+XPtS20Ba6jTKRHtYHjg56fWoGiQKyuQVYdM9aszMyR7WUHcc+uM+lUi5ypYZIHB7Um7aFJXHlkT/VfeIB4NRGXAClduasmIPGH/ixVYxFlU7sketEriVgSbZ8j/xZGfX0qAtwqfj+NAO0SRkfN1FRxsjNtA2s2evepTLaEkxJwxxjOPeo/lj8tHHPQn+VTR7o2VWUZBwfxqMqszyyK20eh7YpvuJMqyq6yBgOB2qC5kSFTMo3MBkgVeV1dQO6jHqM1RuYSPn+6T1xUS20NIvXUW4i+1QK6sVBw2R1FV1w65HUdTV2NibfHtVGVgkI2nnPNPbUnyMyJbgXUhY/u35AqtMikMAMgHitOSTGN5wTyMVnyoQcqevJpJWK5rn/0vvKKXbtVTznr+P86ty5O4Ke3QfrVaAu5McagY7H2p6BkdzKMlh2r8JW2p++takFvCY3yWyTwDVvzMuE28eue9OCHKsyDaTUpEcJZWyc4IGPWlCFtEE6l3dkZGJ1DYIABxSNkMTtACnOR79ajWCR/nfkDk++e1RxsFADg5ftniq5iXHsXoVVx5jtnP4VAXclto3L1yDzj0oSU+YseeDngcVO4CxFM8k4x16U7X2DbcI5o2yYwScDJPSlYl0yRy5/pVQoynEedoPOPT/GrJYFd2MbQCP/AK4p87Fydg8kgo5GcfpSEI6kA8McY6+9Qrd7XxKCA4/n2pyzooyG3DsMc80XiVaQ6TYihTznGc9aaAyMSvIAz1prFn5HzDoQeDn6VIr5BL5BPb0+lK6uPWxLCyuAx656ipWZY/3fTd371B8oUNnGP8jgUvL4J/8A1VoQK5Y4IJAHHuaUAcktnueP6UrqVHAJHf6g0zy2J3YBGe9Jqw09B0cgfIjIJA6+mPWlKKzZPJUdff0xT1yWMkgCNjAPQfpTCCzAq2QfTOP/AK/1prUT3KV9by3URjdtqjnPv0o0qzNirLERIX5zyPar553Bj8vf0+hp2MgRwjB65FS6S5ubqV7V8vL0EkZowQy8nnPX604bAoBOGYHjt+lczq/jrwd4T1HSdH8X61aaXfeIJ2g06GeVUe5kQZKRg9e3XuQByQD0ryxM23aQnQ8cZ9hWnK0k31MVUTbinsRbJOS+APy/Co4k2jzVOAevPP4VYcebhOgHGB3+tRMvlYDj6c9MVNtTVPQc5d+GXbyM464qJkRTznHr65qQDPyDGT+dIwcE+Yd6txjrVMhMqiPed5GB+v40FE+8nylT+HHWrUh3LsIBOOaoJuZgE4QZyDnFS0jSLbQ6VoUIMecnPHXn8KnDGVGkiHbjtn0zSSpFsjiUkgn8h04qMpHAQmOF9DzSSd/IbaaHoSrMZTnf+Wf8KY0Z3F93B7j/AAqNCjLu52g8cHIPv7Uebl9o5U9u9NNEtajI3aRyrY+X8sH3qTKAZC5JHUdP88VFJFAwL7th655xUqSq8e4cqRg4qE+hTXUrQGaNpFkyOmMj/wDXUq+WqeY2cDJyeh9s09ldwWbrjNN8sMyxg9s8iiEbaBOV9QhJdwD90k9c06TKoWHOMd/88+1OwAmAMYqEqyKFzls559Pem3ZCS1GqfMALnggc+9SsSMqeOgz2pzRbd4QgN156UyRhtMjnG3ngd6L2Wo0r7ELjJAYf/qFVsdXJxkenX0q44R1WSM5UjAOMUzLeYBjAA64pWTdx8zSIC5YMY+34+9Rln2kIuCw5z9KsbI4Ubb/EelO8po8lxgcfTj0ocA5xEAZOeoHemMoU4/hJ60pYFiinHrUUnmNGCp6cfh6U0yepC7NukY/Nz+lIIwHDjIHp245qVV25LZyAV6du1QtJt6HPQnHTipv3K16CTtyoJB9vpUDPHlS/G7v9KwtSvnS5jeLJjYA9OM9Oa2VjDxhnwBjgd651VvJpG7pcqTYpfdMAudrdPrTJ2SMbU6Kece9SBlCLt6of0qKYJl2Q48w9K1VzJ7kcvyksBgmq6hhtc4G2riFSCG4Yf5FUnDu+V4HHWkxpkqkTMx5Gfx6VXwXUrnAUnFRyHykxEed2frUqB14HO/mle+g7W1RGIxDHtU5OCB9etQuyyxLkFfWn/OCHY4BPT3prgNKVHAb8qLW0QX1uynK7pGHH3c/oaZKgWPjkf41KPviNh+7PBFSShVYxKeg/SlFjZmTRr5ajOQO9VCByx6Y4q468fL09KryhgOOi9qb1KR//0/vhkFsrPGd4HX6UvmM+fl+9jFRSpK0PzDHt168VYRo0Uo3G3sa/CErO3Q/fXt5i7SBuLZBxgdgKrvzNw5B9Sc9O1P8AMSYAJ2zz9KUxFyJEbIxwD0pvXYFpuTB32Bcg56j2/wAKaWizjrx/nBqv1ZTNyQf1qYSCQmNlJ7EjirTIcTmp0v21RRDkRnGGH3QOK6sMSAc9hTG8pAFUDOOCeMmkB3PsGB3Pr7VEKfLfzNKlTmSVth0T7SUHXqTnj2qV8bQV+bP5VTXy1IOeSep9KemWlLg+4IPpTv0Ja1uK5Dq28/Lg5x70RKQh2/MQevfmkAX5yMjk496eN4HJx39aqwrgI/m3c4A4H17VKxwMY46YxUMS3DzMeNvrn0p3zMTHkZXAOaE0EtxrbeiuMjpnsOwqcsHOUPIx3x1+lEcbuuZQFX86rCMI3mZMigge496G2uhSS7lznAGeR6/pTmiJAO7nrxxj60ecWk2Fc46VIm7DAjAUg4x261omjJ3GhNqMGz856nkUxvlBI6DAx2/CnRF3l8snC/pzTnkVnC8L9KLJ7BdkS/unJfJHQY6VOjeWdy4z270rKhXiTAXsBz/n2ppjjwT3XpzT16Cep8fftbfsmaR+0hpVtrGl3n9keMdGhZLC6dm8iVNxcQTKPuqWJKyKNyk5O4cV8zfs9/theLfhj4l/4Z6/apik0zVdOdba01i7PKjpGl0/IeNh/q7gEgjG8kfMP1XMiKqrnafevnL9oj9m3wH+0d4ZGl67ELHW7NG/s7VY0Bnt2Oflbp5kLH70ZPupDc17ODzCDh9XxOsej6x9PLyPDxuWzU/rGG0n1XSXr5+Z9CxOdqlCGikG4FeV2kZBB7g9qjmRTtdyW5I6+vtX4+fCT48fFD9jjxpF8CP2koprnwp00zVFDTC3hzhZIHxma1/vJ9+LsBjYf110/UtN1vR7TXNHuotQsL6MTW9zA4kikjcZV0ZeCCPSuPMMulQ84vZ9Gd2W5nCvfpJbrqjRCl9sg+YAY9OKcWjByMqVGP8APtTFwEOG3sx5x/IVD8hlPBLDnPoBXCek0TMwZipAPv3zUbqxAKuEyDjt0qqrReYQCVk5Ax3Aqxu3KVA3c9c9f/r5pJg00RYEchTPzAfe/qaSNg5Mh4xnk9T/APWpV+eVkKbAvOeuT7ms++vUtoA7uq7vU4x9aTdlcaV3Y1HG9/lBI9Rxk+9VY4ykvm45QYyO1UbHV4biNHEqNjjj1HY56GrYmjuFcxSccj15/wA+lSpKWqKcJR0ZYdEuF2dUfqPcdMU1444kYx4CD26VTjgMRZt20E5AHY+vWr0a8eXLhupOD+VPfoS9Oom99q4+bd0HX/P1p4xtAXqelKwIkAYcgdO4/KkjkUEsBlTwB9KGxEMyzGdFEgAyCf8AA1ZIC/Jj1Hbv3qB2ZmbAznj8BUKMqEsQTn09amOmrLeq0J0dXBLcsuevfFO+XeWC5B6f4+lVIUmnEokGVxkEf4VeESqM7sYzgdsVUXzImS5SJimzahwR6VCDJHliQe3PHQVKIw7naeOuenH/AOumLGPvSEHB4A9qbWmhKl3E2eW+8nORkf59qillPlsIx5mei++KkDrnzG7DBo85ZG3AAdh75ofYaZWgBZfMfliTkU6VhGcJx1wPXNQvIAj7xhR9c/hTsxyNHg9VLfiBWe2ho9dQleRgW4BA796qRMpgYMArN1HfPepXUvEiK2CpyfX8ahkVvmI7+v5VLvuUnpYgEahRvHHOe/0p5ZViDjjJwfT3p7JtCk9cjFRlULBfvd6BCAgjbIMEEdOuBVNgvmM244X+XerTBAAQvzN8vPXH/wCumquFcY6nGfWh6ghjriMYPY4x6VVJ27QTjcMYq1IhJAUYHWmFN2wjggjr0JosCZXZMA45xz1oKt+75BIH/wBensibm3Ece36VDv2nJG4L0H4cUIGMuv8AVM0anI6d6RZFaJZm4PH+FMMu4BU6dTzUhw8ZhkG3vmoa1uVfSzK0gXeQepxVe4lYOHXgipJJQjqoOSRg/wCNVZgshTB4JofkUl3IbhiYd0fG4/rUMrHkDnd1q0gcyOjgFSMj8KpSEbScY39MUJ9QtrY//9T77iYRP3IYd6H/ALm3dvUjpUTu3lncDweD/SpbaRlVVbGK/DI9j97l3IBGlpvn6D7uPoKmt5kuE3RY9sfX+tEsjbMSLnHp/X8KqSXnkrFFboMZ5PTHrUNpPyLScl5ktw1wJAgX3yKccKSevH5/Wnctg5Jz0+gpsrBl/dkbvr60Wtdi3SQsfLEIcd8nr2pURnf5ic7uvPQY+tC7EGOrgdff61GskilFBBPv1qr9xW7FhVCNgNyc5+tQsmJP3fyknPH6imTMd2CvXqQOtN8lwwaIbsd+5+tA7FhFMZbgYb8etK0su9UADAdcdaSRmQDJAz3qoHeNj5nJf24FEp20FGN9TTEoVMLkfQflTECHnGc9z6n+VR5O1ST1NTs+0nJx7/41e5NrDPM2kAHtnHWkMsQT52wAc4/wqTOQWbkdsCq8sRncEnO30/zzSlccbXJkxu34OM8VdDMvyxkhjjnPXPtVWMRCML95hnGO5pXV41XcOSc4zwapCluSrHJlt2M56jjnrTHeJSoPUfn6CiIureZI3Bx36f5FPLKxYqAduMcfyotoLmTZLEhkAcrtwT+P/wCuhVCnBY/N1PHf+lG8vnyyAD2PSmSOIiHYY4xj+VUu5HkSbUC4YZ+nNV3ZkY7CWx0HpT1STcXjYEEZ59/Wo1nnP7xgMMcAdKGCR5P8Xfg14K+OHhObwb4/tfPtSS8EygLcWs2MCWF/4WHcfdYcMCK/LTQvGHxg/wCCePjYeCPGSS+KvhZrE5e2mj6Lu5MluWJEU4HMkDHa/UH+Kv2fnBALquSByB1r5z/ad8W/DPwp8I9Wu/iloM/iXR7pDENPhgaRpZiMqTKoIg2nnzmK7f4cnAPq5XjJRf1eUeaMun6rszys1wUZR+sRlyyj1/R90cd8Qf2xvhV4J8P+CfFOn6nFq2l+M76OGJ4GAa3swQLm4kQ/MpgLKGRgDkkdq+rEuEcK9vMJo5ACHXlWU8jp1Hoa/kfvbmGWeY2UZgti7mKNm3lEY5C7sDcQOCcDOM4r97v2CfjhL8TfhCvhTWJ/N13wWEspC3Ly2TA/ZpCep2gGIn/ZB716mc8PLD0FUpu9nr+n3bHl5HxJLE13SqJK60+W/wB+597tJGT6seTj29/50jXceDxtHQH0rNlnjA2D5Sw78gV4/wCLvGv9n2UsFkRLKhONrDj1yM8cCvj6tbk3Pt6OFdR2R7HNdIqCWMlwOBjHIrxTxf4phSd7bzPLmHGWO0g9iOfx6dK8gtvidqdnAXglO5iWJJ9T6dOcfl+dZ9xrVxr1yt3wZD0JOQMnn864605TsrHq4XCKnJykzt7PxRNYg2ayPJk5bqBnpkZA/mK9v8Nayk2nRJNgnAIP94H/AD2r5ov7q1eIsyiNFbMjEHGSce3H15qraa2VuIo7SV1CHk53Jjt7gGojTlBucDarGNWPLPRn2rbyLKAFOVJz/XBq6hVyCqkZPB78HnNea+DNZmv9LSedSq8dewwDwf5V3cN0Cd3CLjgHrXbSqKUUzwK9KUJNFsRMbjzPMJUdR1+tXQ0RXAqhADGMo+S35etSjag3O2MZP1rRK2plJt6FgshBwST/AJFVDHuXcxGO3rUiuRgj+KlX5+HPGc/lVXuJaEihkwQSD0xQ8iorDnjHPU8+3eo2wzKwPA/nUqqzRgS8M55+nenbsL1GPFIke5TkY/8A1VFG6GMOOcnn+tI80gOW5G4URoqFt6/e7dqm+tkVbTUryMWw46E8n+VSgbo0VCOD9cHt/wDrpZmUrg/LtOTj+f0pkaphsHA9qIrUJPQgmjPzKD1rlrjVjY3e3cGRO+MEA8H+ddaQC6t0wCD+NZ1xptte5klQF1PB78VlXg38JvQnFP31oWoZFkgSRRw3X8aYQ7MSR0I9qWItENvGDwMdM05RIoO/GTx/WtL3tcyatsQhcsB1XGfXFV4C7li+BtIA9/xqdn2Dcw6HHTt6e9MKuoYKPmP61DV2UnoRTZZmPtmqqkvDjPTn8+afcSiNQ7A9MYHOAarRIV+foMZNJ7jT0LEbOEy45wOvvTHI3KmcZ6D69adu+f5ug/XNZ7SP9sQEfKOPzocrDirkrCQsAucd/fNVyGQlG5zyP8M1fblgF+6DnIqo77nEn3hzRJBFkEW1SEAAOevrTLjKMZFORipgqMM4wV6Z4qvIGO0k9M/nSDqROA23Y3IHJFMlCGKMIOhOfWrAABG4cYOcdqqqgQMIzncc81MikRXDuZ1CDpwcU11EhGOnFTpH5bMTyCSTVWJy5kjC4KtwT6U20hI//9X72cO/7sMc8c9s1E0xjBLDGONo6c1ZeQFcDAPpVdMFWRwCAOp/wr8Ksz99TQiGSRsMQNvLZ/T9OtPmihQIDgIDzUrlAQepaoTl/lLY7+3XpU8qDmHEhGIQkDg1EqDOJOpP0xT3MKscnp37ZpzSMyjYcsOappBEaCYnJ3Fh6e1RyypOoVFOc8kcfr9KWbJHB2s36GiMfKFXr0wOMihroO/UULk4zggDIPTFThW+4nynH4fWoJCSS2clRgjHFL9+NXBOQQOadxMFUkkONx/X/wCvT5EVhuB4HOPrSGQp0+7n+dKxj3AMewJ68d6dkK7HRM/AYAHrnP4VYBUqecNjoay7iWSKJxHjJOSSM8LjPSnQzSXESc+WQeg7447+9Spa8pTg7XNF5kUiM9UHHHHpSKWU9doA9OpqBiGG3ofU9acNyq3m8g9R/Wr16kJLoSpFlzLnr/nGKugjbmUY/oDUQIBDKMHA4HrSZ84YYkDP0yBSirbBJ3GuUXPOAfQ4qaBCECF8n6f1qs4aPIwDnjnpirXmsq7ZCEH59K1jLuZSj2IjIVL25JY5zkgYA9BSxKXYhwSCc89acBvBc4AycZ9R0+tT7QwwCT6575pJal82mw2T5Msv3Tjcc9RVG4TzlCRkoF5OOpp7y7G2sfr3BzU4fzBgE/Lxn/HFLmUtBpOOpTVlAXcTuXkk9c0txDHcxNGpGxwQw7EHrn196tHYDhcHH8qpsDuDQDaHPzDr+PWm9EC1dz5c+Jf7Jf7P/wARvMfXfB9tZX8pP+mab/oUxJ7nysIx/wB9GzXkHwl/Yrvf2f8A4qWnj/4a+LzdaNNG9tqWmanFtkktJeuyaH5WdGCumY15GMjOa++pYp2nG8AIM5Knpx/Oqk8saoPJ+6SR9a6qWaYiMXDnfK9LPX8zlqZRhpTjU5EpLW60/L9TntTbzYWWE7cg9O1fDXjf+0LHWZU1AGKOQlWJHysB0B7c8dMV9h61rtvp0byXcqoi5A7kgc9fY18N/Fvx1a6/cSWemFX2jn+HcTwee+MV5dN81VW1PpKCcKcr6IwfEPiFWgCabiR5FYOc8lABkZBI78AdulReA9eEs0qs+wFtg357nIA59OOa8zsdMupJOMbCMkbsc+390YH41Rubq207UJBAAyA7Bt+YgH1PXA9+w49vpZ4CLhyLc8BZg1Pnex9Y3Orwam8mmx7naUYLgAgE4454P4/lWXp1vJa3wfzAY4tsewkYOOAQOp9j/WvMtI1BLWH/AESSWR3w5GPbJXvkE9D9c161pE818sgKKCqqdzJlgFGcBu2K8GvScbo9/D1lJKR7voHieHTbFLKUMFUfKV5A643Hpz611K+PIYr9LIxhIAuS5Ixk14Mbqa3Bh++CBgkgE56E9gDWPJrTSXv2aLB3YJwMDPY7s4xk4rzYRqJaM650qUndo+wNM8W6ZqjeUspSQkqqlcZOeMH+Vdejqw2kFiOc/wBf6V81+BZHbUo9rbwjKc9OM9a+jom2HdnkDA9/cit8JWlK6l0PLzDCxptcvUsSkpCoUbWUjHHOD2qxbqJFCMPn6n2+lRGQGRwfQH1/+tVlJRJt9c+vrXZbW9zzm9LWI5V+6V6E5FEkuQpPYf8A6zT3jzISp+7yMdzVZEIlLSHpn8KYtxCuULdgeeKhHmykmQbQDjPc96tKFI3ZzjnHpS43sCDtGD+nSlylcxWFuN67vmBA475pJA0cjbRlevHGMcU6WXYuW5C4Ap+4JGUHJ4z/AI/hU6dB69SvApUbmHD/AI9Ae9OZ0woi6A9PpSYK9G4H61EV8rOO/J/pQroGr7kQ+dGZPWkIZzuZ9uf096Iv3qmVeg54pyAlXbksBjJ9BSauh3syAiRscjGeMjt9aGkz8vp1pwfect8vPFSlV+5wGH9KSWgNmVcL5jiPHyv3HI/GoyAVVR91Dz7gVc3r5mwjGz+VMdNmQRwc/lSZRRDlxIewPQ+tMChmYkcLzUkKb0Dxn5O9JIudxwef0FStVcd7OxG4+Q7f4j+VNKeQoB6Dnge9Pkk2qqLx/XNIzMV56le1CYEDMSN54zkYqNcRx+UxzyWyamABjDN+eKbcKQ/TNOwNlCQkjg/NIfwFPUKhZuCD37UJGkcWWOSQTn3NRzRiOILnJfrj8qkpsSVxIp8vgEjp3qoWKHcegGKltovs8TLkt9ajlG4gYznk0X01Hs9D/9b7stHkmkfzlCZz1GME9qsunljJwT1AH9MUzzMjzAQc9RTHBJUOv3ffHNfhMVZWP31u7uSKd5yy4DcjjmmYaRgF468n3qBw/O/dx+fNSxyht2W4wMA8U1qD0Inb5gpP3eOP61MoCphMow45/wAaRVDphjyeST701pCqEEE7eTj0o8w8gFuszuWwWOD1pCskHDEbTxkHgmo7aTJByOfXrWqixlBkZzycmiEU9QnJp2ZVXEm0nhSDx0z/APWochgC68Dp/kUx1OTsb5T1BNNDEnByo7e9VcPQhhimd2CMCjZwT1H4VMIzanbLzn+L36/5FSp+6+YjOOuKmeVZE2j5mbOB6+9RGCQ3UbIJYxcjYV4+9uxgk0scbjC7BgdyM4xSQySKuWJI7e1T5cA7Bhm6cf56VcUtyZSfwiAfONpHI+nFSgOhxv5PA49qjG4LmTpn8BzxShmJ5Izn5SPT1NU2TYmHBBI57jntToXDKUbt/WmKxbcJMNxjI60jM7MggHyr16f5/Gi9gtcc0Z5jyGIOaVo3EYwNx747cUzZyxZiWY81KdoVie45HSlbW4+boPjkxHkjHQgHmn7gwyh6elZys4RUzuz04/IcVdUBQEIGcDirjJMhxsSvyVAHIHJ6jNViRj90AcnntjNOBZvlH3TnP+e9QGNoSTA3B5x2oYR7Eysqt8rYHTof60xw5O0AAcn6f/X/AMaiineU71GFOB83H44p4VVGWUhnOQCfXvSUr7F8ttyoIirSSO+fUHpx9KzrpEcuV+U49eta2eW2twR0PX+lc5q0zJaShOG2ErjucZ69KylZI6IXbPn/AOJ2s2Uh+wp8t0gO3J498CvjPxT4Xklu/tivhG+8YzuypByM8gHPfr6eleveKpdU1bWZLi7tJFgQuhfP3lKkZBPOc9wK87t9RneBrXV32iB2AY9H2jjj8Rzx9a2y6Mo/vFuz0Mco8ns3sjlLq5S68PPaWkTPesyqFUEHaTggnI+Udee3vXHtHPFLLDPGissitk5Icjqfc8AjOQMjBwK6mdybhrxo0jO5xuVgFfC/LndwSvH04rmZFu/EF24edlmhx8rMSXbGOg54HQc9h619FRqS5XdnzWIox5lZana+EkumvWnvAzo4Cqwz8oPrng4GBxXuNhGdOgYw7pTcMSyAbccjHy4HHqe5rz3wnFMJfIvISTGhBGWVWwexI+XBr1S1naO2LTR7UDBVZsZAOcD14/WvnMfW5pM+hwVHlikRz3G2FAxBUhlLfdPHfBGfpxWLZWRjcSMcRBg27g4weOnP+ea3WsJJ287HnCMjjOQ2enbt3PU1vpo960GyWIuszDeQFOxeNpGfb/GvPdRLRnpRi9ztPAWprZX32VcvuOGI7DHp/npX0lZypIucA4HBH5V83+HfD9w1+l7CpRQQDuDY45z15+lfR9khiijXb/CAT7+1Tg5+80tjz81inZ9S3IUaMAcHJ5+lSR27NgZJZgef6UwrGyHPzkHOMYxg1KkxyBGMD+nWvRR5D2G3MvkRMcEsPT9BSqMgOcHdjk84A/SnOFdeeRnOahd5F3ImGT8yM03vdii1axAoma4aT7sZ7jg9OMirYfIYjgDseKRCoGeuB07GqrqzlSDiotbYq9yW5jyUGQFHVffqBUBDKm0ckfyp6uPXgn16HOaXJzu+7t/KqsLmYw4LbmJGR0+vaoZUfIB6NjPtUwXewz9D3pu4DLsDuYjH4UC1TEbChiOAO3AqsvzAKeN/Jz6YqWbKoz4OcZNV0dVUSHgsMDPaovrYtLS5I23cV6qvf8Kz3uXlnEacseM+1aExVVULgYHUfXv+dZcUQjujKw5YdvepqX0sVTt1LLpjknp6evrVZpPMG1xxz+VWSx3hGXGT+Bqq/UsOeOf64qkhX7kMURi2iP7p60jNu5bjBwR9elOkkzgA4xUIWQnEnA3Z/L/9VZ7aIp66sbKpCFI+WPP/AOqodwJZVGMAY9KsLMCATwQSMYqE+YCGK8DI/MZ5ostxp9GVbq7FvA25Twen1qWOTzVBySoz1/WkvYEuIArnDmorOFYbdd2fm+9zWd3z26GtlyX6jJCXdApwucfXvSl1KmTBwKmIXcdpwccAVBHhUeXOQ38Pp64qzO5Xlb5cgfLjmoyd4XaMZ71c2bjvx8vp7VXjkUFg4x/doY0f/9f7qZgxyRkkc+opmP3iq+eDkEnj8qeQpYtIc4HBpS3y4fnPIx3r8Lsfvq0EutrcFzsBA69PSoQchYn5xxnjp9akVWxtcgljkA+oNNmXzD5bDaOn/wCqk+5S7E6SneYt+Qwzz6Hg0uC7hhyo4JPcdKrJEEwkmDg4z7GlQIHEBfcRyAen0zT16k210JzEkSsgAJHXrnHWkLKpWQkbBwRimh4pCMtnquD60lyokGCNmPXrUy20HHfUsNKsbfOcqcHp0z3p7CN+SduOQawp5H3Iqjbswc5/rWnbsZxzwV6kdCKSqXdinCyuOEpdiWBZSPT+VTrHhQBwfWqmyUSAYCLn64NPWZ0Jj5YL0I9DVXXUm3Yd5oPr15+tW0KkncPmGOBx7VXCpISTwo5qVFEh3njBz7n3q43IlYe5DgJnDcn6UxpPKfn5iMZ+lRCSPL4+bB6+xHFLzLyUHUdDjI/rUSba0Ljo9SYP5oLIQG5wSORUsTNBGQ43e4/z1pqKhUFf3fXg07zG3fMMAHOQeKqKaFIcD8wIXcSOT1FPY9QO36VGsYA3h92T61UlbYS/zHeR16fjT5mkQkmy42EO4NgL/Oo8DzxI/JA6nsTUkRXcBI2R0GecGoS6o5JBCudo+tOUVuKMnsThxHwOmepNNJDO2cYHP4/hTVhDvtJIC8jPr60DYq7sAhjT1C6HLtjTgcdsU4bt3A+UcHP9aYrDYw5A5xgcCgY5kI2kYBzxz70R0BshkCgFW6EY+v0rDubT7RDsfAVexH410MqAL1B7596ryI7AqVGCOe2c1MoXNIVbbHiPiHwbDqBdLf5CRgd+f/rV8/8Ajz4VxoC8auZdg3EnarBR/wDWzjvX2ykCyOy8gr26Y9K4fxtYrLpUsCLuLkgAeh69Oa5pR5I80WelQxTlNQkrn59XGn+UqaM1v5kanfvUgY5HA5Hc5zUFr4ZuP7UjdpUQKMswzk85AbBx7jsDXtK+FpLa9muL3Y6SHYpAO768j04rBfw9qNvq/nW1vm2Hy7gCeD9706df510f2haFrnU8CnO9jQ0cwXG6Hc32lCA29R0x/jnkVduri2lkNuCkADDazn5HUdRkjg9a2RFbQQFITtmxkswzzzzyK5LU4fPCeUPtBRiAn8GTxkemD1FccZczN3G3qd94buba9mhitkVYgSA/oO5P517xo/h6xQ/a4Mt8m3GcjHp06cdq+YvCsV3b3IgSMJGGG5F/hJ/vYx1P4V9gaCrS2MLj5AVGPXjsPalRgnVaZy5hOUaasy5Z6fBbKPIAGDkADjJ5NboidgAjYOcj3qkp8oglc7Tg4q3HL82FbGc/jzXbFJaHiSk3qWdhBwvU9hTAMYZxwePxp6PGuS3U459z/npVeQOytIrFcdAR1P0q72RCV2SvnbsQAkdff1qM7k+Venc+pFR2SXUaAyEMBjOetS3HyqBEB7kH/PvSTurg1Z2ItwyqNkButPGE+bGTjgfyqs7Apju44zTpMHDN1A5PammOxFwNzjgA5/Okd2WNeMFhkjH5VKg8sMDyGwB+VEigsoznA4+nvUt6FIjErKCSRlgR/k0nUqT2/Gmv8vGeeefSmncOIiRkcfhU31HYbJLuHlr65NV40zkk5A6g0oRshQMOMmnjBjLHjPOfahq41oKykqzN1P8Aniqsm7OegAAHqcjmrBJwAx6VUkk3TPzkx9vek2hpDj8iBjgDgc9qrTqF2jpk54qWcMyHzDnPTsRTeIlwTngc9fqaWzDpchZQDuYH8/yFNbLnkfNtqQq7KH+9nqKHX5vTf/KiwFGIFZfUkfy4oebdtjwAxY8fhT/ODO7gfKuFBqqdit5jfxcc/wA6nbYtq5aO0Hc3cAewqmX2qxUZUjgUFvMYYPGfzoKEs7noPShghduSXxkIn61XiViDuIXHPHpVgOApVTknqKYI1RpHY4HXFId9BcgHZnIIqrMvyIF52Zz9aur5Yj3E5J5H0NVyvUIcAjJ+tDFE/9D7oVMxghvmGR9aRdzhWkHT07CnLIr88KDxxTTKAmxCTnjivwq5+/D3XcdrP83Y54x/jUH+r+VzjJ6+v1/GkRgoLHp/WoZSruMZDd89CPWlcdtSeTLAx7gmeeKcsSYZHAGOjDrzUMTFSN3IbuTSyS7lXAPyk4HrSvpcdnshgC5w4MbE/eXPapwcqRIxOehI/lTSFJKtkHHIPv3piR7kZJcAjkfX1FJdhvuK8CMm5SR/hU6I6KfKOW9D3x0pizmP9xJ0bv8AhTGYj/VZJU4+o+tVyolyaJzM8gBK4zjpz1qRcHMkZB2joeagSRFRpMkYA/8A1U3zf3giwcDPJ7j8Ku6W5Nn0LEkx2r5R5AyR/n3ohdpPnl4x1HangFvnCk8dDUCMwkA24VuPxpNahdWLJCIxOzoMfWlTG0v0K9+vWq5kbIRfmXI/Ef8A1qlwrj5G2j0x1p3FYmVmmkETr19amXaq4zjHApiEOML2785qvNulHlI2PU+tN6IEr6F/eueOgH+fxpzHg7c4I579uaqxhkhKlfMPTI6j2pyymMKBwh65oUiXEZIoKsWUPx+f49a84EmqPqIf5wqv90nr/iP0r0ZQJHZQOOw6GnrDtcMB1yD/AJ9Kyq0ee1mb0MQoXTV7jo2WRVfgLnp1/CpNisTwQueMcihsL8rKCO/GKag2AFs85GM/KRXQcrJmG1SZD8oGRjrVWVnnQMrD0x2GalNym/Y2OT29+lIqrnoB3pSV9BxdtSF4mhQAZZVHT1xVeFhP+8PIPAyMEVbJ4IwSv5UxQIyduAPfmpW/kVfTzK8qsBgEccjI54rMuIPODKRlG9ec/StQTiQuqnhQRk98VE8LbcrhgPfHJoeqGm0cdP4csi6SrErPGcjuDjuaZN4fsC32hol3AHK+1dc8UcWcDrVK5iLxkxqx246Vg6EF0OiOJqdz5o8VWUNrqEMNtFhXJ3EjkZ5H0FeeBTb3RjI4J3Oc9SuOOMjHcCvrjUfDtpdO0s8SyfLjkfrXnUXw/wDI1RZFRTApB65Ix16+vTiuO04aJHs0sTTmryexF4R8LWupWMOpRM28n5+F+YjnBP8AWva7QfZURFGwZwP8/WoNP06DS4THEoVOOPc9TW4sYY/N0x+GK68Nh+VX6nk4zF878hqRSGM+cwAbgn6miFBCxWJcquASTzU0jrHkkE4HGP6U2NQR83BPJHpkV0NanGpaDskMZG6DnH/6qkWZf4jwT3zxTXAjQkZzn8agjXI8w8hsfSh6BuiwWDdvlNKy5QFTnPGe3+cVDKCgyx//AF0+OQHBQfKBxz/KmnrqS1pdDXVCqgD5gOQfpVZ5VI8rsf51J98lz1Oe3GajQIEYtjOcn2//AFUPyKXmL8oTZjA60yyZ5/NaRdqxEYHr1wKQSoSYhj39qeHUoVAySRkj0qEru5bdlYikblgWwMY57UFslAmCcZxx0olfDbB82f60ghWIh0GSAR+ZqpLsSn3ABRyOo60xsMgQ4BHJP1pgO1Rwdzcn0qKRSUMg6+napY1uV3i8y6STO1E4x9OtLK0asY0xuPTNP3B2wOMVWZyCDnlf0A4qOVK7Lu3ZFpnTO0nOfWqJXI3ucrnFTwkmIy/3ulQviJFU85PPOfb9Ke5O2g9mKxmRDggdKhbO8yZyQpxilctu4GFx+OKif5VDkZB9KTWtyk+g1VwCB04OPWqtyRtz3GfoatTPiXB6EHGPWq20H5cfdGKG+gRvuVpFAzs/5Z9B6mpFbICL1Iz+dJLFgHH/AOsmnJEUJ9DwPoKlItyuhqxBQzdC3Q/U1IuNuJDu6CpA4B24BAOPyqmwYDLZBJ/TvT0IdyFXVpyhyqLxz+lOnYxjaDy3FSSBXj92/kKiL/fL4yDwD71N+hpY/9H7eEyEhCOh69OlTKir+83ZBGf/AK9N+z5B2/eUcZ7fj6VVMruQMYIwDzkV+E3tufvyjfYtS+YxK7cDsBzn601VDAq5x6HuaASmCG3MOgqNmkdmBwrYznt05pMI7FgoZY9qsOc4zxiqFqcl1nHI6HvkelTtHs3MTyce/WnCRVVlZenYj15qZRu7lKWlglEe7cMjYPXPSkG1grZJNRiYKu9RnPUHk/X6UsagnYOCDx75ptXY9kDAtJ5fYHqMdBSfOG/cjcQCMHqKeYvnIY9ev1PUioj5iBXLEknaTjn2Of8AGm3YVrlkqSiocDzME57GpYztUgnAP8x9fSq+zDYz16DPTHtRk4bLAg8ke4q2SixHdxmXyCQGH1x9PyqWTZjAOAcYI5zWUEjSXz0BBPOO3FWkctkBdoPOc/qelRCT1uXKK+yWcYQrgEk5+maSLcgY3AwAeoPeo1nLMWYbM4+lSl9x3LwTkHmquiFce7sy7V48w5OOOP6VcjVSu5uvbH+IqNB5sYHtkVC7SKQUOFbrj1q0rak3voW/KydwPX3xn/69HGRzwTjB6YpmWEYQAkjHI/Wq8jskm0EMepBOPrRJpagk3oXljUxfK+AvJz6+1MR2ZdqNuPr0pqSAAIckce/4cU5mXl9vI7D8ulUrGbTJ0dWG1jn0HI/KmB/l2yFSOp9fao1bdhlHH86VkRZdwYZUHII6fShSE0NeM7s8DPUdD9RVeT9yMlic9AecfpVtWeV8Hpz0x+lNZ9qnZ0+vAqXZlJsiVlmj2rxt5Pb60SKp/ede2B/h/WkSMGQ8gbv1p/lBFIRsA+/Tviqir7hJpbFMxx7QERsnHA4H45qQsseC/PHc8jFTZChsDI9uD9KgbLxbUYqO/Gfw5otYadzDj1i2lumtFOcHnNbSfcIyPTuTzWLFoFvb3IulJ5+bAPAP09K2xll+VhyM81hRc9ec3rqGnIUzHcOcMM44PFMWHaoZk4XnFXi7IRKehGaayuXLBv0rWxhzEMW2Y4ZcZPT3zV4MwwAQD6e1VRtUA7cNnj6U5JhISqqVOf5dadxNXJl3EksM9h/WlSOAuQOq4P4UeYFTkZHT3NNwF/ek4JyKLgNPzu8ZJCqOfbH+eaFC8BWIYHA/Dj+VRorOskm7h/u/Q85NSbGTJHLE8D60t9Q2Eb94pjY7ieOnrS+TtjwhxjjjnjvTyfKJZh09KhRgDnOD9KGikxTJjIbAxwD9PX/PrUCMNgGMjngdz2qks7G7Zf8AWHhcCrm4se2AMcDoenWojU5i5Q5RvlLuMg4J603yyVds7QKWWRlUYBJPr168VEzuvyE88E/THFVpsJJ7jkjZSSzdf5CgSZB54HFNLEDPGW4qIiWMEn5ix79u1K9hvUYxkVSqHdjnn+VSl1OEAwAKrxgsCWHfGe3FG7y2BLYDZHT8am4WBiVAUYB/i/Gq06gocHGemOtWSCyg4+9zn9KpOJJJP9nP/wBam9UC3Ho5ji8snLDp9f8AOKiLiTr0QcZ9TxmhSzvnP3jnNMcDe7ZG3bx+dK1tgerF3ZKZPJB7/hUbsThOoyPxpzYBUL/F39MVWmkYOuzgkjH4c0PYEWHX94zf3c4/z+NUbeTf5iEY2Ngn1q3uQuzP8wA7etVASpGwY3Hnj8amS1HB6Me54fPG7oKcjgAZ5IAP4mqzOrSA56e1M24fjjv+VK/YpLTUdgLL5eOG6n9asSnKnBzgY/Oqm5gSAMkck1IuZArLwvPWpRUhm3D4B2qBUUqkg5I29Tj3qRsyA7Opx+VM2yE7m+57UMEz/9L7hnaT5ZAwxnn3FBTacgD1/GmiRWdWTlcZI9/pUTyeWrbFJwRyfQ1+En79YIfOSQswBXtj+oq0fLZQ2Acf561XYlsKnOz73FUlnuo7h1IBjPPT0/rUuXLoVy82pO5YS/u+Rjqf60394pPOR/L3qfIkiLBQQMHjioJMoAyqcent607dQcr6DVYnOR1/lUck1vAA8kgQDruNTb0+6OO+KxNfsPt2ny26qC7YIBzg+opS0V0VTSbSZ0kdwske6PBDDIpjH5QrDmuM8JpeWqy210pSJCAqNyeODya7dxFsJUcdf8+lOEuaNwq0+Sdikpb+Ilk6gn61ZKLgKOpOT6nHak3kLmP+Hn659e9BkViFwF4zgfSmlbchu+w9+Rt6/T3p3z4I2Y5x1xVViflOOOuM9vrU8UmcL19KegloSrj5Wb7pyenQ+mam2Iy7cfe6+xqCQyqw2AFTjbnqPxqdufnXkcH0/wDr0ILk6FowSnbg5oy2/wDuHv6VmYmeRSrDC49c/hWoNoU5Gc8EHnp+lOLbCSSGIXDkHdjJJx/Tr9aVY4nyz4Ib17fWhnwG8r5TxntQr7k3P8pJ64pdbML9ieNoyNynn+f8qm3jG0jIPX1qoG+YsvQdD/8AWqaNvMJLcAdu9XchoXL7GKnJPUZ7etO3cDeCTzjIINDMwwMgqOuMflSMAeepPaqSIuQCECQyFtoGMgDr+tSqdqEYw3X0zT0AKEEgE96RcE8DHfrj8fxqVFLYrmfUYCpZUAHfkVKygDcxGDkdeKpy+b5gaI7cdu1SO0YmWHndjOB/Kj2ltwcOxKoI/hyO1Jn7pbkduaRs/wAOAQOQOc/lTDLlt+zIIyADjNU5E2EJJfcAcn06UwbUJVmAJ9exqUTRrHuAwH5AHaqZl3SAA5ByOlJsaQ9GD/KwztP/AOqrirgM/U9MVXXahBU8nj/PtUjOsQ2EjJPaiLtuKUbshlUhlGfm+lNjRlB549B0qWQgjIXfjvUSRurOVOVGSAeual6lp6D1zjYBjvildmVNqD7vfsMVJmM/OM8Zzmq8bxvKUJPNF+gJDhtdRtGOhx9KCSA2D0zgjrTtmHAB4zjHT9agdcK2TuOMYoEKXG04GeAc/p0qMFAfMHTb29elC5Y5A+Zhk8dKdsCRjeeAfwpX1KS0IHjVZMgbXI/GovPMZGDu3nvSthpC45GMc+lB2uFIGG5Pvu//AF1LRafcbEzSRkyL9wnH0qUIdhc4GO4qHadmAevXFNcopRYyd2cc96NUGjHlWwADkL/k4pJHzu3nkcVCJJdzZABP6UqLhdzHc+PTvRzBZdR6x7YgF55J596rXMRICjqv+TUzsUUY+UA4+veqQd2dlYdcc0pdhxvuOy8aEE5A9fSpcgoNp5cZz1/CoZYywKjq2R+VMULtCRDGBhRTjpohNX1YpReFT0PeqIRtmAeSef5mrr/uGRCclgV6+tRsFCsR2OB/n6Um7gtNSskbmTLE4U4x7mllwhZuSUFSlwoJ6cZH8hUEzeZgYAJxnHpSeg1rqVWQiIknLH+tIH28jnaMjP5U4Sb2Y9lNNYqAFxwAOlJDKoc4dm75+mBUjldzHqQBz24qOZAxHZQBn3zUcrlmXaM7uv07CkVa5YdhH8o+YnqPQnmpEOEYHkED86pqyszHPzKRzVmRgF+X7uM5PrjFS2VYcfMVw44UcYq07BI+FHUCqksb+SB1fgZqXBeJADkjqfehPWwmtLn/0/tBAUDEEj+dPZW2qGw248k9vSpCC67DgkHJAqMyorbT831r8HP6BvceZCozyj9M+tRlecZGSOPen+ZlgwOcHGO9QOrRghl3FTkduDTDUX52HGVYn6A/WnM0mFyAVB6j0xTYZfOxswMcfh/9alRjFId7ZJ5OPak2JoeGJ5cDcOoppdXP+z70BkcgNwKYzeXyOcZB9800xMj3Dz1jwcjPIGMitB32KRyB3zyKYIkwCDkjp6g96Ugr6g9ePyppNCckyBY4y5bJyc08fMpb+7+lMfJOf1YHt61L5cjZO4bWxx2pehQyONiMS4IHOfY+1TrNGJDEpw36e+KjlKug7bev0psSbHDHn6Gh+QLzLyM0eUIzuB60yUhNpxgDHOcfhVCe5ZLhVb8M8ZJ4q4uclHHXkZpqd9AcGrMsRuzgnhTjn1/SgTMAA43AflUayhJOB09T6elThlbqOPT1q73IsOG0EMvJarEREjbsjgVnNCi52sQh571LHgsxBwpA4pbbh6CTpMJhJHwGxgg8D14q7IPNjCZJPtQSqYQfxentS8BuMc8nmpjBa+Y3O9iOCPyoikjbnJJz708SMoIZc47nkflTmJcByTx29aaYlIDqTGepFWlZWRDld6ifKTu3AfXmhpAgyOeevUVTLMdqnDKpAIPTNWXUofug8dKSkrjcRwc7claIsrIWJwR61GGdmBK7Rj6DFKxLcqxGPX0/xpsSRakdiuFAGT0Iz/8AqqHywTvcEN05PWoUJDBmIHoTx+dTLu3EbtwHcULXcTViq0aI2Uz0OM9PpnpmnjygoY/Ln05/lUyyfLhVzuPORnNRvCryB5WCA4+76j/HvUvTYvfcbDMrttVeGz8xokYh12LjAzz/AE7U3asR+XB75xSSSJsYOxDkZG3nvT5tNSeXXQcgAbzOVNKGb7ijkjv3/wDrVGjHPzjJbjP8qnYkfO3IUdR09qa12BkUh/fHcxCjBwPUCpd6sm/j5jjPt/jUHJdscg4OTzSngYXIwMc0krMGycsjkBF6Z79/c1ESoi3SYHU4zmoCVijzjd0Jzzn1p0Pyrh/vn5hnqB9ablrYSjoMXfkuuRlQPb8qC6yFdx+6R+lSMWcHceBUEpCgKoAI60raFJkPnKp2MvU4P4UBg/TuM9v89KrqP3hVhle57Y9qYZgpKgkE5H4VMZ3NHG2xcLAKI1wMH9aqs2H2qBgUx3C4PXA/nTI8lsj5hxj6+tDfQSXUkJYMzE8HNL5gfA7Ek8fyprcNk9M0gQDDE5z0FK7HZWJF3EyAjAHGf8mqzsp27eoqcykx8AAnnFU85U7eB71TJRIXAkzjAJqqJ2MpjHB6g9hmpwxLgNwAPz9ab5aA71yCuOPxqWx2toMY/vPn5xj9KY6l/lHcVKxyWb8BUBcICCcknB+lNpCTY8kEZHG0VWAVMbxnHB+tKXIh+XGQOB7UAq8aL1Iyc+uPWpv3HYrgF8gHDEkfT0qGQ7B0OMEU22kY6hKjDEaD5fr61NdEuFWMc85/Gs4u6NZKzRSbco69SM/hUTfM4XPIp8m84H93j2/zioAQrgY9voBVWAsxIA0aKcZyT79asYRtmRwGGR+tQQttxhcMcDPtU8ymVsDAAI6e9S9CktSw7b03H5c5PTpUClwRt6PVzbtBA5yOD7Uw4yCB07U/MlbWP//U+0/lGHQc9BiocIw+c4PTI96dlRg/w59eAe1QkgK4YYNfg7P6AQ62kkUP5jbgemOw9afNmT5g53/3T6VVjLFg5B5z06HFTmVU/eN0B4z04qForFta3GsBAFlZSue46c9qbam5aV3mI2njI7jtmrglSXIPzA8kVA+VI8vnbwQB296pR1uTz6WYkjSGYHhVx26/jSsuULDq46Zx1piKGLZGMHnOf0NTMUYboz93qOo/yapIlsrWkfkI25i+TkZJ71oBgyjkgdOfeo2KqglDbeO3TBqIHYRIG+Vj06daIpJWCTbdyUrIi7V+fGMHoT70i5K4iOOOh/wp6yhTgg+w7c96hcb5AVOwZBPvx0oasCdyRpBg7wQe/wBKnBiChd2OlVpZUDFZVO4fl/n2pVIKK6EED1649KaYW7krRgtkj/61DyOoKMp54znt7U7zXC7cduT6VNtRyMk5PQ9s0+XsHNbcZBKjNscDIHPFXN+QvOA3TP8AQ1VKSIp28+vYio0kdZ9hG4ehXI/Aik5cu4cvNsXyoDZ59iD/AJ6UzKM52j7nBJ7+v5VL+6kP3sn/AGelRqjk71+YN1x1+tVJXZKtbUtsIHG2UkgkEYOapyIAxEZwqHn1NSQo2SACNuPpUjo8nG4Y744NEloKLs9yMLM2HXIUHOT707fu2xo2ACCffFRPKGPlxvgdgPWk5U5I+buQM0KSBxLckeFySBnj64qtLI4jUHDc9+x7VJE6dQcE9fr9KHYbtw78g0Sj2FF2I4WwFDJt9gfzq4u3koM5PU+/Sqsb5UsyMSM9utZs+tWlrciFWG5uozjGR/hS51Fasv2bk9EXWhxmST5lXqPelIVkIUcDvj880/zY5lWQYORwajdwiqhBBz/nNPluTfoLbloFAd9xHf0yalZhsOOWHaqwPmOVHzAenbFSs5+6D9MjtQtFYb1dwVlUknP+ewqLHzeerYzgDJzwKVpctsJHHP5VYSMYBHIH4g1O4PQb5vJWQg4GeOM0xRuIbs3T0p8udwLjPYH/ABqijyBvLClkHOfb1zSbs9RqN1oXjIWG314yODxUMhSMs2STzgHOD6UNhvnKgAfjmq7A7cHBweKpvsJJDyQ3yngY7dSfamKzPwc7l6UnluDsXGB3NDK3CjODj/PNJIHYlZmmI8v5cc+lVZAuAWbr+WKcWYJtY4LHtUTr5j4HGzr+AouNIljVHU7jgkfjSP8AJH8pxnimLvCnJC46e9VQd+Qxzn09vSnsg3YsUSxlyoyG7HpmmZcMpbjB4A9DQJVjAV+o6fQcfrTHmjKEL36Y55qdLaF69ScZUDI4HI/OovMZgdw6VFDuMQDtuIJHv+FWHUYyTnI6H2oV3qDdtBqPvXJG0noPbNQOcgnoBTgdww3AxRM6RRhAcYp3EhjMwkXccUgfJZgciql1I212Awe34mpYM7SWxmp5vesVy+7cgcOTu5AX+VGTu57g5zVmVlVRz1P61ScnljwxOfwHanaxN7kjfdJHBAFVVfYhwcnGMeuf/r1IxZkyOtRsVWMMxAI5zSsMicgMGHU5Bpyk7d5PRc/Uj/8AXVdvm5PGCaH3AFR0Ax/jSQ2QyyZwQcA1EuRgk8n+tV7lGeEJ3Y549BUkkmXZc/KO/wBKm+paWhdg+6WJ7k4PSp4ld3ZgMA4yfcVUgf5Y2HI2/wAz/hWhERJEMdCT/PH9KW4PQuqf3RA5IGP8aSPcdvGCRkjt+NRqY44gXODj+dTBPky5xnAGOvNFgP/V+ygSqkZLEcn3pFAcbAcnB71A78DOcjnP9KeJgEPHLdDX4NfU/oNxGgbZd44IGCv09KbNG0gMbjjP4CpkUBwoYY5/z9aVywIY8ovBxzxRJXQRlroRRxrbpgtyvOfr6U6CaN9ykE5PPt780x1dzvQ5Xv2qmXdZm4yDjp/9epSsPc1ZAVBd8g+/T8+1NgnR0Kx/MffjFRsUdMM2Aw5B6/pUVrCkcm4fPxxn2od+bQSScdS6swDGQpx3H6U0mJ12pz3+gqo8nzNGvRuQGNSxsEy/Iz69M1aZDiSAlXWOQ71fv6EVL5YiYoSSCO/cGq7OxBj455H1H+NOaV5GU5xt4GRkfQ0+oW0LKYYYc71PcevT/JpkWFyE/A4qEsy/MnI9D+RH1qzsjzyvL8+2aSQxoWVmPHQHGRxx1zVyFVCcgjPpyBVDzZFfAOD7+tJYm4EjLcDCL69M+x9KXNZpD5bps0iSU+Y4I9P6VIGyMM33elRsygtGhBH5/lTgyBSzZBHcflWhmPAVVZ4+c9u/5/0oWbaBngdj0NRh3AJVcZ798etK7NKFDkEH1oAsQzeZHlCuR1BNSwyHHlyFQ3XHWqRtgjCWE4Zuo6fjVgeYU25BAHpRd31JdiVxk7zj8O/0pAoIIA6HP1FRFSH8xvlGOnapXeOKMsJAGXkg+lP1F6DG2wtuGcEY5/oajEi5PQd8Hk47U8iOQ7nZXHYA/n9KaQu7Maj6n2p3HYiEzxoSqlscn3rCuNL+2Xb3EuCX7EZC/TGOa2j5iuSpJGSdvueOKkVlOQcg9T7VlOmpaM2hVcNYlGzhFrGYUyFHGQT+ua0mZUVvmDL2zz/OoSoWTew4PB9/emSRc5GQMY4PNUvd0IfvO5Mjo2Ni4GBz/nvQYhkFjjH51ApREdlO4Huf5VIxOAQeWHGe3qaL3JtbYpyPcpPgAsnc8Yx9PX2q6J8LgqQOo7/jVcJtJU/Me5pqKFOOg6ms43TNZtNFgtu5Vsnse/pTcHOScEU0kcBOAO/pSlh9zA579a09TP0JSd3bAHOTSlEByWyTn6cVUlaUA4IGMD14pvmnGCdwx6UXFyko4YYPfn3pQwLk5yMmqocE59PTp1pCcnCjCj35PvQApkQMFPY9aQ7Izk4J/Mk1FIIwcsM859aiZjJ8p4PbHr9KjVGmjJn+Ylhke571TDAhirfeJ/zxT2EixmOb5unfoKYyqMt3Izjt/wDro3GrIy5/NFygxweMg9BnrWiBFtAXjPT/AOvUbqCAfQH9abuPGTiohCzZpOXMlYlLbFzUjOGUsuTg4/D/APXUbSfIBjOPxqIMSoJGcHnH1rS5mkORzsBJPA7/AOFOWRdz5POM49CarSzgHKp65qJHVlyOeefele2g7FiTYyhBn3/xquhZcDJ6GmCZ42wRhTxn3pGlXjv2/Sly9Sm3axPM+Cozx1x9KrvhlATt1/GpN7Nnd0A696rShg4I9M4q5PqZxXQkk4YDkDFQndIMAYxj9OaJZAx459abGwQAd8k/rj+VR1K6FdkcOwJIOKYXywJ+7z+ORUskgUuwOSVH55qgZWCjH4fnTQx7SAycHjbmqwLYO4YLH8cdaapLSSMT0HP0qBpWMoCnjBz+JFSykabSKsjBTwoCgeuBWvGT5SjhdqZ/T/65rnw3mSBQPfNa6OWeQpxtwv5ZNSNo0h5YjVmG/PT/AD+AqwuWw5TbkdBUUCn7oHKcfj7Ve8ts8nnH6VRm+x//1vsNP3i5zn68fSm/O671ADdP8aQREuNpAH9BTS2wAA4AIzX4LY/oRsU4iTcDz1OBnrQs3yqV4J9Ke6hCMttJqFfUqNwHah3Qrpkwk/hxt9c1GdpO0Dk+3HNQtuJDA4PQ/WpPPEcZabgKPb9KrmFyiArvYOcnt6fjVhpFUbDxnmoUaFlGfmVgMe4pCIwGVyc9eev4VMLlSJ9iyAEnB5NRrMEPOTngj3qMOdo6NjoemfSjETt5pJU4wc+tAtC2IyAHXnZxz1x7/wCNRyHaD2PHFAnEgIU8rVJTcNOQwBQnjH+eKJStsOKuXnQmILI36damUr5e1DjAxn09M1Cm9SQ4yOcH+lIZFQ4ycdqdrak6vQlGSQoblRwTVtHO0c7SMZH+FZuSSDnr0J7/AJ96t7gUBTkDg8800wlEshN5GSG53Ajik3k/NHwB2+n9KiiYqCF5B9D+uKlS2KsMnHcEfy9KaJJlZ8AlTk+h6H2qaNmlGDgFeD/ntUA3A7SctnntUqTZYBiRkY3fTpVJkNE4QnODnb2PT8KaOGO7Py9DSrMm8Rj73sO1Sz7N+0HoeuaLoLNbirMHHIyVPc4qtIMH5vlz17DHaleRVw2QRjvwaRirLkEfN0B5/lVMnYWI9I12/LSyAPGfm2Ecc/4VXxgnYPnI6e1RHa+3cxYg/T8KzloaxVycq+0ckstDKzFWY42nJ45p6ugHyE4A7n9Kb5oIChuv6U76E6jxIT8h+Yk9utRu/QKM+vY/SkG5cuAAR61CGAUyEHcBSbHFFS+vltI8cAvn/PFS2cgnjW5cspPTPFJLDFNtkmG49weasIgYYcYVvT+npWEYS5m3saylHlstxQu6Qjnjvngmo3CQAySdPcjNI0otVwuGUdD3xTDFFcIFcHa3OK0cunUhLvsWdwZBtGVPPB600FcNn7w/GkUKAIkzGB29fWqtx5zupV9oXr7j2ocmkCSbLLrwSST/ADqupbJ4HPT0FPWTOAoyfzqrPKI1LjotU2krkpNuxLtbBYNkN+HWo95jbHA49c0RSGWJZApAbn+lMlX5QqkZBz+NTe6uirWdmSs4ZuuUAH5imAmN8kjJx1+nSqZk8plb+9z/AI1IzEgErndyfTHrVKQnEkeTfgk47CqrSsxCg9R296Yw4znI/PpVfzBFznO79MVLbTNIw0JG8wDaewz6c1Erlo1wD7+vNTeaSuBzuNV3BV2Of/rU5AmWELOrZPTrUXmbMAE56CkidScp36+nAqKU7sOOi9gcUmuoKXQlDHkHgD/2ao2ldnAQhV5zn1phlG0EHJ96QnA35yeBQO5KQQAG6VEgO4+h5/8A1VV+2IT5QffJz+tWWJwpyMjBOetClpoJxtuKZDt9vX0p4cScHn5Rz9ahC/uTD1JA56+9QRExl4+p4A9aoi3YaBhRjlGPU9aZ9o2t8xHB4H4f/Xqd1/dgjqDjiuN15b6bULb7LkKpy31rOb5Vc1pR55WZ1fBQNnAHNV3IIOB97OKVSyIATycE+1Vg6q2N3fFWiEVRIE3gcbsD/wCtVNXJcEnjninzNuckdBz+VUVlxJnocdKUjRLqa0chhfI5LY/z+lbVmXUj2IPH5/yFcnbTlrhc/wB4E/5/GuosJVlDybsZbCj9KiTKsdNZsuBI/ABzVqTKIS/zHP8AKqMSB2WNc4U5PsBV1vlRmx0457nrQjNo/9f7HIG0fxDPB9KpDzImbcdwPr1/CpPNym1z869c8Ckcpt3MCc9h2r8Ft2P6DRIqq6FVGGHPNV5JEA544rMtrmaG7YSMzBiccdB25rRIVjvOSOw96UaikipU3FiRzLtAIO1u57EVHPlk2rxg5I60GMOMlse39aep2uocDryQaaV1Zg5a3QyNk2LsXBXJxj86tOrSKrKOPccHNV5I1RvNBxz1ppldZAWPyfrmhaA9dhwjYNvB29sDpxTnCyNwQCfvc85FOZsoXHc9aYNysS4wvGf8abRKYvm7cIoyxqzEABtxzVUgqxIXBUYPuO2Kkzk7z8tJLuDLHsSVz296ZIisfLdcg9D/APXpdwYCQ/McDv3FORlPPIx+vrQ10Baak8UY2hH+YA4BHBxjjNSCPDsycMeo9fwqlJIQBtHTnNTxT/uwX4J6MPX3B/lVprYlpltljT5/u/7Q6f5+tPSZjlW/eccE9/z/ACqCOV5EKA4bnlf/AK/Y0j+YevO3pn+VEn2BLuThg+fN74xjg1NsAG1mI+vGc1BE2IiAQWBx+dSDlvm+YY/CiLJktRVIiYEHBHIye9SiTzJCc7X/ACqEIXXKLz3+ntikmcgCNiFYc5HYd6TQ7lkxk5RiAM9G7/lTXJjB80Ap0OB098//AKqbAWKZKbl9Tz+OaWQbT6g9T7Vd9CLajGkz8+4MF9euKEAlYyLjd6H0qMJIh28EHoD3/pSlSGHXj9PyqGncu6sSuFPD5XH5ZqHazH7+D/M1IJcqUJIPbNV5JAh2ggkiiS6hF9CZ5CqbCM5PJ+lNChgMNjv1FR5Ty+OdwpELkckg9vUUIGiTKqx2/jUE5aRW2nG70/pVltuwEjBPJxzVZjtUgEHI/nQ1oEXqKXCBQRz9aWN8k8Yx/Kq7SKDsfoMfj7/hSc/cXA7+lSU0XDIHUlR+HSjcB8oAD+4/lUCEbNrEgntQSU5fp+ooQn5CbVUgn8+n6VCXJj2k568nrSOzN84OQvtgmo/mYgqD+PSi6HZj1mAcjkADPT9Katwki7lfcDnOB+VRzRO0TYJBqnZQ+WXd+GbAwD/OocpKSjY05YuPNcnMab/M6jPAPt7U51wM9AcdO2aeQFO/0GMVA7gKpHQZJ59e1W9DJClWJ4bCjqOmf8KpyAbuex/+vUzyFQDjr/kVWedVjJIyFpSa6mkb9Bu/JJxhl9v6U0tvUsTgnt0qGKQzJ52ME9R3z0pof5dp7n9KlPqX5D1G3CR+vP0Pep0cMvYdjVYyBAzYxt4qI/M4bFWjN+ZOw3NgnAHP5elPwPKOOtVy6lQp49CfSiNyd479BVIlox7ezlXUnnY5XJx+NbUmUTc556ZpCUBBbqDzikuJdwJHI4/KsoU1G6RrObk02MRykWe/ams5B8wck8imckcfdx+PNMORgK3APerSIZM9wcJGgBzy31PpVV2Vn3gdeBUzYA3gZxVZiECkDrknHSmxRJGPzMc5wMVnqPlL9+TzT0lGSzHJPQe1QGTMXPU/yoWxRTmkOPTPT86yJZdhLE5IGOKuXjFvm6AdB61jTyqGwOM8/hUs0iXYrgqQ390dPc//AK66/SVG1GfqPmPuT0/xrzUXAMoUcb2wPp3/AEr0bS3ZolIGN5wo+vH6Cs5GnQ7S2kBjznbnp71fcRgLEvzcZbPc1mR4QDjeV/yKvBeC8pyT2FOJhLc//9D66cBTliFf17VGzJsGCTz+FG9ySSN2etISwAT8q/BEf0KQmIsGLcjrRGcgeWcHofWnNlFxxikUqncEH9KB3EzKDiTk5OM1JvwPlIyO3f8ACqF0zW0bTAlgByPX/wCtVWzu0ugcZBX09aj2ivYv2TceY2DKcFC+PryMVXlXKExnLDpj1FTiEHG4jA5x3pGj2nOcE8H0+orRruZKVnoZ+n3crP5FwnTqxHf0Nbh2phVHHqOlUigB4wT3qVQF2nOFPbPtUwTSsyqjTd0rC/KFKqoJ7U1JFLhVO1hkkdulKRyCSCy9PamvGrvkHaw5qmnchNE5TA9O+B046ihXkZs7Rk9R/X8arIkiylXOCf1/OrLSLDww6fl700Sx4lVTtfg8dexoDfNgAgdce9RSFiA+NyZBOev1qwpTG4cr+gpMpFiFcZBIVuQcnrn9PxpyszMUbk+9GAcMpPH06mkeMjBJDZIwR1p2sLmuSJCNwZiCvQg/pk0jTxo/lk4PT2//AF0gZy+SfbnmnMhblgDgUPbQlPXUWUvGVkU4X3Hf608KzYDYIPPTP5U2NVYADgH8ajaSQEoRu2n8CPpTsDZZVw5AbMWOARinlmQjzRvDdO4/Cqc0sSRmVhlQMke31qlb6lFdHZkIw5G/g4+lJzSdilBtXRpbtxKrk+gP9DTEmlfckibtpx+FPCyMu4YbPof1qFjImPMbO8+1NvqSuw8Sbn+c5PcHjNTlEJ3Lx6VU3KT84AJ9OamjGzIVjj36fpUopjwgJ56+/SovMbcQxwQevYj1oFwswKxnPueajZQ/y7hxSUr7A01uSedljFGN7DocVCw+be3O0c//AFqRy0b5P3eh/CqVxIwA2rsyR1OMD1+lJystS4xu9C8HRuI+e/OcCqzgYOFJJ6YotrhpwxbJ5+8vA9zVhdmTnhu2e/5URtJCl7r1K6SOoyy5Jq0CG+V269R/jUDjayt9Ovp9Kcck5B2t/SmromVnqLsCZDcZ7ChBnJDAqBj8qhldgo70ZKAEDpVKwnchLSN8rjB749qiA2rvHHc+lTqHcsM5z60wg7MHgmkkNsVpS6EL24/CoeepwQKVyRtZTyOoHTHaqbSMzDaOvU07h6DwpaXDfx81HcGOLcqqOR168UM5UAj5WXpVc4cZPAPbNRoUmxhXhWXgf41EHKOQcMFP+cU9SW3DBwvA5qJgVbdnNMpD5W5PuO/FIrIgAJwAMEf4VEZN3DdvWoB83OcZpiRYkLR8n5qiecIwCkY70jtJtI6nHX69KhVEl+c8HAx7UWC49mbZlj1/lUrur/IOo5qoyuCFXgAfoKfE4JK8Hjmn6gyeQldm04FVdzKd39+hmLPlTiqlwzFdi9T0pNaXCO5ed+cdFUcjrUTtuTJHHaolBZfLJ57mln3M6KOnTiqQiuCj/LxjGax7m+WO8S0HBkJP0rUQCOMnjPXPqBWXPDE0y3OMuvAPfnrUyi7aFQavqQXbkuQh6j8q5q6k2jcT049/ety4l+Yn1GK5HU5sQmQnAFNoqLHadKbrUkjY9BuPtnA/lXsmlkkCbGFHyp/LNeC+Ep2utRupQc7m8vPsv3j+dfQukxqsSySnC4wo7Af41g1qbS0RuxEphBzI3Pr9BWgCUABGccH61WtY8qZG4Lc/j/8AWq4QxX5eVHf1NVFOxztq5//R+s8vvwTjvxT0KDI6nOefWhTkgHJx39aVlK8owz1//XX4LY/oS4ydTkjA56e3vVVS0WN4+93+vrV0h5NqOPfPtVFi0E+2UblbIGfpUt2KRIzB0woyvQqaoWdnDaSGSPOXPfsK0N5UBf4R0P8AjVV+OU+6f0ocE9RqbtbuXWlRXRSeOw9qRyzEtjAI4NVW+YhDjOc5puH+4VIHOccimmQ0WI3YgEEfTuCKleTBxJ90nHpg1VSWMfu5Vzk9akkdUDD7ynGRTuIkSXLEHGQKnhZGf5juB4IPFU0Cud3Rk6KeDjpQu8EwjJYZwT3FO4mky1IrHlDyuRg96EKYMUv3h+tNEiNEFbJDAdO2O1KrEp5frxkeooaBPQsBQqsqNkDseuP60oym4KBwMgeo9KgjYgDe2SBz9BVovj5f4exFFuxN7PUp6dqJuyYplCOOcenPStdgAArLkDvWcIiHMuB+XY9fyNTq4BCMCD296iCaVpGlRpu8SVAEYqvOOf8A9dWgW4bpn8R9aqg5I2naenI7VMoCjDEjHStUZSEEhSQgDAbke/8AjTDPltrjOenpT3bGCh28j15qQiPHz8N29qQeZm3Vv56FASqsMfKeoNczZaDJDfCcycRNu2g4z9c/0rtQyIvK9e9MaML8/Qg/l/jWUqCk7nRTxEopxRLHLEpG7KFeD8vWpyyNwjDrUURxguMHtxil2q2SueO2MEVvGJzSY3gdenXA6fWmvICfLDEZ6ZpwZRnP0yf61XLM0hHAGOc/4VL3KJBGAAQAoPOB60SIBww+hH+etPMoVRn/AAqo5bafKOCPWk7Am+oSMpJG4Y4HHc03G4YP60hwSFk5PX1qQjacDIDDPOf0zUWLTsVMFflPA9RxjNSZdGXJyo/P2pSVwST1B47U0kOc5A9DRbsDk+pI0gf5kUED880SuFwMfe4x6fXNVJN4UCM4PrTTJ5BXLe2TQ3YFG+xPIQX5OQOnaq5y5BB78+1ODH77nIPA/wDr1WYqjghcj19KG0NRLuCu5j83H0qrL8q/NyT0piXG6TbuJU9R0p5nQSBSOMZHpVX0J1EVy69Blj39KhcomecmnS7SCRxx2qu4J+QDDY/Wlaw7kJkLE857U3+Ivn6U0sw6DAAIzjvVaVnWPI+bdzmmA+JnVXZmzkk4HpR5hAwDuGf89arjzNoO7aBz+HpUMkqgnaMA9frUtWKWrLDsMHPJPGf5VUMh4wcDv+NTswaNQc8461EU2FkPAzx9DTAc8jEjn5RjFGY1bcOrGoJZAF9ge1NLqScD3FVcklabEzcfKKUAltzAZ5qs6rjaTz1NSq20jB4I5NAx7ICuR3qtncd2enarOSytg9Og9KoB9owx5J9c0bDWpYLYC46mmmUs23sKhJIUH+IdKahG0E9RmmiWRSyKqe/IzVC5fCEd6c7EFzj7p71nzylyfQiqGkZV5KV/z2rhPEGorb2kspPEYY/kK6u+mCgBuSc815J4+u/J0llBw1w6RD33H/DNJas2ijt/hbE0tqJpMbpfmz6ZOa+itP2yMsSnIXr6cV4P8PwINPhgh+ZiBnvive9MZVj2Rglu5rFrU0qM6WPZ3+70A9TWlFgARgYJ79dorPUeUgK/M56Ac1PHuVRnO5upzWqRyN3P/9L6ykdiPk4NMEjDDH0+9UCvtJ3Njd044zTMlphnIAPA6Ag/zr8FbP6F5SQyymUMeVJAA7/59KkuDGyHzAfy5pJAw7YJ559O9IV+YI5+XPFTYbZWQnJQ9O3vTf3qEtnI64qzOSh5xjoSfakJiZMq3BPHrT20DfUrvMsmFA5HIqdNowm45PNRlAB+8wccZA6VGv70gOMHs1LUT1LBRnGHbIHTimANCwDkEHpVhX8sEH59ufr+lNeUMNjqCP8AHmqsJMY6xkbkODjjPFOjlEm3OMAYIqsS7EMRkD9f8asKEYjH8X86XUdtBz7EIIyCe/XNPG/buAwB0/8Ar0mMko54HqaQK2cD5vSlrcHaxYCmQMA2Gz1qVCSoJGCO9RKgHKsQR2x+NKGd1JIP4dyKrYi1y0rAZA55PHv7GkQgr1yc8cYPPtUQDKQ3fHUf4elGVbALYHrTZKJWMhwpxt+vQ98UJJuJQZyD3qKTMfDcnsexH9KdHhmUkEFO4Pb3pMouAb1ZMDnv707cVXEgBYDPvik4UAxn6A84zTXZXPzfKf5/jTiiGTIysvXJ7Um4jrj2OKiLN0U5z+vtUqOqttkGeOpFO4NETxO2FwdvWmMxjAXmQD8xUpDAEjPH61G8R25JJ3dx1zS6lrbUXzFPzD5iR3zUbOzERrGvTAPf86hUSKc9j17H/wDXU6EIuH+Vgevf86TfQEuoxYWjOWkY5z8vp9KaWbAAPPvUxIc4T5j2OKpyoqIWJzu4zUcttiua+4+WVIowjZwcjj0p8RJQsSSrY61CjBgFPLDnj2pTNvBQf596ErO4Paw6WTPTp7D0qOR5AOny9c1EJGiz6DjNTqxkOByD0FUtSXoQtKCMDg981HIA67pMdcirDqNqlRyfSqYY524+760SQ4sWIAKYwMgHIPr7U50XZkHnrimkBeS2KiBGS/8ACalMp9xm1trMOCehqrbq8asJm3Pnr/KpvNYFSelNmYcY5NDXUd+hKhJ5J5zilYoxGO5/MVXV3By+QG9Rj+VDzBl3L06fXtxVdCLajPuI27nnI7VRZsZfrViSUk7WH+RWbNlcqtK5ViTzF2l36dB7elQs2wYT5gOcmoWcfxnbgdPWq8jlWC5+XqaaGEOqRm5eAD5R0J9avuWDZ6g/0rn4rVFuBK38JOPQZrUeRchlPynt2zU079SqiV9BckPjt0powi464zSKVZQ5POP/ANVML5Izzx+daMzRLI4LAZz61LEVAA9qz23eZgN9atxFOW6sBj8aED2J2OxcZ574qg+0FvfmmQPO5kWTjLcUE7W5Od1C1E9GPEnIPoPxqvPKQMHjNIez9hkVSmYuMr2PeqsC3FnlX5gvU4rFuZGRm28cCpJ38tRluTmsp7rczB8f/rplJGVfuT83tmvCPiHdPdano2mxHAMzSsPZBtH6tXtd65IJ7V4PrMgu/HkcHVbWFR9C5LH9MVVNamqPo/wNCtraQqBjIAPrXuthMqxYT5j714t4NgxHGJOSAK9ms1kYbUGPX61i0XUsdDCzp1+8f0q6oBGDznkms2MCIrHu3Mw5rWh2xruPA9KpI52f/9P6wVo5I9jAEL/OnGNFA3Hjjg9RX6TL4V8MLwukWg/7YR//ABNO/wCEY8Nd9JtP+/Ef/wATX57/AKlT/wCfi+7/AIJ+kf69Q/59P7z802PVS2fT6VXdxu8oEdOa/TT/AIRfw0cf8Sm04/6YR/8AxNJ/wi3hnP8AyCLTP/XCP/4mj/Umf/Pxfd/wRrjqn/z6f3n5pRLuQiXBP4fnVZovKOY8FG7f4V+m48L+GgeNJtP+/Ef/AMTR/wAIv4Z/6BNp/wB+I/8A4mk+CJ2/iL7gXHUL/wAJ/efmOwQlmQ4x2zmnIVKMrEe1fpr/AMIt4Yxj+yLTH/XvH/8AE0f8Ir4Y6HSLP/wHj/8AiaFwTU/5+L7gfHVP/n0/vPzKXYrYzgY5Gefzp7eW/IPH8q/TE+FfDB66RZ/9+I//AImlHhfwyOBpFp/34j/+Jp/6k1P+fi+7/gifHVP/AJ9P7z8zGMa4z271GWwxMZGOo/Cv03/4Rbwz1Ok2n/fiP/4mj/hFvDP/AECLT/vxH/8AE0Pgqf8Az8X3CXHNP/n2/vPy6tb2Wa6a2lG0jJyPT39a2Q/OAQce9fpYPCvhkfMNIswf+uEf/wATS/8ACMeGv+gVaf8AfiP/AOJqY8EVFvVX3f8ABLnx3TbuqT+//gH5tHnDKQcf5xUvygk7vveh6HtX6Qjwx4bHTSbQY/6YR/8AxNIfDHhs9dJtP+/Ef/xNN8E1P+fi+7/gkf68U/8An0/v/wCAfmwZ13FTyxHGP50qbWAAYH09/wD69fpP/wAIx4b/AOgTaf8AfiP/AOJoHhnw3/0CrT/vxH/8TQuCKn/P1fd/wRvjqn/z6f3/APAPzVLgEpIQ46irEDRdcgGv0iPhjw3z/wASq056/uI//iaP+EZ8NjppVp/34j/+Jo/1Jqf8/V93/BF/rzT/AOfT+/8A4B+dDbFXrtI5HPBqPzFkj2nHvkDrX6N/8Iz4c/6BVr/34j/+Jo/4Rnw31/sq0z/1wj/+Jqv9Sp/8/F93/BJ/13h/z7f3n5xI0aDafu/WpFUtw7ggfyr9Gh4Z8OZ/5BVpn/rhH/8AE0f8Iz4c/wCgVa/9+I/8KX+pM/8An4vu/wCCV/rzD/n0/vPzr3bWHPymoJnjLlA2CPev0c/4Rrw6ORpdrn/rhH/hSHw14cJydKtT/wBsI/8A4mn/AKlT/wCfi+7/AIIv9eaf/Pp/efnCxK4IK4HvTC6uowQO2D0r9ID4Y8Nnj+yrT/vxH/hSf8Iv4a6/2TaD/thH/wDE1P8AqRP/AJ+L7h/680/+fT+8/ONWQYK4FI6wsTuP4dK/R/8A4Rnw2Rj+yrT/AL8R/wDxNJ/wjPhz/oF2nH/TCP8Awp/6k1P+fi+7/gh/rzT/AOfb+/8A4B+asi7htVtpOQOecGoFhMZG99zH+IdM1+mH/CMeGxz/AGTaf9+I/wD4mj/hGPDX/QJtP+/Ef/xNS+B53v7Rfd/wSo8dw29k/v8A+AfmZKzKCUIIHX6VIsqoBg7Cf89K/S8eGPDfbSbT/vxH/wDE0h8LeGT10m0Of+neP/4mhcEVP+fq+4Hx3Tf/AC6f3/8AAPzWJaUn5gKgcDJOQPWv0x/4Rfwz/wBAm0/78R/4UHwx4aPXSbT/AL8R/wDxNU+CZ/8APxfcSuOYf8+n9/8AwD8ynnQE5HynqSageUBcBx6g+3pX6d/8It4Zxj+ybTnt5Ef/AMTSHwp4XIwdHsyP+veP/wCJqf8AUip/z8X3Ff69U/8An0/v/wCAfmE7Bl2HHPpVMwL54kMmQo+7xX6kjwr4Y7aPZ/8AgPH/APE0n/CJ+Fyc/wBj2efX7PH/APE03wRN/wDLxfcC46h/z7f3/wDAPy8kkVzt3cDgCq38YzgBe2a/U3/hFfC+f+QPZ/8AgPH/APE0n/CKeFz10ezwf+neP/4ml/qRP/n6vuD/AF7p/wDPp/eflsXjZctxgYxVJyCeoJ5r9Vf+ES8K99Gs/wDwHj/+Jo/4RHwpnP8AY1nz/wBO8f8A8TVf6kz/AOfi+7/gi/16p/8APt/efk4yAyb88DtmomRCxJI/Ov1o/wCER8K9To1l/wCA8f8A8TSf8Ih4TP8AzBbL/wABov8A4mj/AFJn/wA/F93/AAQ/17h/z6f3/wDAPyUaIBiVbrzUO5E+8R1x171+uP8AwiHhP/oC2X/gPF/8TSHwd4S/6All/wCA0X/xNNcEz/5+L7v+CN8dU/8An2/v/wCAfkiu3kbvQ1YDRqjKGHp1r9Zz4P8ACeOdFsv/AAGi/wDiaT/hD/CWP+QJZf8AgNF/8TQuCp/8/F9xL45h/wA+395+SKkbs5HPJqaPYCSSOeetfrP/AMId4RHA0Sx/8Bov/iaX/hDvCX/QEscf9e0X/wATT/1Ln/z8X3f8EP8AXin/AM+395+TDgK3ynG4Hv0qAkNtDEdMda/W4+D/AAkRzolifrbRf/E0n/CG+EP+gJY/+A0X/wATR/qXP/n4vuD/AF5h/wA+395+RbsANuQQDyc1Qchd2GAB/ma/YP8A4Q3wj/0A7H/wGi/+Jpv/AAhfg4f8wKx/8BYv/iaP9S5/8/F9wf68U/8An2/vPxpuIxtJ3A4zWJcldo6e/Nftj/whPg3voVgf+3WL/wCJph8D+CiedAsD/wBusP8A8TT/ANTJ/wDPxfcUuOof8+39/wDwD8K724EcTLuBPb868M8NSLrXi/UrzcCWuGUc9k+X+lf0iHwH4GPJ8Pacf+3SH/4mqkPwz+HFu5kt/CulRMTklbGAEk/RKqPBs1/y8X3Frjyn/wA+n9//AAD8ifC9qkUAxgkgADvXpuniTaq5Ax3r9O08GeEI8eXodiv0toh/7LUw8K+Fx00izH/bvH/8TUf6lT/5+L7glx5Tf/Lp/efnBDDtbeoGT75rRESkAdWr9Eh4a8OD7ul2g/7YR/8AxNL/AMI34d/6Bdr/AN+E/wAKpcGS/wCfi+4xfHMH/wAu395//9T99hRRR2zQNC0ntR9aPpQMWj3oo+lACf1paP6UUAHekz2oo5oEFHTNLRQMPYV4B8ff2m/hD+zNpekaz8XNSn0211yaS3tWhtZbktJEgdgREGK4B6mvf6/Dz/gt2T/wrf4YKO+rX/8A6TpQJn1D/wAPYP2Lev8Awk2ocf8AUKuv/iK+k/gD+1f8F/2mLfW7v4S6ncahH4eMIvPPtJbbZ54cpjzAN2djdOlfm7+xR/wT8/ZY+L37Mngb4jeP/CUuoa9rNvPJdTrqF3CJGS6mjU7I5VUfKoHAFfpN8HP2ZPgt+zXpuv2/we0JtFXXFje7DXM9z5ht1cR4893xje3TGc80COH+D37dv7OXx4+IH/CsfhtrN3e6+YZ5/KlsZ4E2W3+sPmSKF47DvV346/tu/s8/s4eK7fwV8VdZutP1a5tEvUjhsp7lTBI7op3RqVzuRuM5r8D/APglH837b4J/6Bms/wAhXR/8FmyR+1HoijoPDNp/6U3VAH9NaeINI/sIeJbi5S20z7N9saeY+WiQbPMLuWxtAXk56DrXxt8Pf+CiH7MPxV8f6d8M/h9rGoazrurTmC3jh0u62NtyWkMhQKsaqCxc4AXk1+Zv/BR79sW7vvCPh79kn4STvc6hfWOnp4iltMvIzSRR+VpsezJLOSDMB/sx93Ffdf8AwTr/AGI7T9mXwF/wmfje2SX4keJoFN4xw39m2xwy2cZ/vZwZmH3mAUfKgJYGrqn/AAVP/Y30jU7vSL3xJfrc2M0kEoGl3TAPExRgCE5GQeaoH/grD+xav/Mzagf+4Vdf/EVm/FH/AIJs/sgaf4M8Z+MYvB07atFYajqCytqV4QLhYpJg23zdv3+cYx26V+Mn/BMf9nn4VftHfGHxL4U+Lekvq+madobXsMaXEtsVnFzDGG3QspPyuwwTikB+/vhD9v8A/Zn8c+BPGPxJ8O65dy6D4DitZtWmewuEaJLyQxQlUK7ny4IO0HHU10fw+/bU+AfxR+HHjH4qeCtSvb/QPAieZqr/AGGdJYk2GQlImUM+EUsdoOADXyT+1P8AsrfBP9mr9ir41N8HtEk0j+37HTheb7qe53i2vovLx5zvtx5jdMZzzXhX/BFzSLDX/hN8XNF1WIXFlqOoWlvPGwyrxS2sqOp9mUkUAfpf8Av2z/gD+0vr+peGPhPrM99qWlWwu5ori0ltj5JcR7lMgG7DEA46ZFfVEs8VvFJcXDCOKJSzMTgKqjJJPoBX8pf7KV3e/si/8FFIPh7rUhgtF1e88MXLscCS2vW2Wsh9i/kSfSv3x/b0+LDfBr9lLx54lim8rUdQszpNiQcN9p1H9wCvuiM7/wDAaAD4Q/t4/s3/AB0+IUfwx+GutXmp67Mk8qobC4jiEduC0jmV1ChfQk8kgDkiuP8AGH/BS39krwJ411XwB4n8R3lrq+iXsun3ajTrlo454HMb/OFIKgg8jIxzXwP/AMEV/g4qWHjn47ajBtM5j0LTnYc7U2z3TKfcmJfwIr8tfj94C8Q/Ef8AbB+LvhvwzEbnUV1vxFeJCAS0q2LT3MiIB1YxxttHc8UwP7LrG+s9TtINQsJluLW5jWWKSM7keNwGVlI6gggg+lfKlv8Atvfs83PxxP7O0OtXP/CbjUH0z7L9in8r7VGpZl87bsxgH5s4r43/AOCS/wC1HH8SvhTN8CvFN35niTwHEDZF2+e50hjiPGept2Pln0Qx+9fn1oIaT/gsXITx/wAVvd/pHJSA/d/49/ti/Ar9mnWdK0H4uatc6bda1A9zaiGzmuQ0Ub7GJMSkA7uxr6B8JeKdG8ceFdH8ZeHZWn0vXbSG9tXZCjPBcIJIyVbBUlWHB5Ffz0/8Ft2/4uj8NFH/AEBbv9bkV+3/AOyz/wAm0fCrnOPC+j/+kkdAz3nHavk749ftsfs/fs1+KLLwd8WNYutP1TULNb6FIbKa5UwNI8YYtGpAO5GGOtfWP6V/Mn/wWnGf2jfCX/Yrxf8ApbdUAz+lfQdZsPEmi6f4h0pzJZapbw3UDEFS0U6CRCVPIJVhwelfKfxZ/br/AGcPgn8SW+E/xB1u6svEaLbMYYrGeZMXYDRfvEUryCM88d695+DYx8IvA49ND0z/ANJY6/mb/wCCneT+31dH/ploP/oqOgR/Rp8ev2k/hP8As1+H9M8T/FnUZtO07V7k2lvJDbSXJaUIZCCsQJA2qeTXXfCL4ueCPjh4D074lfDu7kvdB1UzLBNLE8DsYJGifKSAMMMpHI5r8of+C07KPgV8PUbvr7n8rOWvAfCP7Y9v+zD/AME2/Avhzwfdq3xE8Wf2vHp6ggtY2xvp1kvXXsV+7CD95+eQjUAfqP8AEX/goj+yx8MvH+ofDLxB4jubjxBpk62k8FhYXF4ouWx+5V4lKtICQpVSSG+XqCK+0tOvl1Gxt79YpYBcxpII5kMcqBwDtdDyrDOCDyDxX4Nf8Es/2Jru9u7f9qr40Wbzz3DG48OWt2Czu7kltSlD8kkk+Ru5JzL/AHDX74NsQF8hQOSScCmB8m/Hf9t39nf9m/xVbeCviprs9lrF3aperDb2c11thd2RS5jUhSSjYB5xz0r134LfGv4eftAeBLf4j/DDUG1HRLmaa3V5ImhkWW3ba6vG4DKehGRyCCODX8zPirw3q/8AwUA/bX+KNxoksk2n2djq9xYOnI+z6Rbm309QegE04iz672r67/4Iq/Fw2d/46+BGqzFTOseu2EbHo8eLe7UA98GE49iaQz9lfjv+0N8L/wBm3wraeNPivfzafpV7dpYxyQ28lyxndHkAKxgkDajc9K+ST/wVh/Yu6/8ACTagf+4Vdf8AxFfXvxt+AXwu/aM8LW3g34taU+r6VZ3SXsUSXEtuROiOituhZWPyuwwTjmvzH/an/Y//AOCf37MPwc1f4j+IvBcs16oNvpdkdWvg97fyA+VEv77O0Y3SN/CgJ64BBH0r4d/4KhfsgeKvEOl+GNG8R38moaxdQWdsjaZcqGmuHWOMFiuACzAZPSvY/j5+2b8A/wBmnX9N8M/FrWLjTtQ1a1N5bpBZzXIaFXaMktEpAO5SME5r+fv/AIJjfsk3fx7+L0XxU8R2z2ngrwHeRXZK7lF1qUbCW3to2JztjIEkpySFCqT8+R6z/wAFsh/xfDwER/0Lj/8ApZNQB/Rno/ibRtb8OWPiyxnH9l6haRX0Usg8sfZ5YxKrtuxtGwgnPTvXxz4P/wCCiv7L3xB+IVl8MPA2s6hrmvahdmzt47TTLmSOV1JDOsmzb5QALGQkKFG4nFfmh+3D+2VPonwG8B/ssfC26aTXta8OaMuvz2xLSQ281nD5dgm3nzZwQZAORGQvVzj7Q/4Jt/sQR/s4eC/+Fj/EC0U/EXxRAvmRuATpdm+GFqp7SvwZyO4CDhSSAfqJwOpr4M+In/BSf9k34YeNNa8AeKvEl2usaBcvaXaW+n3E8aTR/fUSIu1tp4OD1BFfVnxg+IumfCX4W+KviZq5AtvDWnXN6QxwHeJCY0+rvtUe5r+Pvw/8FvFnxd+DXxc/aX1B5bibwtqVhLO2MieTUpna7Y+8e+Nj6BqAP7MvD2vaV4p0DTvE2hTi603V7aK7tpl6SQzoJEYfVSDWvX5q/wDBKb4w/wDCz/2U9L8PXs3man4CuZNGlBOWNuuJbU/QRPsH+4a/SvpQNBSUtJQAv0pKP1paBhxSUtFAg78cUlLR+tAwozzSUtACUvvRQaAP/9X99qXtTaXtQNBS+1JxRQUxaSl/WkoEGaWk70UALSUAUUALQKM8UnvQDFr8PP8Agt2cfDj4YH/qLX//AKTpX7h1+JX/AAWt0zUNS+HPwyTT7SW7ZNWviyxIzkA26ddoNAj4c+AX7E/7cHxT+EPhzx58LviDHo/hbVopHsbQ67fWpiRJnjYeTFGUTLqxwD3z1r9p/wBhv4F/HP4DfC7xR4d+PfiFfEer6hqLXVrMt/cagI7b7PHHs33Cqy/OrHaOOc9TWt/wTmtLmy/Yy+GlvdxPBMlpc7kkUoy/6ZOeQcGvtDUFL2Nwo7xt+ooEfyy/8EpP+T4B/wBg3Wf5Cui/4LMnb+1Lof8A2LNn+H+lXNUv+CVuga5Yftri6vtPubeEabrA8ySF0XJAxywxXQ/8Fj9G1bUP2ndEm0+wnulHhq1BaKJ3UEXNzxlQRmgD5Q8VfDH49fsT+Pfhd8cfGNrFLqmriHxBZPI32lDKj7pbW5YgjzjGys+CSBICDuBx/WT8Efi94T+O3wu0D4qeCpt+ma7biXyyQZLeYfLLBJjo8Tgq30yOCK8H/aH/AGa9J/ac/Zbg+HGoIkOtQ6baXWj3Mi822owW48sk9QknMcn+yxPUCvxy/wCCYPx48b/s+fGXUP2fPihYXth4c8T3jWoW4icR6drUR8pSTjCrMV8pz03BG6AmgD+hX4v5/wCFS+Nv+wHqX/pLJX88n/BFT/k4Hxp/2LTf+lltX9D/AMXEeX4VeNIYlLO+iakFAGSSbaTAAr+fT/gi/our6d8fPGc2o2M9qp8NlVMsTICTeW5wCwHpQB+tv/BR/j9if4o+9la/+l1vXwx/wRD/AOSdfE8f9Raw/wDSeSvvD/gotbXF5+xd8ULe0ieaV7G2Coilmb/TbfoBkmvhv/gilpupad8PvicmoWsto0mq2BUSxtGSPIkzjcBQB8u/8Fgvhne+AP2hfC3xs8PqbdfFVpHulQY26lpLKobI7mIwkf7pre/4Kj/tJ2/xX+EXwN8N6LLvTxTpkXiq9iQ5+eWP7PChA7rJ9oGPUV+j3/BU74RP8Tv2UtW1fTLY3OreCbqDWLcIpZzEp8m5UAc/6qQsR/sCvwh/Yq+EPjT4+/tOfDjwx4xtLqbQfC225l+0QuscWnabI10IQWUDa8z7cf7ZoGf0yfsefB9Pgb+zX4G+HskQiv7bT0ur/jBN7efv58/7rvt+iivwe+B7qn/BXvUkYbg3i3xGCD0IaK7Ff09NwCPav5mfgZoOsD/grlqN/NYXC2v/AAlniNvOMTiPHlXeDuxjB7c0xHOftCeDPEn/AATq/bf0j4seBbZ18H6zcvqdlEmRHJZTtt1DTj2zHuIQHopjbqKr+BfEOj+KP+Ctem+KfD04u9L1zxUb+1mXpJBd2hljYfVXB9q/cT9u79mqD9pz4B6p4T06Ff8AhKNGzqWiSnAP2uFTmHd2WdMxntkqT92v5v8A9grwr4psP2zfhe+raTe2wtdXKyGaCRQhSGQYYsOMEYpAfan/AAW3H/F0Pho3rot2P/JkV+3/AOyvx+zP8Kf+xX0f/wBJI6/FL/gtXpWq6n8T/ht/ZtlPdLHo13uMUbOATcjglQfSv20/Zfhktv2bvhdbzIUePwzpCsrAhgRaR5BB5BoA90xX8y3/AAWoBX9ovwi2DhvDEQz2/wCP25r+mmvyR/4KpfsgeMPj74T0H4n/AAwsH1bxL4OSaC40+Lme70+Uh/3I/ikhcFgg5ZWbGWABBn6R/BZ0n+DvgWaMhlfQdLII6EG0jr+Z3/gps32j9v26hh+dxHoCYHXcYYiB9eRXbfBz/gqp8a/gD8ObH4N+LPA8Gu33huEWNjPfyT2V1FFENsUVxFsJfyx8oI2MQADzzTf2Uv2cvjp+2j+05F+0h8ZtLnsPDUepRavfXs8DW8N49sVa3s7NH5aMbEQkZVYwcsWIyCPs7/gtUv8AxY74eKeMa/IP/JSSvxJuP2bvjIf2d7P9pu5t/O8Ex339lwsZPMmjjV2XzvL5CQefmPJI/eHpg5P7kf8ABaTTdR1H4K+Ao9PtZbp11+QlYY2cgfZJOSFBxXtv/BPr4eaN41/4J++H/h746043Gl67FrFreWsyFSYprycHhhkMPvKeoIBHQUDO5/4J9ftU6d+038EbN75ooPGHhNIdO1i3jAQMVTENyiDAEcyL0AwrhlHAFd9+3N8Xv+FJfst+OvGNrN5Gp3FmdN08g4b7XqH7hCvugZpP+A1/P14IPxS/4Jrftl3VlPZXuq+HoJvs135MTsmp6FdNujmXaNvmoAHA/hlRk6E19Yf8FhvjDP45074b/DPwP52p6ReW3/CSzy28buki3CmKyzgcHZ5rYPI3DigR8df8E/P2xPhV+yHc+L9b8b+G9T13WfEK21tBLYmALDawFndT5rocu5UnHGFFedfA/wCO/hX4c/tx6Z8ZvBcNxpHg7UPEMxa2uCokg0zVJGjljk8slSIllJGD/CDX9C37JX7HXwe8I/s5+A9J8feANF1XxFLpsV5qFxf6dBcXBubzNwyM8qFv3e8IAegXFfmV/wAFdf2Y/D/gfUvAnxL+Ffhi30nTb+OfSr620q0WGITxHz4JGjhUDc6NIpbGfkA9KAP6JNR1XTtH0241fU7iO1sLOJ55p5GCxxxRqWd2Y8BVUEk+nNfyvftE/E7x9/wUo/ax0n4d/C1ZD4as5pLLRkcERw2qnN1qdwP4d4Xee4QIg+br75+1V+1X8T/Gf7B3wf8ACmh210lz41trnT/Ek6RyfaGOhGKB4SAMhblmWRyfvKNvIZq+MP2R/wBqPx9+yG+uah4R+Gdrr2sa9sjk1C/iuxNHbR8iCIR7Qql/mbuxC5+6KBn9VPwO+Dng74CfC/Qvhb4Hh8vTtFhCNIwAkuZ2+aa4lI6vK+WPpwBwAB+BX/BbJtvxw8AD/qXX/wDSyavQ/Cv/AAVz/aH8QeKNH0Gf4Vabbw6le29tJIFv8os0ioWGWxkA554ri/8AgtJpGq6j8bPAbafZT3YTw64JiiZwD9smxnaDQCPhTxT8IPj7+yfc/Cr9pPxPDG03iB4dZ06SU/avLlgZZYoLrdkB5IdrgZPyHAIZSB/V/wDs8/HXwn+0Z8JtD+Kng5ttvqcW24tyQZLS7jwJ7eTH8SN0P8SlWHBFeM+K/wBnvQv2jv2M9A+E3icC3muvDmlSWVy65ey1CGzjMMwHX5WyrjuhZe9fir/wT7+NXjr9j79oPV/gl8UtPu7Lwzrt8dM1IPHI0VhqcLmKK6VsY8tj8jsOChV+iigR98f8Fkfi+fCXwI0T4UadPtvvHF+HuFB5+w6fiV8+zTNEPfBr87f2dv24PgH8JP2Sdc/Zv8WeDdY1S88Ux6mNTu7c2wheS+UxRsoeQN+6jWPGQPmXitX/AIKBS+K/2mv267D4X+HLW5l07SZ7DwxbSiJzEsskga7l3Y24SSVgxz0jr+gDS/2VP2b9K06006P4ZeHJRaRJCryaVau7CNQoZmaMkscZJJyTQB+Af/BHf4wN4J/aE1P4W3823TvHtgywqx4+3WAaaLHu0RmHucV/T5iv5Vv2u/h/q/7Jf7e0Hj34d6K9to8V9p/iTToLKArAsTMPtFuixjaq+YkqbRwFYDGK/qW0LWLLxDothr2lv5lnqVvFcwt0zHMgdDj/AHSKBmp9aSijigYUvtSUtABRSe9AoAKWik56UAhaSlNH1oC4ho6UUUAf/9b99qKWk4oGL+lJRSjFAxKWjikoAWko+lFABS0lFAC/Wj3o+tJQK4vtTWRX++obHrS5paAEAAAVRgClpOtL1oAascaHKqAfpTWhiY7nQMfepMYpPxoAX+lR+TETuKAn6d6f05ozzQApwaYscaHcqhTT+BSUBYQgOMMMg+tCoiZCKF+lO7UlAWBgCCGGRTUjjjOVXb9KfxSUAL15pojQNuCgH1p3FGaAAj1poSNSGCjNO7UZoAjaKNzllBPvTxhRgdKKX3oGFJ0peDRQIyrvQdDvrhbu+063uZ0OVkkhR3B9mYE1qKFQAKAABwB2FL3pM0AIyI4xIA1OCqgwgAApKXigLEbRxu2XQMfUigwwtjManHTin0poAO2KY8aOMOoYehp/HrRQBF5EOAvlrj6UeRCB/q1/KpKM8UBYYIYgchB+VDRROdzqGPuKfml/GgLBxgDpURt4GO5kUn1IzUuaTigGhvlRht20Z65xTue9Lmk+tADHiikILoGI45FSDAGFGAKSigANFL9aQ0DClpKOKAFpKKKAD6Ue1LSGgAoo4paAbEopaSgR/9k="
       }
     }
-  }]
+  ]
 }

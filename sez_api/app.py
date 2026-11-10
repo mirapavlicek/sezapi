@@ -39,6 +39,7 @@ from sez_api.client import (
 )
 from sez_api.certstore import CertChyba, CertStore, dekoduj_pfx, zkontroluj_pfx
 from sez_api import certdistribuce
+from sez_api import kzr_pravidla as _kzr
 from sez_api import krpzs_registr
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_order as _fhir_order
@@ -299,6 +300,26 @@ async def env_sync_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def korelace_middleware(request: Request, call_next):
+    """Jeden požadavek na tuto aplikaci = jeden obchodní proces: všechna volání
+    brány, která vyvolá, nesou stejné ``X-Correlation-Id`` (prezentace MZ ČR
+    3. 11. 2026; hlavička bude povinná od 1. 1. 2027).
+
+    Pošle-li volající platné ``X-Correlation-Id`` (UUID v4+, max 128 znaků),
+    převezme se – proces tak může pokračovat přes více požadavků. Jinak se
+    vygeneruje nové. Použitá hodnota se vrací v hlavičce odpovědi."""
+    from sez_api import client as _cl
+    if not request.url.path.startswith(("/api/", "/internal/")):
+        return await call_next(request)
+    prichozi = request.headers.get("x-correlation-id")
+    cid = prichozi if _cl.correlation_id_platne(prichozi) else None
+    with _cl.korelace(cid) as pouzite:
+        response = await call_next(request)
+    response.headers["X-Correlation-Id"] = pouzite
+    return response
+
+
 def api_response(resp) -> dict:
     try:
         data = resp.json()
@@ -436,6 +457,8 @@ async def status():
         "sukl_enabled": getattr(cfg, "SUKL_ENABLED", False),
         "sukl_mode": cfg.sukl_mode(SEZConfig.ENVIRONMENT) if getattr(cfg, "SUKL_ENABLED", False) else "OFF",
         "sukl_interface_version": getattr(cfg, "SUKL_INTERFACE_VERSION", ""),
+        "sukl_epoukaz_interface_version": getattr(
+            cfg, "SUKL_EPOUKAZ_INTERFACE_VERSION", ""),
         "sukl_test_erecepty": getattr(cfg, "SUKL_TEST_ERECEPTY", []),
         "sukl_dlp_sample": getattr(cfg, "SUKL_DLP_SAMPLE", []),
         "uzis_enabled": getattr(cfg, "UZIS_ENABLED", False),
@@ -604,13 +627,67 @@ class KRPJmenoRequest(BaseModel):
     rodne_cislo: str
     ucel: str = "LECBA"
 
+def _s_upozornenim(odpoved: JSONResponse, upozorneni) -> JSONResponse:
+    """Doplní do odpovědi ``timed_call`` neblokující upozornění (pole
+    ``upozorneni``) – pravidla, která standard uvádí, ale brána je podle
+    dostupných podkladů nevynucuje."""
+    texty = [u for u in (upozorneni or []) if u]
+    if not texty:
+        return odpoved
+    try:
+        obsah = json.loads(odpoved.body)
+    except Exception:
+        return odpoved
+    if isinstance(obsah, dict):
+        obsah["upozorneni"] = texty
+        return JSONResponse(obsah, status_code=odpoved.status_code)
+    return odpoved
+
+
+def _krp_jmena(jmeno, prijmeni):
+    """Kontrola jména a příjmení před dotazem do KRP (MZ ČR, 3. 11. 2026).
+
+    Vrací ``(odmitnuti, upozorneni)``: ``odmitnuti`` je hotová odpověď 422,
+    pokud se dotaz nemá odeslat (režim ``odmitnout``), jinak ``None``;
+    ``upozorneni`` jsou texty pro režim ``varovat``."""
+    rezim = _kzr.rezim_kontroly_jmen()
+    if rezim == _kzr.REZIM_VYPNUTO:
+        return None, []
+    chyby = _kzr.kontrola_jmena(jmeno, prijmeni)
+    if not chyby:
+        return None, []
+    if rezim == _kzr.REZIM_ODMITNOUT:
+        return JSONResponse({
+            "status": 422,
+            "error": " ".join(chyby) + " Dotaz se na KRP neodeslal.",
+            "duvod": _kzr.JMENA_DUVOD,
+            "odeslano": False,
+        }), []
+    return None, chyby
+
+
+@app.get("/api/krp/pravidla")
+async def krp_pravidla():
+    """Pravidla Standardu EZ Kmenové registry 1.3 používaná klientem i GUI:
+    DRID, kontrola jmen, kombinace univerzálního hledání, limit dávky
+    hromadného ztotožnění a tvar notifikací."""
+    return JSONResponse(_kzr.pravidla())
+
+
 @app.post("/api/krp/hledat-rid")
 async def krp_hledat_rid(req: KRPRidRequest):
-    return timed_call(_modules["krp"].hledat_rid, req.rid, req.ucel)
+    return _s_upozornenim(
+        timed_call(_modules["krp"].hledat_rid, req.rid, req.ucel),
+        [] if _kzr.drid_tvar(req.rid) else [_kzr.rid_upozorneni(req.rid)])
 
 @app.post("/api/krp/hledat-jmeno")
 async def krp_hledat_jmeno(req: KRPJmenoRequest):
-    return timed_call(_modules["krp"].hledat_jmeno_rc, req.jmeno, req.prijmeni, req.rodne_cislo, req.ucel)
+    odmitnuti, upoz = _krp_jmena(req.jmeno, req.prijmeni)
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(
+        timed_call(_modules["krp"].hledat_jmeno_rc, req.jmeno, req.prijmeni, req.rodne_cislo, req.ucel),
+        upoz)
 
 # DRID – Dočasný RID
 
@@ -627,30 +704,55 @@ class DRIDMapovaniRequest(BaseModel):
 
 @app.post("/api/krp/drid/generovat")
 async def krp_drid_generovat(req: DRIDGenerujRequest):
-    return timed_call(_modules["krp"].generovat_docasny_rid, req.pocet)
+    """Standard KZR 1.3, kap. 4.4.3: DRID je pro pacienta s neznámou totožností,
+    výpadek sítě nebo traumaplán – ne pro založení novorozence. Zásoba
+    předgenerovaných DRID je 50 ks; větší počet se odešle s upozorněním."""
+    if req.pocet < 1:
+        return error_response("Počet DRID musí být alespoň 1.", code=422)
+    return _s_upozornenim(
+        timed_call(_modules["krp"].generovat_docasny_rid, req.pocet),
+        [_kzr.drid_pocet_upozorneni(req.pocet)])
 
 @app.post("/api/krp/drid/priradit")
 async def krp_drid_priradit(req: DRIDPriradRequest):
-    return timed_call(_modules["krp"].priradit_docasny_rid, req.docasny_rid, req.rid)
+    """DRID se špatným tvarem (jiným než D + 9 číslic) se neodešle. Kontrolní
+    pravidlo verze 1.3 je jen upozornění – starší DRID ho splňovat nemusí."""
+    drid = (req.docasny_rid or "").strip().upper()
+    chyba = _kzr.drid_chyba(drid)
+    if chyba:
+        return JSONResponse({"status": 422, "error": chyba + " Požadavek se na KRP neodeslal.",
+                             "odeslano": False})
+    return _s_upozornenim(
+        timed_call(_modules["krp"].priradit_docasny_rid, drid, req.rid),
+        [_kzr.drid_upozorneni(drid), _kzr.rid_upozorneni(req.rid)])
 
 @app.post("/api/krp/drid/mapovani")
 async def krp_drid_mapovani(req: DRIDMapovaniRequest):
-    return timed_call(_modules["krp"].mapovani_rid, req.rid, req.jen_aktualni)
+    """Vstupem může být RID i DRID (Standard KZR 1.3, kap. 4.4.4)."""
+    return timed_call(_modules["krp"].mapovani_rid, (req.rid or "").strip(), req.jen_aktualni)
 
 @app.post("/api/krp/hledat-jmeno-dn")
 async def krp_hledat_jmeno_dn(request: Request):
     body = await request.json()
-    return timed_call(_modules["krp"].hledat_jmeno_dn,
-                      body.get("jmeno",""), body.get("prijmeni",""),
-                      body.get("datumNarozeni",""), body.get("statniObcanstvi"),
-                      body.get("ucel","LECBA"))
+    odmitnuti, upoz = _krp_jmena(body.get("jmeno"), body.get("prijmeni"))
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(timed_call(
+        _modules["krp"].hledat_jmeno_dn,
+        body.get("jmeno",""), body.get("prijmeni",""),
+        body.get("datumNarozeni",""), body.get("statniObcanstvi"),
+        body.get("ucel","LECBA")), upoz)
 
 @app.post("/api/krp/hledat-jmeno-cp")
 async def krp_hledat_jmeno_cp(request: Request):
     body = await request.json()
-    return timed_call(_modules["krp"].hledat_jmeno_cp,
-                      body.get("jmeno",""), body.get("prijmeni",""),
-                      body.get("cisloPojistence",""), body.get("ucel","LECBA"))
+    odmitnuti, upoz = _krp_jmena(body.get("jmeno"), body.get("prijmeni"))
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(timed_call(
+        _modules["krp"].hledat_jmeno_cp,
+        body.get("jmeno",""), body.get("prijmeni",""),
+        body.get("cisloPojistence",""), body.get("ucel","LECBA")), upoz)
 
 @app.post("/api/krp/hledat-cizinec-cp")
 async def krp_hledat_cizinec_cp(request: Request):
@@ -681,9 +783,18 @@ async def krp_hledat_niabsi(request: Request):
 
 @app.post("/api/krp/hledat-uni")
 async def krp_hledat_uni(request: Request):
+    """Univerzální vyhledání. Standard KZR 1.3 (kap. 4.5.1) uvádí pět kombinací,
+    vždy jméno + příjmení + (RČ | č. pojištěnce | datum narození | adresa
+    pobytu | doklad). Jiná kombinace se odešle s upozorněním – swagger 3.0.6
+    ji nevynucuje; zjevně chybné jméno se neodešle vůbec."""
     body = await request.json()
     ucel = body.pop("ucel", "LECBA")
-    return timed_call(_modules["krp"].hledat_uni, ucel, **body)
+    odmitnuti, upoz = _krp_jmena(body.get("jmeno"), body.get("prijmeni"))
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(
+        timed_call(_modules["krp"].hledat_uni, ucel, **body),
+        upoz + [_kzr.uni_upozorneni(body)])
 
 @app.post("/api/krp/historie-pojisteni")
 async def krp_historie_pojisteni(request: Request):
@@ -799,15 +910,116 @@ async def krp_ztotozneni_csv2xml(request: Request, file: UploadFile = File(None)
         xml_text = KRP.to_davka_xml(text)
     except Exception as e:
         return error_response(f"Převod na XML selhal: {e}", code=400)
-    pocet = xml_text.count("<Pacient>")
+    pocet = _kzr.pocet_pacientu(xml_text)
     valid, chyba = _validate_against_xsd(xml_text, KRP.import_xsd())
     base = src_name.rsplit(".", 1)[0] or "davka"
-    return JSONResponse({
+    out = {
         "xml": xml_text,
         "filename": base + ".xml",
         "pocetPacientu": pocet,
         "validni": valid,
         "chyba": chyba,
+    }
+    out.update(_krp_davka_info(xml_text, base))
+    return JSONResponse(out)
+
+
+def _krp_davka_info(xml_text: str, base: str = "davka", s_obsahem: bool = True) -> dict:
+    """Limit dávky hromadného ztotožnění (Standard KZR 1.3, kap. 4.4.5:
+    nejvýše 10 000 pacientů) a kontrola jmen v dávce. Nad limit vrátí i hotové
+    části (``davky``), které se podávají každá zvlášť."""
+    pocet = _kzr.pocet_pacientu(xml_text)
+    casti = _kzr.rozdel_davku(xml_text) if pocet > _kzr.DAVKA_MAX_PACIENTU else [xml_text]
+    info = {
+        "limitDavky": _kzr.DAVKA_MAX_PACIENTU,
+        "pocetDavek": len(casti),
+        "dobaZpracovaniMin": _kzr.DAVKA_DOBA_ZPRACOVANI_MIN,
+        "prekrocenLimit": pocet > _kzr.DAVKA_MAX_PACIENTU,
+    }
+    if len(casti) > 1:
+        info["upozorneniDavky"] = (
+            f"Dávka má {pocet} pacientů; KRP přijímá nejvýše "
+            f"{_kzr.DAVKA_MAX_PACIENTU} v jedné dávce. Podá se jako {len(casti)} "
+            "samostatné žádosti, každá s vlastním hromadneZtotozneniID.")
+        info["davky"] = [
+            dict({"poradi": i, "filename": f"{base}_{i:02d}.xml",
+                  "pocetPacientu": _kzr.pocet_pacientu(c)},
+                 **({"xml": c} if s_obsahem else {}))
+            for i, c in enumerate(casti, start=1)]
+    vadna = _krp_davka_vadna_jmena(xml_text)
+    if vadna:
+        info["vadnaJmena"] = vadna[:50]
+        info["pocetVadnychJmen"] = len(vadna)
+        info["upozorneniJmena"] = (
+            f"{len(vadna)} záznamů má jméno nebo příjmení, které do KRP nepatří "
+            "(nepovolené znaky nebo zástupná hodnota). " + _kzr.JMENA_DUVOD)
+    return info
+
+
+_DAVKA_PACIENT_RE = re.compile(r"<Pacient\b[^>]*>(.*?)</Pacient\s*>", re.S)
+
+
+def _krp_davka_vadna_jmena(xml_text: str) -> list:
+    """Záznamy dávky, jejichž jméno/příjmení neprojde kontrolou jmen."""
+    if _kzr.rezim_kontroly_jmen() == _kzr.REZIM_VYPNUTO:
+        return []
+    from xml.sax.saxutils import unescape
+
+    def _pole(blok, tag):
+        m = re.search(rf"<{tag}>(.*?)</{tag}>", blok, re.S)
+        return unescape(m.group(1)).strip() if m else ""
+
+    vadna = []
+    for i, m in enumerate(_DAVKA_PACIENT_RE.finditer(xml_text or ""), start=1):
+        blok = m.group(1)
+        chyby = _kzr.kontrola_jmena(_pole(blok, "Jmeno"), _pole(blok, "Prijmeni"))
+        if chyby:
+            vadna.append({"poradi": i, "sourceId": _pole(blok, "SourceId") or None,
+                          "chyby": chyby})
+    return vadna
+
+
+def _krp_podat_davku(modul, content, filename: str, ucel: str = "LECBA",
+                     registrovat_odber: bool = False):
+    """Podá hromadné ztotožnění. Dávka do 10 000 pacientů jde jedním voláním
+    (odpověď beze změny), větší se rozdělí a každá část se podá zvlášť –
+    odpověď pak nese seznam ``davky`` se všemi ``hromadneZtotozneniID``.
+    Dávka se zjevně chybnými jmény se v režimu ``odmitnout`` nepodá."""
+    from sez_api.client import KRP
+    text = content.decode("utf-8-sig") if isinstance(content, (bytes, bytearray)) else str(content)
+    try:
+        xml_text = KRP.to_davka_xml(text)
+    except Exception as e:
+        return error_response(f"Převod na XML selhal: {e}", code=400)
+    base = (filename or "davka").rsplit(".", 1)[0] or "davka"
+    info = _krp_davka_info(xml_text, base, s_obsahem=False)
+    if info.get("vadnaJmena") and _kzr.rezim_kontroly_jmen() == _kzr.REZIM_ODMITNOUT:
+        return JSONResponse(dict({
+            "status": 422, "odeslano": False,
+            "error": info["upozorneniJmena"] + " Dávka se nepodala – opravte "
+                     "nebo vyřaďte označené záznamy.",
+        }, **info))
+    if not info["prekrocenLimit"]:
+        return None, info
+    t0 = time.monotonic()
+    try:
+        davky = modul.ztotozneni_zadost_po_davkach(
+            xml_text.encode("utf-8"), base + ".xml", ucel, registrovat_odber)
+    except Exception as e:
+        return error_response(f"Odeslání selhalo: {e}")
+    podane = [d for d in davky if d["status"] is not None]
+    status = max((d["status"] for d in podane), default=0)
+    return JSONResponse({
+        "status": status,
+        "data": {"davky": davky,
+                 "hromadneZtotozneniID": [d["hromadneZtotozneniID"] for d in davky
+                                          if d["hromadneZtotozneniID"]]},
+        "rozdeleno": True,
+        "pocetPacientu": _kzr.pocet_pacientu(xml_text),
+        "limitDavky": _kzr.DAVKA_MAX_PACIENTU,
+        "pocetDavek": len(davky),
+        "upozorneniDavky": info.get("upozorneniDavky"),
+        "elapsed_ms": round((time.monotonic() - t0) * 1000),
     })
 
 def _validate_against_xsd(xml_text: str, xsd_text: str):
@@ -827,10 +1039,23 @@ def _validate_against_xsd(xml_text: str, xsd_text: str):
         return False, str(e)
 
 @app.post("/api/krp/ztotozneni-zadost")
-async def krp_ztotozneni_zadost(file: UploadFile = File(...)):
-    """Upload CSV (or XML) file for batch identification."""
+async def krp_ztotozneni_zadost(file: UploadFile = File(...),
+                                registrovat_odber: bool = Form(False)):
+    """Nahraje soubor (CSV/JSON/XML) a podá hromadné ztotožnění.
+
+    Standard KZR 1.3 (kap. 4.4.5) omezuje dávku na 10 000 pacientů; větší
+    soubor se rozdělí a podá jako více žádostí (odpověď pak má ``rozdeleno``
+    a seznam ``data.davky``). Zpracování jedné dávky trvá dle MZ ČR cca 30 min."""
     content = await file.read()
-    return timed_call(_modules["krp"].ztotozneni_zadost, content, file.filename or "upload.csv")
+    vysledek = _krp_podat_davku(_modules["krp"], content, file.filename or "upload.csv",
+                                "LECBA", registrovat_odber)
+    if isinstance(vysledek, JSONResponse):
+        return vysledek
+    _nic, info = vysledek
+    return _s_upozornenim(
+        timed_call(_modules["krp"].ztotozneni_zadost, content,
+                   file.filename or "upload.csv", "LECBA", registrovat_odber),
+        [info.get("upozorneniJmena")])
 
 @app.post("/api/krp/ztotozneni-vykonani")
 async def krp_ztotozneni_vykonani(request: Request):
@@ -900,23 +1125,68 @@ async def krp_ztotozneni_vysledky_csv(request: Request):
 
 @app.post("/api/krp/notifikace-vyhledat")
 async def krp_notifikace_vyhledat(request: Request):
+    """Vyhledání odběrů notifikací KRP (Standard KZR 1.3, kap. 4.5.3.3):
+    ``idSubskripce`` a/nebo ``subjektId`` (IČO); alespoň jedno je povinné."""
     body = await request.json()
+    if not (body.get("idSubskripce") or body.get("subjektId")):
+        return JSONResponse({
+            "status": 422, "odeslano": False,
+            "error": "Zadejte idSubskripce nebo subjektId (IČO subjektu) – "
+                     "alespoň jeden z parametrů musí být vyplněn."})
     return timed_call(_modules["krp"].notifikace_vyhledat,
-                      body.get("kanalTyp",""), body.get("subjektId"),
-                      body.get("subjektTyp"),
-                      body.get("ucel","LECBA"))
+                      None, body.get("subjektId"), None,
+                      body.get("ucel", "LECBA"), body.get("idSubskripce"))
 
 @app.post("/api/krp/notifikace-zalozit")
 async def krp_notifikace_zalozit(request: Request):
+    """Založení odběru notifikací KRP (kap. 4.5.3.1): ``rid`` (jeden nebo
+    seznam), nepovinné ``url`` a ``subjektId`` (IČO). Na bránu jde tělo dle
+    swaggeru 3.0.6 – ``predmet[].rid``, ``prijemci.url``, ``subjektId``.
+    Přijímá i starší tvary (obálka ``data``, ``Rid``/``CallbackUrl``)."""
     body = await request.json()
-    return timed_call(_modules["krp"].notifikace_zalozit, body.get("data",{}), body.get("ucel","LECBA"))
+    try:
+        data = _kzr.notifikace_odber_z_volneho_tela(body)
+    except ValueError as e:
+        return JSONResponse({"status": 422, "error": str(e), "odeslano": False})
+    return _s_upozornenim(
+        timed_call(_modules["krp"].notifikace_zalozit, data, body.get("ucel", "LECBA")),
+        [_kzr.rid_upozorneni(p["rid"]) for p in data["predmet"]])
 
 @app.post("/api/krp/notifikace-zrusit")
 async def krp_notifikace_zrusit(request: Request):
+    """Zrušení odběru podle ``idSubskripce`` (GUID vrácený při založení)."""
     body = await request.json()
+    if not body.get("idSubskripce"):
+        return JSONResponse({"status": 422, "odeslano": False,
+                             "error": "Zadejte idSubskripce odběru, který se má zrušit."})
     return timed_call(_modules["krp"].notifikace_zrusit,
-                      body.get("idSubskripce"), body.get("subjektId"),
-                      body.get("ucel","LECBA"))
+                      body.get("idSubskripce"), None, body.get("ucel", "LECBA"))
+
+@app.post("/api/krp/notifikace-zprava")
+async def krp_notifikace_zprava(request: Request):
+    """Rozebere a ověří příchozí zprávu ``KZR.Notifikace`` (Standard KZR 1.3,
+    kap. 4.5.3.4–4.5.3.6) – tu KRP posílá na URL listeneru poskytovatele.
+    Bránu nevolá; slouží k vývoji a testu vlastního listeneru."""
+    try:
+        zprava = await request.json()
+    except Exception:
+        return JSONResponse({"platna": False, "chyby": ["Tělo není platný JSON."]},
+                            status_code=400)
+    return JSONResponse(_kzr.notifikace_zprava(zprava))
+
+@app.get("/api/krp/notifikace-vzor")
+async def krp_notifikace_vzor():
+    """Vzorová zpráva ``KZR.Notifikace`` a číselníky typů událostí a objektů
+    změny dle Standardu KZR 1.3."""
+    return JSONResponse({
+        "zprava": _kzr.NOTIFIKACE_PRIKLAD,
+        "udalosti": _kzr.NOTIFIKACE_UDALOSTI,
+        "objektyZmeny": list(_kzr.NOTIFIKACE_OBJEKTY_ZMENY),
+        "odber": _kzr.notifikace_odber("2393511146", "https://nis.example.cz/kzr/notifikace",
+                                       "25488627"),
+        "poznamka": "Příklady ve Standardu 1.3 (str. 35–36) nejsou v textové vrstvě "
+                    "PDF validní JSON; vzor je složen z polí, která v nich jsou.",
+    })
 
 @app.get("/api/krp/ciselnik/{nazev}")
 async def krp_ciselnik(nazev: str):
@@ -2047,7 +2317,7 @@ async def elp2_opravneni(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# ELP v3 – Elektronické posudky v3.0.1
+# ELP v3 – Elektronické posudky v3.0.3
 # ---------------------------------------------------------------------------
 
 @app.get("/api/elp3/ciselniky")
@@ -2098,15 +2368,31 @@ async def elp3_opravneni(request: Request):
 _ez_sim_mode = False
 _ez_sim_store: dict = {}
 
+# Stavy dle číselníku stav-zadanky v1.0.0 (Standard systému eŽádanka v2.0,
+# Tabulka 9; produkční TermX a testovací sada Postman MZ ČR z 15. 10. 2026):
+# 0 Nová, 1 Přijatá, 2 Neproveditelná, 3 Stornovaná, 4 Dokončená (= vyřízená),
+# 5 Expirovaná. Vrácení do oběhu není stav – žádanka se vrací do 0 (Nová)
+# a ztrácí adresáta. Do revize 10. 11. 2026 byly kódy 2/4 prohozené a kód 5
+# vedený jako „Vrácená do oběhu“.
 _EZ_TRANSITIONS = {
     "0": {"prijmi": "1", "stornuj": "3"},
-    "1": {"vyrid": "2", "stornuj": "3", "neproveditelnost": "4", "vrat": "5"},
-    "5": {"prijmi": "1", "stornuj": "3"},
+    "1": {"vyrid": "4", "stornuj": "3", "neproveditelnost": "2", "vrat": "0"},
 }
 _EZ_STAV_NAMES = {
-    "0": "Nová", "1": "Přijatá", "2": "Vyřízená",
-    "3": "Stornovaná", "4": "Neproveditelná", "5": "Vrácená do oběhu",
+    "0": "Nová", "1": "Přijatá", "2": "Neproveditelná",
+    "3": "Stornovaná", "4": "Dokončená", "5": "Expirovaná",
 }
+_EZ_STAVY_AKTIVNI = ("0", "1")
+_EZ_STAVY_KONCOVE = ("2", "3", "4", "5")
+
+
+def _ez_stav_na_fhir(stav) -> str:
+    """Stav žádanky (stav-zadanky) → ``ServiceRequest.status``."""
+    if stav in (None, "0", "1"):
+        return "active"
+    if stav == "4":
+        return "completed"
+    return "revoked"
 
 
 def _ez_sim_verze():
@@ -2215,6 +2501,12 @@ def _ez_sim_transition(zid, action, extras=None):
             rec["datumSkutecneRealizaceVysetreni"] = extras["datumSkutecneRealizaceVysetreni"]
     elif action == "stornuj":
         rec["datumStorna"] = now
+    elif action == "vrat":
+        # Vrácením do oběhu žádanka ztrácí adresáta a údaje o přijetí.
+        rec["datumPoslednihoPrijeti"] = None
+        (rec.get("zasilka") or {}).pop("adresat", None)
+        if isinstance(rec.get("_v2_hlavicka"), dict):
+            rec["_v2_hlavicka"].pop("adresat", None)
     return rec, None
 
 
@@ -2258,7 +2550,7 @@ def _ez_sim_search(body):
 
 
 def _ez_sim_search_aktivni(body):
-    items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] in ("0", "1", "5")]
+    items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] in _EZ_STAVY_AKTIVNI]
     rid = body.get("rid")
     if rid:
         items = [z for z in items if z["zasilka"].get("pacient") == rid]
@@ -2280,7 +2572,7 @@ def _ez_sim_seed():
          "pac": ("Petr", "Dvořák", "6534744190", "1965-07-30"),
          "aut": ("MUDr.", "Jan", "Dobrý", "102129137"),
          "ico": "25488627", "icp": "72090001", "instr": "Pacient na antikoagulační terapii"},
-        {"nazev": "Laboratorní vyšetření – biochemie", "metoda": "LAB", "urg": "routine", "stav": "2",
+        {"nazev": "Laboratorní vyšetření – biochemie", "metoda": "LAB", "urg": "routine", "stav": "4",
          "pac": ("Anna", "Králová", "6653225891", "1988-01-14"),
          "aut": ("MUDr.", "Petra", "Lékařová", "102129137"),
          "ico": "25488627", "icp": "72090001", "instr": "Odběr nalačno"},
@@ -2305,11 +2597,11 @@ def _ez_sim_seed():
             "pacientPojistovna": {"kod": "111", "verze": "1.0"},
             "datumVytvoreni": now,
             "datumExpirace": None,
-            "datumPoslednihoPrijeti": now if t["stav"] in ("1", "2") else None,
-            "datumVyrizeni": now if t["stav"] == "2" else None,
+            "datumPoslednihoPrijeti": now if t["stav"] in ("1", "4") else None,
+            "datumVyrizeni": now if t["stav"] == "4" else None,
             "datumStorna": now if t["stav"] == "3" else None,
             "datumPlanovanehoVysetreni": None,
-            "datumSkutecneRealizaceVysetreni": now if t["stav"] == "2" else None,
+            "datumSkutecneRealizaceVysetreni": now if t["stav"] == "4" else None,
             "zasilka": {
                 "nazev": t["nazev"],
                 "typ": {"kod": "57133-1", "verze": "1.0.0"},
@@ -2334,7 +2626,7 @@ def _ez_sim_seed():
 
 def _ez_legacy_endpoint_error(endpoint_name: str) -> JSONResponse:
     return error_response(
-        f"Aktuální eŽádanky API v1.11.17 endpoint {endpoint_name} už nepublikuje. "
+        f"Aktuální eŽádanky API v1.11.25 endpoint {endpoint_name} už nepublikuje. "
         "Použijte pouze operace dostupné ve swaggeru aktuální verze.",
         410,
     )
@@ -2461,7 +2753,7 @@ async def ez_uprav(request: Request):
         rec = _ez_sim_store.get(zid)
         if not rec:
             return _ez_sim_err(f"Žádanka {zid} nenalezena", "E00002")
-        if rec["stav"]["kod"] in ("2", "3", "4"):
+        if rec["stav"]["kod"] in _EZ_STAVY_KONCOVE:
             return _ez_sim_err(f"Žádanku ve stavu '{_EZ_STAV_NAMES.get(rec['stav']['kod'])}' nelze upravit")
         if body.get("upravenyPacient"):
             rec["zasilka"]["pacient"] = body["upravenyPacient"]
@@ -2712,6 +3004,12 @@ _EZ2_SIM_ACTIONS = {
 }
 
 
+def _fhir_etag(hodnota) -> str | None:
+    """verzeZaznamu z ETag / If-Match – bez příznaku ``W/`` a uvozovek."""
+    from sez_api.client import EZadankyV2
+    return EZadankyV2.etag_na_verzi(hodnota)
+
+
 def _ez2_sim_transition(zid: str, operace: str, if_match: str | None, body: dict):
     """Procesní operace v2 nad simulátorem – kontrola If-Match (409) a přechodu stavu."""
     rec = _ez_sim_store.get(zid)
@@ -2719,7 +3017,7 @@ def _ez2_sim_transition(zid: str, operace: str, if_match: str | None, body: dict
         return _ez_sim_err(f"Žádanka {zid} nenalezena v simulaci", "E00002", 404)
     if not if_match:
         return _ez_sim_err("Chybí hlavička If-Match (verzeZaznamu).", "E00400", 400)
-    if if_match.strip('"') != rec.get("verzeRadku"):
+    if _fhir_etag(if_match) != rec.get("verzeRadku"):
         return _ez_sim_err(
             f"Verze záznamu nesouhlasí (If-Match={if_match}, aktuální={rec.get('verzeRadku')}). "
             "Načtěte žádanku znovu.", "E00409", 409)
@@ -2762,7 +3060,7 @@ def _ez2_if_match(request: Request, body: dict) -> str | None:
     v = request.headers.get("if-match")
     if not v and isinstance(body, dict):
         v = body.get("verzeZaznamu") or body.get("ifMatch") or body.get("If-Match")
-    return str(v).strip('"') if v else None
+    return _fhir_etag(v) if v else None
 
 
 def _ez2_strip_meta(body: dict) -> dict:
@@ -2807,6 +3105,10 @@ async def ez2_katalog():
         "typyZadanky": EZadankyV2.TYPY_ZADANKY,
         "typy": _fhir_order.katalog_typu(),
         "stavy": EZadankyV2.STAVY,
+        "stavyAktivni": list(EZadankyV2.STAVY_AKTIVNI),
+        "stavyKoncove": list(EZadankyV2.STAVY_KONCOVE),
+        "prechody": EZadankyV2.PRECHODY,
+        "zivotniCyklus": EZadankyV2.ZIVOTNI_CYKLUS,
         "prevodZV1": EZadankyV2.prevod_z_v1(),
         "zmeny": [
             "Datová věta = systémová hlavička (hlavicka) + FHIR Bundle typu document (fhirBundle) dle HL7 CZ IG "
@@ -2818,9 +3120,37 @@ async def ez2_katalog():
             "Vyřízení vyžaduje zásilku s nejméně jedním dokumentem u všech způsobů vyřízení.",
             "Stránkování od 0 (v1 od 1); detailní data z registrů (pacientData, autorData…) se nevrací.",
             "Hlavička User-Agent je povinná (X-Correlation-Id doporučena, od 1. 1. 2027 povinná).",
+            "Revize 10. 11. 2026: stavy dle číselníku stav-zadanky – 2 Neproveditelná, 4 Dokončená (vyřízená), "
+            "5 Expirovaná; vrácení do oběhu vrací žádanku do stavu 0 (Nová) bez adresáta.",
+            "Revize 10. 11. 2026: ETag může být slabý validátor (W/\"…\") – do If-Match se posílá hodnota "
+            "bez W/ a uvozovek.",
         ],
         "simulace": _ez_sim_mode,
     })
+
+
+@app.post("/api/ezadanky/v2/vysledek-kostra")
+async def ez2_vysledek_kostra(request: Request):
+    """Zásilka s výsledkem pro ``vyridit`` ve tvaru testovací sady Postman
+    MZ ČR – hash SHA-256 se počítá na serveru (prohlížeč bez HTTPS nemá
+    ``crypto.subtle``). Vstup: ``text`` nebo ``obsahBase64``, ``nazevSouboru``,
+    ``autor`` (KRZP příjemce), ``poskytovatel`` (IČO příjemce), ``pacient``."""
+    import base64 as _b64
+    body = await request.json()
+    try:
+        obsah = (_b64.b64decode(body["obsahBase64"], validate=True)
+                 if body.get("obsahBase64") else (body.get("text") or ""))
+        volby = {k2: body[k1] for k1, k2 in (
+            ("mime", "mime"), ("typ", "typ"), ("klasifikace", "klasifikace"),
+            ("jazyk", "jazyk"), ("nazev", "nazev")) if body.get(k1)}
+        zasilka = EZadankyV2.sestav_vysledek(
+            obsah, nazev_souboru=body.get("nazevSouboru") or "vysledek.txt",
+            autor=body.get("autor") or "", poskytovatel=body.get("poskytovatel") or "",
+            pacient=body.get("pacient") or "",
+            zdravotnicky_pracovnik=body.get("zdravotnickyPracovnik"), **volby)
+    except Exception as e:
+        return error_response(f"Zásilku s výsledkem nelze sestavit: {e}", 400)
+    return JSONResponse({"status": 200, "data": zasilka})
 
 
 # --- Typy žádanek Z / K / FT: katalog, vzory IG, kostra, příprava Bundle ------
@@ -2895,8 +3225,12 @@ async def ez2_kostra(request: Request):
     zdravotnickyPracovnik?, nazev?, nazevPoskytovatele?, nazevAdresata?,
     textPozadavku?, vykony?: [{code, display, system?}], diagnoza?: {code, display},
     klinickaOtazka?, pojistovna? (kód KP, null = samoplátce), cisloPojistence?,
-    priorita? (routine|stat), pocetProcedur? (FT), odbornost?}``.
-    Stejný tvar prošel 13. 10. 2026 na T2 u všech tří typů (201 Created)."""
+    priorita? (routine|stat), pocetProcedur? (FT), odbornost?, pacientJmeno?
+    ({family, given[]}), datumNarozeni?, modalita? (Z – DICOM, např. DX),
+    pokynyPacientovi? (Z)}``.
+    Základní tvar prošel 13. 10. 2026 na T2 u všech tří typů (201 Created);
+    ``upozorneniIg`` v odpovědi vyjmenuje, co chybí proti povinným prvkům
+    publikovaných IG 1.0.0 (neblokující)."""
     body = await request.json()
     typ = (body.get("typ") or "K").upper()
     try:
@@ -2907,17 +3241,20 @@ async def ez2_kostra(request: Request):
                         icp=body.get("icp"), adresat=body.get("adresat") or None, nazev=body.get("nazev"),
                         nazev_poskytovatele=body.get("nazevPoskytovatele"),
                         pojistovna=body.get("pojistovna", "111"), priorita=body.get("priorita") or "routine",
-                        diagnoza=body.get("diagnoza"))
+                        diagnoza=body.get("diagnoza"),
+                        pacient_jmeno=body.get("pacientJmeno"), datum_narozeni=body.get("datumNarozeni"),
+                        cislo_pojistence=body.get("cisloPojistence"), odbornost=body.get("odbornost"),
+                        text_pozadavku=body.get("textPozadavku"), klinicka_otazka=body.get("klinickaOtazka"))
         if typ == "Z":
-            bundle = _fhir_order.kostra_z(**spolecne, vykon=(body.get("vykony") or [None])[0])
+            bundle = _fhir_order.kostra_z(**spolecne, vykon=(body.get("vykony") or [None])[0],
+                                          modalita=body.get("modalita"),
+                                          pokyny_pacientovi=body.get("pokynyPacientovi"))
         else:
             bundle = _fhir_order.kostra(
                 typ, **spolecne, zdravotnicky_pracovnik=body.get("zdravotnickyPracovnik"),
-                nazev_adresata=body.get("nazevAdresata"), text_pozadavku=body.get("textPozadavku"),
-                vykony=body.get("vykony") or None, klinicka_otazka=body.get("klinickaOtazka"),
-                cislo_pojistence=body.get("cisloPojistence"), odbornost=body.get("odbornost"),
-                pocet_procedur=body.get("pocetProcedur"),
-                pacient_jmeno=body.get("pacientJmeno"))
+                nazev_adresata=body.get("nazevAdresata"),
+                vykony=body.get("vykony") or None,
+                pocet_procedur=body.get("pocetProcedur"))
     except (ValueError, KeyError, TypeError) as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     v2 = _fhir_order.to_v2(bundle, zdravotnicky_pracovnik=body.get("zdravotnickyPracovnik"),
@@ -2925,6 +3262,8 @@ async def ez2_kostra(request: Request):
                            nadrizena_zadanka_id=body.get("nadrizenaZadankaId"))
     v2["typ"] = typ
     v2["vyhrady"] = EZadankyV2.zkontroluj_pozadavek(v2)
+    # Neblokující: co chybí proti povinným prvkům publikovaných IG (1.0.0)
+    v2["upozorneniIg"] = _fhir_order.vyhrady_ig(bundle)
     return JSONResponse(v2)
 
 
@@ -2986,7 +3325,7 @@ async def ez2_vyhledat(request: Request):
             if body.get("metoda"):
                 items = [z for z in items if any(m.get("kod") in body["metoda"] for m in z.get("metodaData") or [])]
             if body.get("uzavrena"):
-                items = [z for z in items if z["stav"]["kod"] in ("2", "3", "4")]
+                items = [z for z in items if z["stav"]["kod"] in _EZ_STAVY_KONCOVE]
             if body.get("datumOd"):
                 items = [z for z in items if (z.get("datumVytvoreni") or "") >= body["datumOd"]]
             if body.get("datumDo"):
@@ -3004,7 +3343,7 @@ async def ez2_vyhledat_aktivni(request: Request):
         if not (body.get("id") or body.get("rid") or body.get("kodZadanky")):
             return _ez_sim_err("Zadejte alespoň jedno z: id, rid, kodZadanky.", "E00400")
         try:
-            items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] in ("0", "5")]
+            items = [z for z in _ez_sim_store.values() if z["stav"]["kod"] == "0"]
             if body.get("rid"):
                 items = [z for z in items if z["zasilka"].get("pacient") == body["rid"]]
             if body.get("id"):
@@ -3616,7 +3955,16 @@ async def krp3_hledat(typ: str, request: Request):
     }.get(typ)
     if not handler:
         return error_response(f"Neznámý typ KRP v3 hledání: {typ}")
-    return timed_call(handler, body)
+    zd = body.get("zadostData") if isinstance(body.get("zadostData"), dict) else {}
+    upoz = []
+    if typ in ("jmeno_prijmeni_rc", "jmeno_prijmeni_datum_narozeni",
+               "jmeno_prijmeni_cp", "uni"):
+        odmitnuti, upoz = _krp_jmena(zd.get("jmeno"), zd.get("prijmeni"))
+        if odmitnuti:
+            return odmitnuti
+    if typ == "uni":
+        upoz = upoz + [_kzr.uni_upozorneni(zd)]
+    return _s_upozornenim(timed_call(handler, body), upoz)
 
 @app.post("/api/krp3/zalozit")
 async def krp3_zalozit(request: Request):
@@ -3638,7 +3986,45 @@ async def krp3_notifikace(akce: str, request: Request):
     }.get(akce)
     if not handler:
         return error_response(f"Neznámá akce notifikace: {akce}")
+    try:
+        body = _krp3_notifikace_telo(akce, body)
+    except ValueError as e:
+        return JSONResponse({"status": 422, "error": str(e), "odeslano": False})
     return timed_call(handler, body)
+
+
+def _krp3_notifikace_telo(akce: str, body: dict) -> dict:
+    """Srovná ``zadostData`` notifikací KRP v3 se swaggerem 3.0.6 (schémata mají
+    ``additionalProperties: false``) a se Standardem KZR 1.3, kap. 4.5.3.
+    Obálka ``zadostInfo`` zůstává, jak přišla."""
+    body = dict(body or {})
+    if "zadostData" not in body:
+        # tělo bez obálky (starší GUI, ruční volání) – obálka se doplní
+        body = {"zadostData": {k: v for k, v in body.items() if k != "zadostInfo"},
+                "zadostInfo": body.get("zadostInfo") or {
+                    "datum": date.today().isoformat(), "ucel": "LECBA",
+                    "zadostId": str(uuid.uuid4())}}
+    zd = body.get("zadostData")
+    zd = dict(zd) if isinstance(zd, dict) else {}
+    if akce == "zalozit":
+        body["zadostData"] = _kzr.notifikace_odber_z_volneho_tela(zd)
+    elif akce == "zrusit":
+        ids = zd.get("idSubskripce") or zd.get("OdberId") or zd.get("odberId")
+        if isinstance(ids, (list, tuple)):
+            if len(ids) > 1:
+                raise ValueError("Swagger KRP 3.0.6 přijímá u zrušení jedno idSubskripce "
+                                 "– rušte odběry po jednom.")
+            ids = ids[0] if ids else None
+        if not ids:
+            raise ValueError("Zadejte idSubskripce odběru, který se má zrušit.")
+        body["zadostData"] = {"idSubskripce": str(ids).strip()}
+    elif akce == "vyhledat":
+        cista = {k: str(zd[k]).strip() for k in ("idSubskripce", "subjektId") if zd.get(k)}
+        if not cista:
+            raise ValueError("Zadejte idSubskripce nebo subjektId (IČO subjektu) – "
+                             "alespoň jeden z parametrů musí být vyplněn.")
+        body["zadostData"] = cista
+    return body
 
 # Šablona IRIS ObjectScript klienta pro KRP v3 hromadné ztotožnění
 # (vygenerováno dle skill iris-objectscript, ověřeno lint_udl.py = 0 chyb).
@@ -3780,15 +4166,17 @@ def _krp3_prep_payload(text: str, registrovat_odber: bool, request: Request) -> 
         f"  -F 'ZadostInfo.ZadostId={uuid.uuid4()}' \\\n"
         f"  -F 'ZadostData.RegistrovatOdber={reg}' \\\n"
         f"  -F 'file=@{xml_name};type=application/xml'")
-    return {
+    out = {
         "xml": xml_text,
         "filename": xml_name,
-        "pocetPacientu": xml_text.count("<Pacient>"),
+        "pocetPacientu": _kzr.pocet_pacientu(xml_text),
         "validni": valid,
         "chyba": chyba,
         "curl": curl_proxy + "\n\n" + curl_direct,
         "iris": _krp3_iris_code(),
     }
+    out.update(_krp_davka_info(xml_text, "davka"))
+    return out
 
 
 async def _read_input_text(request: Request, file):
@@ -3813,6 +4201,11 @@ async def krp3_ztotozneni_zadost(request: Request, file: UploadFile = File(...),
         prep = _krp3_prep_payload(text, registrovat_odber, request)
     except Exception as e:
         return error_response(f"Příprava dávky selhala: {e}", code=400)
+    # Standard KZR 1.3: nejvýše 10 000 pacientů v dávce – větší soubor se podá
+    # po částech; dávka se zjevně chybnými jmény se nepodá vůbec.
+    vysledek = _krp_podat_davku(_modules["krp3"], text, "davka", "LECBA", registrovat_odber)
+    if isinstance(vysledek, JSONResponse):
+        return vysledek
     t0 = time.monotonic()
     try:
         resp = _modules["krp3"].ztotozneni_zadost(
@@ -3825,6 +4218,9 @@ async def krp3_ztotozneni_zadost(request: Request, file: UploadFile = File(...),
     out["iris"] = prep["iris"]
     out["xml"] = prep["xml"]
     out["validni"] = prep["validni"]
+    for klic in ("pocetPacientu", "limitDavky", "dobaZpracovaniMin", "upozorneniJmena"):
+        if prep.get(klic) is not None:
+            out[klic] = prep[klic]
     return JSONResponse(out)
 
 @app.post("/api/krp3/ztotozneni-nahled")
@@ -3971,8 +4367,9 @@ async def szz2_action_typ(modul: str, typ: str, id_: str, akce: str, request: Re
 
 
 # ---------------------------------------------------------------------------
-# SZZ v3.0.0 (Standard EZ SZZ 3.0, platný od 29. 7. 2026)
-# Nové screeningy, opravený HPV typ a položka `samoplatce`; v2 běží dál.
+# SZZ v3 (Standard EZ SZZ 3.1, platný od 23. 10. 2026; swagger 3.0.5)
+# Položka `samoplatce`, účast ve screeningu jako samostatné záznamy
+# (/screeningy/*Ucast); v2 běží dál.
 # ---------------------------------------------------------------------------
 _SZZ3_MODULY = {"prevence", "screeningy", "emergentniZaznam"}
 
@@ -3991,15 +4388,21 @@ def _szz3_crud(modul: str, typ: str):
 async def szz3_katalog():
     """Přehled typů vyšetření, rozsahů hodnot a nových číselníků ve verzi 3."""
     from sez_api.client import SZZv2, SZZv3
-    nove = sorted(set(SZZv3.SCREENINGY_TYPY)
-                  - set(SZZv2.SCREENINGY_TYPY) - {"karcinomDeloznihoHrdlaHpv"})
+    nove = sorted(set(SZZv3.SCREENINGY_TYPY) - set(SZZv2.SCREENINGY_TYPY))
     return JSONResponse({"status": 200, "data": {
         "verzeApi": SZZv3.VERZE_API,
         "verzeStandardu": SZZv3.VERZE_STANDARDU,
-        "platneOd": "2026-07-29",
+        "platneOd": "2026-10-23",
         "prevence": SZZv3.PREVENCE_TYPY,
         "screeningy": SZZv3.SCREENINGY_TYPY,
         "screeningyNoveVeV3": nove,
+        "screeningyOdV2_0_4": list(SZZv2.SCREENINGY_OD_2_0_4),
+        "ucastVeScreeningu": {
+            typ: {**info, "operace": ["vytvor", "uprav", "zneplatnit",
+                                      "zpochybnit", "obnovit"],
+                  "cesta": f"/api/v3/screeningy/{typ}"}
+            for typ, info in SZZv3.UCAST_VE_SCREENINGU.items()},
+        "vplOdebranePolozky": list(SZZv3.VPL_ODEBRANE_POLOZKY),
         "emergentniZaznam": SZZv3.EMERGENTNI_TYPY,
         "rozsahy": {k: {"min": v[0], "max": v[1], "desetinnaMista": v[2]}
                     for k, v in SZZv3.ROZSAHY.items()},
@@ -4014,12 +4417,15 @@ async def szz3_katalog():
 
 @app.post("/api/szz3/zkontrolovat")
 async def szz3_zkontrolovat(request: Request):
-    """Klientská kontrola těla proti rozsahům z přílohy Validace SZZ 3.0."""
+    """Klientská kontrola těla proti rozsahům z přílohy Validace SZZ
+    (blokující ``vyhrady``) a změnám Standardu 3.1 (neblokující
+    ``upozorneni``)."""
     from sez_api.client import SZZv3
     body = await request.json()
     vyhrady = SZZv3.zkontroluj(body)
     return JSONResponse({"status": 200, "data": {
-        "validni": not vyhrady, "vyhrady": vyhrady}})
+        "validni": not vyhrady, "vyhrady": vyhrady,
+        "upozorneni": SZZv3.upozorneni(body)}})
 
 
 @app.get("/api/szz3/ciselniky")
@@ -4108,7 +4514,12 @@ async def szz3_search_typ(modul: str, typ: str, request: Request):
     if modul not in _SZZ3_MODULY:
         return error_response(f"Neznámý modul SZZ v3: {modul}")
     body = await request.json()
-    return timed_call(_szz3_crud(modul, typ)["vyhledat"], body)
+    ops = _szz3_crud(modul, typ)
+    if "vyhledat" not in ops:
+        return error_response(
+            f"Služba {typ} nemá operaci /vyhledat (Standard SZZ 3.1) – záznamy "
+            "účasti čtěte souhrnem POST /api/szz3/screeningy/vyhledat.", 405)
+    return timed_call(ops["vyhledat"], body)
 
 
 @app.put("/api/szz3/{modul}/{typ}/{id_}")
@@ -4184,6 +4595,7 @@ async def debug_jwt():
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Accept-Language": "cs",
+        "User-Agent": SEZClient.user_agent(),
         "X-Correlation-Id": correlation_id,
         "X-Trace-Id": trace_id,
     }
@@ -4254,7 +4666,15 @@ async def debug_jwt():
             "KRP": {
                 "name": "Kmenový registr pacientů",
                 "base": "/krp",
-                "version": "v3.0.x (v1 vypnuto 14. 8. 2026, v1 i v2 vypnuto k 15. 9. 2026)",
+                "version": "v3.0.6 (v1 vypnuto 14. 8. 2026; o provozu v2 si zdroje odporují)",
+                "note": ("Revize 10. 11. 2026 – Standard EZ Kmenové registry 1.3 (platnost od 3. 11. 2026): "
+                         "dočasný RID = „D“ + devítimístné číslo dělitelné 13 a nedělitelné 11; hromadné "
+                         "ztotožnění nejvýše 10 000 pacientů v dávce; ve jméně a příjmení jen písmena, "
+                         "spojovník, apostrof a mezera; univerzální hledání jen v kombinacích kap. 4.5.1. "
+                         "Pravidla drží sez_api.kzr_pravidla a GET /api/krp/pravidla. Vypnutí v2: Novinky "
+                         "27. 8. 2026 je oznámily k 15. 9. 2026, plán vývoje z 3. 11. 2026 s v2 dál počítá "
+                         "a přehled dostupnosti PROD z 10. 11. 2026 vede v2.0 jako běžící – stav brány "
+                         "není z tohoto prostředí ověřen."),
                 "endpoints": [
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid", "desc": "Vyhledání pacienta podle RID"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc", "desc": "Vyhledání podle jména a RČ"},
@@ -4268,7 +4688,7 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/mapovani_rid", "desc": "Mapování RID (aktuální ↔ historické)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_pojisteni", "desc": "Historie pojištění"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
-                    {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID) – pro pacienta bez zjištěné totožnosti, ne pro novorozence"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/priradit/docasny_rid", "desc": "Přiřazení DRID ke skutečnému RID"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec do 3 měsíců, cizinec)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zmenit/pacient", "desc": "Změna údajů pacienta"},
@@ -4276,8 +4696,8 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krp/api/v3/pacient/slouceni/zadost", "desc": "Žádost o sloučení pacientů"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/rozdeleni/zadost", "desc": "Žádost o rozdělení pacientů"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zruseni/zadost", "desc": "Zrušení žádosti"},
-                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání (jen v2, ve v3.0.0 endpoint není; v2 vypnuto k 15. 9. 2026)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost (nejvýše 10 000 pacientů v dávce)"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání (jen v2, ve v3 endpoint není; vypnutí v2 oznámeno k 15. 9. 2026)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění — výsledky"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky/soubor", "desc": "Hromadné ztotožnění — výsledky (CSV soubor)"},
                     {"method": "POST", "path": "/krp/api/v3/ciselnik/country_service_context", "desc": "Číselník CountryServiceContext"},
@@ -4322,7 +4742,7 @@ async def debug_jwt():
             "KRPZS": {
                 "name": "Kmenový registr poskytovatelů zdravotních služeb",
                 "base": "/krpzs",
-                "version": "v2.0.2",
+                "version": "v2.0.4",
                 "endpoints": [
                     {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/ico", "desc": "Vyhledání poskytovatele podle IČO"},
                     {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/nazev", "desc": "Vyhledání podle názvu"},
@@ -4346,7 +4766,7 @@ async def debug_jwt():
                 "name": "Registr oprávnění",
                 "base": "/registrOpravneni",
                 "version": "v1.0.7",
-                "note": "v1.0.7 (duben 2026): rozšíření GET /Opravneni/Over o EHS osoby a opt-in/opt-out – backward compatible. Endpoint /Osoby/Opravnujici/{rid} byl v PROD dočasně odstraněn z externího API PZS.",
+                "note": "v1.0.7 (duben 2026): rozšíření GET /Opravneni/Over o EHS osoby a opt-in/opt-out – backward compatible. Endpoint /Osoby/Opravnujici/{rid} byl 20. 4. 2026 dočasně odstraněn z externího API PZS; plán vývoje z 3. 11. 2026 ho vrací do konce roku 2026 s jiným významem (osoby, které pacient po přihlášení přes NIA zastupuje). Kontrakt zatím není zveřejněn, klient metodu nemá.",
                 "endpoints": [
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce (rozšířeno v 1.0.7)"},
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZdraví"},
@@ -4358,8 +4778,11 @@ async def debug_jwt():
             "TermX": {
                 "name": "Terminologický server (FHIR)",
                 "base": "/terminologie",
-                "version": "v1.0.5 (T2) / v1.1.0 (apio)",
-                "note": ("Gateway: /terminologie/... BEZ /fhir (dle swaggeru v1.0.5 i v1.1.0; "
+                "version": "v1.0.5 (T2 i apio; apio ji do 8. 10. 2026 vedlo jako v1.1.0)",
+                "note": ("Revize 10. 11. 2026: PROD katalog apio přejmenoval specifikaci na „Terminologie "
+                          "v1.0.5“ – cesty beze změny, $lookup a $validate-code mají navíc volitelné "
+                          "displayLanguage a useSupplement; /metadata na apio vrací 404, /manifest 200. "
+                          "Gateway: /terminologie/... BEZ /fhir (dle swaggeru v1.0.5 i v1.1.0; "
                           "legacy /terminologie/fhir po upgrade T2 vrací 406 – klient prefix "
                           "autodetekuje) | Veřejný mirror: termx-api-t2-pub.csez.cz/fhir (mTLS) "
                           "| Open API bez přihlášení: apio.csez.gov.cz/apidoc"),
@@ -4378,8 +4801,8 @@ async def debug_jwt():
                     {"method": "GET", "path": "/terminologie/CodeSystem/$lookup", "desc": "Lookup kódu v CodeSystemu"},
                     {"method": "GET", "path": "/terminologie/ConceptMap/{id}", "desc": "Mapování konceptů"},
                     {"method": "GET", "path": "/terminologie/ConceptMap/$translate", "desc": "Překlad konceptů (sourceCode/targetSystem)"},
-                    {"method": "GET", "path": "/terminologie/manifest", "desc": "Manifest obsahu serveru (v1.1.0)"},
-                    {"method": "GET", "path": "/terminologie/metadata", "desc": "FHIR capability statement"},
+                    {"method": "GET", "path": "/terminologie/manifest", "desc": "Manifest obsahu serveru (lastUpdate, effectiveDate)"},
+                    {"method": "GET", "path": "/terminologie/metadata", "desc": "FHIR capability statement (na PROD apio vrací 404)"},
                     {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/medical-document-type/$expand", "desc": "Typ zdravotního dokumentu (veřejný)"},
                     {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/stav-zasilky/$expand", "desc": "Stav zásilky (veřejný)"},
                 ],
@@ -4387,8 +4810,8 @@ async def debug_jwt():
             "DU": {
                 "name": "Dočasné úložiště",
                 "base": "/docasneUloziste",
-                "version": "v1.11.17",
-                "note": "v1.11.17 (Popis API DÚ v1.2, 5. 6. 2026) – přidána služba ZpochybniZasilku + kapitola Notifikace; patch zpřesnění validací (BC). Akce nad zásilkou používají Id+VerzeRadku v query parametrech. DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami.",
+                "version": "v1.11.27",
+                "note": "v1.11.27 dle swaggeru brány T2 z 13. 10. 2026 (7 cest, kontrakt beze změny). Popis API DÚ v1.2 (5. 6. 2026) – přidána služba ZpochybniZasilku + kapitola Notifikace; patch zpřesnění validací (BC). Akce nad zásilkou používají Id+VerzeRadku v query parametrech. DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami.",
                 "endpoints": [
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky (eZD)"},
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/VyhledejZasilku", "desc": "Vyhledání zásilek"},
@@ -4462,14 +4885,17 @@ async def debug_jwt():
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
-                "version": "v1.0.7 + v2.0.9",
+                "version": "v1.0.7 + v2.0.11",
                 "note": ("Standard 2.2 (10. 4. 2026), v2.0.7+ zpřísněné validace: "
                          "datum vystavení max. 3 dny zpětně a ne v budoucnosti, "
                          "datum platnosti ne v minulosti a max. 100 let od vystavení "
                          "(2 roky pro 70+), max. 300 znaků doplňujícího textu, "
                          "PDF pouze pro platný posudek, zneplatnit může jen vystavující PZS. "
                          "v2.0.8 + 2.0.9 přidávají interní endpointy online/offline validace "
-                         "(EzKarta), nejsou v B2B PZS API."),
+                         "(EzKarta), nejsou v B2B PZS API. v2.0.11 (květen 2026): validace odbornosti "
+                         "PZS. 9. 11. 2026 (PROD): upraven formát validačních hlášek offline validace "
+                         "a přenos neplatných a zneplatněných posudků do registru řidičů – dle Novinek "
+                         "bez dopadu na funkčnost."),
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v1)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v1)"},
@@ -4529,7 +4955,7 @@ async def debug_jwt():
             "Notifikace": {
                 "name": "Notifikační služby",
                 "base": "/notifikace",
-                "version": "v1.0.5",
+                "version": "v1.0.9",
                 "endpoints": [
                     {"method": "GET",  "path": "/notifikace/api/v1/notifikace/ping", "desc": "Ping (health check)"},
                     {"method": "POST", "path": "/notifikace/api/v1/notifikace/odeslat", "desc": "Odeslat notifikaci"},
@@ -4593,7 +5019,7 @@ async def debug_jwt():
             "EZCA2_SpravaCertifikatu": {
                 "name": "EZCA II – Správa certifikátů (NOVÁ služba)",
                 "base": "/ezca2Certifikaty",
-                "version": "v1.0.2",
+                "version": "v1.0.8",
                 "note": ("Nově oddělená samostatná služba na T2 gateway pro životní cyklus systémových "
                          "EZCA II certifikátů. Gateway prefix: /ezca2Certifikaty (dle servers[0].url v swagger). "
                          "Doporučený proces: vystavit/preregistrovat/obnovit → sledovat /stav → /stahnout. "
@@ -4628,13 +5054,14 @@ async def debug_jwt():
                 ],
             },
             "KRP_v3": {
-                "name": "KRP v3.0.0 (NOVÁ MAJOR – paralelně s v2)",
+                "name": "KRP v3.0.6 (Standard KZR 1.3)",
                 "base": "/krp",
-                "version": "v3.0.0",
+                "version": "v3.0.6",
                 "note": ("BREAKING změny: 1) Odstraněna diakritika v atributech (např. DatumNarození → DatumNarozeni). "
                          "2) Cesty používají snake_case (např. /pacient/hledat/jmeno_prijmeni_rc místo "
                          "/jmeno-prijmeni-rc). 3) MatkaNovorozence.DatumNarozeni typ změněn z date-time na date. "
-                         "Verze v2.0.2 zůstává paralelně dostupná."),
+                         "Tělo požadavků je u v2 a v3 shodné. Odběry notifikací dle swaggeru 3.0.6: "
+                         "predmet, prijemci, subjektId; zrušení přes idSubskripce."),
                 "endpoints": [
                     {"method": "POST", "path": "/krp/api/v3/ciselnik/{nazev}", "desc": "Číselník (country_service_context, druh_dokladu, pohlavi, stat, zdravotni_pojistovna)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid", "desc": "Hledat podle RID (POST s body)"},
@@ -4666,16 +5093,18 @@ async def debug_jwt():
                 ],
             },
             "SZZ_v2": {
-                "name": "SZZ v2.0.1 – Prevence + Screeningy (NOVÉ moduly)",
+                "name": "SZZ v2.0.7 – Prevence + Screeningy",
                 "base": "/sdilenyZdravotniZaznam",
-                "version": "v2.0.1",
+                "version": "v2.0.7",
                 "note": ("BREAKING: ze společného SZZ v1 vznikla samostatná verze v2 s oddělenými moduly: "
                          "PREVENCE (5 typů: kardiovaskulární rizika, HPV očkování, prev. prohlídky všeob. praktik / "
                          "gynekolog / PLDD) a SCREENINGY (10 typů: kolorektální karcinom TOKS, prsu mammografie/biopsie, "
                          "děložního hrdla cytologie/HPV/expertní kolposkopie, prostaty PSA/MRI, plic LDCT, "
                          "aneurysma USG). U alergií v2 odstraněno CasZjisteni z requestu/response. "
                          "U TOKS přibyl typ POCT analyzátoru. Souhrnné POST endpointy /prevence/vyhledat a /screeningy/vyhledat "
-                         "vrátí všechny záznamy pacienta podle RID. SZZ v1 zůstává paralelně dostupná."),
+                         "vrátí všechny záznamy pacienta podle RID. SZZ v1 zůstává paralelně dostupná. "
+                         "Od v2.0.4 (T2 11. 6., PROD 29. 6. 2026) dalších pět screeningů: koloskopie, "
+                         "vstupní PSA, urologické a bioptické vyšetření prostaty, pneumologické vyšetření."),
                 "endpoints": [
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v2/ciselniky", "desc": "Číselníky v2"},
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v2/ciselniky/{kod}/polozky", "desc": "Položky číselníku v2"},
@@ -4690,26 +5119,61 @@ async def debug_jwt():
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyPsa", "desc": "SCREENING: karcinom prostaty – PSA"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyMri", "desc": "SCREENING: karcinom prostaty – MRI"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaCytologie", "desc": "SCREENING: karcinom děložního hrdla – cytologie"},
-                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV (cesta se dvěma D dle swaggeru)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDDeloznihoHrdlaHpv", "desc": "SCREENING: karcinom děložního hrdla – HPV (swagger 2.0.1; ve swaggeru 2.0.7 karcinomDeloznihoHrdlaHpv – klient zkusí obě)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomDeloznihoHrdlaExpertniKolposkopie", "desc": "SCREENING: karcinom děložního hrdla – expertní kolposkopie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuMamografie", "desc": "SCREENING: karcinom prsu – mamografie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuBiopsie", "desc": "SCREENING: karcinom prsu – biopsie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPlicLdct", "desc": "SCREENING: karcinom plic – LDCT"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/aneurysmaAbdominalniAortyUsg", "desc": "SCREENING: aneurysma břišní aorty – USG"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/kolorektalniKarcinomKoloskopie", "desc": "SCREENING: kolorektální karcinom – koloskopie (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyVstupniPsa", "desc": "SCREENING: karcinom prostaty – vstupní PSA (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyUrologickeVysetreni", "desc": "SCREENING: karcinom prostaty – urologické vyšetření (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyBioptickeVysetreni", "desc": "SCREENING: karcinom prostaty – bioptické vyšetření (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPlicPneumologickeVysetreni", "desc": "SCREENING: karcinom plic – pneumologické vyšetření (od v2.0.4)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/emergentniZaznam/vyhledat", "desc": "EMERG. ZÁZNAM v2: souhrnné vyhledat (alergie bez CasZjisteni)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/emergentniZaznam/pdf", "desc": "EMERG. ZÁZNAM v2: PDF"},
                 ],
             },
+            "SZZ_v3": {
+                "name": "SZZ v3.0.5 – Standard EZ SZZ 3.1",
+                "base": "/sdilenyZdravotniZaznam",
+                "version": "v3.0.5",
+                "note": ("Standard EZ SZZ 3.1 (23. 10. 2026) je dle wiki platný pro SZZ od verze 3.0.5. "
+                         "Účast ve screeningu je samostatný záznam: služby /screeningy/*Ucast (T2 od "
+                         "20. 10. 2026; POST, PUT, PATCH zneplatnit/zpochybnit/obnovit, bez /vyhledat), "
+                         "z preventivní prohlídky VPL byly položky účasti odebrány. Swagger 3.0.5 "
+                         "z 13. 10. 2026 je starší a tyto cesty ještě neobsahuje; datum nasazení na PROD "
+                         "není známé. Ostatní moduly mají stejné cesty jako v2 pod /api/v3; klient SZZv3, "
+                         "backend /api/szz3/*."),
+                "endpoints": [
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/prevence/vyhledat", "desc": "Souhrnné vyhledání prevencí pacienta"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/vyhledat", "desc": "Souhrnné vyhledání screeningů pacienta (včetně záznamů účasti)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/karcinomProstatyUcast", "desc": "ÚČAST: screening karcinomu prostaty (muži 50–69 let) – Standard 3.1"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/karcinomPlicUcast", "desc": "ÚČAST: screening karcinomu plic (55–74 let) – Standard 3.1"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/aneurysmaAbdominalniAortyUcast", "desc": "ÚČAST: screening aneurysmatu abdominální aorty (muži 65–67 let, nejvýše jeden platný záznam) – Standard 3.1"},
+                    {"method": "PUT", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/{typ}Ucast/{id}", "desc": "ÚČAST: aktualizace záznamu"},
+                    {"method": "PATCH", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/{typ}Ucast/{id}/zneplatnit", "desc": "ÚČAST: zneplatnění (stejně zpochybnit, obnovit)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/emergentniZaznam/vyhledat", "desc": "Emergentní záznam v3: souhrnné vyhledání"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/emergentniZaznam/pdf", "desc": "Emergentní záznam v3: PDF"},
+                ],
+            },
             "ELP_v3": {
-                "name": "ELP v3.0.0 (interní – nejen pro PZS B2B)",
+                "name": "ELP v3.0.3 – Elektronické posudky v3",
                 "base": "/elektronickePosudky",
-                "version": "v3.0.0",
-                "note": ("INTERNÍ API systému ELP – určeno pro Národní portál, EZKartu a interní aplikace. "
-                         "Pro PZS B2B používáme dál v1 (v1.0.7) a v2 (v2.0.9). v3.0.0 obsahuje pouze 2 "
-                         "číselníkové endpointy + interní validační endpointy."),
+                "version": "v3.0.3",
+                "note": ("Od v3.0.1 (PROD 30. 5. 2026) swagger v3 obsahuje i služby posudků, ne jen "
+                         "číselníky; národní kódy jsou v jednom poli. v1 (v1.0.7) a v2 (v2.0.11) běží "
+                         "souběžně. Klient ELPv3."),
                 "endpoints": [
                     {"method": "GET", "path": "/elektronickePosudky/api/v3/ciselniky", "desc": "Číselníky v3"},
                     {"method": "GET", "path": "/elektronickePosudky/api/v3/ciselniky/{kod}/polozky", "desc": "Položky číselníku v3"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v3)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v3)"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v3)"},
+                    {"method": "PATCH", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v3)"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v3)"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}/historie", "desc": "Historie (v3)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/zalozeni/opravneni", "desc": "Ověřit oprávnění pracovníka (v3)"},
                 ],
             },
             "RO_NCPeH": {
@@ -4732,8 +5196,11 @@ async def debug_jwt():
             "SÚKL / eRecept": {
                 "name": "SÚKL – eRecept / CÚER",
                 "base": "(SÚKL – mimo CSEZ gateway)",
-                "version": cfg.SUKL_INTERFACE_VERSION,
+                "version": (f"eRecept {cfg.SUKL_INTERFACE_VERSION} · "
+                            f"ePoukaz {cfg.SUKL_EPOUKAZ_INTERFACE_VERSION}"),
                 "note": ("Samostatný systém SÚKL (SOAP web services, epreskripce.gov.cz). "
+                         "Termíny SÚKL: 30. 11. 2026 se vypínají „staré“ endpointy eReceptu "
+                         "a verze ePoukazu 202601A/202601B/202604A (od 1. 12. 2026 jen 202605A). "
                          "Vyžaduje registraci SW u SÚKL + certifikát. Bez těchto přístupů běží "
                          "v režimu SIMULACE (in-memory engine + builder obálek). Endpointy níže jsou "
                          "REST fasáda tohoto nástroje (/api/sukl/...), nikoli přímé SÚKL URL."),
@@ -4752,7 +5219,7 @@ async def debug_jwt():
             },
             "SÚKL / DLP": {
                 "name": "SÚKL – Databáze léčivých přípravků",
-                "base": "opendata.sukl.cz",
+                "base": "opendata.sukl.gov.cz",
                 "version": "otevřená data (CSV, měsíčně)",
                 "note": ("Veřejná otevřená data SÚKL (bez certifikátu). Používá se pro vyhledávání "
                          "léčivých přípravků podle názvu, kódu SÚKL nebo ATC a pro doplnění názvů "
@@ -4839,6 +5306,11 @@ async def debug_jwt():
                 {"name": "Autentizace k API gateway", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/160530443"},
                 {"name": "Novinky v aplikacích EZ a dostupnosti služeb", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129"},
                 {"name": "Plán vývoje CSEZ", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/524517377"},
+                {"name": "Plán vývoje – stav k 3. 11. 2026", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/1040646145"},
+                {"name": "Plánované výpadky prostředí T2 a Produkce", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/1044774914"},
+                {"name": "Dostupnost služeb (eZdraví)", "url": "https://www.ezdravi.gov.cz/katalog-sluzeb/dostupnost"},
+                {"name": "Statistiky (eZdraví)", "url": "https://www.ezdravi.gov.cz/statistiky"},
+                {"name": "HL7 CZ implementační příručky (závazný portál)", "url": "https://ig.ezdravi.gov.cz/"},
                 {"name": "FAQ", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/190251018"},
                 {"name": "Kmenové zdravotnické registry", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/48136196"},
                 {"name": "Notifikace", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935032"},
@@ -4923,9 +5395,11 @@ async def reference_dotnet():
         "source": "Aplikace_NET9_TestovaciPZS_ver02",
         "description": "Oficiální testovací .NET 9 aplikace od MZČR pro ověření připojení k SEZ API",
         "config": {
-            "clientId": "25488627_KrajskaZdravotniVerejnyTest",
+            # Veřejný testovací certifikát NCEZ obměňuje čtvrtletně; „test 04“
+            # platí 7. 10. 2026 – 7. 1. 2027 (stránka Autentizace k API gateway).
+            "clientId": "25488627_KrajskaZdravotniVerejnyTest04",
             "audience": "https://jsuint-auth-t2.csez.cz/connect/token",
-            "certificate": "Certifikat_systémový_Krajská_zdravotní_ICO_25488627.pfx",
+            "certificate": "krajska zdravotni verejny test 04 25488627.pfx",
             "gateway": "https://gwy-ext-sec-t2.csez.cz",
             "test_endpoint": "/notifikace/api/v1/kanaly/katalog",
         },
@@ -7232,9 +7706,12 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
     """Sestaví FHIR Bundle pro výjezdovou zprávu ZZS (LOINC 67796-3).
 
     Hlavička dle HL7 CZ EMS IG (cz-composition-ems / cz-bundle-ems, L1):
-    meta.profile, category 18682-5, presentedForm, sekce s LOINC kódy
-    dle profilu (mission 67664-3, findings 29545-1, procedure 29554-3,
-    diagnosticSummary 11450-4) + klinické zdroje (Encounter/Condition/Procedure).
+    meta.profile, identifier (cz-ems 0.1.0: 1..1), category 18682-5,
+    presentedForm, sekce s LOINC kódy dle profilu (mission 67664-3,
+    findings 29545-1, procedure 29554-3, diagnosticSummary 11450-4)
+    + klinické zdroje (Encounter/Condition/Procedure). Sekci časové osy
+    (67667-6) dokument nenese – invariant mission-time-required se tak
+    neuplatní.
     """
     ems_meta = _fhir_ezd.EZD_KATEGORIE["vyjezd-zzs"]
     comp_uuid = f"urn:uuid:{uuid.uuid4()}"
@@ -7265,6 +7742,8 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
             {"fullUrl": comp_uuid, "resource": {
                 "resourceType": "Composition", "status": "final",
                 "meta": {"profile": [ems_meta["composition_profile"]]},
+                "identifier": {"system": "urn:ietf:rfc:3986",
+                                "value": f"urn:uuid:{uuid.uuid4()}"},
                 "extension": [{
                     "url": _fhir_ezd.PRESENTED_FORM_EXT,
                     "valueAttachment": {"contentType": "application/pdf",
@@ -8604,7 +9083,7 @@ async def termx_pub_list():
 # ===========================================================================
 # SÚKL – eRecept / CÚER + DLP
 # ---------------------------------------------------------------------------
-# DLP: reálná veřejná data (opendata.sukl.cz) – přes SUKLDLP klienta.
+# DLP: reálná veřejná data (opendata.sukl.gov.cz) – přes SUKLDLP klienta.
 # eRecept: builder obálek + simulační engine (LIVE jen s registrací + endpointem).
 # ===========================================================================
 
@@ -9584,8 +10063,7 @@ async def img_order_search(request: Request):
                 "resource": {
                     "resourceType": "ServiceRequest",
                     "id": zid,
-                    "status": "active" if stav in (None, "0", "1", "5") else
-                              ("revoked" if stav == "3" else "completed"),
+                    "status": _ez_stav_na_fhir(stav),
                     "intent": "order",
                     "priority": (upp.get("urgentnost") or {}).get("kod") or "routine",
                     "subject": {"identifier": {"system": _fhir_img.SYS_RID, "value": hl.get("pacient")}} if hl.get("pacient") else {},
@@ -9624,7 +10102,7 @@ async def img_order_search(request: Request):
             "resource": {
                 "resourceType": "ServiceRequest",
                 "id": zid,
-                "status": "active" if stav in (None, "0", "1") else "completed",
+                "status": _ez_stav_na_fhir(stav),
                 "intent": "order",
                 "priority": urgent,
                 "subject": {"identifier": {"system": _fhir_img.SYS_RID, "value": rid}} if rid else {},
@@ -9996,6 +10474,7 @@ class ZpravaRequest(BaseModel):
     autor_data: Optional[dict] = None
     sekce: Optional[dict] = None
     pdf_base64: Optional[str] = None
+    cislo_vyjezdu: Optional[str] = None
 
 
 @app.post("/api/zpravy/nahled")
@@ -10007,7 +10486,8 @@ async def zpravy_nahled(req: ZpravaRequest):
             req.kategorie, rid=req.rid, autor_krzpid=req.autor, ico=req.ico,
             pzs_nazev=req.pzs_nazev, title=req.title,
             pacient=req.pacient, autor=req.autor_data,
-            sekce=req.sekce, pdf_base64=req.pdf_base64)
+            sekce=req.sekce, pdf_base64=req.pdf_base64,
+            cislo_vyjezdu=req.cislo_vyjezdu)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     v = _fhir_ezd.validate_ezd_bundle(bundle, kategorie=req.kategorie)
@@ -10076,7 +10556,8 @@ async def zpravy_odeslat_du(req: ZpravaRequest):
             req.kategorie, rid=req.rid, autor_krzpid=req.autor, ico=req.ico,
             pzs_nazev=req.pzs_nazev, title=req.title,
             pacient=req.pacient, autor=req.autor_data,
-            sekce=req.sekce, pdf_base64=req.pdf_base64)
+            sekce=req.sekce, pdf_base64=req.pdf_base64,
+            cislo_vyjezdu=req.cislo_vyjezdu)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
@@ -10634,6 +11115,12 @@ def _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel) -> list:
     Kombinace bez jména (typicky rodné číslo z NIS) zvládne jen univerzální
     hledání – ostatní metody jméno vyžadují, a `cizinec_cp` je určená pro
     cizince bez rodného čísla, takže na českého pacienta vrací 404.
+
+    Standard KZR 1.3 (kap. 4.5.1) uvádí u univerzálního hledání jen kombinace
+    jméno + příjmení + další údaj. Hledání podle samotného rodného čísla tu
+    zůstává: rodné číslo určuje osobu jednoznačně, swagger 3.0.6 kombinace
+    nevynucuje a NIS často jméno v použitelné podobě nemá. Samotné datum
+    narození se už neposílá – osobu neurčuje a jen zatěžuje KRP a ISZR.
     """
     pokusy = []
     if j and p and rc:
@@ -10645,7 +11132,7 @@ def _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel) -> list:
     if j and p and dn:
         pokusy.append(("jmeno_prijmeni_datum_narozeni",
                        lambda: krp.hledat_jmeno_dn(j, p, dn, so, ucel)))
-    if rc or dn:
+    if rc or (j and p and dn):
         pokusy.append(("uni", lambda: krp.hledat_uni(
             ucel, rodneCislo=rc or None, datumNarozeni=dn or None,
             jmeno=j or None, prijmeni=p or None,
@@ -10709,13 +11196,22 @@ def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
     dn = (datumNarozeni or "").strip()
     so = statniObcanstvi or None
 
+    # MZ ČR (3. 11. 2026): zjevně chybná jména („Test“, „Neuvedeno“, číslice,
+    # symboly) zatěžují KRP i ISZR – takový dotaz se vůbec neodešle a volající
+    # dostane 422 s důvodem. Režim řídí SEZ_KRP_KONTROLA_JMEN.
+    if _kzr.rezim_kontroly_jmen() == _kzr.REZIM_ODMITNOUT:
+        vadna = _kzr.kontrola_jmena(j, p)
+        if vadna:
+            raise ValueError(" ".join(vadna) + " Dotaz se na KRP neodeslal. "
+                             + _kzr.JMENA_DUVOD)
+
     pokusy = _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel)
     if not pokusy:
         raise ValueError(
             "Zadejte alespoň jednu z kombinací: (jméno+příjmení+rodné číslo) | "
             "(jméno+příjmení+číslo pojištěnce) | "
-            "(jméno+příjmení+datum narození) | rodné číslo | datum narození | "
-            "číslo pojištěnce.")
+            "(jméno+příjmení+datum narození) | rodné číslo | číslo pojištěnce. "
+            "Samotné datum narození osobu neurčuje a do KRP se neposílá.")
 
     budget = max(0, cfg.ZTOTOZNENI_BUDGET_MS) / 1000.0
     zacatek = time.monotonic()
