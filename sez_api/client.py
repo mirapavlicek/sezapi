@@ -28,6 +28,8 @@ from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, Priva
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.x509.extensions import SubjectKeyIdentifier
 
+from sez_api import kzr_pravidla as _kzr
+
 logger = logging.getLogger("sez_api")
 
 
@@ -131,8 +133,10 @@ class SEZConfig:
     ASSERTION_VALIDITY_SECONDS = 300
     ASSERTION_NBF_SKEW_SECONDS = 60
     ENVIRONMENT = "T2"
-    # Verze API KRP pro PZS. K 15. 9. 2026 NCEZ vypíná v1 i v2 (Novinky EZ,
-    # 27. 8. 2026); jediná provozovaná verze je v3.
+    # Verze API KRP pro PZS. Novinky EZ 27. 8. 2026 oznámily vypnutí v1 i v2
+    # k 15. 9. 2026; plány MZ ČR z 3. 11. 2026 naopak mluví o vypnutí jen v1
+    # "do konce roku" s tím, že v2 a v3 zůstanou. v3 zůstává podle obou zdrojů,
+    # proto je výchozí; dostupnost v2 je nutné ověřit na bráně.
     KRP_VERZE = os.environ.get("SEZ_KRP_VERZE", "v3").strip().lower() or "v3"
 
     @classmethod
@@ -800,19 +804,77 @@ def korelace(correlation_id: str = None):
         _KORELACE.reset(token)
 
 
+def _podej_po_davkach(krp, file_bytes, filename, ucel, registrovat_odber, limit) -> list:
+    """Společná implementace ``ztotozneni_zadost_po_davkach`` pro KRP i KRPv3."""
+    if isinstance(file_bytes, (bytes, bytearray)):
+        raw = file_bytes.decode("utf-8-sig")
+    else:
+        raw = str(file_bytes)
+    xml_text = KRP.to_davka_xml(raw)
+    casti = _kzr.rozdel_davku(xml_text, limit or _kzr.DAVKA_MAX_PACIENTU)
+    base = (filename or "davka").rsplit(".", 1)[0] or "davka"
+    vysledky, pokracovat = [], True
+    for i, cast in enumerate(casti, start=1):
+        nazev = f"{base}_{i:02d}.xml" if len(casti) > 1 else f"{base}.xml"
+        polozka = {"poradi": i, "pocetPacientu": _kzr.pocet_pacientu(cast),
+                   "soubor": nazev, "status": None,
+                   "hromadneZtotozneniID": None, "odpoved": None}
+        if pokracovat:
+            resp = krp.ztotozneni_zadost(cast.encode("utf-8"), nazev, ucel,
+                                         registrovat_odber)
+            polozka["status"] = resp.status_code
+            try:
+                telo = resp.json()
+            except Exception:
+                telo = getattr(resp, "text", "")
+            polozka["odpoved"] = telo
+            if isinstance(telo, dict):
+                od = telo.get("odpovedData")
+                if isinstance(od, dict):
+                    polozka["hromadneZtotozneniID"] = (
+                        od.get("hromadneZtotozneniID") or od.get("hromadneZtotozneniId")
+                        or od.get("idZadosti"))
+            pokracovat = resp.status_code < 400
+        vysledky.append(polozka)
+    return vysledky
+
+
 class KRP:
     """KRP – Kmenový registr pacientů (rozhraní pro PZS).
 
     Cesty i tělo požadavků jsou u v2 a v3 shodné (liší se jen prefix
     ``/api/v2`` vs. ``/api/v3``; v3 navíc nemá ``ztotoznihromadne/vykonani``),
-    proto třída pouze parametrizuje verzi. NCEZ vypnul v1 k 14. 8. 2026 a
-    **v1 i v2 vypíná k 15. 9. 2026** (Novinky EZ, 27. 8. 2026) – výchozí je
-    proto ``v3``; starší verzi vrátí ``SEZ_KRP_VERZE=v2`` nebo parametr
-    ``verze`` (jen pro ladění, po 15. 9. 2026 vrací brána chybu)."""
+    proto třída pouze parametrizuje verzi. Výchozí je ``v3``.
+
+    Stav starších verzí (revize 10. 11. 2026) není jednoznačný: Novinky EZ
+    z 27. 8. 2026 oznámily vypnutí **v1 i v2 k 15. 9. 2026**, plány MZ ČR
+    z 3. 11. 2026 uvádějí „do konce roku vypnout v1, zůstane v2 a v3“ a stránka
+    KZR z téhož dne swagger ``KRP_v2`` dál odkazuje. v2 proto zůstává
+    přepínatelná (``SEZ_KRP_VERZE=v2`` nebo parametr ``verze``); zda na ni
+    brána odpovídá, se z této sítě ověřit nedalo.
+
+    Pravidla Standardu EZ Kmenové registry 1.3 (platnost 3. 11. 2026) drží
+    modul :mod:`sez_api.kzr_pravidla`."""
 
     BASE = "/krp"
+    # Datum z oznámení 27. 8. 2026 (viz docstring – plán z 3. 11. 2026 mu odporuje).
     VYPNUTI_V2 = "2026-09-15"
+    VYPNUTI_V2_POTVRZENO = False
     VERZE = "v3"  # výchozí; instance ji může přepsat (viz __init__)
+    STANDARD_VERZE = _kzr.STANDARD_VERZE
+    DRID_ZASOBA = _kzr.DRID_ZASOBA
+    DAVKA_MAX_PACIENTU = _kzr.DAVKA_MAX_PACIENTU
+    DAVKA_DOBA_ZPRACOVANI_MIN = _kzr.DAVKA_DOBA_ZPRACOVANI_MIN
+    NOTIFIKACE_UDALOSTI = _kzr.NOTIFIKACE_UDALOSTI
+    NOTIFIKACE_OBJEKTY_ZMENY = _kzr.NOTIFIKACE_OBJEKTY_ZMENY
+
+    drid_platny = staticmethod(_kzr.drid_platny)
+    rid_platny = staticmethod(_kzr.rid_platny)
+    kontrola_jmena = staticmethod(_kzr.kontrola_jmena)
+    uni_kombinace = staticmethod(_kzr.uni_kombinace)
+    rozdel_davku = staticmethod(_kzr.rozdel_davku)
+    notifikace_odber = staticmethod(_kzr.notifikace_odber)
+    notifikace_zprava = staticmethod(_kzr.notifikace_zprava)
 
     def __init__(self, client: SEZClient, verze: str | None = None):
         self.c = client
@@ -856,14 +918,35 @@ class KRP:
                            self._envelope(ucel, {"jmeno": jmeno, "prijmeni": prijmeni, "rodneCislo": rc}))
 
     def generovat_docasny_rid(self, pocet: int = 1, ucel="LECBA"):
+        """Vygeneruje dočasné RID (DRID) – Standard KZR 1.3, kap. 4.4.3.
+
+        DRID slouží k interní evidenci pacienta s neznámou totožností (občan ČR
+        i cizinec), při výpadku sítě nebo traumaplánu; **neslouží k založení
+        novorozence**. Zásoba předgenerovaných DRID je stanovena na 50 ks."""
+        try:
+            n = int(pocet)
+        except (TypeError, ValueError):
+            raise ValueError("Počet DRID musí být celé číslo.") from None
+        if n < 1:
+            raise ValueError("Počet DRID musí být alespoň 1.")
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/generovat/docasny_rid",
-                           self._envelope(ucel, {"pocet": pocet}))
+                           self._envelope(ucel, {"pocet": n}))
 
     def priradit_docasny_rid(self, docasny_rid: str, rid: str, ucel="LECBA"):
+        """Přiřadí použitý DRID k trvalému RID (kap. 4.4.4). DRID se špatným
+        tvarem (jiným než ``D`` + 9 číslic) se na bránu neposílá. Kontrolní
+        pravidlo verze 1.3 (dělitelnost 13, ne 11) se nevynucuje – DRID vydané
+        před 3. 11. 2026 ho splňovat nemusí; viz ``kzr_pravidla.drid_upozorneni``."""
+        drid = str(docasny_rid or "").strip().upper()
+        chyba = _kzr.drid_chyba(drid)
+        if chyba:
+            raise ValueError(chyba)
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/priradit/docasny_rid",
-                           self._envelope(ucel, {"docasnyRID": docasny_rid, "rid": rid}))
+                           self._envelope(ucel, {"docasnyRID": drid, "rid": str(rid or "").strip()}))
 
     def mapovani_rid(self, rid: str, jen_aktualni: bool = False, ucel="LECBA"):
+        """Aktuální RID nebo historie („rodokmen“) RID. Vstupem může být
+        libovolný vyhledatelný RID i DRID (Standard KZR 1.3, kap. 4.4.4)."""
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/mapovani_rid",
                            self._envelope(ucel, {"rid": rid, "jenAktualni": jen_aktualni}))
 
@@ -908,6 +991,11 @@ class KRP:
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/niabsi", body)
 
     def hledat_uni(self, ucel="LECBA", **kwargs):
+        """Univerzální vyhledání (``VyhledejUni``). Standard KZR 1.3, kap. 4.5.1,
+        uvádí pět kombinací, vždy jméno + příjmení a k tomu rodné číslo, číslo
+        pojištěnce, datum narození, adresu pobytu nebo doklad
+        (``kzr_pravidla.UNI_KOMBINACE``). Swagger 3.0.6 je nevynucuje, proto se
+        zde nekontrolují – upozornění vrací ``kzr_pravidla.uni_upozorneni``."""
         data = {k: v for k, v in kwargs.items() if v is not None}
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/pacient/hledat/uni",
                            self._envelope(ucel, data))
@@ -997,6 +1085,10 @@ class KRP:
         base = (filename or "davka").rsplit(".", 1)[0] or "davka"
         xml_text = self.to_davka_xml(raw)
         out_name = base + ".xml"
+        # Standard KZR 1.3, kap. 4.4.5: dávka nejvýše 10 000 pacientů.
+        chyba = _kzr.davka_chyba(_kzr.pocet_pacientu(xml_text))
+        if chyba:
+            raise ValueError(chyba + " Viz ztotozneni_zadost_po_davkach().")
 
         url = self.c.config.GATEWAY + f"{self.BASE}/api/{self.VERZE}/pacient/ztotoznihromadne/zadost"
         assertion = self.c.auth.build_assertion()
@@ -1021,6 +1113,17 @@ class KRP:
         except Exception:
             self.c.last_response = resp.text
         return resp
+
+    def ztotozneni_zadost_po_davkach(self, file_bytes, filename: str = "ztotozneni.csv",
+                                     ucel="LECBA", registrovat_odber: bool = False,
+                                     limit: int | None = None) -> list:
+        """Podá hromadné ztotožnění po dávkách nejvýše 10 000 pacientů
+        (Standard KZR 1.3, kap. 4.4.5) a vrátí seznam
+        ``{poradi, pocetPacientu, soubor, status, hromadneZtotozneniID, odpoved}``
+        – jednu položku za každou podanou dávku. Po první neúspěšné dávce se
+        další nepodávají (zbytek má ``status`` ``None``)."""
+        return _podej_po_davkach(self, file_bytes, filename, ucel,
+                                 registrovat_odber, limit)
 
     def ztotozneni_vykonani(self, id_zadosti, ucel="LECBA"):
         """POZOR: endpoint /ztotoznihromadne/vykonani NENÍ v dokumentaci API KRP
@@ -1081,11 +1184,15 @@ class KRP:
         return out
 
     def ztotozneni_cekat_na_vysledky(self, id_zadosti, ucel="LECBA",
-                                      max_wait_s: float = 300,
+                                      max_wait_s: float = _kzr.DAVKA_CEKANI_S,
                                       interval_s: float = 10) -> dict:
         """Polluje /vysledky, dokud hromadneZtotozneniDokonceno != True
         (nebo do vypršení max_wait_s). Vrací poslední stav ze
-        :meth:`ztotozneni_stav` doplněný o počet pokusů a celkový čas."""
+        :meth:`ztotozneni_stav` doplněný o počet pokusů a celkový čas.
+
+        Výchozí čekání je 45 minut: MZ ČR (3. 11. 2026) uvádí, že zpracování
+        jedné dávky do 10 000 pacientů trvá cca 30 minut (dřív zde bylo 5 min
+        a čekání skončilo dřív než zpracování)."""
         t0 = time.monotonic()
         pokusy = 0
         while True:
@@ -1471,27 +1578,66 @@ class KRP:
             w.writerow(flat)
         return out.getvalue()
 
-    def notifikace_vyhledat(self, kanal_typ, subjekt_id=None, subjekt_typ=None, ucel="LECBA"):
-        data = {"kanalTyp": kanal_typ}
+    # --- Notifikace z KRP (Standard KZR 1.3, kap. 4.5.3) ---------------------
+    # Těla odpovídají swaggeru KRP 3.0.6 (schémata mají additionalProperties:
+    # false): založení ``predmet[].rid`` + ``prijemci.url`` + ``subjektId``,
+    # vyhledání ``idSubskripce`` a/nebo ``subjektId`` (IČO), zrušení jedno
+    # ``idSubskripce``. Dřívější pole ``kanalTyp``, ``subjektTyp``,
+    # ``typyUdalosti`` a ``cil`` ve schématu nejsou a už se neposílají.
+
+    def notifikace_vyhledat(self, kanal_typ=None, subjekt_id=None, subjekt_typ=None,
+                            ucel="LECBA", id_subskripce=None):
+        """Vyhledá odběry notifikací. ``subjekt_id`` je IČO subjektu (vrátí
+        všechny jeho aktivní odběry), ``id_subskripce`` GUID konkrétního
+        odběru. Alespoň jeden z nich musí být zadán (kap. 4.5.3.3).
+
+        ``kanal_typ`` a ``subjekt_typ`` zůstávají jen kvůli starším voláním
+        a ignorují se – schéma je nezná (kanál je „nyní pouze API“)."""
+        data = {}
+        if id_subskripce:
+            data["idSubskripce"] = str(id_subskripce).strip()
         if subjekt_id:
-            data["subjektId"] = subjekt_id
-        if subjekt_typ:
-            data["subjektTyp"] = subjekt_typ
+            data["subjektId"] = str(subjekt_id).strip()
+        if not data:
+            raise ValueError("Pro vyhledání odběru notifikací zadejte idSubskripce "
+                             "nebo subjektId (IČO).")
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/vyhledat/odber",
                            self._envelope(ucel, data))
 
-    def notifikace_zalozit(self, nastaveni, ucel="LECBA"):
+    def notifikace_zalozit(self, nastaveni=None, ucel="LECBA", *, rid=None,
+                           url=None, subjekt_id=None):
+        """Založí odběr notifikací o změnách pacienta/pacientů.
+
+        Buď pojmenované parametry (``rid`` – jeden nebo seznam, ``url`` –
+        nepovinná adresa listeneru, ``subjekt_id`` – IČO), nebo slovník
+        ``nastaveni``; starší tvary slovníku se převedou
+        (``kzr_pravidla.notifikace_odber_z_volneho_tela``). Bez URL použije KRP
+        výchozí adresu poskytovatele z KRPZS. Odpověď nese
+        ``zalozeneNotifikace[].idSubskripce`` a ``predmetId``."""
+        if rid is not None:
+            data = _kzr.notifikace_odber(rid, url, subjekt_id)
+        else:
+            data = _kzr.notifikace_odber_z_volneho_tela(nastaveni or {})
         return self.c.post(f"{self.BASE}/api/{self.VERZE}/notifikace/zalozit/odber",
-                           self._envelope(ucel, nastaveni))
+                           self._envelope(ucel, data))
 
     def notifikace_zrusit(self, id_subskripce=None, subjekt_id=None, ucel="LECBA"):
-        data = {}
-        if id_subskripce:
-            data["idSubskripce"] = id_subskripce
-        if subjekt_id:
-            data["subjektId"] = subjekt_id
-        return self.c.delete(f"{self.BASE}/api/{self.VERZE}/notifikace/zrusit/odber",
-                             self._envelope(ucel, data))
+        """Zruší odběr podle ``idSubskripce`` (GUID vrácený při založení).
+
+        Standard 1.3 uvádí násobnost [1..*], swagger 3.0.6 jeden řetězec –
+        seznam se proto ruší po jednom a vrací se odpověď posledního volání.
+        ``subjekt_id`` se ignoruje (zrušení ho ve schématu nemá)."""
+        if isinstance(id_subskripce, dict):
+            id_subskripce = (id_subskripce.get("idSubskripce")
+                             or id_subskripce.get("OdberId"))
+        idcka = [str(i).strip() for i in _kzr._seznam(id_subskripce) if str(i).strip()]
+        if not idcka:
+            raise ValueError("Pro zrušení odběru notifikací zadejte idSubskripce.")
+        resp = None
+        for jedno in idcka:
+            resp = self.c.delete(f"{self.BASE}/api/{self.VERZE}/notifikace/zrusit/odber",
+                                 self._envelope(ucel, {"idSubskripce": jedno}))
+        return resp
 
 
 class DocasneUloziste:
@@ -4128,6 +4274,9 @@ class KRPv3:
             raw = str(file_bytes)
         base = (filename or "davka").rsplit(".", 1)[0] or "davka"
         xml_text = KRP.to_davka_xml(raw)
+        chyba = _kzr.davka_chyba(_kzr.pocet_pacientu(xml_text))
+        if chyba:
+            raise ValueError(chyba + " Viz ztotozneni_zadost_po_davkach().")
         url = self.c.config.GATEWAY + f"{self.BASE}/api/v3/pacient/ztotoznihromadne/zadost"
         assertion = self.c.auth.build_assertion()
         headers = {
@@ -4151,6 +4300,14 @@ class KRPv3:
         except Exception:
             self.c.last_response = resp.text
         return resp
+
+    def ztotozneni_zadost_po_davkach(self, file_bytes, filename="ztotozneni.csv",
+                                     ucel="LECBA", registrovat_odber=False,
+                                     limit=None) -> list:
+        """Jako :meth:`KRP.ztotozneni_zadost_po_davkach` – dávky po nejvýše
+        10 000 pacientech, jedna žádost za každou."""
+        return _podej_po_davkach(self, file_bytes, filename, ucel,
+                                 registrovat_odber, limit)
 
     # zpětná kompatibilita (JSON varianta – některé starší volání)
     def hrom_zadost(self, body):

@@ -171,10 +171,14 @@ def test_cizinec_bez_rodneho_cisla_pouzije_cizinec_cp():
     assert kandidati[0].rid == "333"
 
 
-def test_samotne_datum_narozeni_je_pripustne():
+def test_samotne_datum_narozeni_se_do_krp_neposila():
+    """Standard KZR 1.3 (kap. 4.5.1): univerzální hledání je vždy jméno +
+    příjmení + další údaj. Samotné datum narození osobu neurčuje, a proto se
+    neodešle; samotné rodné číslo zůstává (viz testy výše)."""
     krp = _FakeKRP({"uni": _Resp(200, _nalezeny_pacient("444"))})
-    metoda, _s, _k, _ch, _p = _zt(krp, datumNarozeni="1990-05-14")
-    assert metoda == "uni"
+    with pytest.raises(ValueError, match="datum narození"):
+        _zt(krp, datumNarozeni="1990-05-14")
+    assert krp.volani == []
 
 
 def test_bez_identifikatoru_vyhodi_chybu():

@@ -169,6 +169,20 @@ input[type="date"], input[type="datetime-local"], input[type="time"] {
 .date-quick button:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
 /* JSON viewer */
+/* Zvýraznění rozdílů v revizích: bylo → je */
+.rev-diff { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; border-radius: var(--radius); padding: 10px 12px; color: #78350f; }
+.rev-old { background: #fee2e2; color: #991b1b; text-decoration: line-through; text-decoration-color: rgba(153,27,27,.55); border-radius: 3px; padding: 0 3px; }
+.rev-new { background: #dcfce7; color: #166534; font-weight: 600; border-radius: 3px; padding: 0 3px; }
+.rev-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; border-radius: 3px; padding: 1px 5px; margin-right: 4px; }
+.rev-tag.nove { background: #dcfce7; color: #166534; }
+.rev-tag.zmena { background: #fef3c7; color: #92400e; }
+.rev-tag.oprava { background: #dbeafe; color: #1e40af; }
+.rev-tag.zruseno { background: #fee2e2; color: #991b1b; }
+.rev-tag.neovereno { background: #f3f4f6; color: #4b5563; }
+.rev-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rev-table th { text-align: left; padding: 6px 8px; background: #f1f5f9; border-bottom: 2px solid #cbd5e1; font-size: 11px; color: #334155; }
+.rev-table td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; line-height: 1.5; }
+.rev-table tr.rev-sekce td { background: #eff6ff; font-weight: 700; color: #1e3a8a; }
 .json-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6; overflow: auto; max-height: 600px; white-space: pre-wrap; word-break: break-all; }
 details[open] > summary span:first-child { display:inline-block; transform: rotate(90deg); }
 .json-key { color: #0550ae; }
@@ -972,6 +986,13 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             </div>
           </div>
           <div class="sub-panel" id="krp-univ">
+            <div class="rev-diff" style="font-size:12px;line-height:1.6;margin-bottom:10px">
+              <strong>Standard KZR 1.3 (3. 11. 2026), kap. 4.5.1 – povolené kombinace <code>VyhledejUni</code>:</strong>
+              vždy <strong>jméno + příjmení</strong> a k tomu rodné číslo, číslo pojištěnce, datum narození, adresa pobytu nebo doklad.
+              <span class="rev-old">Samotné RID, samotný doklad, rodné příjmení místo příjmení, občanství + č. pojištěnce</span>
+              už mezi kombinacemi nejsou – použijte záložky RID, Doklady a Cizinec + ČP.
+              Jiná kombinace se odešle s upozorněním v odpovědi (swagger 3.0.6 ji nevynucuje).
+            </div>
             <div class="form-row">
               <div class="form-group"><label>Jméno</label><input id="krpUnivJ" placeholder="Jméno"></div>
               <div class="form-group"><label>Příjmení</label><input id="krpUnivP" placeholder="Příjmení"></div>
@@ -985,20 +1006,27 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           </div>
           <div class="sub-panel" id="krp-drid-gen">
             <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">
-              Vygeneruje požadovaný počet dočasných RID (DRID) pro pacienty, kteří zatím nemají přidělené stálé RID (cizinci, novorozenci apod.).
+              Vygeneruje dočasné RID (DRID) pro <strong>interní evidenci pacienta, jehož totožnost není známa</strong> a je mu nutné poskytnout péči
+              (občan ČR i cizinec), a dále pro výpadek sítě nebo vyhlášení traumaplánu.
             </p>
+            <div class="rev-diff" style="font-size:12px;line-height:1.6;margin-bottom:10px">
+              <strong>Standard KZR 1.3 (3. 11. 2026), kap. 1.3.1 a 4.4.3:</strong>
+              <strong style="color:#b91c1c">DRID neslouží k založení novorozence v KRP</strong> – novorozenec se zakládá ve Správě pacientů (<code>zalozit/pacient</code>).
+              Každý DRID smí být použit jen jednou. Struktura: <span class="rev-old">D + 9 náhodných číslic</span> → <span class="rev-new">D + devítimístné číslo dělitelné 13 a nedělitelné 11</span>.
+              Zásoba předgenerovaných DRID: <span class="rev-old">desítky až stovky ks</span> → <span class="rev-new">50 ks</span>.
+            </div>
             <div class="form-row">
-              <div class="form-group"><label>Počet DRID</label><input type="number" id="dridPocet" value="1" min="1" max="100"></div>
+              <div class="form-group"><label>Počet DRID (zásoba max. 50)</label><input type="number" id="dridPocet" value="1" min="1" max="50"></div>
               <button class="btn btn-primary" onclick="dridGenerovat()">Generovat</button>
             </div>
             <div id="dridGenResult" style="margin-top:12px"></div>
           </div>
           <div class="sub-panel" id="krp-drid-map">
             <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">
-              Zjistí aktuální RID pacienta a jeho historické (sloučené / nahrazené) RIDy.
+              Zjistí aktuální RID pacienta a jeho historické (sloučené / nahrazené) RIDy. Vstupem může být libovolný vyhledatelný <strong>RID i DRID</strong> (Standard KZR 1.3, kap. 4.4.4).
             </p>
             <div class="form-row">
-              <div class="form-group"><label>RID</label><input id="dridMapRid" placeholder="např. 7653800856"></div>
+              <div class="form-group"><label>RID nebo DRID</label><input id="dridMapRid" placeholder="např. 7653800856 nebo D000000013"></div>
               <div class="form-group">
                 <label><input type="checkbox" id="dridMapAktualni"> Jen aktuální</label>
               </div>
@@ -1008,10 +1036,12 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
           </div>
           <div class="sub-panel" id="krp-drid-assign">
             <p style="color:var(--fg2);font-size:13px;margin-bottom:12px">
-              Přiřadí existující dočasný RID (DRID) ke skutečnému (stálému) RID pacienta – typicky po ztotožnění cizince nebo novorozence.
+              Přiřadí použitý dočasný RID (DRID) ke skutečnému (stálému) RID pacienta – po zjištění jeho totožnosti. Pokud pacient v KRP není,
+              nejprve se založí nová identita a DRID se přiřadí k ní. Přiřadit může i jiný poskytovatel než ten, který DRID vydal.
+              DRID s jiným tvarem než <code>D</code> + 9 číslic se neodešle; nesplněné kontrolní pravidlo verze 1.3 je jen upozornění (starší DRID ho splňovat nemusí).
             </p>
             <div class="form-row">
-              <div class="form-group"><label>Dočasný RID (DRID)</label><input id="dridDocasny" placeholder="Dočasný RID"></div>
+              <div class="form-group"><label>Dočasný RID (DRID)</label><input id="dridDocasny" placeholder="D + 9 číslic" maxlength="10" oninput="dridKontrola(this, 'dridDocasnyInfo')"><div id="dridDocasnyInfo" style="font-size:11px;margin-top:3px;min-height:14px"></div></div>
               <div class="form-group"><label>Skutečný RID</label><input id="dridSkutecny" placeholder="Skutečný RID"></div>
               <button class="btn btn-primary" onclick="dridPriradit()">Přiřadit</button>
             </div>
@@ -1374,12 +1404,14 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
         <div class="card" style="background:#fffbeb;border-color:#fcd34d">
           <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:6px">Proč „to dlouho nic nevrací" – asynchronní rozhraní a nedokumentované části</div>
           <div style="font-size:12px;color:#78350f;line-height:1.7">
-            <strong>Dávka je asynchronní</strong> (dokumentace API KRP: „Metoda pro <em>asynchronní</em> hromadné (dávkové) ztotožnění"). <code>POST …/ztotoznihromadne/zadost</code> vrátí <em>okamžitě</em> jen <code>hromadneZtotozneniID</code> – žádné výsledky. KRP nic „nepošle zpět"; stav je nutné <strong>opakovaně dotazovat</strong> přes <code>POST …/ztotoznihromadne/vysledky</code> a čekat na <code>hromadneZtotozneniDokonceno=true</code>. U větších dávek to na T2 trvá jednotky až desítky minut.<br>
+            <strong>Dávka je asynchronní</strong> (dokumentace API KRP: „Metoda pro <em>asynchronní</em> hromadné (dávkové) ztotožnění"). <code>POST …/ztotoznihromadne/zadost</code> vrátí <em>okamžitě</em> jen <code>hromadneZtotozneniID</code> – žádné výsledky. KRP nic „nepošle zpět"; stav je nutné <strong>opakovaně dotazovat</strong> přes <code>POST …/ztotoznihromadne/vysledky</code> a čekat na <code>hromadneZtotozneniDokonceno=true</code>. <span class="rev-new">MZ ČR (3. 11. 2026): zpracování jedné dávky do 10 000 pacientů trvá cca 30 minut</span> – UI proto čeká až 45 minut (dřív 10).<br>
+            <strong>Limit dávky:</strong> <span class="rev-old">soubor do 2 GB, doporučeno do 1 milionu záznamů</span> → <span class="rev-new">nejvýše 10 000 pacientů v jedné dávce</span> (Standard KZR 1.3, kap. 4.4.5; v provozu od 17. 9. 2026). Větší soubor aplikace sama rozdělí a podá jako více žádostí.<br>
+            <strong>Jména:</strong> záznamy se zástupným jménem (<em>Test, Pacient, Neuvedeno, Neví…</em>) nebo s jinými znaky než písmena, spojovník, apostrof a mezera se do KRP neposílají – dávka se nepodá a vadné záznamy se vypíšou.<br>
             <strong>Nedokumentované / jen ve swaggeru:</strong>
             (1)&nbsp;<code>…/vykonani</code> na wiki v metodách pro PZS vůbec není (odpověď má ve swaggeru schéma „…Interní") – pro PZS flow ho není potřeba volat, zpracování startuje samo po podání žádosti;
             (2)&nbsp;pokud odpověď <code>/vysledky</code> má <code>dataVSouboru=true</code>, výsledky <em>nejsou</em> v JSON poli <code>souborHromadnehoZtotozneni</code> a je nutné je stáhnout přes <code>…/vysledky/soubor</code>;
             (3)&nbsp;<code>base64Data</code> z <code>/vysledky/soubor</code> je ve skutečnosti <strong>ZIP archiv</strong> s <code>KRP_ZTOTOZNENI_&lt;id&gt;.JSON</code> uvnitř (UI ho umí rozbalit);
-            (4)&nbsp;formát XML dávky je popsán jen ve <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55902489" target="_blank" style="color:#92400e">Standardu EZ KZR 1.2 + vzorovém XSD</a> (29. 5. 2026), ne ve swaggeru (tam je jen <code>file: binary</code>).
+            (4)&nbsp;formát XML dávky je popsán jen ve <a href="https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55902489" target="_blank" style="color:#92400e">Standardu EZ KZR 1.3 + vzorovém XSD</a> (3. 11. 2026; dřív 1.2 z 29. 5. 2026), ne ve swaggeru (tam je jen <code>file: binary</code>).
           </div>
         </div>
 
@@ -1481,10 +1513,20 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             Systém notifikací umožňuje PZS <strong>odebírat změny</strong> u vybraných pacientů.
             Pokud se změní údaje pacienta, na jehož odběr jste přihlášeni, obdržíte notifikaci.
             <div style="margin-top:6px;font-size:12px;color:var(--fg3)">
-              <strong>Typické použití:</strong> registrující lékař odebírá změny u svých pacientů (změna pojišťovny, adresy, úmrtí).
-              Notifikace přichází přes kanál, který si zvolíte při registraci odběru.
+              <strong>Typické použití:</strong> registrující lékař odebírá změny u svých pacientů (změna pojišťovny, adresy, úmrtí, změna RID).
+              Notifikace přichází jako HTTP zpráva <code>KZR.Notifikace</code> na URL listeneru poskytovatele; odběr lze založit i při hromadném ztotožnění.
             </div>
           </div>
+        </div>
+
+        <div class="card rev-diff" style="font-size:12px;line-height:1.7">
+          <strong>Standard KZR 1.3 (3. 11. 2026), kap. 4.5.3 – přepracovaná administrace notifikací:</strong><br>
+          <span class="rev-old">kritérium <code>KRP?rid=…</code>, typ kanálu (webová služba / e-mail / datová schránka), výběr typů událostí při založení</span> →
+          <span class="rev-new">RID pacienta/pacientů + nepovinné URL listeneru + nepovinné IČO subjektu</span>.
+          Kanál je jen <code>API</code> (HTTP listener poskytovatele); bez URL se použije výchozí adresa z KRPZS.
+          Typy událostí se při založení nevybírají – jsou obsahem doručené zprávy
+          (<code>ZmenaUdaje</code>, <code>UmrtiPacienta</code>, <code>Reklamace</code>, <code>ZmenaRid</code>).
+          Odběr se ruší a hledá podle <code>idSubskripce</code> (GUID vrácený při založení).
         </div>
 
         <!-- Vyhledat odběry -->
@@ -1493,18 +1535,11 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">🔍</span> Vyhledat existující odběry
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Zobrazí seznam aktivních odběrů notifikací pro vaše PZS. Filtrovat můžete podle typu kanálu nebo ID subjektu (RID pacienta).
+            Podle <strong>IČO subjektu</strong> vrátí všechny jeho aktivní odběry, podle <strong>ID subskripce</strong> jeden konkrétní. Alespoň jedno pole musí být vyplněné.
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end">
-            <div class="form-group"><label>Typ kanálu</label>
-              <select id="krpNotifKanalTyp">
-                <option value="">-- všechny --</option>
-                <option value="WEBSERVICE">Webová služba</option>
-                <option value="EMAIL">E-mail</option>
-                <option value="DATOVA_SCHRANKA">Datová schránka</option>
-              </select>
-            </div>
-            <div class="form-group"><label>ID subjektu (RID)</label><input id="krpNotifSubjektId" placeholder="RID pacienta"></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krpNotifSubjektId" placeholder="IČO poskytovatele (předvyplní se vlastní)"></div>
+            <div class="form-group"><label>ID subskripce</label><input id="krpNotifVyhSubId" placeholder="GUID odběru"></div>
             <button class="btn btn-primary" onclick="krpNotifVyhledat()">Vyhledat</button>
           </div>
         </div>
@@ -1515,33 +1550,17 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">➕</span> Založit odběr notifikací
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Registruje nový odběr notifikací na změny dat u konkrétního pacienta (RID).
-            Při změně údajů pacienta budete upozorněni zvoleným kanálem.
+            Registruje odběr změn u jednoho nebo více pacientů. Na zadané URL musí běžet HTTP listener, který notifikaci přijme.
+            Odpověď vrací pro každý RID <code>idSubskripce</code> a <code>predmetId</code>.
           </p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-            <div class="form-group"><label>RID pacienta *</label><input id="krpNotifZalRid" placeholder="RID pacienta, jehož změny chcete sledovat"></div>
-            <div class="form-group"><label>Typ kanálu *</label>
-              <select id="krpNotifZalKanal">
-                <option value="">-- vyberte --</option>
-                <option value="WEBSERVICE">Webová služba (callback URL)</option>
-                <option value="EMAIL">E-mail</option>
-                <option value="DATOVA_SCHRANKA">Datová schránka</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Cíl (URL / e-mail / ID DS)</label><input id="krpNotifZalCil" placeholder="Kam posílat notifikace"></div>
+            <div class="form-group"><label>RID pacienta/pacientů *</label><input id="krpNotifZalRid" placeholder="RID; více oddělte čárkou"></div>
+            <div class="form-group"><label>URL listeneru</label><input id="krpNotifZalCil" placeholder="https://… (prázdné = výchozí URL z KRPZS)"></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krpNotifZalIco" placeholder="nepovinné"></div>
           </div>
           <details style="margin-top:8px">
-            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Typy sledovaných událostí</summary>
-            <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtZmena" checked style="width:auto"> Změna osobních údajů</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtPojist" checked style="width:auto"> Změna pojištění</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtUmrti" checked style="width:auto"> Úmrtí</label>
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" id="krpNotifEvtSlouceni" style="width:auto"> Sloučení záznamu</label>
-            </div>
-          </details>
-          <details style="margin-top:8px">
             <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600">Vlastní JSON (pokročilé)</summary>
-            <div class="form-group" style="margin-top:6px"><textarea id="krpNotifZalozitJson" rows="5" placeholder='{"kanalTyp":"WEBSERVICE","subjektId":"…","callbackUrl":"https://…"}'></textarea></div>
+            <div class="form-group" style="margin-top:6px"><textarea id="krpNotifZalozitJson" rows="5" placeholder='{"predmet":[{"rid":"…"}],"prijemci":{"url":"https://…"},"subjektId":"IČO"}'></textarea></div>
           </details>
           <div style="margin-top:12px"><button class="btn btn-primary" onclick="krpNotifZalozit()">Založit odběr</button></div>
         </div>
@@ -1552,13 +1571,29 @@ a:focus-visible, [tabindex]:focus-visible, .nav-item:focus-visible, .sub-tab:foc
             <span style="font-size:16px">🔕</span> Zrušit odběr
           </div>
           <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
-            Zruší existující odběr notifikací. ID subskripce naleznete ve výsledcích vyhledávání odběrů výše.
+            Zruší odběr podle <code>idSubskripce</code> – GUID vrácený při založení (najdete ho i ve výsledcích vyhledávání).
           </p>
-          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end">
-            <div class="form-group"><label>ID subskripce *</label><input id="krpNotifZrusSubId" placeholder="ID z výsledků vyhledávání"></div>
-            <div class="form-group"><label>ID subjektu (RID)</label><input id="krpNotifZrusSubjId" placeholder="RID pacienta"></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:flex-end">
+            <div class="form-group"><label>ID subskripce *</label><input id="krpNotifZrusSubId" placeholder="GUID odběru"></div>
             <button class="btn" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="krpNotifZrusit()">Zrušit odběr</button>
           </div>
+        </div>
+
+        <!-- Příchozí zpráva -->
+        <div class="card">
+          <div class="card-title" style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">📨</span> Příchozí zpráva <code>KZR.Notifikace</code> – kontrola
+          </div>
+          <p style="color:var(--fg3);font-size:12px;margin-bottom:12px">
+            Zprávu posílá KRP na URL listeneru. Kontrola ověří pravidla Standardu KZR 1.3 (kap. 4.5.3.4–4.5.3.6): seznam <code>data</code> není prázdný,
+            všechny události se týkají téhož RID, úmrtí a změna RID mají právě jednu položku. Bránu nevolá – slouží k vývoji vlastního listeneru.
+          </p>
+          <div class="form-group"><textarea id="krpNotifZprava" rows="9" spellcheck="false" placeholder="Vložte JSON zprávy nebo načtěte vzor"></textarea></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" onclick="krpNotifVzor()">Načíst vzor</button>
+            <button class="btn btn-primary" onclick="krpNotifZkontrolovat()">Zkontrolovat zprávu</button>
+          </div>
+          <div id="krpNotifZpravaInfo" style="margin-top:10px;font-size:12px;line-height:1.7"></div>
         </div>
 
         <div class="card"><div class="card-title">Výsledek</div><div class="json-box" id="krpNotifResult">-</div></div>
@@ -5139,7 +5174,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
           <div style="font-size:12px;line-height:1.8;color:#78350f">
             <ul style="margin:0;padding-left:18px">
               <li><strong>Podání žádosti MZdr</strong> – k dispozici od NCEZ, po kompletaci i na MV</li>
-              <li><strong>KR – novorozenci a cizinci</strong> – testuje se založení nového RID u novorozenců a DRID u cizinců</li>
+              <li><strong>KR – novorozenci a cizinci</strong> – testuje se založení nového RID u novorozenců (<code>zalozit/pacient</code>). DRID je podle Standardu KZR 1.3 určen jen pro pacienta s neznámou totožností, výpadek sítě a traumaplán – <strong>novorozence nezakládá</strong></li>
               <li><strong>Dokumenty na DÚ</strong> – odesílání typů dokumentů z žádosti, ověření správného FHIR formátu (čitelné, uložené na DÚ)</li>
               <li><strong>Screenshoty</strong> – pro prokazování jsou nutné screenshoty z testování</li>
               <li><strong>Prohlášení o shodě</strong> – místo testování PZS lze využít prohlášení o shodě SW se standardy EZ (Medicalc ho má)</li>
@@ -5833,17 +5868,23 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
 
       <!-- DRID -->
       <div class="sub-panel" id="krp3-drid-panel">
+        <div class="card rev-diff" style="font-size:12px;line-height:1.7">
+          <strong>Standard KZR 1.3 (3. 11. 2026):</strong> DRID je provizorní identifikátor pro interní evidenci pacienta s neznámou totožností (občan ČR i cizinec),
+          pro výpadek sítě a traumaplán. <strong style="color:#b91c1c">Neslouží k založení novorozence v KRP.</strong> Smí být použit jen jednou.
+          Struktura: <span class="rev-old">D + 9 náhodných číslic</span> → <span class="rev-new">D + devítimístné číslo dělitelné 13 a nedělitelné 11</span>;
+          zásoba: <span class="rev-old">desítky až stovky</span> → <span class="rev-new">50 ks</span>.
+        </div>
         <div class="card">
           <div class="card-title">Generovat dočasný RID (POST /api/v3/pacient/generovat/docasny_rid)</div>
           <div class="form-row">
-            <div class="form-group"><label>Počet</label><input type="number" id="krp3DridPocet" value="1" min="1" max="100"></div>
+            <div class="form-group"><label>Počet (zásoba max. 50)</label><input type="number" id="krp3DridPocet" value="1" min="1" max="50"></div>
             <button class="btn btn-primary" onclick="krp3DridGenerovat()">Generovat</button>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Přiřadit dočasný RID ke skutečnému (POST /api/v3/pacient/priradit/docasny_rid)</div>
           <div class="form-row">
-            <div class="form-group"><label>Dočasný RID</label><input id="krp3DridDocasny" placeholder="DRID"></div>
+            <div class="form-group"><label>Dočasný RID</label><input id="krp3DridDocasny" placeholder="D + 9 číslic" maxlength="10" oninput="dridKontrola(this, 'krp3DridDocasnyInfo')"><div id="krp3DridDocasnyInfo" style="font-size:11px;margin-top:3px;min-height:14px"></div></div>
             <div class="form-group"><label>Skutečný RID</label><input id="krp3DridSkutecny" placeholder="RID"></div>
             <button class="btn btn-primary" onclick="krp3DridPriradit()">Přiřadit</button>
           </div>
@@ -5851,7 +5892,7 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">Mapování RID (POST /api/v3/pacient/hledat/mapovani_rid)</div>
           <div class="form-row">
-            <div class="form-group"><label>RID</label><input id="krp3MapRid" placeholder="RID"></div>
+            <div class="form-group"><label>RID nebo DRID</label><input id="krp3MapRid" placeholder="RID nebo DRID"></div>
             <button class="btn btn-primary" onclick="krp3MapovaniRid()">Zjistit mapování</button>
           </div>
         </div>
@@ -5863,29 +5904,36 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
         <div class="card">
           <div class="card-title">📡 Notifikace v3 – odběry změn pacientů</div>
           <p style="font-size:12px;color:var(--fg3);margin-bottom:8px">
-            v3 přidává <code>DELETE /api/v3/notifikace/zrusit/odber</code>. Pro vyhledání a založení použijte POST.
+            Těla dle swaggeru KRP 3.0.6 a Standardu KZR 1.3 (kap. 4.5.3). Zrušení je <code>DELETE /api/v3/notifikace/zrusit/odber</code>, vyhledání a založení POST.
           </p>
+          <div class="rev-diff" style="font-size:12px;line-height:1.6">
+            Založení: <span class="rev-old"><code>{"Rid", "CallbackUrl"}</code></span> → <span class="rev-new"><code>{"predmet":[{"rid"}], "prijemci":{"url"}, "subjektId"}</code></span>;
+            zrušení: <span class="rev-old"><code>{"OdberId"}</code></span> → <span class="rev-new"><code>{"idSubskripce"}</code></span>;
+            vyhledání: <span class="rev-new"><code>idSubskripce</code> a/nebo <code>subjektId</code> (IČO)</span>. Starší tvary backend převede.
+          </div>
         </div>
         <div class="card">
           <div class="card-title">Vyhledat odběry (POST)</div>
           <div class="form-row">
-            <div class="form-group" style="flex:1"><label>Body (JSON)</label><textarea id="krp3NotifVyhBody" rows="3">{}</textarea></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krp3NotifVyhIco" placeholder="IČO"></div>
+            <div class="form-group"><label>ID subskripce</label><input id="krp3NotifVyhId" placeholder="GUID"></div>
             <button class="btn btn-primary" onclick="krp3NotifVyhledat()">Vyhledat</button>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Založit odběr (POST)</div>
           <div class="form-row">
-            <div class="form-group"><label>RID pacienta</label><input id="krp3NotifZalRid" placeholder="RID"></div>
-            <div class="form-group"><label>URL pro notifikace</label><input id="krp3NotifZalUrl" placeholder="https://..."></div>
+            <div class="form-group"><label>RID pacienta/pacientů</label><input id="krp3NotifZalRid" placeholder="RID; více oddělte čárkou"></div>
+            <div class="form-group"><label>URL listeneru</label><input id="krp3NotifZalUrl" placeholder="https://… (prázdné = výchozí z KRPZS)"></div>
+            <div class="form-group"><label>IČO subjektu</label><input id="krp3NotifZalIco" placeholder="nepovinné"></div>
           </div>
-          <textarea id="krp3NotifZalBody" rows="3" placeholder='{} = sestaví se z polí'></textarea>
+          <textarea id="krp3NotifZalBody" rows="3" placeholder='vlastní zadostData; prázdné = sestaví se z polí'></textarea>
           <button class="btn btn-primary" onclick="krp3NotifZalozit()" style="margin-top:8px">Založit</button>
         </div>
         <div class="card">
           <div class="card-title">Zrušit odběr (DELETE)</div>
           <div class="form-row">
-            <div class="form-group" style="flex:1"><label>Body (JSON s ID odběru)</label><textarea id="krp3NotifZrusBody" rows="3">{"OdberId":""}</textarea></div>
+            <div class="form-group" style="flex:1"><label>ID subskripce</label><input id="krp3NotifZrusId" placeholder="GUID vrácený při založení"></div>
             <button class="btn btn-primary" onclick="krp3NotifZrusit()">Zrušit (DELETE)</button>
           </div>
         </div>
@@ -9595,8 +9643,29 @@ async function krpHledatJmeno() {
 // ---------------------------------------------------------------------------
 // DRID – Dočasný RID
 // ---------------------------------------------------------------------------
+// Standard KZR 1.3: DRID = "D" + devítimístné číslo dělitelné 13 a nedělitelné 11.
+// Tvar je podmínka odeslání; kontrolní pravidlo jen upozornění (DRID vydané
+// před 3. 11. 2026 byly náhodné číslice).
+function dridStav(h) {
+  const v = String(h || '').trim().toUpperCase();
+  if (!/^D\d{9}$/.test(v)) return 'tvar';
+  const n = parseInt(v.slice(1), 10);
+  return (n % 13 === 0 && n % 11 !== 0) ? 'ok' : 'pravidlo';
+}
+function dridKontrola(input, infoId) {
+  const el = document.getElementById(infoId);
+  if (!el) return;
+  const v = input.value.trim();
+  if (!v) { el.textContent = ''; return; }
+  const st = dridStav(v);
+  if (st === 'ok') { el.style.color = '#15803d'; el.textContent = 'DRID odpovídá Standardu KZR 1.3'; }
+  else if (st === 'pravidlo') { el.style.color = '#b45309'; el.textContent = 'Tvar je v pořádku, ale číslo nesplňuje pravidlo 1.3 (dělitelné 13, ne 11) – u DRID vydaných před 3. 11. 2026 je to možné'; }
+  else { el.style.color = '#b91c1c'; el.textContent = 'DRID musí mít tvar D + 9 číslic'; }
+}
+
 async function dridGenerovat() {
   const pocet = parseInt(document.getElementById('dridPocet').value) || 1;
+  if (pocet > 50 && !confirm('Standard KZR 1.3 stanovuje zásobu předgenerovaných DRID na 50 ks. Opravdu požádat o ' + pocet + '?')) return;
   const data = await api('POST', '/api/krp/drid/generovat', { pocet });
   showResult('krpResult', data);
   const box = document.getElementById('dridGenResult');
@@ -9659,8 +9728,10 @@ async function dridPriradit() {
   const docasny = document.getElementById('dridDocasny').value.trim();
   const skutecny = document.getElementById('dridSkutecny').value.trim();
   if (!docasny || !skutecny) return toast('Zadejte oba RIDy', true);
+  if (dridStav(docasny) === 'tvar') return toast('DRID musí mít tvar D + 9 číslic', true);
   const data = await api('POST', '/api/krp/drid/priradit', { docasny_rid: docasny, rid: skutecny });
   showResult('krpResult', data);
+  if (data && data.odeslano === false) return toast(data.error || 'Požadavek se neodeslal', true);
   const resp = data.data || data;
   const info = resp.odpovedInfo || {};
   if (info.stav === 'OK') {
@@ -9723,8 +9794,12 @@ async function krpHledatUniv() {
   if (dn) body.datumNarozeni = dn;
   if (cp) body.cisloPojistence = cp;
   if (!Object.keys(body).length) return toast('Vyplňte alespoň jedno pole', true);
+  // Standard KZR 1.3, kap. 4.5.1: vždy jméno + příjmení + další údaj.
+  if (!(j && p && (rc || dn || cp)) &&
+      !confirm('Standard KZR 1.3 uvádí u univerzálního hledání jen kombinace jméno + příjmení + (rodné číslo | číslo pojištěnce | datum narození | adresa | doklad). Přesto odeslat?')) return;
   const data = await api('POST', '/api/krp/hledat-uni', body);
   showResult('krpResult', data);
+  if (data && data.odeslano === false) toast(data.error || 'Dotaz se neodeslal', true);
 }
 
 // ---------------------------------------------------------------------------
@@ -10163,14 +10238,22 @@ async function krpNacistPacienta() {
   const rid = _val('krpSprZmenRid');
   if (!rid) return toast('Zadejte RID pacienta', true);
   toast('Načítám data pacienta…');
-  const data = await api('POST', '/api/krp/hledat-uni', { rid });
+  // Samotné RID už mezi kombinacemi univerzálního hledání není (Standard KZR
+  // 1.3, kap. 4.5.1) – pacient se načítá metodou hledat/rid.
+  const data = await api('POST', '/api/krp/hledat-rid', { rid });
   showResult('krpSpravaResult', data);
-  const pac = data?.data?.odpovedData?.pacient || data?.data?.pacient || {};
+  const od = data?.data?.odpovedData;
+  const zaznam = Array.isArray(od) ? (od[0] || {}) : (od?.pacient || od || data?.data?.pacient || {});
+  const pac = {};
+  ['jmeno', 'prijmeni', 'rodnePrijmeni', 'rodneCislo', 'datumNarozeni'].forEach(k => {
+    const v = zaznam[k];
+    pac[k] = (v && typeof v === 'object' && 'hodnota' in v) ? v.hodnota : v;
+  });
   if (pac.jmeno) document.getElementById('krpSprZmenJmeno').value = pac.jmeno;
   if (pac.prijmeni) document.getElementById('krpSprZmenPrijmeni').value = pac.prijmeni;
   if (pac.rodnePrijmeni) document.getElementById('krpSprZmenRodPrijmeni').value = pac.rodnePrijmeni;
   if (pac.rodneCislo) document.getElementById('krpSprZmenRc').value = pac.rodneCislo;
-  if (pac.datumNarozeni) _setDate('krpSprZmenDatNar', pac.datumNarozeni.substring(0,10));
+  if (pac.datumNarozeni) _setDate('krpSprZmenDatNar', String(pac.datumNarozeni).substring(0,10));
   toast('Data načtena, upravte co potřebujete');
 }
 
@@ -10418,6 +10501,25 @@ async function krpHromNahrat() {
     _qDone(qi, resp.status, null);
     showResult('krpHromadneResult', data);
 
+    if (data && data.odeslano === false) {
+      // dávka se nepodala – zjevně chybná jména (MZ ČR, 3. 11. 2026)
+      const vadna = (data.vadnaJmena || []).slice(0, 8).map(v => `#${v.poradi}${v.sourceId ? ' (' + v.sourceId + ')' : ''}`).join(', ');
+      _showHromStatus((data.error || 'Dávka se nepodala') + (vadna ? ' Záznamy: ' + vadna + (data.pocetVadnychJmen > 8 ? ' …' : '') : ''), 'red');
+      toast('Dávka se nepodala – opravte označené záznamy', true);
+      return;
+    }
+    if (data && data.rozdeleno) {
+      // Standard KZR 1.3: max. 10 000 pacientů v dávce – podáno po částech
+      const davky = data?.data?.davky || [];
+      const ids = davky.filter(d => d.hromadneZtotozneniID).map(d => d.hromadneZtotozneniID);
+      _showHromStatus(`Dávka má ${data.pocetPacientu} pacientů (limit ${data.limitDavky}) – podáno ${ids.length} z ${davky.length} částí. ID žádostí: ${ids.join(', ') || '—'}. Stav každé zjistíte zvlášť přes „Zjistit stav".`, ids.length === davky.length ? 'orange' : 'red');
+      if (ids.length) {
+        document.getElementById('krpHromZadostId').value = ids[0];
+        toast(`Podáno ${ids.length} dávek, sleduji první (${ids[0]})`);
+        krpHromAutoPoll(ids[0]);
+      }
+      return;
+    }
     const respData = data?.data?.odpovedData || data?.odpovedData || data?.data || {};
     const hzId = respData.hromadneZtotozneniID || '';
     if (hzId) {
@@ -10481,7 +10583,9 @@ async function krpHromVysledky() {
 let _hromPollTimer = null;
 let _hromPollStart = 0;
 const HROM_POLL_INTERVAL_MS = 10000;
-const HROM_POLL_MAX_MS = 10 * 60 * 1000;
+// MZ ČR (3. 11. 2026): zpracování dávky do 10 000 pacientů trvá cca 30 minut;
+// dřív se čekalo jen 10 minut a sledování skončilo dřív než zpracování.
+const HROM_POLL_MAX_MS = 45 * 60 * 1000;
 
 function krpHromStopPoll() {
   if (_hromPollTimer) { clearTimeout(_hromPollTimer); _hromPollTimer = null; }
@@ -10512,7 +10616,7 @@ async function krpHromAutoPoll(id) {
     }
     if (Date.now() - _hromPollStart > HROM_POLL_MAX_MS) {
       krpHromStopPoll();
-      _showHromStatus(`Zpracování stále běží po ${Math.round(HROM_POLL_MAX_MS / 60000)} min – dávka může být velká, zkuste „Zjistit stav" později`, 'orange');
+      _showHromStatus(`Zpracování stále běží po ${Math.round(HROM_POLL_MAX_MS / 60000)} min – KRP uvádí cca 30 min na dávku do 10 000 pacientů, zkuste „Zjistit stav" později`, 'orange');
       return;
     }
     _hromPollTimer = setTimeout(tick, HROM_POLL_INTERVAL_MS);
@@ -10646,21 +10750,36 @@ function _downloadText(text, filename, mime) {
 function _showHromStatus(msg, color) {
   const bar = document.getElementById('krpHromStatusBar');
   bar.style.display = 'block';
-  bar.style.background = color === 'green' ? '#e8f5e9' : color === 'orange' ? '#fff3e0' : 'var(--bg2)';
-  bar.style.color = color === 'green' ? '#2e7d32' : color === 'orange' ? '#e65100' : 'var(--fg)';
-  bar.style.border = `1px solid ${color === 'green' ? '#a5d6a7' : color === 'orange' ? '#ffcc80' : 'var(--border)'}`;
+  bar.style.background = color === 'green' ? '#e8f5e9' : color === 'orange' ? '#fff3e0' : color === 'red' ? '#fef2f2' : 'var(--bg2)';
+  bar.style.color = color === 'green' ? '#2e7d32' : color === 'orange' ? '#e65100' : color === 'red' ? '#b91c1c' : 'var(--fg)';
+  bar.style.border = `1px solid ${color === 'green' ? '#a5d6a7' : color === 'orange' ? '#ffcc80' : color === 'red' ? '#fecaca' : 'var(--border)'}`;
   bar.textContent = msg;
 }
 
 // ---------------------------------------------------------------------------
 // KRP – notifikace
 // ---------------------------------------------------------------------------
+// Těla dle swaggeru KRP 3.0.6 a Standardu KZR 1.3 (kap. 4.5.3): založení
+// rid + url + subjektId (IČO), vyhledání idSubskripce a/nebo subjektId,
+// zrušení idSubskripce. Typ kanálu ani typy událostí se neposílají.
+function _krpNotifIco() {
+  return (typeof CLIENT_ICO !== 'undefined' && CLIENT_ICO) ? CLIENT_ICO : '';
+}
+function _krpRidy(text) {
+  return String(text || '').split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
+}
 async function krpNotifVyhledat() {
-  const typ = _val('krpNotifKanalTyp');
-  const subj = _val('krpNotifSubjektId');
+  const subj = _val('krpNotifSubjektId') || '';
+  const subId = _val('krpNotifVyhSubId') || '';
   const body = {};
-  if (typ) body.kanalTyp = typ;
+  if (subId) body.idSubskripce = subId;
   if (subj) body.subjektId = subj;
+  if (!subId && !subj) {
+    const ico = _krpNotifIco();
+    if (!ico) return toast('Zadejte IČO subjektu nebo ID subskripce', true);
+    body.subjektId = ico;
+    document.getElementById('krpNotifSubjektId').value = ico;
+  }
   const data = await api('POST', '/api/krp/notifikace-vyhledat', body);
   showResult('krpNotifResult', data);
 }
@@ -10670,32 +10789,57 @@ async function krpNotifZalozit() {
   if (jsonEl && jsonEl.value.trim()) {
     try { body = JSON.parse(jsonEl.value); } catch { return toast('Neplatný JSON', true); }
   } else {
-    const rid = _val('krpNotifZalRid');
-    const kanal = _val('krpNotifZalKanal');
-    const cil = _val('krpNotifZalCil');
-    if (!rid) return toast('RID pacienta je povinný', true);
-    if (!kanal) return toast('Vyberte typ kanálu', true);
-    body = { subjektId: rid, kanalTyp: kanal };
-    if (cil) body.cil = cil;
-    const udalosti = [];
-    if (document.getElementById('krpNotifEvtZmena')?.checked) udalosti.push('ZMENA_UDAJU');
-    if (document.getElementById('krpNotifEvtPojist')?.checked) udalosti.push('ZMENA_POJISTENI');
-    if (document.getElementById('krpNotifEvtUmrti')?.checked) udalosti.push('UMRTI');
-    if (document.getElementById('krpNotifEvtSlouceni')?.checked) udalosti.push('SLOUCENI');
-    if (udalosti.length) body.typyUdalosti = udalosti;
+    const ridy = _krpRidy(_val('krpNotifZalRid'));
+    const url = _val('krpNotifZalCil');
+    const ico = _val('krpNotifZalIco');
+    if (!ridy.length) return toast('RID pacienta je povinný', true);
+    if (url && !/^https?:\/\//i.test(url)) return toast('URL listeneru musí začínat http:// nebo https://', true);
+    body = { rid: ridy };
+    if (url) body.url = url;
+    if (ico) body.subjektId = ico;
   }
   const data = await api('POST', '/api/krp/notifikace-zalozit', body);
   showResult('krpNotifResult', data);
-  const subId = data?.data?.odpovedData?.subskripceId || data?.data?.subskripceId;
-  if (subId) toast(`Odběr založen, ID: ${subId}`);
+  if (data && data.odeslano === false) return toast(data.error || 'Požadavek se neodeslal', true);
+  const zalozene = data?.data?.odpovedData?.zalozeneNotifikace || [];
+  if (zalozene.length) {
+    document.getElementById('krpNotifZrusSubId').value = zalozene[0].idSubskripce || '';
+    toast(`Odběr založen (${zalozene.length}×), ID: ${zalozene.map(z => z.idSubskripce).join(', ')}`);
+  }
 }
 async function krpNotifZrusit() {
   const subId = _val('krpNotifZrusSubId');
-  const subjId = _val('krpNotifZrusSubjId');
   if (!subId) return toast('Zadejte ID subskripce', true);
   if (!confirm('Opravdu zrušit tento odběr notifikací?')) return;
-  const data = await api('POST', '/api/krp/notifikace-zrusit', { idSubskripce: subId, subjektId: subjId });
+  const data = await api('POST', '/api/krp/notifikace-zrusit', { idSubskripce: subId });
   showResult('krpNotifResult', data);
+}
+async function krpNotifVzor() {
+  const r = await fetch('/api/krp/notifikace-vzor');
+  const d = await r.json();
+  document.getElementById('krpNotifZprava').value = JSON.stringify(d.zprava, null, 2);
+  document.getElementById('krpNotifZpravaInfo').innerHTML =
+    '<span style="color:var(--fg3)">' + esc(d.poznamka || '') + '</span>';
+}
+async function krpNotifZkontrolovat() {
+  const box = document.getElementById('krpNotifZpravaInfo');
+  let zprava;
+  try { zprava = JSON.parse(document.getElementById('krpNotifZprava').value); }
+  catch { box.innerHTML = '<span style="color:#b91c1c">Text není platný JSON.</span>'; return; }
+  const r = await fetch('/api/krp/notifikace-zprava', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(zprava) });
+  const d = await r.json();
+  showResult('krpNotifResult', d);
+  const radky = [];
+  radky.push(d.platna
+    ? '<strong style="color:#15803d">Zpráva odpovídá pravidlům Standardu KZR 1.3.</strong>'
+    : '<strong style="color:#b91c1c">Zpráva pravidlům neodpovídá.</strong>');
+  (d.chyby || []).forEach(c => radky.push('<span style="color:#b91c1c">✗ ' + esc(c) + '</span>'));
+  (d.upozorneni || []).forEach(c => radky.push('<span style="color:#b45309">! ' + esc(c) + '</span>'));
+  if (d.rid) radky.push('RID: <code>' + esc(d.rid) + '</code>');
+  (d.udalosti || []).forEach(u => radky.push(
+    '<code>' + esc(u.typUdalosti || '?') + '</code> – ' + esc((u.objektZmeny || []).join(', ') || '—') +
+    ': <span class="rev-old">' + esc(String(u.puvodniHodnota ?? '—')) + '</span> → <span class="rev-new">' + esc(String(u.novaHodnota ?? '—')) + '</span>'));
+  box.innerHTML = radky.join('<br>');
 }
 
 // ---------------------------------------------------------------------------
@@ -16981,12 +17125,16 @@ async function krp3HromSoubor() {
 
 // KRP v3 – DRID
 async function krp3DridGenerovat() {
-  const body = _krp3Env({ pocet: parseInt(_val('krp3DridPocet') || '1', 10) });
+  const pocet = parseInt(_val('krp3DridPocet') || '1', 10);
+  if (pocet > 50 && !confirm('Standard KZR 1.3 stanovuje zásobu předgenerovaných DRID na 50 ks. Opravdu požádat o ' + pocet + '?')) return;
+  const body = _krp3Env({ pocet });
   const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/generovat/docasny_rid', body });
   _showJson('krp3DridResult', r);
 }
 async function krp3DridPriradit() {
-  const body = _krp3Env({ docasnyRID: _val('krp3DridDocasny'), rid: _val('krp3DridSkutecny') });
+  const drid = (_val('krp3DridDocasny') || '').trim().toUpperCase();
+  if (dridStav(drid) === 'tvar') return toast('DRID musí mít tvar D + 9 číslic', true);
+  const body = _krp3Env({ docasnyRID: drid, rid: _val('krp3DridSkutecny') });
   const r = await api('POST', '/api/raw', { method: 'POST', path: '/krp/api/v3/pacient/priradit/docasny_rid', body });
   _showJson('krp3DridResult', r);
 }
@@ -16997,19 +17145,27 @@ async function krp3MapovaniRid() {
 
 // KRP v3 – Notifikace
 async function krp3NotifVyhledat() {
-  let body; try { body = _parseJson('krp3NotifVyhBody', {}); } catch { return; }
-  const r = await api('POST', '/api/krp3/notifikace/vyhledat', body);
+  const data = _krp3Clean({ idSubskripce: _val('krp3NotifVyhId'), subjektId: _val('krp3NotifVyhIco') || _krpNotifIco() });
+  const r = await api('POST', '/api/krp3/notifikace/vyhledat', _krp3Env(data));
   _showJson('krp3NotifResult', r);
 }
 async function krp3NotifZalozit() {
-  const built = { Rid: _val('krp3NotifZalRid'), CallbackUrl: _val('krp3NotifZalUrl') };
-  let body; try { body = _bodyOrOverride('krp3NotifZalBody', built); } catch { return; }
+  const built = _krp3Clean({
+    predmet: _krpRidy(_val('krp3NotifZalRid')).map(rid => ({ rid })),
+    prijemci: _val('krp3NotifZalUrl') ? { url: _val('krp3NotifZalUrl') } : null,
+    subjektId: _val('krp3NotifZalIco'),
+  });
+  let data; try { data = _bodyOrOverride('krp3NotifZalBody', built); } catch { return; }
+  const body = (data && data.zadostData) ? data : _krp3Env(data);
   const r = await api('POST', '/api/krp3/notifikace/zalozit', body);
   _showJson('krp3NotifResult', r);
+  const z = r?.data?.odpovedData?.zalozeneNotifikace || [];
+  if (z.length) document.getElementById('krp3NotifZrusId').value = z[0].idSubskripce || '';
 }
 async function krp3NotifZrusit() {
-  let body; try { body = _parseJson('krp3NotifZrusBody', {}); } catch { return; }
-  const r = await api('POST', '/api/krp3/notifikace/zrusit', body);
+  const id = _val('krp3NotifZrusId');
+  if (!id) return toast('Zadejte ID subskripce', true);
+  const r = await api('POST', '/api/krp3/notifikace/zrusit', _krp3Env({ idSubskripce: id }));
   _showJson('krp3NotifResult', r);
 }
 

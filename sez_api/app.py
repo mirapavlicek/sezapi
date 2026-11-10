@@ -39,6 +39,7 @@ from sez_api.client import (
 )
 from sez_api.certstore import CertChyba, CertStore, dekoduj_pfx, zkontroluj_pfx
 from sez_api import certdistribuce
+from sez_api import kzr_pravidla as _kzr
 from sez_api import krpzs_registr
 from sez_api import fhir_imgorder as _fhir_img
 from sez_api import fhir_order as _fhir_order
@@ -624,13 +625,67 @@ class KRPJmenoRequest(BaseModel):
     rodne_cislo: str
     ucel: str = "LECBA"
 
+def _s_upozornenim(odpoved: JSONResponse, upozorneni) -> JSONResponse:
+    """Doplní do odpovědi ``timed_call`` neblokující upozornění (pole
+    ``upozorneni``) – pravidla, která standard uvádí, ale brána je podle
+    dostupných podkladů nevynucuje."""
+    texty = [u for u in (upozorneni or []) if u]
+    if not texty:
+        return odpoved
+    try:
+        obsah = json.loads(odpoved.body)
+    except Exception:
+        return odpoved
+    if isinstance(obsah, dict):
+        obsah["upozorneni"] = texty
+        return JSONResponse(obsah, status_code=odpoved.status_code)
+    return odpoved
+
+
+def _krp_jmena(jmeno, prijmeni):
+    """Kontrola jména a příjmení před dotazem do KRP (MZ ČR, 3. 11. 2026).
+
+    Vrací ``(odmitnuti, upozorneni)``: ``odmitnuti`` je hotová odpověď 422,
+    pokud se dotaz nemá odeslat (režim ``odmitnout``), jinak ``None``;
+    ``upozorneni`` jsou texty pro režim ``varovat``."""
+    rezim = _kzr.rezim_kontroly_jmen()
+    if rezim == _kzr.REZIM_VYPNUTO:
+        return None, []
+    chyby = _kzr.kontrola_jmena(jmeno, prijmeni)
+    if not chyby:
+        return None, []
+    if rezim == _kzr.REZIM_ODMITNOUT:
+        return JSONResponse({
+            "status": 422,
+            "error": " ".join(chyby) + " Dotaz se na KRP neodeslal.",
+            "duvod": _kzr.JMENA_DUVOD,
+            "odeslano": False,
+        }), []
+    return None, chyby
+
+
+@app.get("/api/krp/pravidla")
+async def krp_pravidla():
+    """Pravidla Standardu EZ Kmenové registry 1.3 používaná klientem i GUI:
+    DRID, kontrola jmen, kombinace univerzálního hledání, limit dávky
+    hromadného ztotožnění a tvar notifikací."""
+    return JSONResponse(_kzr.pravidla())
+
+
 @app.post("/api/krp/hledat-rid")
 async def krp_hledat_rid(req: KRPRidRequest):
-    return timed_call(_modules["krp"].hledat_rid, req.rid, req.ucel)
+    return _s_upozornenim(
+        timed_call(_modules["krp"].hledat_rid, req.rid, req.ucel),
+        [] if _kzr.drid_tvar(req.rid) else [_kzr.rid_upozorneni(req.rid)])
 
 @app.post("/api/krp/hledat-jmeno")
 async def krp_hledat_jmeno(req: KRPJmenoRequest):
-    return timed_call(_modules["krp"].hledat_jmeno_rc, req.jmeno, req.prijmeni, req.rodne_cislo, req.ucel)
+    odmitnuti, upoz = _krp_jmena(req.jmeno, req.prijmeni)
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(
+        timed_call(_modules["krp"].hledat_jmeno_rc, req.jmeno, req.prijmeni, req.rodne_cislo, req.ucel),
+        upoz)
 
 # DRID – Dočasný RID
 
@@ -647,30 +702,55 @@ class DRIDMapovaniRequest(BaseModel):
 
 @app.post("/api/krp/drid/generovat")
 async def krp_drid_generovat(req: DRIDGenerujRequest):
-    return timed_call(_modules["krp"].generovat_docasny_rid, req.pocet)
+    """Standard KZR 1.3, kap. 4.4.3: DRID je pro pacienta s neznámou totožností,
+    výpadek sítě nebo traumaplán – ne pro založení novorozence. Zásoba
+    předgenerovaných DRID je 50 ks; větší počet se odešle s upozorněním."""
+    if req.pocet < 1:
+        return error_response("Počet DRID musí být alespoň 1.", code=422)
+    return _s_upozornenim(
+        timed_call(_modules["krp"].generovat_docasny_rid, req.pocet),
+        [_kzr.drid_pocet_upozorneni(req.pocet)])
 
 @app.post("/api/krp/drid/priradit")
 async def krp_drid_priradit(req: DRIDPriradRequest):
-    return timed_call(_modules["krp"].priradit_docasny_rid, req.docasny_rid, req.rid)
+    """DRID se špatným tvarem (jiným než D + 9 číslic) se neodešle. Kontrolní
+    pravidlo verze 1.3 je jen upozornění – starší DRID ho splňovat nemusí."""
+    drid = (req.docasny_rid or "").strip().upper()
+    chyba = _kzr.drid_chyba(drid)
+    if chyba:
+        return JSONResponse({"status": 422, "error": chyba + " Požadavek se na KRP neodeslal.",
+                             "odeslano": False})
+    return _s_upozornenim(
+        timed_call(_modules["krp"].priradit_docasny_rid, drid, req.rid),
+        [_kzr.drid_upozorneni(drid), _kzr.rid_upozorneni(req.rid)])
 
 @app.post("/api/krp/drid/mapovani")
 async def krp_drid_mapovani(req: DRIDMapovaniRequest):
-    return timed_call(_modules["krp"].mapovani_rid, req.rid, req.jen_aktualni)
+    """Vstupem může být RID i DRID (Standard KZR 1.3, kap. 4.4.4)."""
+    return timed_call(_modules["krp"].mapovani_rid, (req.rid or "").strip(), req.jen_aktualni)
 
 @app.post("/api/krp/hledat-jmeno-dn")
 async def krp_hledat_jmeno_dn(request: Request):
     body = await request.json()
-    return timed_call(_modules["krp"].hledat_jmeno_dn,
-                      body.get("jmeno",""), body.get("prijmeni",""),
-                      body.get("datumNarozeni",""), body.get("statniObcanstvi"),
-                      body.get("ucel","LECBA"))
+    odmitnuti, upoz = _krp_jmena(body.get("jmeno"), body.get("prijmeni"))
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(timed_call(
+        _modules["krp"].hledat_jmeno_dn,
+        body.get("jmeno",""), body.get("prijmeni",""),
+        body.get("datumNarozeni",""), body.get("statniObcanstvi"),
+        body.get("ucel","LECBA")), upoz)
 
 @app.post("/api/krp/hledat-jmeno-cp")
 async def krp_hledat_jmeno_cp(request: Request):
     body = await request.json()
-    return timed_call(_modules["krp"].hledat_jmeno_cp,
-                      body.get("jmeno",""), body.get("prijmeni",""),
-                      body.get("cisloPojistence",""), body.get("ucel","LECBA"))
+    odmitnuti, upoz = _krp_jmena(body.get("jmeno"), body.get("prijmeni"))
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(timed_call(
+        _modules["krp"].hledat_jmeno_cp,
+        body.get("jmeno",""), body.get("prijmeni",""),
+        body.get("cisloPojistence",""), body.get("ucel","LECBA")), upoz)
 
 @app.post("/api/krp/hledat-cizinec-cp")
 async def krp_hledat_cizinec_cp(request: Request):
@@ -701,9 +781,18 @@ async def krp_hledat_niabsi(request: Request):
 
 @app.post("/api/krp/hledat-uni")
 async def krp_hledat_uni(request: Request):
+    """Univerzální vyhledání. Standard KZR 1.3 (kap. 4.5.1) uvádí pět kombinací,
+    vždy jméno + příjmení + (RČ | č. pojištěnce | datum narození | adresa
+    pobytu | doklad). Jiná kombinace se odešle s upozorněním – swagger 3.0.6
+    ji nevynucuje; zjevně chybné jméno se neodešle vůbec."""
     body = await request.json()
     ucel = body.pop("ucel", "LECBA")
-    return timed_call(_modules["krp"].hledat_uni, ucel, **body)
+    odmitnuti, upoz = _krp_jmena(body.get("jmeno"), body.get("prijmeni"))
+    if odmitnuti:
+        return odmitnuti
+    return _s_upozornenim(
+        timed_call(_modules["krp"].hledat_uni, ucel, **body),
+        upoz + [_kzr.uni_upozorneni(body)])
 
 @app.post("/api/krp/historie-pojisteni")
 async def krp_historie_pojisteni(request: Request):
@@ -819,15 +908,116 @@ async def krp_ztotozneni_csv2xml(request: Request, file: UploadFile = File(None)
         xml_text = KRP.to_davka_xml(text)
     except Exception as e:
         return error_response(f"Převod na XML selhal: {e}", code=400)
-    pocet = xml_text.count("<Pacient>")
+    pocet = _kzr.pocet_pacientu(xml_text)
     valid, chyba = _validate_against_xsd(xml_text, KRP.import_xsd())
     base = src_name.rsplit(".", 1)[0] or "davka"
-    return JSONResponse({
+    out = {
         "xml": xml_text,
         "filename": base + ".xml",
         "pocetPacientu": pocet,
         "validni": valid,
         "chyba": chyba,
+    }
+    out.update(_krp_davka_info(xml_text, base))
+    return JSONResponse(out)
+
+
+def _krp_davka_info(xml_text: str, base: str = "davka", s_obsahem: bool = True) -> dict:
+    """Limit dávky hromadného ztotožnění (Standard KZR 1.3, kap. 4.4.5:
+    nejvýše 10 000 pacientů) a kontrola jmen v dávce. Nad limit vrátí i hotové
+    části (``davky``), které se podávají každá zvlášť."""
+    pocet = _kzr.pocet_pacientu(xml_text)
+    casti = _kzr.rozdel_davku(xml_text) if pocet > _kzr.DAVKA_MAX_PACIENTU else [xml_text]
+    info = {
+        "limitDavky": _kzr.DAVKA_MAX_PACIENTU,
+        "pocetDavek": len(casti),
+        "dobaZpracovaniMin": _kzr.DAVKA_DOBA_ZPRACOVANI_MIN,
+        "prekrocenLimit": pocet > _kzr.DAVKA_MAX_PACIENTU,
+    }
+    if len(casti) > 1:
+        info["upozorneniDavky"] = (
+            f"Dávka má {pocet} pacientů; KRP přijímá nejvýše "
+            f"{_kzr.DAVKA_MAX_PACIENTU} v jedné dávce. Podá se jako {len(casti)} "
+            "samostatné žádosti, každá s vlastním hromadneZtotozneniID.")
+        info["davky"] = [
+            dict({"poradi": i, "filename": f"{base}_{i:02d}.xml",
+                  "pocetPacientu": _kzr.pocet_pacientu(c)},
+                 **({"xml": c} if s_obsahem else {}))
+            for i, c in enumerate(casti, start=1)]
+    vadna = _krp_davka_vadna_jmena(xml_text)
+    if vadna:
+        info["vadnaJmena"] = vadna[:50]
+        info["pocetVadnychJmen"] = len(vadna)
+        info["upozorneniJmena"] = (
+            f"{len(vadna)} záznamů má jméno nebo příjmení, které do KRP nepatří "
+            "(nepovolené znaky nebo zástupná hodnota). " + _kzr.JMENA_DUVOD)
+    return info
+
+
+_DAVKA_PACIENT_RE = re.compile(r"<Pacient\b[^>]*>(.*?)</Pacient\s*>", re.S)
+
+
+def _krp_davka_vadna_jmena(xml_text: str) -> list:
+    """Záznamy dávky, jejichž jméno/příjmení neprojde kontrolou jmen."""
+    if _kzr.rezim_kontroly_jmen() == _kzr.REZIM_VYPNUTO:
+        return []
+    from xml.sax.saxutils import unescape
+
+    def _pole(blok, tag):
+        m = re.search(rf"<{tag}>(.*?)</{tag}>", blok, re.S)
+        return unescape(m.group(1)).strip() if m else ""
+
+    vadna = []
+    for i, m in enumerate(_DAVKA_PACIENT_RE.finditer(xml_text or ""), start=1):
+        blok = m.group(1)
+        chyby = _kzr.kontrola_jmena(_pole(blok, "Jmeno"), _pole(blok, "Prijmeni"))
+        if chyby:
+            vadna.append({"poradi": i, "sourceId": _pole(blok, "SourceId") or None,
+                          "chyby": chyby})
+    return vadna
+
+
+def _krp_podat_davku(modul, content, filename: str, ucel: str = "LECBA",
+                     registrovat_odber: bool = False):
+    """Podá hromadné ztotožnění. Dávka do 10 000 pacientů jde jedním voláním
+    (odpověď beze změny), větší se rozdělí a každá část se podá zvlášť –
+    odpověď pak nese seznam ``davky`` se všemi ``hromadneZtotozneniID``.
+    Dávka se zjevně chybnými jmény se v režimu ``odmitnout`` nepodá."""
+    from sez_api.client import KRP
+    text = content.decode("utf-8-sig") if isinstance(content, (bytes, bytearray)) else str(content)
+    try:
+        xml_text = KRP.to_davka_xml(text)
+    except Exception as e:
+        return error_response(f"Převod na XML selhal: {e}", code=400)
+    base = (filename or "davka").rsplit(".", 1)[0] or "davka"
+    info = _krp_davka_info(xml_text, base, s_obsahem=False)
+    if info.get("vadnaJmena") and _kzr.rezim_kontroly_jmen() == _kzr.REZIM_ODMITNOUT:
+        return JSONResponse(dict({
+            "status": 422, "odeslano": False,
+            "error": info["upozorneniJmena"] + " Dávka se nepodala – opravte "
+                     "nebo vyřaďte označené záznamy.",
+        }, **info))
+    if not info["prekrocenLimit"]:
+        return None, info
+    t0 = time.monotonic()
+    try:
+        davky = modul.ztotozneni_zadost_po_davkach(
+            xml_text.encode("utf-8"), base + ".xml", ucel, registrovat_odber)
+    except Exception as e:
+        return error_response(f"Odeslání selhalo: {e}")
+    podane = [d for d in davky if d["status"] is not None]
+    status = max((d["status"] for d in podane), default=0)
+    return JSONResponse({
+        "status": status,
+        "data": {"davky": davky,
+                 "hromadneZtotozneniID": [d["hromadneZtotozneniID"] for d in davky
+                                          if d["hromadneZtotozneniID"]]},
+        "rozdeleno": True,
+        "pocetPacientu": _kzr.pocet_pacientu(xml_text),
+        "limitDavky": _kzr.DAVKA_MAX_PACIENTU,
+        "pocetDavek": len(davky),
+        "upozorneniDavky": info.get("upozorneniDavky"),
+        "elapsed_ms": round((time.monotonic() - t0) * 1000),
     })
 
 def _validate_against_xsd(xml_text: str, xsd_text: str):
@@ -847,10 +1037,23 @@ def _validate_against_xsd(xml_text: str, xsd_text: str):
         return False, str(e)
 
 @app.post("/api/krp/ztotozneni-zadost")
-async def krp_ztotozneni_zadost(file: UploadFile = File(...)):
-    """Upload CSV (or XML) file for batch identification."""
+async def krp_ztotozneni_zadost(file: UploadFile = File(...),
+                                registrovat_odber: bool = Form(False)):
+    """Nahraje soubor (CSV/JSON/XML) a podá hromadné ztotožnění.
+
+    Standard KZR 1.3 (kap. 4.4.5) omezuje dávku na 10 000 pacientů; větší
+    soubor se rozdělí a podá jako více žádostí (odpověď pak má ``rozdeleno``
+    a seznam ``data.davky``). Zpracování jedné dávky trvá dle MZ ČR cca 30 min."""
     content = await file.read()
-    return timed_call(_modules["krp"].ztotozneni_zadost, content, file.filename or "upload.csv")
+    vysledek = _krp_podat_davku(_modules["krp"], content, file.filename or "upload.csv",
+                                "LECBA", registrovat_odber)
+    if isinstance(vysledek, JSONResponse):
+        return vysledek
+    _nic, info = vysledek
+    return _s_upozornenim(
+        timed_call(_modules["krp"].ztotozneni_zadost, content,
+                   file.filename or "upload.csv", "LECBA", registrovat_odber),
+        [info.get("upozorneniJmena")])
 
 @app.post("/api/krp/ztotozneni-vykonani")
 async def krp_ztotozneni_vykonani(request: Request):
@@ -920,23 +1123,68 @@ async def krp_ztotozneni_vysledky_csv(request: Request):
 
 @app.post("/api/krp/notifikace-vyhledat")
 async def krp_notifikace_vyhledat(request: Request):
+    """Vyhledání odběrů notifikací KRP (Standard KZR 1.3, kap. 4.5.3.3):
+    ``idSubskripce`` a/nebo ``subjektId`` (IČO); alespoň jedno je povinné."""
     body = await request.json()
+    if not (body.get("idSubskripce") or body.get("subjektId")):
+        return JSONResponse({
+            "status": 422, "odeslano": False,
+            "error": "Zadejte idSubskripce nebo subjektId (IČO subjektu) – "
+                     "alespoň jeden z parametrů musí být vyplněn."})
     return timed_call(_modules["krp"].notifikace_vyhledat,
-                      body.get("kanalTyp",""), body.get("subjektId"),
-                      body.get("subjektTyp"),
-                      body.get("ucel","LECBA"))
+                      None, body.get("subjektId"), None,
+                      body.get("ucel", "LECBA"), body.get("idSubskripce"))
 
 @app.post("/api/krp/notifikace-zalozit")
 async def krp_notifikace_zalozit(request: Request):
+    """Založení odběru notifikací KRP (kap. 4.5.3.1): ``rid`` (jeden nebo
+    seznam), nepovinné ``url`` a ``subjektId`` (IČO). Na bránu jde tělo dle
+    swaggeru 3.0.6 – ``predmet[].rid``, ``prijemci.url``, ``subjektId``.
+    Přijímá i starší tvary (obálka ``data``, ``Rid``/``CallbackUrl``)."""
     body = await request.json()
-    return timed_call(_modules["krp"].notifikace_zalozit, body.get("data",{}), body.get("ucel","LECBA"))
+    try:
+        data = _kzr.notifikace_odber_z_volneho_tela(body)
+    except ValueError as e:
+        return JSONResponse({"status": 422, "error": str(e), "odeslano": False})
+    return _s_upozornenim(
+        timed_call(_modules["krp"].notifikace_zalozit, data, body.get("ucel", "LECBA")),
+        [_kzr.rid_upozorneni(p["rid"]) for p in data["predmet"]])
 
 @app.post("/api/krp/notifikace-zrusit")
 async def krp_notifikace_zrusit(request: Request):
+    """Zrušení odběru podle ``idSubskripce`` (GUID vrácený při založení)."""
     body = await request.json()
+    if not body.get("idSubskripce"):
+        return JSONResponse({"status": 422, "odeslano": False,
+                             "error": "Zadejte idSubskripce odběru, který se má zrušit."})
     return timed_call(_modules["krp"].notifikace_zrusit,
-                      body.get("idSubskripce"), body.get("subjektId"),
-                      body.get("ucel","LECBA"))
+                      body.get("idSubskripce"), None, body.get("ucel", "LECBA"))
+
+@app.post("/api/krp/notifikace-zprava")
+async def krp_notifikace_zprava(request: Request):
+    """Rozebere a ověří příchozí zprávu ``KZR.Notifikace`` (Standard KZR 1.3,
+    kap. 4.5.3.4–4.5.3.6) – tu KRP posílá na URL listeneru poskytovatele.
+    Bránu nevolá; slouží k vývoji a testu vlastního listeneru."""
+    try:
+        zprava = await request.json()
+    except Exception:
+        return JSONResponse({"platna": False, "chyby": ["Tělo není platný JSON."]},
+                            status_code=400)
+    return JSONResponse(_kzr.notifikace_zprava(zprava))
+
+@app.get("/api/krp/notifikace-vzor")
+async def krp_notifikace_vzor():
+    """Vzorová zpráva ``KZR.Notifikace`` a číselníky typů událostí a objektů
+    změny dle Standardu KZR 1.3."""
+    return JSONResponse({
+        "zprava": _kzr.NOTIFIKACE_PRIKLAD,
+        "udalosti": _kzr.NOTIFIKACE_UDALOSTI,
+        "objektyZmeny": list(_kzr.NOTIFIKACE_OBJEKTY_ZMENY),
+        "odber": _kzr.notifikace_odber("2393511146", "https://nis.example.cz/kzr/notifikace",
+                                       "25488627"),
+        "poznamka": "Příklady ve Standardu 1.3 (str. 35–36) nejsou v textové vrstvě "
+                    "PDF validní JSON; vzor je složen z polí, která v nich jsou.",
+    })
 
 @app.get("/api/krp/ciselnik/{nazev}")
 async def krp_ciselnik(nazev: str):
@@ -3705,7 +3953,16 @@ async def krp3_hledat(typ: str, request: Request):
     }.get(typ)
     if not handler:
         return error_response(f"Neznámý typ KRP v3 hledání: {typ}")
-    return timed_call(handler, body)
+    zd = body.get("zadostData") if isinstance(body.get("zadostData"), dict) else {}
+    upoz = []
+    if typ in ("jmeno_prijmeni_rc", "jmeno_prijmeni_datum_narozeni",
+               "jmeno_prijmeni_cp", "uni"):
+        odmitnuti, upoz = _krp_jmena(zd.get("jmeno"), zd.get("prijmeni"))
+        if odmitnuti:
+            return odmitnuti
+    if typ == "uni":
+        upoz = upoz + [_kzr.uni_upozorneni(zd)]
+    return _s_upozornenim(timed_call(handler, body), upoz)
 
 @app.post("/api/krp3/zalozit")
 async def krp3_zalozit(request: Request):
@@ -3727,7 +3984,45 @@ async def krp3_notifikace(akce: str, request: Request):
     }.get(akce)
     if not handler:
         return error_response(f"Neznámá akce notifikace: {akce}")
+    try:
+        body = _krp3_notifikace_telo(akce, body)
+    except ValueError as e:
+        return JSONResponse({"status": 422, "error": str(e), "odeslano": False})
     return timed_call(handler, body)
+
+
+def _krp3_notifikace_telo(akce: str, body: dict) -> dict:
+    """Srovná ``zadostData`` notifikací KRP v3 se swaggerem 3.0.6 (schémata mají
+    ``additionalProperties: false``) a se Standardem KZR 1.3, kap. 4.5.3.
+    Obálka ``zadostInfo`` zůstává, jak přišla."""
+    body = dict(body or {})
+    if "zadostData" not in body:
+        # tělo bez obálky (starší GUI, ruční volání) – obálka se doplní
+        body = {"zadostData": {k: v for k, v in body.items() if k != "zadostInfo"},
+                "zadostInfo": body.get("zadostInfo") or {
+                    "datum": date.today().isoformat(), "ucel": "LECBA",
+                    "zadostId": str(uuid.uuid4())}}
+    zd = body.get("zadostData")
+    zd = dict(zd) if isinstance(zd, dict) else {}
+    if akce == "zalozit":
+        body["zadostData"] = _kzr.notifikace_odber_z_volneho_tela(zd)
+    elif akce == "zrusit":
+        ids = zd.get("idSubskripce") or zd.get("OdberId") or zd.get("odberId")
+        if isinstance(ids, (list, tuple)):
+            if len(ids) > 1:
+                raise ValueError("Swagger KRP 3.0.6 přijímá u zrušení jedno idSubskripce "
+                                 "– rušte odběry po jednom.")
+            ids = ids[0] if ids else None
+        if not ids:
+            raise ValueError("Zadejte idSubskripce odběru, který se má zrušit.")
+        body["zadostData"] = {"idSubskripce": str(ids).strip()}
+    elif akce == "vyhledat":
+        cista = {k: str(zd[k]).strip() for k in ("idSubskripce", "subjektId") if zd.get(k)}
+        if not cista:
+            raise ValueError("Zadejte idSubskripce nebo subjektId (IČO subjektu) – "
+                             "alespoň jeden z parametrů musí být vyplněn.")
+        body["zadostData"] = cista
+    return body
 
 # Šablona IRIS ObjectScript klienta pro KRP v3 hromadné ztotožnění
 # (vygenerováno dle skill iris-objectscript, ověřeno lint_udl.py = 0 chyb).
@@ -3869,15 +4164,17 @@ def _krp3_prep_payload(text: str, registrovat_odber: bool, request: Request) -> 
         f"  -F 'ZadostInfo.ZadostId={uuid.uuid4()}' \\\n"
         f"  -F 'ZadostData.RegistrovatOdber={reg}' \\\n"
         f"  -F 'file=@{xml_name};type=application/xml'")
-    return {
+    out = {
         "xml": xml_text,
         "filename": xml_name,
-        "pocetPacientu": xml_text.count("<Pacient>"),
+        "pocetPacientu": _kzr.pocet_pacientu(xml_text),
         "validni": valid,
         "chyba": chyba,
         "curl": curl_proxy + "\n\n" + curl_direct,
         "iris": _krp3_iris_code(),
     }
+    out.update(_krp_davka_info(xml_text, "davka"))
+    return out
 
 
 async def _read_input_text(request: Request, file):
@@ -3902,6 +4199,11 @@ async def krp3_ztotozneni_zadost(request: Request, file: UploadFile = File(...),
         prep = _krp3_prep_payload(text, registrovat_odber, request)
     except Exception as e:
         return error_response(f"Příprava dávky selhala: {e}", code=400)
+    # Standard KZR 1.3: nejvýše 10 000 pacientů v dávce – větší soubor se podá
+    # po částech; dávka se zjevně chybnými jmény se nepodá vůbec.
+    vysledek = _krp_podat_davku(_modules["krp3"], text, "davka", "LECBA", registrovat_odber)
+    if isinstance(vysledek, JSONResponse):
+        return vysledek
     t0 = time.monotonic()
     try:
         resp = _modules["krp3"].ztotozneni_zadost(
@@ -3914,6 +4216,9 @@ async def krp3_ztotozneni_zadost(request: Request, file: UploadFile = File(...),
     out["iris"] = prep["iris"]
     out["xml"] = prep["xml"]
     out["validni"] = prep["validni"]
+    for klic in ("pocetPacientu", "limitDavky", "dobaZpracovaniMin", "upozorneniJmena"):
+        if prep.get(klic) is not None:
+            out[klic] = prep[klic]
     return JSONResponse(out)
 
 @app.post("/api/krp3/ztotozneni-nahled")
@@ -10738,6 +11043,12 @@ def _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel) -> list:
     Kombinace bez jména (typicky rodné číslo z NIS) zvládne jen univerzální
     hledání – ostatní metody jméno vyžadují, a `cizinec_cp` je určená pro
     cizince bez rodného čísla, takže na českého pacienta vrací 404.
+
+    Standard KZR 1.3 (kap. 4.5.1) uvádí u univerzálního hledání jen kombinace
+    jméno + příjmení + další údaj. Hledání podle samotného rodného čísla tu
+    zůstává: rodné číslo určuje osobu jednoznačně, swagger 3.0.6 kombinace
+    nevynucuje a NIS často jméno v použitelné podobě nemá. Samotné datum
+    narození se už neposílá – osobu neurčuje a jen zatěžuje KRP a ISZR.
     """
     pokusy = []
     if j and p and rc:
@@ -10749,7 +11060,7 @@ def _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel) -> list:
     if j and p and dn:
         pokusy.append(("jmeno_prijmeni_datum_narozeni",
                        lambda: krp.hledat_jmeno_dn(j, p, dn, so, ucel)))
-    if rc or dn:
+    if rc or (j and p and dn):
         pokusy.append(("uni", lambda: krp.hledat_uni(
             ucel, rodneCislo=rc or None, datumNarozeni=dn or None,
             jmeno=j or None, prijmeni=p or None,
@@ -10813,13 +11124,22 @@ def _ztotozni(krp, *, jmeno=None, prijmeni=None, rodneCislo=None,
     dn = (datumNarozeni or "").strip()
     so = statniObcanstvi or None
 
+    # MZ ČR (3. 11. 2026): zjevně chybná jména („Test“, „Neuvedeno“, číslice,
+    # symboly) zatěžují KRP i ISZR – takový dotaz se vůbec neodešle a volající
+    # dostane 422 s důvodem. Režim řídí SEZ_KRP_KONTROLA_JMEN.
+    if _kzr.rezim_kontroly_jmen() == _kzr.REZIM_ODMITNOUT:
+        vadna = _kzr.kontrola_jmena(j, p)
+        if vadna:
+            raise ValueError(" ".join(vadna) + " Dotaz se na KRP neodeslal. "
+                             + _kzr.JMENA_DUVOD)
+
     pokusy = _ztotozneni_pokusy(krp, j, p, rc, cp, dn, so, ucel)
     if not pokusy:
         raise ValueError(
             "Zadejte alespoň jednu z kombinací: (jméno+příjmení+rodné číslo) | "
             "(jméno+příjmení+číslo pojištěnce) | "
-            "(jméno+příjmení+datum narození) | rodné číslo | datum narození | "
-            "číslo pojištěnce.")
+            "(jméno+příjmení+datum narození) | rodné číslo | číslo pojištěnce. "
+            "Samotné datum narození osobu neurčuje a do KRP se neposílá.")
 
     budget = max(0, cfg.ZTOTOZNENI_BUDGET_MS) / 1000.0
     zacatek = time.monotonic()
