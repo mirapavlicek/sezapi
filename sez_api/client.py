@@ -14,6 +14,10 @@ Flow:
 import time
 import uuid
 import logging
+import contextlib
+import contextvars
+import re
+import unicodedata
 import tempfile
 import os
 import base64
@@ -360,8 +364,46 @@ class SEZClient:
         env_key = getattr(SEZConfig, "ENVIRONMENT", "T2")
         env = SEZ_ENVIRONMENTS.get(env_key, {})
         prostredi = "Prod" if env.get("base_env") == "PROD" else "Test"
+        nazev = SEZClient._ua_token(nazev) or "sez-api"
+        vyrobce = SEZClient._ua_text(vyrobce) or "neuvedeno"
+        poznamka = SEZClient._ua_text(poznamka)
         detail = f"{prostredi}; {vyrobce}" + (f"; {poznamka}" if poznamka else "")
-        return f"{nazev}/{_ver} ({detail})"
+        return f"{nazev}/{SEZClient._ua_token(_ver) or '0'} ({detail})"
+
+    @staticmethod
+    def _ua_ascii(text) -> str:
+        """Hlavička smí nést jen tisknutelné ASCII – diakritika se odstraní."""
+        t = unicodedata.normalize("NFKD", str(text or ""))
+        t = "".join(ch for ch in t if not unicodedata.combining(ch))
+        return "".join(ch for ch in t if 32 <= ord(ch) < 127)
+
+    @staticmethod
+    def _ua_token(text) -> str:
+        """Název / verze produktu: RFC 9110 ``token`` (bez mezer, lomítek, závorek)."""
+        t = re.sub(r"\s+", "-", SEZClient._ua_ascii(text).strip())
+        return re.sub(r"[^A-Za-z0-9!#$%&'*+.^_`|~-]", "", t)
+
+    @staticmethod
+    def _ua_text(text) -> str:
+        """Položka komentáře: bez středníku a závorek, které by rozbily formát
+        ``název/verze (Test|Prod; výrobceSW; další_informace)``."""
+        t = re.sub(r"[;()\\]", " ", SEZClient._ua_ascii(text))
+        return re.sub(r"\s+", " ", t).strip()
+
+    def pruvodni_hlavicky(self) -> dict:
+        """User-Agent + X-Correlation-Id (+ X-Trace-Id) pro volání, která si
+        hlavičky skládají sama (multipart upload, DÚ, JSU). Korelační id se
+        bere z běžícího obchodního procesu – viz :func:`korelace`."""
+        return {
+            "User-Agent": self.user_agent(),
+            "X-Correlation-Id": aktualni_correlation_id() or nove_correlation_id(),
+            "X-Trace-Id": str(uuid.uuid4()),
+        }
+
+    @staticmethod
+    def korelace(correlation_id: str = None):
+        """Kontext jednoho obchodního procesu – viz modulovou :func:`korelace`."""
+        return korelace(correlation_id)
 
     @staticmethod
     def traceparent() -> str:
@@ -410,6 +452,7 @@ class SEZClient:
             resp = self.session.post(
                 self.config.TOKEN_AUDIENCE,
                 data=data,
+                headers=self.pruvodni_hlavicky(),
                 timeout=30,
             )
             try:
@@ -463,14 +506,13 @@ class SEZClient:
         # od 1. 1. 2027 (UUID v4+, max 128 znaků; formát UA viz user_agent()).
         # Zdroj: API endpointy (Manuál EZ pro PZS), aktualizace 31. 8. 2026
         # (znění z 21. 7. uvádělo UA povinný už od 1. 9. 2026).
+        # Korelační id je společné pro celý obchodní proces (viz korelace()).
         h = {
             "Authorization": f"Bearer {self.auth.build_assertion()}",
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "User-Agent": self.user_agent(),
-            "X-Correlation-Id": str(uuid.uuid4()),
-            "X-Trace-Id": str(uuid.uuid4()),
+            **self.pruvodni_hlavicky(),
         }
         # traceparent (W3C) je volitelný – posílá se jen při zapnutí
         # SEZ_SEND_TRACEPARENT, aby se nikdy neodeslal neplatný formát.
@@ -628,17 +670,35 @@ class SEZClient:
 
         return resp
 
-    def get(self, path, params=None, timeout=None):
+    def get(self, path, params=None, timeout=None, extra_headers=None):
         kw = {"params": params}
         if timeout is not None:
             kw["timeout"] = timeout
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
         return self._request("GET", path, **kw)
 
-    def post(self, path, body=None, timeout=None):
+    def post(self, path, body=None, timeout=None, extra_headers=None):
         kw = {"json": body}
         if timeout is not None:
             kw["timeout"] = timeout
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
         return self._request("POST", path, **kw)
+
+    def query(self, path, body=None, timeout=None, extra_headers=None):
+        """HTTP metoda ``QUERY`` – bezpečný a idempotentní dotaz s tělem.
+
+        MZ ČR ji (prezentace 3. 11. 2026) plánuje pro vyhledávací operace
+        **nových verzí** služeb místo POST. K 10. 11. 2026 ji žádný
+        publikovaný swagger nepoužívá – metoda je připravená, stávající
+        moduly dál volají POST."""
+        kw = {"json": body}
+        if timeout is not None:
+            kw["timeout"] = timeout
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
+        return self._request("QUERY", path, **kw)
 
     def patch(self, path, body=None, params=None, **kwargs):
         return self._request("PATCH", path, json=body, params=params, **kwargs)
@@ -646,8 +706,11 @@ class SEZClient:
     def put(self, path, body=None, params=None, **kwargs):
         return self._request("PUT", path, json=body, params=params, **kwargs)
 
-    def delete(self, path, body=None):
-        return self._request("DELETE", path, json=body)
+    def delete(self, path, body=None, extra_headers=None):
+        kw = {"json": body}
+        if extra_headers:
+            kw["extra_headers"] = extra_headers
+        return self._request("DELETE", path, **kw)
 
     def get_external(self, url: str, timeout: int = 30,
                       params: dict = None, headers: dict = None) -> requests.Response:
@@ -684,6 +747,58 @@ class SEZClient:
 # ---------------------------------------------------------------------------
 # API moduly
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# X-Correlation-Id jednoho obchodního procesu
+# ---------------------------------------------------------------------------
+# Prezentace MZ ČR „HTTP hlavičky a metoda QUERY“ (3. 11. 2026): hodnotu
+# X-Correlation-Id generuje iniciátor JEDNOU pro celý obchodní proces a předává
+# ji do všech navazujících volání (UUID v4 a vyšší, nejvýše 128 znaků). Hlavička
+# bude povinná od 1. 1. 2027. ContextVar drží hodnotu pro právě běžící proces
+# (HTTP požadavek na tuto aplikaci, dávku, scénář); mimo proces dostane každé
+# volání vlastní UUID jako dosud.
+_KORELACE: contextvars.ContextVar = contextvars.ContextVar("sez_korelace", default=None)
+CORRELATION_ID_MAX = 128
+
+
+def correlation_id_platne(hodnota) -> bool:
+    """UUID verze 4 nebo vyšší v kanonickém zápisu, nejvýše 128 znaků."""
+    if not isinstance(hodnota, str) or not hodnota or len(hodnota) > CORRELATION_ID_MAX:
+        return False
+    try:
+        u = uuid.UUID(hodnota)
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return (u.version or 0) >= 4 and str(u) == hodnota.lower()
+
+
+def nove_correlation_id() -> str:
+    return str(uuid.uuid4())
+
+
+def aktualni_correlation_id() -> "str | None":
+    """Korelační id právě běžícího obchodního procesu (nebo None)."""
+    return _KORELACE.get()
+
+
+@contextlib.contextmanager
+def korelace(correlation_id: str = None):
+    """Všechna volání brány uvnitř bloku ponesou stejné X-Correlation-Id.
+
+    Bez parametru se převezme id nadřazeného procesu, jinak se vygeneruje
+    nové UUID v4. Neplatná hodnota (jiná než UUID v4+, delší než 128 znaků)
+    vyvolá ``ValueError`` – bránu by od 1. 1. 2027 stejně odmítla."""
+    if correlation_id is None:
+        correlation_id = _KORELACE.get() or nove_correlation_id()
+    elif not correlation_id_platne(correlation_id):
+        raise ValueError("X-Correlation-Id musí být UUID verze 4 nebo vyšší "
+                         f"(nejvýše {CORRELATION_ID_MAX} znaků).")
+    token = _KORELACE.set(correlation_id)
+    try:
+        yield correlation_id
+    finally:
+        _KORELACE.reset(token)
+
 
 class KRP:
     """KRP – Kmenový registr pacientů (rozhraní pro PZS).
@@ -889,8 +1004,7 @@ class KRP:
             "Authorization": f"Bearer {assertion}",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "X-Correlation-Id": str(uuid.uuid4()),
-            "X-Trace-Id": str(uuid.uuid4()),
+            **self.c.pruvodni_hlavicky(),
         }
         form_data = {
             "ZadostInfo.Datum": self._now(),
@@ -1549,7 +1663,8 @@ class DocasneUloziste:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "X-Correlation-Id": str(uuid.uuid4()),
+            "User-Agent": SEZClient.user_agent(),
+            "X-Correlation-Id": aktualni_correlation_id() or nove_correlation_id(),
             "X-Trace-Id": str(uuid.uuid4()),
         }
 
@@ -1614,8 +1729,7 @@ class DocasneUloziste:
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                     "Accept-Language": "cs",
-                    "X-Correlation-Id": str(uuid.uuid4()),
-                    "X-Trace-Id": str(uuid.uuid4()),
+                    **self.c.pruvodni_hlavicky(),
                 }
                 try:
                     if method == "GET":
@@ -4020,8 +4134,7 @@ class KRPv3:
             "Authorization": f"Bearer {assertion}",
             "Accept": "application/json",
             "Accept-Language": "cs",
-            "X-Correlation-Id": str(uuid.uuid4()),
-            "X-Trace-Id": str(uuid.uuid4()),
+            **self.c.pruvodni_hlavicky(),
         }
         form_data = {
             "ZadostInfo.Datum": self._now(),

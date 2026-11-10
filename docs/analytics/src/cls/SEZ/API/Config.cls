@@ -47,23 +47,32 @@ Parameter VENDOR = "Krajska zdravotni a.s.";
 /// Volitelná doplňující informace v User-Agent (např. "Nasazeno u ABC").
 Parameter UANOTE = "";
 
-/// Sestaví hlavičku User-Agent dle stránky API endpointy (21. 7. 2026):
+/// Sestaví hlavičku User-Agent dle stránky API endpointy (31. 8. 2026):
 /// formát <název-aplikace>/<verze> (Test|Prod; výrobceSW[; poznámka]).
-/// POVINNÁ od 1. 9. 2026 (RFC 9110, sekce 10.1.5).
+/// Doporučená od 1. 9. 2026, POVINNÁ od 1. 1. 2027 (RFC 9110, sekce 10.1.5).
+///
+/// Hodnotu skládá a sanitizuje generátor SEZ.API.UserAgent (diakritika,
+/// středníky a závorky by formát rozbily). Je-li nastavená běhová konfigurace
+/// (SEZ.API.UserAgent.Nastav), má přednost; jinak se použijí parametry
+/// APPNAME / APPVERSION / VENDOR / UANOTE této třídy.
 ///
 /// Prostředí se určuje z hostname gateway – testovací brány obsahují
 /// "-t2", produkce je api.csez.gov.cz.
 ClassMethod UserAgent() As %String
 {
-    Set prostredi = $Select(..#GATEWAY [ "-t2": "Test", 1: "Prod")
-    Set detail = prostredi _ "; " _ ..#VENDOR
-    If ..#UANOTE '= "" {
-        Set detail = detail _ "; " _ ..#UANOTE
+    If $Data(^SEZ.API.UserAgent) {
+        Quit ##class(SEZ.API.UserAgent).Dej(..#GATEWAY)
     }
-    Quit ..#APPNAME _ "/" _ ..#APPVERSION _ " (" _ detail _ ")"
+    Set prostredi = ##class(SEZ.API.UserAgent).Prostredi(..#GATEWAY)
+    Set sc = $$$OK
+    Set ua = ##class(SEZ.API.UserAgent).Sestav(..#APPNAME, ..#APPVERSION, prostredi, ..#VENDOR, ..#UANOTE, .sc)
+    If $$$ISERR(sc) {
+        Set ua = ##class(SEZ.API.UserAgent).Dej(..#GATEWAY)
+    }
+    Quit ua
 }
 
-/// Client ID (formát: "ICO_nazev", např. "25488627_KrajskaZdravotniVerejnyTest")
+/// Client ID (formát: "ICO_nazev", např. "25488627_KrajskaZdravotniVerejnyTest04")
 Property ClientId As %String;
 
 /// Client Secret – pokud prázdný, použije se private_key_jwt s přímou assertion
@@ -410,9 +419,11 @@ Method DiagToken() As %Status
     Quit sc
 }
 
+/// Nové UUID pro X-Correlation-Id / jti. Kanonický zápis malými písmeny
+/// (MZ ČR požaduje UUID verze 4 a vyšší, nejvýše 128 znaků).
 ClassMethod NewUUID() As %String
 {
-    Quit $SYSTEM.Util.CreateGUID()
+    Quit $ZConvert($SYSTEM.Util.CreateGUID(), "L")
 }
 
 }

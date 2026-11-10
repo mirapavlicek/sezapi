@@ -1,9 +1,10 @@
 /// Generátor hlavičky <b>User-Agent</b> pro volání SEZ API (NCEZ).
 ///
-/// Formát dle stránky "API endpointy" (aktualizace 21. 7. 2026):
+/// Formát dle stránky "API endpointy" (aktualizace 21. 7. a 31. 8. 2026):
 /// <pre>&lt;název-aplikace&gt;/&lt;verze&gt; (Test|Prod; výrobceSW[; poznámka])</pre>
-/// Hlavička je POVINNÁ od 1. 9. 2026 (RFC 9110, sekce 10.1.5) – volání bez ní
-/// brána odmítne. Pozor: %Net.HttpRequest bez explicitního nastavení pošle
+/// Hlavička je doporučená od 1. 9. 2026 a POVINNÁ od 1. 1. 2027 (RFC 9110,
+/// sekce 10.1.5; znění stránky z 31. 8. 2026 a prezentace MZ ČR z 3. 11. 2026)
+/// – volání bez ní pak brána odmítne. Pozor: %Net.HttpRequest bez explicitního nastavení pošle
 /// vlastní "Mozilla/4.0 (compatible; InterSystems IRIS;)", které formátu
 /// nevyhovuje.
 ///

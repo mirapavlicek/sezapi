@@ -299,6 +299,26 @@ async def env_sync_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def korelace_middleware(request: Request, call_next):
+    """Jeden požadavek na tuto aplikaci = jeden obchodní proces: všechna volání
+    brány, která vyvolá, nesou stejné ``X-Correlation-Id`` (prezentace MZ ČR
+    3. 11. 2026; hlavička bude povinná od 1. 1. 2027).
+
+    Pošle-li volající platné ``X-Correlation-Id`` (UUID v4+, max 128 znaků),
+    převezme se – proces tak může pokračovat přes více požadavků. Jinak se
+    vygeneruje nové. Použitá hodnota se vrací v hlavičce odpovědi."""
+    from sez_api import client as _cl
+    if not request.url.path.startswith(("/api/", "/internal/")):
+        return await call_next(request)
+    prichozi = request.headers.get("x-correlation-id")
+    cid = prichozi if _cl.correlation_id_platne(prichozi) else None
+    with _cl.korelace(cid) as pouzite:
+        response = await call_next(request)
+    response.headers["X-Correlation-Id"] = pouzite
+    return response
+
+
 def api_response(resp) -> dict:
     try:
         data = resp.json()
@@ -4268,6 +4288,7 @@ async def debug_jwt():
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Accept-Language": "cs",
+        "User-Agent": SEZClient.user_agent(),
         "X-Correlation-Id": correlation_id,
         "X-Trace-Id": trace_id,
     }

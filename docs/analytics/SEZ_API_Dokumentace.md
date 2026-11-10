@@ -122,10 +122,32 @@ Assertion se podepisuje **privátním klíčem** z certifikátu EZCA II (formát
 | `Authorization` | string | `Bearer <JWT_assertion>` |
 | `Content-Type` | string | `application/json` |
 | `Accept-Language` | string | Jazyk odpovědi (`cs`, `en`, `de`), výchozí `cs` |
-| `User-Agent` | string | `<název-aplikace>/<verze> (Test\|Prod; výrobceSW)` – **povinná od 1. 9. 2026** |
-| `X-Correlation-Id` | uuid | ID korelace pro trasování |
-| `X-Trace-Id` | uuid | ID trasování |
+| `User-Agent` | string | `<název-aplikace>/<verze> (Test\|Prod; výrobceSW)` – doporučená od 1. 9. 2026, **povinná od 1. 1. 2027**; hodnoty bez diakritiky, středníků a závorek |
+| `X-Correlation-Id` | uuid | ID korelace – UUID v4+, max 128 znaků; doporučená od 1. 9. 2026, **povinná od 1. 1. 2027**. Generuje se **jednou pro celý obchodní proces** a předává se do všech navazujících volání (prezentace MZ ČR 3. 11. 2026) |
+| `X-Trace-Id` | uuid | ID trasování (pro každé volání nové) |
 | `If-Match` | string | ETag pro optimistickou souběžnost (SZZ, ELP) |
+
+#### X-Correlation-Id pro celý proces
+
+Python klient drží korelaci v kontextu – vše uvnitř bloku nese stejnou hodnotu
+(včetně výměny tokenu na JSU, uploadů a Dočasného úložiště):
+
+```python
+from sez_api.client import korelace
+
+with korelace() as cid:              # nebo korelace("<převzaté UUID>")
+    pacient = krp.hledat_rid(rid)
+    szz.alergie.vyhledat(rid)
+```
+
+Webová aplikace otevírá korelaci automaticky pro každý požadavek na `/api/…`;
+platné příchozí `X-Correlation-Id` převezme a použitou hodnotu vrací v hlavičce
+odpovědi. V IRIS: `Do client.ZacniProces()` … `Do client.UkonciProces()`
+(`SEZ.API.HttpClient`), u generovaného klienta vlastnost `CorrelationId`.
+
+Metoda **QUERY** (bezpečný dotaz s tělem) je připravená jako `SEZClient.query()`
+/ `HttpClient.Query()`; MZ ČR ji plánuje pro vyhledávání v nových verzích služeb,
+k 10. 11. 2026 ji žádný publikovaný swagger nepoužívá.
 
 #### User-Agent v IRIS / CSP
 
@@ -1798,8 +1820,8 @@ Odpoved: true | false
 | `Authorization` | Request | string | `Bearer <JWT_assertion>` |
 | `Content-Type` | Request | string | `application/json` |
 | `Accept-Language` | Request | string | `cs` / `en` / `de` |
-| `User-Agent` | Request | string | `<aplikace>/<verze> (Test\|Prod; výrobceSW)`, povinná od 1. 9. 2026 |
-| `X-Correlation-Id` | Request | uuid | ID pro korelaci požadavků |
+| `User-Agent` | Request | string | `<aplikace>/<verze> (Test\|Prod; výrobceSW)`, doporučená od 1. 9. 2026, povinná od 1. 1. 2027 |
+| `X-Correlation-Id` | Request | uuid | ID pro korelaci – jedno pro celý obchodní proces; povinná od 1. 1. 2027 |
 | `X-Trace-Id` | Request | uuid | ID pro trasování |
 | `If-Match` | Request | string | ETag pro optimistickou souběžnost (SZZ, ELP) |
 | `ETag` | Response | string | Verze záznamu |
