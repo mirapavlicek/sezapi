@@ -216,14 +216,15 @@ def test_tabulka_verzi_api_je_aktualizovana():
     zastaralými verzemi."""
     html = TestClient(app).get("/").text
     assert "Revize 19. 8. 2026" in html
-    # SZZ v3 a vypnuté KRP v1 jsou změny s dopadem na integraci.
-    assert "v3.0.0" in html and "NOVÁ VERZE" in html
-    # Od revize 9. 9. 2026: k 15. 9. 2026 je vypnuto v1 i v2.
-    assert "v1 + v2 VYPNUTO k 15. 9. 2026" in html
+    # Revize 10. 11. 2026: tabulka uvádí verze swaggerů brány T2 z 13. 10. 2026
+    # (SZZ 3.0.5 se Standardem 3.1, DÚ 1.11.27, RO 1.0.7), ne čísla z Novinek.
+    assert "<code>v3.0.5</code>" in html and "STANDARD 3.1" in html
+    assert "<code>v1.11.27</code>" in html
+    assert "<td>RO – Registr oprávnění</td><td><code>v1.0.7</code></td>" in html
+    # KRP: v1 je vypnuté, o v2 si zdroje odporují (Novinky 27. 8. × plán 3. 11.).
+    assert "v1 VYPNUTO 14. 8. 2026" in html and "v2: ROZPOR ZDROJŮ" in html
+    assert "v1 + v2 VYPNUTO k 15. 9. 2026" not in html
     assert "SEZ_INTERNAL_KRP_VERZE" in html
-    # Verze služeb dle novinek z července a srpna.
-    assert "v1.11.20" in html      # DÚ i eŽádanky
-    assert "v1.0.8" in html        # Registr oprávnění
     assert "Žurnál činností 1.0.6" in html
     # Stará hlavička revize už tam být nemá.
     assert "Revize 26. 7. 2026</strong> dle veřejné dokumentace" not in html
