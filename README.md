@@ -6,10 +6,10 @@ Python klient a webové rozhraní pro **Sdílené elektronické zdravotnictví**
 
 | Služba | Popis |
 |--------|-------|
-| **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla (**API v3**; NCEZ vypnul v1 k 14. 8. 2026 a v1 i v2 vypíná k 15. 9. 2026) |
+| **KRP** | Kmenový registr pacientů -- vyhledávání pacientů podle RID, jména a rodného čísla (**API v3.0.6**, Standard KZR 1.3; v1 vypnuto 14. 8. 2026, o vypnutí v2 si zdroje odporují – viz Revize 10. 11. 2026) |
 | **KRZP / KRPZS** | Kmenové registry zdravotnických pracovníků a poskytovatelů (KRZP v2.0.7 a **nová v3.0.4** – přepínač `SEZ_KRZP_VERZE`; KRPZS v2.0.4) |
 | **DÚ** | Dočasné úložiště -- ukládání, vyhledávání a stahování zdravotnických zásilek |
-| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1.0.9, v2.0.7 a **v3.0.5** dle Standardu EZ SZZ 3.0) |
+| **SZZ** | Sdílený zdravotní záznam -- alergie, krevní skupiny, léčivé přípravky, nežádoucí události, prevence a screeningy (v1.0.9, v2.0.7 a **v3.0.5** dle Standardu EZ SZZ 3.1) |
 | **ELP** | Elektronické posudky -- vyhledávání a správa lékařských posudků |
 | **eŽádanky** | Elektronické žádanky mezi poskytovateli (**API v2.0.0** dle Standardu eŽádanka 2.0 – systémová hlavička + FHIR Bundle, platné od 1. 10. 2026; v1.11.25 deprecated) |
 | **Notifikace** | Notifikační služba -- kanály, šablony, zdroje |
@@ -200,7 +200,8 @@ Volitelné proměnné:
 | `SEZ_CERT_API_KEY` | (`SEZ_INTERNAL_API_KEY`) | Klíč pro API distribuce certifikátů |
 | `SEZ_INTERNAL_API_KEY` | (bez ochrany) | Klíč vyžadovaný interním API `/internal` |
 | `SEZ_GATEWAY` | `https://gwy-ext-sec-t2.csez.cz` | URL API Gateway |
-| `SEZ_KRP_VERZE` | `v3` | Verze API KRP pro hlavní rozhraní `/api/krp/*` (v1 i v2 jsou k 15. 9. 2026 vypnuty; `v2` jen pro ladění) |
+| `SEZ_KRP_VERZE` | `v3` | Verze API KRP pro hlavní rozhraní `/api/krp/*` (v1 je vypnuté; vypnutí v2 bylo oznámeno k 15. 9. 2026, plán z 3. 11. 2026 s v2 dál počítá) |
+| `SEZ_KRP_KONTROLA_JMEN` | `odmitnout` | Kontrola jména a příjmení před dotazem do KRP: `odmitnout` (interní API HTTP 422, `/api/krp/*` `status: 422` v těle), `varovat`, `vypnuto` |
 | `SEZ_INTERNAL_KRP_VERZE` | (`SEZ_KRP_VERZE`) | Verze API KRP pro interní ztotožnění |
 | `SEZ_HOST` | `0.0.0.0` | Adresa webového serveru |
 | `SEZ_PORT` | `8000` | Port webového serveru |
@@ -446,9 +447,54 @@ dle [Metodiky testování EHR fáze I](https://mzcr.atlassian.net/wiki/spaces/EP
 - **Protokol o provedení testu** (povinný výstup testů) lze vygenerovat
   tlačítkem v záložce „Spustit vše" nebo přes `POST /api/irop/protokol`.
 
-## SZZ v3.0.0 (Standard EZ SZZ 3.0)
+## Revize 10. 11. 2026 – co se změnilo (bylo → je)
 
-Od 29. 7. 2026 platí nová verze API Sdíleného zdravotního záznamu. Klient ji
+Stejný přehled se zvýrazněním je na dashboardu aplikace (box „Revize 10. 11. 2026“).
+Brána T2 není z prostředí, kde revize vznikla, dostupná; změny vycházejí
+z dokumentace, standardů a swaggerů, ne z živého volání.
+
+| Oblast | Bylo | Je |
+|--------|------|----|
+| **SZZ – účast ve screeningu** | položky účasti uvnitř preventivní prohlídky VPL | tři služby `/api/v3/screeningy/karcinomProstatyUcast`, `karcinomPlicUcast`, `aneurysmaAbdominalniAortyUcast` (Standard SZZ 3.1, T2 od 20. 10. 2026) |
+| **SZZ – verze** | Standard 3.0, API 3.0.0 | Standard 3.1, API 3.0.5 (v2 na 2.0.7) |
+| **SZZ v2 – screeningy** | 10 typů | 15 typů (pět doplněných ve 2.0.4) |
+| **SZZ – rozsah PSA** | 1 000–12 000 | 0–200 µg/l |
+| **eŽádanky v2 – stavy** | 2 Vyřízená, 4 Neproveditelná, 5 Vrácená do oběhu | 2 Neproveditelná, 4 Dokončená, 5 Expirovaná; vrácení do oběhu → stav 0 bez adresáta |
+| **eŽádanky v2 – FHIR IG** | img-order 0.1.0 (CI build) | img-order 1.0.0 a order 1.0.0 z `ig.ezdravi.gov.cz` |
+| **X-Correlation-Id** | nové UUID pro každý požadavek | jedno UUID pro celý obchodní proces (`korelace()`) |
+| **User-Agent** | hodnota z konfigurace beze změny | bez diakritiky a řídicích znaků |
+| **KRP – dočasný RID** | „D“ + 9 náhodných číslic | „D“ + devítimístné číslo dělitelné 13 a nedělitelné 11 (Standard KZR 1.3) |
+| **KRP – hromadné ztotožnění** | bez omezení dávky | nejvýše 10 000 pacientů, větší soubor se dělí |
+| **KRP – jméno a příjmení** | bez kontroly | jen písmena, spojovník, apostrof a mezera; jinak chyba 422 (`SEZ_KRP_KONTROLA_JMEN`) |
+| **KRP – univerzální hledání** | dotaz i jen s datem narození | kombinace podle kap. 4.5.1 standardu |
+| **Zprávy eZD – výjezd ZZS** | IG 0.0.2, časová osa jako text | IG 0.1.0, časové body jako `Observation`, povinné 02/03/04/05/07 |
+| **Zprávy eZD – laboratoř** | IG 0.5.0 (CI build), sekce `annotations`, `attachment` | IG 1.0.0, profil `composition-cz-lab`, obě sekce zrušeny |
+| **Zprávy eZD – obrazové vyšetření** | IG 0.1.0-ballot, tři kategorie | IG 1.0.0, dvě kategorie |
+| **SÚKL DLP** | katalog na staré adrese | `opendata.sukl.gov.cz` |
+| **SÚKL ePoukaz** | verze rozhraní 202601A/B, 202604A | 202605A (starší se vypínají k 30. 11. 2026) |
+| **Terminologie (apio)** | specifikace v1.1.0 | „Terminologie v1.0.5“, nové parametry `displayLanguage`, `useSupplement` |
+| **Testovací client_id v ukázkách** | `25488627_KrajskaZdravotniVerejnyTest` | `25488627_KrajskaZdravotniVerejnyTest04` |
+
+Změny, které se projeví bez zásahu obsluhy: jméno se zástupnou hodnotou nebo
+nepovolenými znaky končí chybou 422, interní ztotožnění neposílá dotaz jen s datem
+narození, zpráva ZZS ve stavu `final` bez povinných časových bodů a laboratorní
+zpráva se zrušenou sekcí neprojdou validací.
+
+O vypnutí KRP v2 si zdroje odporují: Novinky z 27. 8. 2026 je oznamují
+k 15. 9. 2026, plán vývoje z 3. 11. 2026 počítá s provozem v2 i v3. Aplikace
+volá v3.
+
+## SZZ v3.0.5 (Standard EZ SZZ 3.1)
+
+Standard 3.1 (23. 10. 2026) vede **účast ve screeningu** jako samostatný
+záznam. `SZZv3.screening("karcinomProstatyUcast")` (a obdobně
+`karcinomPlicUcast`, `aneurysmaAbdominalniAortyUcast`) nabízí vytvoření,
+úpravu, zneplatnění, zpochybnění a obnovení; operaci `/vyhledat` standard
+u účasti neuvádí, záznamy vrací souhrn `POST /api/v3/screeningy/vyhledat`.
+Formulář prohlídky VPL ve v3 položky účasti neposílá. Swagger s těmito
+službami zatím zveřejněný není a datum nasazení na PROD není známé.
+
+Verze 3.0.0 platí od 29. 7. 2026. Klient ji
 obsluhuje třídou `SZZv3` a endpointy `/api/szz3/…`; verze v2 zůstává dostupná
 paralelně, takže přechod nemusí být skokový.
 

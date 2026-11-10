@@ -1,7 +1,7 @@
 # SEZ API – Komplexní dokumentace
 
 **Zdroj:** https://gwy-ext-sec-t2.csez.cz/apidoc/
-**Datum zpracování:** 2026-02-19
+**Datum zpracování:** 2026-02-19 (základ), poslední revize 2026-11-10
 **Prostředí:** T2 (testovací)
 
 ---
@@ -137,7 +137,7 @@ from sez_api.client import korelace
 
 with korelace() as cid:              # nebo korelace("<převzaté UUID>")
     pacient = krp.hledat_rid(rid)
-    szz.alergie.vyhledat(rid)
+    alergie = szz.alergie(rid)
 ```
 
 Webová aplikace otevírá korelaci automaticky pro každý požadavek na `/api/…`;
@@ -756,8 +756,30 @@ Každý endpoint existuje i v async variantě (`/api/signasync/document` atd.).
 **OpenAPI:** 3.0.1 | **Verze:** v2.0.0 (popis níže) – **provozovaná verze je v3** (`/krp/api/v3/…`)
 **Kontakt:** SLE01 – Kmenové registry, `csez@mzd.gov.cz`
 
+> **Revize 10. 11. 2026 – Standard EZ Kmenové registry 1.3 (platnost od 3. 11. 2026):**
+>
+> | Pravidlo | Bylo (1.2) | Je (1.3) |
+> |----------|-----------|----------|
+> | Dočasný RID | „D“ + 9 náhodně generovaných číslic | „D“ + devítimístné číslo dělitelné 13 a nedělitelné 11 |
+> | Dávka hromadného ztotožnění | bez limitu | nejvýše 10 000 pacientů; zpracování souboru trvá zhruba 30 minut |
+> | Jméno a příjmení | bez omezení | jen písmena, spojovník, apostrof a mezera |
+> | Univerzální hledání | libovolná kombinace údajů | jen kombinace podle kap. 4.5.1 |
+>
+> Klient pravidla hlídá v modulu `sez_api.kzr_pravidla` a vrací je `GET /api/krp/pravidla`.
+> U DRID se vynucuje tvar, pravidlo 13/11 je jen upozornění (dříve vydané DRID ho nesplňují).
+> Jméno s nepovolenými znaky nebo zástupnou hodnotou („Test“, „Neuvedeno“) se do KRP
+> neodešle a volající dostane chybu 422 (interní API jako HTTP 422, `/api/krp/*` jako
+> `status: 422` v těle odpovědi); chování řídí `SEZ_KRP_KONTROLA_JMEN`
+> (`odmitnout` – výchozí, `varovat`, `vypnuto`). Dávka nad 10 000 pacientů se podá po částech.
+> Odběry notifikací mají těla podle swaggeru 3.0.6 (`predmet`, `prijemci`, `subjektId`;
+> zrušení přes `idSubskripce`), příchozí zprávu `KZR.Notifikace` rozebere
+> `POST /api/krp/notifikace-zprava`.
+> Zda brána nová pravidla vynucuje, není ověřeno – T2 není z prostředí revize dostupná.
+>
 > **Upozornění (Novinky EZ, 27. 8. 2026):** NCEZ vypnul API KRP pro PZS v1 k 14. 8. 2026
-> a **k 15. 9. 2026 vypíná v1 i v2**. Cesty a tělo požadavků jsou u v2 a v3 shodné (liší se
+> a **k 15. 9. 2026 vypíná v1 i v2**. Plán vývoje z 3. 11. 2026 naopak uvádí, že po vypnutí
+> v1 „zůstane pouze v2 a v3“, a přehled dostupnosti PROD z 10. 11. 2026 vede KRP v2.0
+> jako běžící – zdroje si odporují. Cesty a tělo požadavků jsou u v2 a v3 shodné (liší se
 > jen prefix `/api/v3`; ve v3.0.0 není `ztotoznihromadne/vykonani`), proto níže uvedené
 > příklady platí i pro v3 po nahrazení prefixu. Klient v tomto repozitáři volá v3
 > (`SEZ_KRP_VERZE`, IRIS `SEZ.API.KRP` Parameter `APIVERZE`).
@@ -968,10 +990,12 @@ NotifikaceOdeslatRequestModel
 **OpenAPI:** 3.0.4 | **Verze:** v1.0.6
 **Popis:** Externí API systému SZZ – určeno pro PZS
 
-> **Aktuální verze API je 3.0.0** (Standard EZ SZZ 3.0 s platností
-> od 29. 7. 2026, swagger `gwy-ext-sec-t2.csez.cz/apidoc/Sdileny_zdravotni_zaznam_v3`).
-> Verze v1 a v2 níže zůstávají dostupné. Přehled změn ve verzi 3 je
-> v části 12.4.
+> **Aktuální verze API je 3.0.5** (Standard EZ SZZ 3.1 z 23. 10. 2026, dle wiki
+> platný pro SZZ od verze 3.0.5; swagger
+> `gwy-ext-sec-t2.csez.cz/apidoc/Sdileny_zdravotni_zaznam_v3`). Verze v1.0.9
+> a v2.0.7 níže zůstávají dostupné; plán vývoje z 3. 11. 2026 chce v1 vypnout
+> do konce roku, termín neuvádí. Přehled změn ve verzi 3 je v části 12.4,
+> změny Standardu 3.1 v části 12.5.
 
 ### Endpointy – přehled oblastí
 
@@ -1052,10 +1076,9 @@ operací (POST / `vyhledat` / PUT / PATCH `zneplatnit`, `zpochybnit`,
   výchozí `false` (vyšetření hrazené ze zdravotního pojištění).
 - `genotypyHpvTestu` – volitelný text u HPV screeningu, vyplňuje se při
   pozitivním výsledku.
-- Preventivní prohlídka praktického lékaře: účast ve screeningu karcinomu
-  plic, karcinomu prostaty a aneurysmatu abdominální aorty (číselníky
-  `szz-ucast-karcinom-plic`, `szz-ucast-karcinom-prostaty`,
-  `szz-ucast-ve-screeningu-aaa`) a `obvodPasu`.
+- Preventivní prohlídka praktického lékaře: `obvodPasu`. Položky účasti ve
+  screeningu, které verze 3.0 do prohlídky přidala, Standard 3.1 zase odebral
+  (viz část 12.5).
 - Souhrn prevencí i screeningů pacienta: swagger 3.0.5 (13. 10. 2026) cestu
   `/api/v3/zdravotniZaznamy/vyhledat` **neobsahuje** – souhrn tvoří dvě
   operace `POST /api/v3/prevence/vyhledat` a `POST /api/v3/screeningy/vyhledat`
@@ -1071,16 +1094,17 @@ operací (POST / `vyhledat` / PUT / PATCH `zneplatnit`, `zpochybnit`,
 | `obvodPasu` | 10 – 400 cm | 3 |
 | `hladinaToksUgG` | 0 – 500 µg/g (jen při vytvoření) | 2 |
 | `vysledekBbps` | 0 – 9 (Boston Bowel Preparation Scale) | celé číslo |
-| `hladinaPsa` | 1 000 – 12 000 µg/l | 2 |
-| `objemProstaty` | 0 – 1 000 ml | 2 |
-| `psaDenzita`, `psaVelocita` | 0 – 10 | 2 |
+| `hladinaPsaUgL` | 0 – 200 µg/l (popis swaggeru 3.0.5; dříve 1 000 – 12 000) | 2 |
+| `objemProstatyMl` | 0 – 1 000 ml | 2 |
+| `psaDenzita`, `psaVelocity` | 0 – 10 | 2 |
 
 Volné texty (`poznamka`, `popis`, `davkovani`, `genotypyHpvTestu`) mají limit
 300 znaků, datum zjištění lze zadat nejvýše 100 let zpětně. Kontrolu nad
 tělem požadavku dělá `SZZv3.zkontroluj()` respektive
 `POST /api/szz3/zkontrolovat`; závazná validace je na straně serveru.
 
-**Nové číselníky:** `szz-ucast-karcinom-plic`, `szz-ucast-karcinom-prostaty`,
+**Nové číselníky:** `szz-ucast-ve-screeningu-karcinomu-plic`,
+`szz-ucast-ve-screeningu-karcinomu-prostaty`,
 `szz-ucast-ve-screeningu-aaa`, `gastro-typ-koloskopie`,
 `gastro-kompletnost-koloskopie`, `gastro-patologie-nalez`, `gastro-zaver`,
 `urologie-klinicke-vysetreni`, `urologie-dalsi-vysetreni`,
@@ -1096,6 +1120,33 @@ o elektronizaci zdravotnictví) se v API projeví jako **HTTP 403 Forbidden** �
 tedy stejným kódem jako nedostatečné oprávnění. Samotná služba pro nastavení
 souhlasu není součástí API pro PZS (je v portálové části; její odpověď byla
 28. 7. 2026 rozšířena o osobu a datum nastavení).
+
+### 12.5 Standard EZ SZZ 3.1 (23. 10. 2026) – účast ve screeningu
+
+Účast ve screeningovém programu je samostatný záznam (na T2 od 20. 10. 2026).
+
+| Bylo (3.0) | Je (3.1) |
+|------------|----------|
+| položky `ucastVeScreeninguKarcinomuPlic`, `ucastVeScreeninguKarcinomuProstaty`, `ucastVeScreeninguAaa` v preventivní prohlídce VPL | tři služby `/api/v3/screeningy/…Ucast`; v prohlídce VPL položky nejsou |
+
+| Služba | Cílová skupina | Číselník |
+|--------|----------------|----------|
+| `/api/v3/screeningy/karcinomProstatyUcast` | muži 50–69 let | `szz-ucast-ve-screeningu-karcinomu-prostaty` |
+| `/api/v3/screeningy/karcinomPlicUcast` | muži i ženy 55–74 let | `szz-ucast-ve-screeningu-karcinomu-plic` |
+| `/api/v3/screeningy/aneurysmaAbdominalniAortyUcast` | muži 65–67 let, nejvýše jeden platný záznam | `szz-ucast-ve-screeningu-aaa` |
+
+Operace: `POST`, `PUT /{id}`, `PATCH /{id}/zneplatnit`, `/zpochybnit`, `/obnovit`.
+Operaci `/vyhledat` standard u účasti neuvádí; záznamy vrací souhrn
+`POST /api/v3/screeningy/vyhledat`. Klient: `SZZv3.screening("karcinomProstatyUcast")`,
+přehled `SZZv3.UCAST_VE_SCREENINGU`, očištění těla prohlídky `SZZv3.ocisti_vpl()`.
+
+Neověřeno: swagger 3.0.5 z 13. 10. 2026 je starší než tato změna a cesty neobsahuje,
+názvy polí těla jsou převzaté ze standardu; datum nasazení na PROD není známé;
+číselníky verze 3.1 (xlsx) nebyly ke stažení.
+
+SZZ v2 (2.0.7) má od verze 2.0.4 stejných pět screeningů jako v3 (koloskopie,
+vstupní PSA, urologické a bioptické vyšetření prostaty, pneumologické vyšetření);
+klient je ve `SZZv2` dříve odmítal.
 
 ---
 
@@ -1775,9 +1826,10 @@ Odpoved: true | false
 
 | Parametr | Hodnota |
 |----------|---------|
-| CN | krajska zdravotni verejny test |
-| client_id | `25488627_KrajskaZdravotniVerejnyTest` |
-| UID (kid) | `85cf28c4-c190-406f-bc96-f92ad25b3202` |
+| CN | krajska zdravotni verejny test 04 (7. 10. 2026 – 7. 1. 2027) |
+| client_id | `25488627_KrajskaZdravotniVerejnyTest04` |
+| Sériové číslo | `210000031878A0744CF8664AE2000000000318` |
+| UID (kid) | wiki u certifikátu 04 neuvádí; původní `85cf28c4-…` patřil certifikátu platnému do 21. 4. 2026 |
 | IČO | 25488627 (Krajská zdravotní, a.s.) |
 
 ### Testovací pacienti (výběr)
@@ -1833,20 +1885,21 @@ Odpoved: true | false
 ### curl
 
 ```bash
+# Heslo k PFX se bere z proměnné prostředí SEZ_P12_PASSWORD (do skriptů ho nepište).
 # 1. Vytvoreni JWT assertion pomoci openssl a jq
-HEADER=$(echo -n '{"alg":"RS256","kid":"85cf28c4-c190-406f-bc96-f92ad25b3202","typ":"JWT"}' | \
+HEADER=$(echo -n '{"alg":"RS256","typ":"JWT"}' | \
   openssl base64 -e | tr -d '\n=' | tr '+/' '-_')
-PAYLOAD=$(echo -n "{\"iss\":\"25488627_KrajskaZdravotniVerejnyTest\",\"sub\":\"25488627_KrajskaZdravotniVerejnyTest\",\"aud\":\"https://jsuint-auth-t2.csez.cz/connect/token\",\"jti\":\"$(uuidgen)\",\"iat\":$(date +%s),\"exp\":$(($(date +%s)+55))}" | \
+PAYLOAD=$(echo -n "{\"iss\":\"25488627_KrajskaZdravotniVerejnyTest04\",\"sub\":\"25488627_KrajskaZdravotniVerejnyTest04\",\"aud\":\"https://jsuint-auth-t2.csez.cz/connect/token\",\"jti\":\"$(uuidgen)\",\"iat\":$(date +%s),\"exp\":$(($(date +%s)+55))}" | \
   openssl base64 -e | tr -d '\n=' | tr '+/' '-_')
 SIG=$(echo -n "${HEADER}.${PAYLOAD}" | \
-  openssl dgst -sha256 -sign <(openssl pkcs12 -in krajska_zdravotni.pfx -passin pass:'Tre-987set*krajzdra321/' -nocerts -nodes 2>/dev/null) | \
+  openssl dgst -sha256 -sign <(openssl pkcs12 -in krajska_zdravotni.pfx -passin env:SEZ_P12_PASSWORD -nocerts -nodes 2>/dev/null) | \
   openssl base64 -e | tr -d '\n=' | tr '+/' '-_')
 ASSERTION="${HEADER}.${PAYLOAD}.${SIG}"
 
 # 2. Vyhledani pacienta podle RID (tentyz certifikat pro mTLS i assertion)
 curl -s -X POST \
   "https://gwy-ext-sec-t2.csez.cz/krp/api/v2/pacient/hledat/rid" \
-  --cert-type P12 --cert "krajska_zdravotni.pfx:Tre-987set*krajzdra321/" \
+  --cert-type P12 --cert "krajska_zdravotni.pfx:${SEZ_P12_PASSWORD}" \
   -H "Authorization: Bearer $ASSERTION" \
   -H "Content-Type: application/json" \
   -H "Accept-Language: cs" \
@@ -1867,13 +1920,15 @@ curl -s -X POST \
 ### Python
 
 ```python
+import os
+
 from sez_client import SEZAuth, SEZClient, KRP, DocasneUloziste, SZZ, ELP, Notifikace
 
 # Jeden certifikát EZCA II pro mTLS i JWT signing
 auth = SEZAuth(
-    client_id="25488627_KrajskaZdravotniVerejnyTest",
+    client_id="25488627_KrajskaZdravotniVerejnyTest04",
     p12_path="krajska_zdravotni.pfx",
-    p12_password="Tre-987set*krajzdra321/",
+    p12_password=os.environ["SEZ_P12_PASSWORD"],
 )
 client = SEZClient(auth)
 
@@ -1910,10 +1965,10 @@ print(resp.json())  # {"totalCount": 9, "page": [...]}
 Do ##class(SEZ.API.Installer).SetupSSL("/certs/krajska_zdravotni.pfx", "heslo")
 
 // 2. Konfigurace klienta (private_key_jwt – přímá assertion na Gateway)
-Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest")
+Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest04")
 Set config.P12CertFile = "/certs/krajska_zdravotni.pfx"
 Set config.P12CertPassword = "heslo"
-Set config.CertUID = "85cf28c4-c190-406f-bc96-f92ad25b3202"
+// config.CertUID (kid) jen u certifikátu registrovaného s UID na portálu EZCA
 Set config.ICO = "25488627"
 
 // 3. KRP – hledání pacienta
