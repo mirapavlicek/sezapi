@@ -79,6 +79,7 @@
 | **KRP PZS v1** (direct) – **VYPNUTO k 14. 8. 2026**, snapshot jen pro historii; používejte v3 | https://krp-pzs-t2.csez.cz/swagger/index.html | `swagger_specs/KrpPzs_v1_direct.json` |
 | **TermX** (vyžaduje mTLS) | https://termx-swagger-web-t2-pub.csez.cz/swagger/?urls.primaryName=termx | `swagger_specs/TermxTerminologie_v1.0.5.json` |
 | **TermX FHIR** (vyžaduje mTLS) | https://termx-swagger-web-t2-pub.csez.cz/swagger/?urls.primaryName=termx-fhir | `swagger_specs/TermxTerminologie_v1.0.5.json` |
+| **Terminologie – veřejný řez** (bez přihlášení) | https://apio.csez.gov.cz/apidoc/ (katalog od 8. 10. 2026 pod názvem „Terminologie v1.0.5“) | `swagger_specs/Terminologie_v1.0.5_apio_2026-10-08.json` – stejné cesty jako `Terminologie_v1.1.0.json` (vč. `/manifest`), navíc volitelné `displayLanguage` a `useSupplement` u `$lookup` a `$validate-code`. Soubor `Terminologie_v1.0.5.json` je starší snímek plného serveru (CRUD), ne tento veřejný řez. |
 | Dočasné úložiště v1 | (gateway) | `swagger_specs/DocasneUloziste_v1.0.0.json` |
 | eŽádanky v1 | (gateway) | `swagger_specs/EZadanky_v1.0.0.json` |
 | Elektronické posudky v1.0.7 | (gateway) | `swagger_specs/ElektronickePosudky_v1.0.7.json` |
@@ -101,7 +102,7 @@
 | Swagger UI (PROD) | `https://api.csez.gov.cz/apidoc/` | — |
 | ELP Swagger (T2) | `https://elp-ext-api-t2.csez.cz/swagger/index.html` | — |
 | SZZ Swagger (T2) | `https://szz-ext-api-t2.csez.cz/swagger/index.html` | — |
-| TermX FHIR (public, no auth) | `https://apio.csez.gov.cz/termx-fhir/` | — |
+| TermX FHIR (public, no auth) | `https://apio.csez.gov.cz/terminologie/` (bez `/fhir`; `/termx-fhir/` i `/terminologie/metadata` vrací 404 – ověřeno 10. 11. 2026, výčet číselníků dává `/terminologie/manifest`) | — |
 | TermX Swagger (PROD) | `https://swagger-termx.ezdravi.gov.cz/swagger/` | — |
 | TermX web UI (PROD) | `https://termx.ezdravi.gov.cz/` | — |
 | SNOMED browser | `https://snomed.ezdravi.gov.cz/` | — |

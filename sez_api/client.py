@@ -3591,14 +3591,18 @@ class Terminologie:
     def metadata(self):
         """``GET /metadata`` – CapabilityStatement serveru.
 
-        Pozn.: ve swaggeru v1.1.0 už není uveden (zůstává funkční jako
-        standardní FHIR interakce)."""
+        Pozn.: veřejný swagger (apio, soubor Terminologie_v1.0.5.json
+        z 8. 10. 2026) tuto cestu neuvádí a veřejná adresa
+        ``https://apio.csez.gov.cz/terminologie/metadata`` vrací 404
+        (ověřeno 10. 11. 2026). Přes bránu (mTLS) nebylo ověřeno; výčet
+        číselníků dává spolehlivě :meth:`manifest`."""
         return self._request("GET", "/metadata")
 
     def manifest(self, *, lastUpdate: str = None, effectiveDate: str = None):
         """``GET /manifest`` – manifest obsahu terminologického serveru.
 
-        Přidáno ve swaggeru Terminologie v1.1.0 (apio.csez.gov.cz).
+        Přidáno ve swaggeru Terminologie v1.1.0 (apio.csez.gov.cz); katalog
+        apio stejný veřejný řez od 8. 10. 2026 vede pod názvem v1.0.5.
         Volitelné filtry ``lastUpdate`` a ``effectiveDate`` (datum)."""
         return self._request("GET", "/manifest",
                              params={"lastUpdate": lastUpdate,
@@ -3665,18 +3669,35 @@ class Terminologie:
         return self._request("PUT", f"/CodeSystem/{id}", body=body)
 
     def codesystem_lookup(self, *, code: str, system: str = None, id: str = None,
-                            version: str = None, property: str = None, **extra):
+                            version: str = None, property: str = None,
+                            displayLanguage: str = None,
+                            useSupplement: str = None, **extra):
+        """``GET /CodeSystem[/{id}]/$lookup``.
+
+        ``displayLanguage`` (např. ``cs``) a ``useSupplement`` (canonical
+        doplňku pro designations a properties) jsou volitelné parametry
+        doplněné ve veřejném swaggeru z 8. 10. 2026."""
         params = {"code": code, "system": system, "version": version,
-                   "property": property, **extra}
+                   "property": property, "displayLanguage": displayLanguage,
+                   "useSupplement": useSupplement, **extra}
         if id:
             return self._request("GET", f"/CodeSystem/{id}/$lookup", params=params)
         return self._request("GET", "/CodeSystem/$lookup", params=params)
 
     def codesystem_validate_code(self, *, code: str, url: str = None, id: str = None,
                                    system: str = None, version: str = None,
-                                   display: str = None, **extra):
+                                   display: str = None,
+                                   displayLanguage: str = None,
+                                   useSupplement: str = None, **extra):
+        """``GET /CodeSystem[/{id}]/$validate-code``.
+
+        ``displayLanguage`` a ``useSupplement`` (doplněk použitý při
+        ověření display a properties) jsou volitelné – veřejný swagger
+        z 8. 10. 2026."""
         params = {"code": code, "url": url, "system": system,
-                   "version": version, "display": display, **extra}
+                   "version": version, "display": display,
+                   "displayLanguage": displayLanguage,
+                   "useSupplement": useSupplement, **extra}
         if id:
             return self._request("GET", f"/CodeSystem/{id}/$validate-code", params=params)
         return self._request("GET", "/CodeSystem/$validate-code", params=params)
@@ -4963,7 +4984,8 @@ class RegistrOpravneniNcpeh:
 # ===========================================================================
 # SÚKL – eRecept / CÚER a Databáze léčivých přípravků (DLP)
 # ---------------------------------------------------------------------------
-# eRecept je samostatný systém SÚKL (SOAP web services, verze rozhraní 202501A,
+# eRecept je samostatný systém SÚKL (SOAP web services, verze rozhraní 202501A;
+# ePoukaz 202605A,
 # dokumentace na epreskripce.gov.cz). Vyžaduje registraci SW u SÚKL + certifikát.
 # Bez těchto přístupů běží integrace v režimu SIMULACE (viz simulační engine
 # v sez_api/app.py). DLP jsou veřejná otevřená data (opendata.sukl.cz).
@@ -4982,7 +5004,8 @@ SUKL_ENVIRONMENTS = {
 
 
 class SUKLDLP:
-    """Databáze léčivých přípravků SÚKL – veřejná otevřená data (opendata.sukl.cz).
+    """Databáze léčivých přípravků SÚKL – veřejná otevřená data
+    (opendata.sukl.gov.cz; do 23. 10. 2026 opendata.sukl.cz).
 
     Líné stažení + rozbalení + cache CSV; fulltext lookup nad indexem v paměti.
     Když stažení selže (offline), použije vestavěné vzorky z configu
@@ -4999,7 +5022,7 @@ class SUKLDLP:
 
     # Kandidátní názvy sloupců (schéma DLP se mezi verzemi liší) – zkusí se po
     # řadě. První v seznamu je název podle datového rozhraní DLP
-    # (opendata.sukl.cz/soubory/DLP_datove_rozhrani<datum>.csv).
+    # (opendata.sukl.gov.cz/soubory/DLP_datove_rozhrani<datum>.csv).
     _COLS = {
         "kod": ["KOD_SUKL", "KODSUKL", "KOD"],
         "nazev": ["NAZEV", "NÁZEV", "NAZ"],
@@ -5087,17 +5110,26 @@ class SUKLDLP:
         katalog = getattr(_cfg, "SUKL_DLP_KATALOG", "")
         if not katalog:
             return "", "SUKL_DLP_KATALOG není nastavena"
-        try:
-            resp = requests.get(katalog, timeout=30)
-            resp.raise_for_status()
-        except Exception as exc:
-            return "", f"katalog DLP nedostupný: {str(exc)[:150]}"
-        odkazy = re.findall(
-            r"https?://[^\"'\s]+/soubory/SOD\d{8}/DLP\d{8}\.zip", resp.text)
-        if not odkazy:
-            return "", "v katalogu DLP nebyl nalezen odkaz na balík"
-        # Datum je součástí názvu, takže nejnovější balík je lexikograficky poslední.
-        return sorted(set(odkazy))[-1], None
+        # Nasazení s ručně nastavenou starou adresou (opendata.sukl.cz/?q=…)
+        # by po přesunu portálu skončilo na vzorcích – zkusí se i výchozí.
+        vychozi = getattr(_cfg, "SUKL_DLP_KATALOG_VYCHOZI", "")
+        kandidati = [katalog] + ([vychozi] if vychozi and vychozi != katalog else [])
+        chyba = None
+        for adresa in kandidati:
+            try:
+                resp = requests.get(adresa, timeout=30)
+                resp.raise_for_status()
+            except Exception as exc:
+                chyba = chyba or f"katalog DLP nedostupný: {str(exc)[:150]}"
+                continue
+            odkazy = re.findall(
+                r"https?://[^\"'\s]+/soubory/SOD\d{8}/DLP\d{8}\.zip", resp.text)
+            if odkazy:
+                # Datum je součástí názvu, takže nejnovější balík je
+                # lexikograficky poslední.
+                return max(set(odkazy), key=lambda u: u.rsplit("/", 1)[-1]), None
+            chyba = chyba or "v katalogu DLP nebyl nalezen odkaz na balík"
+        return "", chyba
 
     def _doplnit_ciselniky(self, zf, records: list) -> None:
         """Přeloží zkratky (držitel, stav registrace, výdej) na názvy z číselníků
@@ -5296,10 +5328,22 @@ class SUKLeRecept:
     def mode(self) -> str:
         return self._cfg().sukl_mode(SEZConfig.ENVIRONMENT)
 
-    def _hlavicka(self, kontext: dict | None = None) -> dict:
+    # Operace ePoukazu – mají vlastní verzi datového rozhraní
+    OPERACE_EPOUKAZ = ("ZalozeniEPoukazu", "NahledNaEPoukaz")
+
+    def verze_rozhrani(self, operace: str = None) -> str:
+        """Verze datového rozhraní pro danou operaci: eRecept a doplňkové
+        služby CÚER ``SUKL_INTERFACE_VERSION`` (202501A), ePoukaz
+        ``SUKL_EPOUKAZ_INTERFACE_VERSION`` (od 1. 12. 2026 jen 202605A)."""
+        cfg = self._cfg()
+        if operace in self.OPERACE_EPOUKAZ:
+            return cfg.SUKL_EPOUKAZ_INTERFACE_VERSION
+        return cfg.SUKL_INTERFACE_VERSION
+
+    def _hlavicka(self, kontext: dict | None = None, operace: str = None) -> dict:
         cfg = self._cfg()
         h = {
-            "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
+            "verzeRozhrani": self.verze_rozhrani(operace),
             "identifikaceVyrobce": cfg.SUKL_VYROBCE,
             "registracniId": cfg.SUKL_REG_ID or None,
             "casVytvoreni": _iso_now(),
@@ -5313,7 +5357,7 @@ class SUKLeRecept:
                        kontext: dict | None = None) -> dict:
         return {
             "operace": operace,
-            "hlavicka": self._hlavicka(kontext),
+            "hlavicka": self._hlavicka(kontext, operace),
             "telo": telo or {},
         }
 
@@ -5449,6 +5493,21 @@ class SUKLeRecept:
             "enabled": cfg.SUKL_ENABLED,
             "mode": self.mode(),
             "verzeRozhrani": cfg.SUKL_INTERFACE_VERSION,
+            "verzeRozhraniEPoukaz": cfg.SUKL_EPOUKAZ_INTERFACE_VERSION,
+            "terminy": [
+                {"datum": cfg.SUKL_ERECEPT_VYPNUTI_STARYCH_ENDPOINTU,
+                 "co": "eRecept: vypnutí „starých“ endpointů – živé volání "
+                       "musí mířit na nové URL (SUKL_ERECEPT_ENDPOINT)"},
+                {"datum": cfg.SUKL_EPOUKAZ_VYPNUTI_STARYCH,
+                 "co": "ePoukaz: vypnutí verzí "
+                       + ", ".join(cfg.SUKL_EPOUKAZ_VERZE_VYPINANE)
+                       + " – od 1. 12. 2026 jen 202605A"},
+            ],
+            "upozorneni": (
+                [f"SUKL_EPOUKAZ_INTERFACE_VERSION={cfg.SUKL_EPOUKAZ_INTERFACE_VERSION} "
+                 f"se k {cfg.SUKL_EPOUKAZ_VYPNUTI_STARYCH} vypíná"]
+                if cfg.SUKL_EPOUKAZ_INTERFACE_VERSION in cfg.SUKL_EPOUKAZ_VERZE_VYPINANE
+                else []),
             "endpoint": cfg.sukl_erecept_endpoint(env) or "(nenastaveno – simulace)",
             "registracniId": bool(cfg.SUKL_REG_ID),
             "certifikat": bool(cert),

@@ -216,14 +216,20 @@ Rozhraní obsahuje sekci **SÚKL / eRecept** (skupina *Preskripce / SÚKL* v lev
 - **DLP -- léky** -- vyhledávání v databázi léčivých přípravků SÚKL (veřejná data)
 
 > **eRecept** je samostatný systém SÚKL (SOAP, verze rozhraní `202501A`,
+> ePoukaz `202605A`,
 > [epreskripce.gov.cz](https://epreskripce.gov.cz)) a vyžaduje **registraci SW u SÚKL
 > a certifikát**. Bez těchto přístupů běží v **režimu SIMULACE** (in-memory engine +
 > builder request obálek). Po doplnění `SUKL_REG_ID` a `SUKL_ERECEPT_ENDPOINT(_TEST)`
 > (viz `.env.example`) se přepne na **živé volání**.
 >
 > **DLP** (databáze léčivých přípravků) jsou **veřejná otevřená data**
-> ([opendata.sukl.cz](https://opendata.sukl.cz)) a fungují reálně i bez certifikátu;
+> ([opendata.sukl.gov.cz](https://opendata.sukl.gov.cz)) a fungují reálně i bez certifikátu;
 > při nedostupnosti se použije vestavěný vzorek přípravků.
+>
+> **Termíny SÚKL (stav k 10. 11. 2026):** portál otevřených dat je od 23. 10. 2026
+> jen na `opendata.sukl.gov.cz` (stará adresa katalogu už balík nenabízí);
+> „staré“ endpointy eReceptu se vypínají **30. 11. 2026**; ePoukaz od
+> **1. 12. 2026** přijímá jen verzi rozhraní `202605A`.
 
 Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
 
@@ -231,11 +237,12 @@ Konfigurace (vše volitelné) -- viz `.env.example`, sekce *SÚKL*:
 |----------|-------|
 | `SUKL_ENABLED` | Zapnutí sekce SÚKL (výchozí `true`) |
 | `SUKL_INTERFACE_VERSION` | Verze datového rozhraní eReceptu (výchozí `202501A`) |
+| `SUKL_EPOUKAZ_INTERFACE_VERSION` | Verze datového rozhraní ePoukazu (výchozí `202605A`) |
 | `SUKL_REG_ID` | Registrační ID SW přidělené SÚKL (prázdné = simulace) |
 | `SUKL_ERECEPT_ENDPOINT_TEST` / `SUKL_ERECEPT_ENDPOINT` | Endpoint SOAP rozhraní eReceptu |
 | `SUKL_CERT_PATH` / `SUKL_CERT_PASSWORD` | Certifikát pro mTLS k eReceptu (volitelné) |
 | `SUKL_DLP_URL` | Balík otevřených dat DLP – `auto` (výchozí) najde aktuální v katalogu, prázdné = vzorky |
-| `SUKL_DLP_KATALOG` | Katalog otevřených dat, ze kterého se `auto` odkaz zjišťuje |
+| `SUKL_DLP_KATALOG` | Stránka datové sady DLP, ze které se `auto` odkaz zjišťuje (výchozí na `opendata.sukl.gov.cz`) |
 | `SUKL_DLP_CACHE_DIR` | Lokální cache DLP (výchozí `/tmp/sukl_dlp`) |
 
 Živý režim SÚKL: pokud je prázdné `SUKL_CERT_PATH`, použije se pro mTLS certifikát

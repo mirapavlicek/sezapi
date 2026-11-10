@@ -457,6 +457,8 @@ async def status():
         "sukl_enabled": getattr(cfg, "SUKL_ENABLED", False),
         "sukl_mode": cfg.sukl_mode(SEZConfig.ENVIRONMENT) if getattr(cfg, "SUKL_ENABLED", False) else "OFF",
         "sukl_interface_version": getattr(cfg, "SUKL_INTERFACE_VERSION", ""),
+        "sukl_epoukaz_interface_version": getattr(
+            cfg, "SUKL_EPOUKAZ_INTERFACE_VERSION", ""),
         "sukl_test_erecepty": getattr(cfg, "SUKL_TEST_ERECEPTY", []),
         "sukl_dlp_sample": getattr(cfg, "SUKL_DLP_SAMPLE", []),
         "uzis_enabled": getattr(cfg, "UZIS_ENABLED", False),
@@ -5142,8 +5144,11 @@ async def debug_jwt():
             "SÚKL / eRecept": {
                 "name": "SÚKL – eRecept / CÚER",
                 "base": "(SÚKL – mimo CSEZ gateway)",
-                "version": cfg.SUKL_INTERFACE_VERSION,
+                "version": (f"eRecept {cfg.SUKL_INTERFACE_VERSION} · "
+                            f"ePoukaz {cfg.SUKL_EPOUKAZ_INTERFACE_VERSION}"),
                 "note": ("Samostatný systém SÚKL (SOAP web services, epreskripce.gov.cz). "
+                         "Termíny SÚKL: 30. 11. 2026 se vypínají „staré“ endpointy eReceptu "
+                         "a verze ePoukazu 202601A/202601B/202604A (od 1. 12. 2026 jen 202605A). "
                          "Vyžaduje registraci SW u SÚKL + certifikát. Bez těchto přístupů běží "
                          "v režimu SIMULACE (in-memory engine + builder obálek). Endpointy níže jsou "
                          "REST fasáda tohoto nástroje (/api/sukl/...), nikoli přímé SÚKL URL."),
@@ -5162,7 +5167,7 @@ async def debug_jwt():
             },
             "SÚKL / DLP": {
                 "name": "SÚKL – Databáze léčivých přípravků",
-                "base": "opendata.sukl.cz",
+                "base": "opendata.sukl.gov.cz",
                 "version": "otevřená data (CSV, měsíčně)",
                 "note": ("Veřejná otevřená data SÚKL (bez certifikátu). Používá se pro vyhledávání "
                          "léčivých přípravků podle názvu, kódu SÚKL nebo ATC a pro doplnění názvů "
@@ -9019,7 +9024,7 @@ async def termx_pub_list():
 # ===========================================================================
 # SÚKL – eRecept / CÚER + DLP
 # ---------------------------------------------------------------------------
-# DLP: reálná veřejná data (opendata.sukl.cz) – přes SUKLDLP klienta.
+# DLP: reálná veřejná data (opendata.sukl.gov.cz) – přes SUKLDLP klienta.
 # eRecept: builder obálek + simulační engine (LIVE jen s registrací + endpointem).
 # ===========================================================================
 

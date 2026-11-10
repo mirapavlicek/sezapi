@@ -1,0 +1,7158 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Terminologie",
+    "description": "Standard Conformance Statement for the Terminology Server provided by TermX",
+    "contact": {},
+    "version": "v1.0.5"
+  },
+  "servers": [
+    {
+      "url": "/terminologie"
+    }
+  ],
+  "paths": {
+    "/CodeSystem/{id}/$validate-code": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "validate-code",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be validated",
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name in an extension in the outcome. Whether displays are case sensitive is code system dependent",
+            "name": "display",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The requested language for display strings.",
+            "name": "displayLanguage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplement resources to use when validating display and properties.",
+            "name": "useSupplement",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/CodeSystem/{id}/$lookup": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "lookup",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be located. If a code is provided, a system must be provided",
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The date for which the information should be returned. Normally, this is the current conditions (which is the default value) but under some circumstances, systems need to acccess this information as it would have been in the past. A typical example of this would be where code selection is constrained to the set of codes that were available when the patient was treated, not when the record is being edited. Note that which date is appropriate is a matter for implementation policy.",
+            "name": "date",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The requested language for display strings.",
+            "name": "displayLanguage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplement resources to use when retrieving designations and properties.",
+            "name": "useSupplement",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A property that the client wishes to be returned in the output. If no properties are specified, the server chooses what to return. The following properties are defined for all code systems: name, version (code system info) and code information: display, designation, and lang.X where X is a designation language code. These properties are returned explicitly in named out parameters with matching names, or in designations. In addition, any property codes defined by [this specification](codesystem.html#defined-props) or by the CodeSystem ([CodeSystem.property.code](codesystem-definitions.html#CodeSystem.property)) are allowed, and these are returned in the out parameter ```property```",
+            "name": "property",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/CodeSystem/$subsumes": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "subsumes",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The \"A\" code that is to be tested. If a code is provided, a system must be provided",
+            "name": "codeA",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The \"B\" code that is to be tested. If a code is provided, a system must be provided",
+            "name": "codeB",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code system in which subsumption testing is to be performed. This must be provided unless the operation is invoked on a code system instance",
+            "name": "system",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The version of the code system, if one was provided in the source data",
+            "name": "version",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/ValueSet/{id}/$validate-code": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "validate-code",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be validated. If a code is provided, a system or a context must be provided (if a context is provided, then the server SHALL ensure that the code is not ambiguous without a system)",
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The system for the code that is to be validated",
+            "name": "system",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The version of the system, if one was provided in the source data",
+            "name": "systemVersion",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name using the display parameter in the outcome. Whether displays are case sensitive is code system dependent",
+            "name": "display",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A coding to validate",
+            "name": "coding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A full codeableConcept to validate. The server returns true if one of the coding values is in the value set, and may also validate that the codings are not in conflict with each other if more than one is present",
+            "name": "codeableConcept",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/ValueSet": {
+      "get": {
+        "summary": "search-type",
+        "tags": [
+          "ValueSet"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "_count",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "_page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the resource",
+            "name": "_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "url",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "name",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "title",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "reference",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "publisher",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "description",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "identifier",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "date",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/fhir_Resource"
+                },
+                "example": "{\n  \"resourceType\" : \"Bundle\"\n}"
+              }
+            },
+            "description": "resource 'Bundle'"
+          }
+        }
+      }
+    },
+    "/CodeSystem/{id}/$subsumes": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "subsumes",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The \"A\" code that is to be tested. If a code is provided, a system must be provided",
+            "name": "codeA",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The \"B\" code that is to be tested. If a code is provided, a system must be provided",
+            "name": "codeB",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/ValueSet/$expand": {
+      "post": {
+        "summary": "operation",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "expand",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "expand",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A canonical reference to a value set. The server must know the value set (e.g. it is defined explicitly in the server's value sets, or it is defined implicitly by some code system known to the server",
+            "name": "url",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The identifier that is used to identify a specific version of the value set to be used when generating the expansion. This is an arbitrary value managed by the value set author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available.",
+            "name": "valueSetVersion",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/ConceptMap/{id}/$translate": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "ConceptMap"
+        ],
+        "description": "translate",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be translated. If a code is provided, a system must be provided\n\n",
+            "name": "sourceCode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The system for the code that is to be translated",
+            "name": "system",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A coding to translate",
+            "name": "sourceCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "name": "sourceCodeableConcept",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The target code that is to be translated to. If a code is provided, a system must be provided",
+            "name": "targetCode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "identifies a target code system in which a mapping is sought. This parameter is an alternative to the targetScope parameter - only one is required. Searching for any translation to a target code system irrespective of the context (e.g. target valueset) may lead to unsafe results, and it is at the discretion of the server to decide when to support this operation",
+            "name": "targetSystem",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A target coding to translate to",
+            "name": "targetCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "name": "targetCodeableConcept",
+            "in": "query"
+          },
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/CodeSystem/$validate-code": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "validate-code",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "CodeSystem URL. The server must know the code system (e.g. it is defined explicitly in the server'scode systems, or it is known implicitly by the server",
+            "name": "url",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be validated",
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The version of the code system, if one was provided in the source data",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name in an extension in the outcome. Whether displays are case sensitive is code system dependent",
+            "name": "display",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The requested language for display strings.",
+            "name": "displayLanguage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplement resources to use when validating display and properties.",
+            "name": "useSupplement",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/ValueSet/$validate-code": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "validate-code",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value set Canonical URL. The server must know the value set (e.g. it is defined explicitly in the server's value sets, or it is defined implicitly by some code system known to the server",
+            "name": "url",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The identifier that is used to identify a specific version of the value set to be used when validating the code. This is an arbitrary value managed by the value set author and is not expected to be globally unique. For example, it might be a timestamp (e.g. yyyymmdd) if a managed version is not available.",
+            "name": "valueSetVersion",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be validated. If a code is provided, a system or a context must be provided (if a context is provided, then the server SHALL ensure that the code is not ambiguous without a system)",
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The system for the code that is to be validated",
+            "name": "system",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The version of the system, if one was provided in the source data",
+            "name": "systemVersion",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The display associated with the code, if provided. If a display is provided a code must be provided. If no display is provided, the server cannot validate the display value, but may choose to return a recommended display name using the display parameter in the outcome. Whether displays are case sensitive is code system dependent",
+            "name": "display",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A coding to validate",
+            "name": "coding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A full codeableConcept to validate. The server returns true if one of the coding values is in the value set, and may also validate that the codings are not in conflict with each other if more than one is present",
+            "name": "codeableConcept",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/ValueSet/{id}/$expand": {
+      "post": {
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "summary": "operation",
+        "description": "expand",
+        "requestBody": {
+          "content": {
+            "application/fhir+json": {
+              "schema": {
+                "$ref": "#/components/schemas/fhir_Resource"
+              },
+              "example": "{\n  \"resourceType\" : \"Parameters\"\n}"
+            }
+          }
+        },
+        "tags": [
+          "ValueSet"
+        ],
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        }
+      },
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "ValueSet"
+        ],
+        "description": "expand",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Resource Id",
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "minimum": 1
+            },
+            "example": "123",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/ConceptMap/$translate": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "ConceptMap"
+        ],
+        "description": "translate",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A canonical URL for a concept map. The server must know the concept map (e.g. it is defined explicitly in the server's concept maps, or it is defined implicitly by some code system known to the server.",
+            "name": "url",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be translated. If a code is provided, a system must be provided\n\n",
+            "name": "sourceCode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The system for the code that is to be translated",
+            "name": "system",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A coding to translate",
+            "name": "sourceCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "name": "sourceCodeableConcept",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The target code that is to be translated to. If a code is provided, a system must be provided",
+            "name": "targetCode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "identifies a target code system in which a mapping is sought. This parameter is an alternative to the targetScope parameter - only one is required. Searching for any translation to a target code system irrespective of the context (e.g. target valueset) may lead to unsafe results, and it is at the discretion of the server to decide when to support this operation",
+            "name": "targetSystem",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A target coding to translate to",
+            "name": "targetCoding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A full codeableConcept to validate. The server can translate any of the coding values (e.g. existing translations) as it chooses",
+            "name": "targetCodeableConcept",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/CodeSystem/$lookup": {
+      "get": {
+        "summary": "operation",
+        "tags": [
+          "CodeSystem"
+        ],
+        "description": "lookup",
+        "responses": {
+          "200": {
+            "description": "response"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The code that is to be located. If a code is provided, a system must be provided",
+            "name": "code",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The system for the code that is to be located",
+            "name": "system",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The version of the system, if one was provided in the source data",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The date for which the information should be returned. Normally, this is the current conditions (which is the default value) but under some circumstances, systems need to acccess this information as it would have been in the past. A typical example of this would be where code selection is constrained to the set of codes that were available when the patient was treated, not when the record is being edited. Note that which date is appropriate is a matter for implementation policy.",
+            "name": "date",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "The requested language for display strings.",
+            "name": "displayLanguage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplement resources to use when retrieving designations and properties.",
+            "name": "useSupplement",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "description": "A property that the client wishes to be returned in the output. If no properties are specified, the server chooses what to return. The following properties are defined for all code systems: name, version (code system info) and code information: display, designation, and lang.X where X is a designation language code. These properties are returned explicitly in named out parameters with matching names, or in designations. In addition, any property codes defined by [this specification](codesystem.html#defined-props) or by the CodeSystem ([CodeSystem.property.code](codesystem-definitions.html#CodeSystem.property)) are allowed, and these are returned in the out parameter ```property```",
+            "name": "property",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/manifest": {
+      "get": {
+        "operationId": "getManifest",
+        "tags": [
+          "Manifest"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            },
+            "name": "lastUpdate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "nullable": true,
+              "type": "string"
+            },
+            "name": "effectiveDate",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "getManifest 200 response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "fhir_Resource": {
+        "type": "object",
+        "description": "FHIR Resource"
+      },
+      "PageRelation": {
+        "properties": {
+          "spaceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "content": {
+            "$ref": "#/components/schemas/CodeName"
+          },
+          "pageId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "EntityPropertyValue": {
+        "properties": {
+          "entityProperty": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "entityPropertyType": {
+            "type": "string"
+          },
+          "supplement": {
+            "type": "boolean"
+          },
+          "value": {},
+          "entityPropertyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "extensions": {},
+          "codeSystemEntityVersionId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "HealthCheckType": {
+        "type": "string",
+        "enum": [
+          "LIVENESS",
+          "READINESS"
+        ]
+      },
+      "CodeSystemEntityPropertyConceptSummary.CodeSystemEntityPropertyConceptSummaryItem": {
+        "properties": {
+          "propertyCode": {
+            "type": "string"
+          },
+          "conceptCnt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "conceptIds": {
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "VystupEnum": {
+        "type": "string",
+        "enum": [
+          "Z",
+          "F",
+          "F_ZIP"
+        ]
+      },
+      "QueryResult_PageComment_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PageComment"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Space.SpaceIntegration": {
+        "properties": {
+          "msDevops": {
+            "$ref": "#/components/schemas/Space.SpaceIntegrationMsDevops"
+          },
+          "github": {
+            "$ref": "#/components/schemas/Space.SpaceIntegrationGithub"
+          }
+        },
+        "type": "object"
+      },
+      "Task.TaskContextItem": {
+        "properties": {
+          "id": {},
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PropertyReference": {
+        "properties": {
+          "uri": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_MapSetAssociation_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetAssociation"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ANEnum": {
+        "type": "string",
+        "enum": [
+          "A",
+          "N"
+        ]
+      },
+      "TransformationDefinitionController.TransformationRequest": {
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/TransformationDefinition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "definition",
+          "source"
+        ]
+      },
+      "CodeSystemController.CodeSystemVersionDuplicateRequest": {
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageTreeItem": {
+        "properties": {
+          "contents": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PageTreeItem.PageTreeItemContent"
+            }
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/PageTreeItem"
+            },
+            "type": "array"
+          },
+          "pageId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "parentPageId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult.SearchResultMeta": {
+        "properties": {
+          "pages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemsPerPage": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "type": "object"
+      },
+      "PageLinkMoveRequest": {
+        "properties": {
+          "parentLinkId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "siblingLinkId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "action": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystem.CodeSystemSettings": {
+        "properties": {
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "disableHierarchyGrouping": {
+            "type": "boolean"
+          },
+          "approvalRequired": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Provenance": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "context": {
+            "items": {
+              "$ref": "#/components/schemas/Provenance.ProvenanceContext"
+            },
+            "type": "array"
+          },
+          "activity": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Reference"
+          },
+          "author": {
+            "$ref": "#/components/schemas/Reference"
+          },
+          "changes": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Provenance.ProvenanceChange"
+            }
+          },
+          "detail": {
+            "$ref": "#/components/schemas/Provenance.ProvenanceDetail"
+          },
+          "messages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "EntityPropertyRule.EntityPropertyRuleFilter": {
+        "properties": {
+          "operator": {
+            "type": "string"
+          },
+          "property": {
+            "$ref": "#/components/schemas/EntityProperty"
+          },
+          "association": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionUnit": {
+        "properties": {
+          "system": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "EntityProperty": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PropertyReference"
+          },
+          {
+            "properties": {
+              "rule": {
+                "$ref": "#/components/schemas/EntityPropertyRule"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "codeSystem": {
+                "type": "string"
+              },
+              "preferred": {
+                "type": "boolean"
+              },
+              "definedEntityPropertyId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "showInList": {
+                "type": "boolean"
+              },
+              "orderNumber": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "status": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "SpaceOverviewResponse": {
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ConfigurationAttribute": {
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "attribute": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ImplementationGuideResource": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "$ref": "#/components/schemas/ImplementationGuideGroup"
+          },
+          "reference": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CanonicaliseResponse": {
+        "properties": {
+          "result": {
+            "description": "The base-unit canonical form of the provided UCUM expression",
+            "example": "g.m-6.s-1",
+            "type": "string"
+          }
+        },
+        "description": "Response containing a UCUM code converted into its base-unit canonical form",
+        "type": "object"
+      },
+      "ImplementationGuideVersion.ImplementationGuideVersionGithub": {
+        "properties": {
+          "init": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UcumExportResponse": {
+        "properties": {
+          "units": {
+            "description": "Exported units",
+            "items": {
+              "$ref": "#/components/schemas/UcumExportUnit"
+            },
+            "type": "array"
+          },
+          "supplements": {
+            "description": "Supplements used for export",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "description": "UCUM export result with supplements",
+        "type": "object"
+      },
+      "Task.TaskActivity.TaskActivityTransition": {
+        "properties": {
+          "to": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageLink": {
+        "properties": {
+          "targetId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "orderNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionInterpretation.ObservationDefinitionInterpretationTarget": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_ValueSet_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSet"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "EntityPropertyRule": {
+        "properties": {
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/EntityPropertyRule.EntityPropertyRuleFilter"
+            },
+            "type": "array"
+          },
+          "codeSystems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "valueSet": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GithubService.GithubStatus": {
+        "properties": {
+          "sha": {
+            "type": "string"
+          },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "SnomedDescriptionItemResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedDescriptionItemResponse.SnomedDescriptionItem"
+            },
+            "type": "array"
+          },
+          "buckets": {
+            "$ref": "#/components/schemas/SnomedDescriptionItemResponse.SnomedBuckets"
+          }
+        },
+        "type": "object"
+      },
+      "PageTag": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tag": {
+            "$ref": "#/components/schemas/Tag"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinition.TransformationDefinitionResource": {
+        "properties": {
+          "reference": {
+            "$ref": "#/components/schemas/TransformationDefinition.TransformationDefinitionResourceReference"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "reference",
+          "source"
+        ]
+      },
+      "QueryResult_CodeSystem_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "UniqueResource_MapSet_": {
+        "properties": {
+          "id": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemCircularDependenciesDetectorResult": {
+        "type": "object"
+      },
+      "SnomedRefsetMemberResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedRefsetResponse.SnomedRefsetItem"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "FileAnalysisResponse": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/FileAnalysisResponse.FileAnalysisColumn"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Task.TaskActivity": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "transition": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Task.TaskActivity.TaskActivityTransition"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "context": {
+            "items": {
+              "$ref": "#/components/schemas/Task.TaskActivity.TaskActivityContextItem"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "NamingSystemIdentifier": {
+        "properties": {
+          "preferred": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_Page_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Page"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedExportRequest": {
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "branchPath": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionValue.ObservationDefinitionValueItem": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemEntityPropertyConceptSummary": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemEntityPropertyConceptSummary.CodeSystemEntityPropertyConceptSummaryItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ]
+      },
+      "MapSetConcept": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetAssociation"
+            },
+            "type": "array"
+          },
+          "display": {
+            "$ref": "#/components/schemas/Designation"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "designations": {
+            "items": {
+              "$ref": "#/components/schemas/Designation"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ImportStatusEnum": {
+        "type": "string",
+        "enum": [
+          "PROCESSING",
+          "DONE",
+          "FAILED"
+        ]
+      },
+      "JobLogResponse": {
+        "properties": {
+          "jobId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "PatchUtil.PatchRequest.PatchField": {
+        "properties": {
+          "value": {},
+          "fieldName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetVersionConcept": {
+        "properties": {
+          "propertyValues": {
+            "items": {
+              "$ref": "#/components/schemas/EntityPropertyValue"
+            },
+            "type": "array"
+          },
+          "enumerated": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemAssociation"
+            },
+            "type": "array"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "concept": {
+            "$ref": "#/components/schemas/ValueSetVersionConcept.ValueSetVersionConceptValue"
+          },
+          "display": {
+            "$ref": "#/components/schemas/Designation"
+          },
+          "notSelectable": {
+            "type": "boolean"
+          },
+          "orderNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "additionalDesignations": {
+            "items": {
+              "$ref": "#/components/schemas/Designation"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MeasurementUnitMapping": {
+        "properties": {
+          "systemUnit": {
+            "type": "string"
+          },
+          "systemValue": {
+            "type": "string"
+          },
+          "system": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetSnapshotDependency": {
+        "properties": {
+          "dynamic": {
+            "type": "boolean"
+          },
+          "codeSystemVersion": {
+            "$ref": "#/components/schemas/CodeSystemVersionReference"
+          },
+          "ruleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MeasurementUnit": {
+        "properties": {
+          "definitionValue": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "ordering": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alias": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "definitionUnit": {
+            "type": "string"
+          },
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/MeasurementUnitMapping"
+            },
+            "type": "array"
+          },
+          "period": {
+            "$ref": "#/components/schemas/LocalDateRange"
+          },
+          "code": {
+            "type": "string"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "rounding": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "OtherTitle": {
+        "properties": {
+          "preferred": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_ConceptTreeItem_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptTreeItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MapSet.MapSetSettings": {
+        "properties": {
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "approvalRequired": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "Page.PageAttachment": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ConceptTreeItem": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Concept"
+          },
+          {
+            "$ref": "#/components/schemas/CodeSystemEntity"
+          },
+          {
+            "properties": {
+              "parentCode": {
+                "type": "string"
+              },
+              "matched": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "SpaceGithubController.SpaceGithubAuthRequest": {
+        "properties": {
+          "returnUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "returnUrl"
+        ]
+      },
+      "Workflow": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/Workflow.WorkflowTransition"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Error": {
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HttpStatus"
+              }
+            ],
+            "description": "HTTP status of the error",
+            "example": "NOT_FOUND"
+          },
+          "path": {
+            "description": "Request path that resulted in the error",
+            "example": "/api/v1/ucum/defined-units/ll",
+            "type": "string"
+          },
+          "message": {
+            "description": "Detailed error message",
+            "example": "Defined unit with code 'll' was not found",
+            "type": "string"
+          }
+        },
+        "description": "Standard error response containing an HTTP status, a path and an error message",
+        "type": "object"
+      },
+      "QueryResult_MeasurementUnit_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MeasurementUnit"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PageController.PageRequest": {
+        "properties": {
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          },
+          "content": {
+            "$ref": "#/components/schemas/PageContent"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_TransformationDefinition_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TransformationDefinition"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Identifier": {
+        "properties": {
+          "system": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetController.ValueSetVersionDuplicateRequest": {
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "valueSet": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.FmlComposeResult": {
+        "properties": {
+          "fml": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fml"
+        ]
+      },
+      "QueryResult_Template_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Template"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RelatedArtifact.ArtifactAssociation": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "codeSystemUri": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Space": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "shared": {
+            "type": "boolean"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/Package"
+            },
+            "type": "array"
+          },
+          "integration": {
+            "$ref": "#/components/schemas/Space.SpaceIntegration"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "acl": {},
+          "terminologyServers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_ImplementationGuideVersion_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ImplementationGuideVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ConceptTransactionRequest": {
+        "properties": {
+          "codeSystemVersion": {
+            "type": "string"
+          },
+          "entityVersion": {
+            "$ref": "#/components/schemas/CodeSystemEntityVersion"
+          },
+          "concept": {
+            "$ref": "#/components/schemas/Concept"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_MapSet_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MapSet"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedTranslation": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "conceptId": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "descriptionId": {
+            "type": "string"
+          },
+          "acceptability": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationResult": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ConceptSnapshot.SnapshotProperty": {
+        "properties": {
+          "valueCoding": {
+            "$ref": "#/components/schemas/ConceptSnapshot.SnapshotCoding"
+          },
+          "code": {
+            "type": "string"
+          },
+          "conceptVersion": {
+            "type": "string"
+          },
+          "conceptVersionId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "conceptVersion",
+          "conceptVersionId",
+          "valueCoding"
+        ]
+      },
+      "ObservationDefinitionComponent": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "orderNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valueSet": {
+            "type": "string"
+          },
+          "cardinality": {
+            "$ref": "#/components/schemas/ObservationDefinitionCardinality"
+          },
+          "sectionType": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "unit": {
+            "$ref": "#/components/schemas/ObservationDefinitionUnit"
+          }
+        },
+        "type": "object"
+      },
+      "PatchUtil.PatchRequest": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/PatchUtil.PatchRequest.PatchField"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "BaseUnit": {
+        "properties": {
+          "dimension": {
+            "description": "Dimension symbol representing the base physical dimension of the unit (e.g., 'L' for length, 'M' for mass)",
+            "example": "M",
+            "type": "string"
+          },
+          "description": {
+            "description": "Human-readable description",
+            "example": "baseunit g ('gram') (mass)",
+            "type": "string"
+          },
+          "kind": {
+            "readOnly": true,
+            "description": "The kind of concept (always 'BASEUNIT')",
+            "example": "BASEUNIT",
+            "type": "string"
+          },
+          "property": {
+            "description": "Property of the unit",
+            "example": "mass",
+            "type": "string"
+          },
+          "printSymbol": {
+            "description": "Printable symbol for the unit",
+            "example": "g",
+            "type": "string"
+          },
+          "codeUC": {
+            "description": "The UCUM code (uppercase)",
+            "example": "G",
+            "type": "string"
+          },
+          "code": {
+            "description": "The UCUM code",
+            "example": "g",
+            "type": "string"
+          },
+          "names": {
+            "description": "Unit names",
+            "example": [
+              "gram"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "description": "A UCUM base unit",
+        "type": "object"
+      },
+      "DataEnum": {
+        "type": "string",
+        "enum": [
+          "DS3_A",
+          "DS3_E",
+          "DS4"
+        ]
+      },
+      "TemplateContent": {
+        "properties": {
+          "lang": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "UseContext": {
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GithubService.GithubDiff": {
+        "properties": {
+          "left": {
+            "type": "string"
+          },
+          "right": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Permissions": {
+        "properties": {
+          "admin": {
+            "type": "string"
+          },
+          "viewer": {
+            "type": "string"
+          },
+          "endorser": {
+            "type": "string"
+          },
+          "editor": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemController.CodeSystemDuplicateRequest": {
+        "properties": {
+          "codeSystemUri": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "HealthStatus": {
+        "properties": {
+          "operational": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "severity": {
+            "format": "int32",
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "description",
+          "name",
+          "operational",
+          "severity"
+        ]
+      },
+      "Concept": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CodeSystemEntity"
+          },
+          {
+            "properties": {
+              "childCount": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "immutable": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "leaf": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "ConvertResponse": {
+        "properties": {
+          "result": {
+            "description": "Converted numeric value resulting from the conversion",
+            "example": "2500",
+            "type": "string"
+          }
+        },
+        "description": "Response containing the converted value for the provided input in the target unit",
+        "type": "object"
+      },
+      "Page": {
+        "properties": {
+          "spaceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "leaf": {
+            "type": "boolean"
+          },
+          "relations": {
+            "items": {
+              "$ref": "#/components/schemas/PageRelation"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/PageTag"
+            },
+            "type": "array"
+          },
+          "contents": {
+            "items": {
+              "$ref": "#/components/schemas/PageContent"
+            },
+            "type": "array"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/PageLink"
+            },
+            "type": "array"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Page.PageSettings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "spaceId"
+        ]
+      },
+      "Provenance.ProvenanceChange": {
+        "properties": {
+          "left": {},
+          "right": {}
+        },
+        "type": "object"
+      },
+      "MapSetVersionReference": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/VersionReference_MapSetVersionReference_"
+          },
+          {
+            "properties": {
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "QueryResult_ValueSetVersion_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSetVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Task.TaskActivity.TaskActivityContextItem": {
+        "properties": {
+          "id": {},
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "WikiSpaceController.WikiSpace": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetVersionReference": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/VersionReference_ValueSetVersionReference_"
+          },
+          {
+            "properties": {
+              "valueSet": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "Space.SpaceIntegrationGithub": {
+        "properties": {
+          "repo": {
+            "type": "string"
+          },
+          "dirs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemVersion": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CodeSystemVersionReference"
+          },
+          {
+            "$ref": "#/components/schemas/VersionReference_CodeSystemVersionReference_"
+          },
+          {
+            "properties": {
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "entities": {
+                "items": {
+                  "$ref": "#/components/schemas/CodeSystemEntityVersion"
+                },
+                "type": "array"
+              },
+              "expirationDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "conceptsTotal": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "supportedLanguages": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "baseCodeSystemUri": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "algorithm": {
+                "type": "string"
+              },
+              "releaseDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "codeSystem": {
+                "type": "string"
+              },
+              "valueSet": {
+                "$ref": "#/components/schemas/ValueSetVersionReference"
+              },
+              "baseCodeSystem": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "MapSet": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UniqueResource_MapSet_"
+          },
+          {
+            "properties": {
+              "experimental": {
+                "type": "boolean"
+              },
+              "profile": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "name": {
+                "type": "string"
+              },
+              "copyright": {
+                "$ref": "#/components/schemas/Copyright"
+              },
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "versions": {
+                "items": {
+                  "$ref": "#/components/schemas/MapSetVersion"
+                },
+                "type": "array"
+              },
+              "narrative": {
+                "type": "string"
+              },
+              "configurationAttributes": {
+                "items": {
+                  "$ref": "#/components/schemas/ConfigurationAttribute"
+                },
+                "type": "array"
+              },
+              "useContext": {
+                "items": {
+                  "$ref": "#/components/schemas/UseContext"
+                },
+                "type": "array"
+              },
+              "sourceReference": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "contacts": {
+                "items": {
+                  "$ref": "#/components/schemas/ContactDetail"
+                },
+                "type": "array"
+              },
+              "title": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "externalWebSource": {
+                "type": "string"
+              },
+              "publisher": {
+                "type": "string"
+              },
+              "properties": {
+                "items": {
+                  "$ref": "#/components/schemas/MapSetProperty"
+                },
+                "type": "array"
+              },
+              "replaces": {
+                "type": "string"
+              },
+              "uri": {
+                "type": "string"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "settings": {
+                "$ref": "#/components/schemas/MapSet.MapSetSettings"
+              },
+              "topic": {
+                "$ref": "#/components/schemas/Topic"
+              },
+              "otherTitle": {
+                "items": {
+                  "$ref": "#/components/schemas/OtherTitle"
+                },
+                "type": "array"
+              }
+            }
+          }
+        ]
+      },
+      "QueryResult_Task_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PageTreeItem.PageTreeItemContent": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetVersion.MapSetResourceReference": {
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AnalyseResponse": {
+        "properties": {
+          "result": {
+            "description": "Human-readable form of the UCUM expression",
+            "example": "(gram) * (meter ^ -6) * (second ^ -1)",
+            "type": "string"
+          }
+        },
+        "description": "Response containing a UCUM code converted into a human-readable expression",
+        "type": "object"
+      },
+      "LocalDateRange": {
+        "$ref": "#/components/schemas/Range_LocalDate_"
+      },
+      "SnomedRefsetResponse": {
+        "properties": {
+          "memberCountsByReferenceSet": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedRefsetResponse.SnomedRefsetItem"
+            },
+            "type": "array"
+          },
+          "referenceSets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SnomedConcept"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionProtocol.ObservationDefinitionProtocolValue": {
+        "properties": {
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValueConcept"
+            },
+            "type": "array"
+          },
+          "usage": {
+            "type": "string"
+          },
+          "valueSet": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DastaSearchParams": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QueryParams"
+          },
+          {
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/DataEnum"
+              },
+              "idSadyUzis": {
+                "type": "string"
+              },
+              "aktual": {
+                "$ref": "#/components/schemas/AktualEnum"
+              },
+              "vystup": {
+                "$ref": "#/components/schemas/VystupEnum"
+              },
+              "idSadyNclp": {
+                "type": "string"
+              },
+              "rozsireni": {
+                "$ref": "#/components/schemas/ANEnum"
+              },
+              "ciselnik": {
+                "type": "string"
+              },
+              "idSadyDs": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ObservationDefinitionInterpretation.ObservationDefinitionInterpretationRange": {
+        "properties": {
+          "numericRange": {
+            "$ref": "#/components/schemas/ObservationDefinitionCardinality"
+          },
+          "codeSystemConcepts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "valueSet": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetVersion": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ValueSetVersionReference"
+          },
+          {
+            "$ref": "#/components/schemas/VersionReference_ValueSetVersionReference_"
+          },
+          {
+            "properties": {
+              "snapshot": {
+                "$ref": "#/components/schemas/ValueSetSnapshot"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "algorithm": {
+                "type": "string"
+              },
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "supportedLanguages": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "releaseDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "preferredLanguage": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "expirationDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "ruleSet": {
+                "$ref": "#/components/schemas/ValueSetVersionRuleSet"
+              }
+            }
+          }
+        ]
+      },
+      "QueryResult_ImplementationGuide_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ImplementationGuide"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemAssociation": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CodeSystemEntity"
+          },
+          {
+            "properties": {
+              "targetId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "sourceCode": {
+                "type": "string"
+              },
+              "sourceId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "supplement": {
+                "type": "boolean"
+              },
+              "associationType": {
+                "type": "string"
+              },
+              "orderNumber": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "targetCode": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "MapSetPropertyValue": {
+        "properties": {
+          "mapSetPropertyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mapSetPropertyType": {
+            "type": "string"
+          },
+          "mapSetAssociationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {},
+          "mapSetPropertyName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemArtifactImpact": {
+        "properties": {
+          "currentCodeSystemVersion": {
+            "$ref": "#/components/schemas/CodeSystemVersionReference"
+          },
+          "artifactType": {
+            "type": "string"
+          },
+          "artifactVersion": {
+            "type": "string"
+          },
+          "snapshotCreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "affected": {
+            "type": "boolean"
+          },
+          "dynamic": {
+            "type": "boolean"
+          },
+          "artifactId": {
+            "type": "string"
+          },
+          "resolvedCodeSystemVersion": {
+            "$ref": "#/components/schemas/CodeSystemVersionReference"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedCodeSystem.SnomedCodeSystemModule": {
+        "properties": {
+          "pt": {
+            "$ref": "#/components/schemas/SnomedConcept.SnomedConceptName"
+          },
+          "fsn": {
+            "$ref": "#/components/schemas/SnomedConcept.SnomedConceptName"
+          },
+          "conceptId": {
+            "type": "string"
+          },
+          "moduleId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DastaSearchParamsSady": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QueryParams"
+          },
+          {
+            "properties": {
+              "zdroj": {
+                "type": "string"
+              },
+              "vystup": {
+                "$ref": "#/components/schemas/VystupEnum"
+              },
+              "pouzeAktualni": {
+                "$ref": "#/components/schemas/AktualEnum"
+              }
+            }
+          }
+        ]
+      },
+      "NamingSystem": {
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "identifiers": {
+            "items": {
+              "$ref": "#/components/schemas/NamingSystemIdentifier"
+            },
+            "type": "array"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_Space_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Space"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "HealthResult": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/HealthStatus"
+          },
+          "name": {
+            "type": "string"
+          },
+          "details": {}
+        },
+        "type": "object"
+      },
+      "QueryResult_EntityProperty_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EntityProperty"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.InstanceTransformationRequest": {
+        "properties": {
+          "source": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ]
+      },
+      "UcumExportUnit": {
+        "properties": {
+          "code": {
+            "description": "UCUM code",
+            "example": "mL",
+            "type": "string"
+          },
+          "property": {
+            "description": "UCUM property",
+            "example": "volume",
+            "type": "string"
+          },
+          "designations": {
+            "description": "Merged designations",
+            "items": {
+              "$ref": "#/components/schemas/UcumExportDesignation"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "description": "UCUM kind",
+            "example": "UNIT",
+            "type": "string"
+          }
+        },
+        "description": "A UCUM unit with merged base and supplement designations",
+        "type": "object"
+      },
+      "QueryResult_PageContentHistoryItem_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PageContentHistoryItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionImportRequest": {
+        "properties": {
+          "loincCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemCompareResult.CodeSystemCompareResultDiff": {
+        "properties": {
+          "old": {
+            "$ref": "#/components/schemas/CodeSystemCompareResult.CodeSystemCompareResultDiffItem"
+          },
+          "mew": {
+            "$ref": "#/components/schemas/CodeSystemCompareResult.CodeSystemCompareResultDiffItem"
+          }
+        },
+        "type": "object"
+      },
+      "VersionReference_ValueSetVersionReference_": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionMember": {
+        "properties": {
+          "cardinality": {
+            "$ref": "#/components/schemas/ObservationDefinitionCardinality"
+          },
+          "orderNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "item": {
+            "$ref": "#/components/schemas/CodeName"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetExpandRequest": {
+        "properties": {
+          "valueSet": {
+            "type": "string"
+          },
+          "valueSetVersion": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemSupplementRequest": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "type": "array"
+          },
+          "externalSystemCode": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "codeSystemUri": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.GenerateInputRequest": {
+        "properties": {
+          "resource": {
+            "$ref": "#/components/schemas/TransformationDefinition.TransformationDefinitionResource"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resource"
+        ]
+      },
+      "QueryResult_ObservationDefinition_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationDefinition"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinition.TransformationDefinitionResourceReference": {
+        "properties": {
+          "localId": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "resourceUrl": {
+            "type": "string"
+          },
+          "resourceServerId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "UcumExportDesignation": {
+        "properties": {
+          "supplement": {
+            "description": "Indicates whether the designation originated from a supplement",
+            "example": true,
+            "type": "boolean"
+          },
+          "preferred": {
+            "description": "Indicates whether the designation is preferred",
+            "example": true,
+            "type": "boolean"
+          },
+          "value": {
+            "description": "Designation text",
+            "example": "Mililitras",
+            "type": "string"
+          },
+          "language": {
+            "description": "Language code",
+            "example": "lt",
+            "type": "string"
+          },
+          "type": {
+            "description": "Designation type",
+            "example": "display",
+            "type": "string"
+          }
+        },
+        "description": "A UCUM designation in the export output",
+        "type": "object"
+      },
+      "SnomedRefsetResponse.SnomedRefsetItem.SnomedRefsetAdditionalFields": {
+        "properties": {
+          "mapTarget": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SpaceGithubController.SpaceGithubCommitRequest": {
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files",
+          "message"
+        ]
+      },
+      "ImplementationGuideGroup": {
+        "properties": {
+          "description": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetAssociation": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/MapSetAssociation.MapSetAssociationEntity"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "propertyValues": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetPropertyValue"
+            },
+            "type": "array"
+          },
+          "mapSetVersion": {
+            "$ref": "#/components/schemas/MapSetVersionReference"
+          },
+          "target": {
+            "$ref": "#/components/schemas/MapSetAssociation.MapSetAssociationEntity"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "mapSet": {
+            "type": "string"
+          },
+          "uniqueKey": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "noMap": {
+            "type": "boolean"
+          },
+          "relationshipName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Topic": {
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.GenerateInputResponse": {
+        "properties": {
+          "resource": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resource"
+        ]
+      },
+      "ValueSetVersionRuleSet.ValueSetVersionRule": {
+        "properties": {
+          "codeSystemBaseUri": {
+            "type": "string"
+          },
+          "valueSetVersion": {
+            "$ref": "#/components/schemas/ValueSetVersionReference"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "codeSystemVersion": {
+            "$ref": "#/components/schemas/CodeSystemVersionReference"
+          },
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSetVersionRuleSet.ValueSetVersionRule.ValueSetRuleFilter"
+            },
+            "type": "array"
+          },
+          "valueSet": {
+            "type": "string"
+          },
+          "valueSetUri": {
+            "type": "string"
+          },
+          "codeSystemUri": {
+            "type": "string"
+          },
+          "properties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSetVersionConcept"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ConceptSnapshot.SnapshotDesignation": {
+        "properties": {
+          "use": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "language",
+          "name",
+          "use"
+        ]
+      },
+      "CodeSystemVersionReference": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/VersionReference_CodeSystemVersionReference_"
+          },
+          {
+            "properties": {
+              "releaseDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "status": {
+                "type": "string"
+              },
+              "preferredLanguage": {
+                "type": "string"
+              },
+              "uri": {
+                "type": "string"
+              },
+              "baseCodeSystemVersion": {
+                "$ref": "#/components/schemas/CodeSystemVersionReference"
+              }
+            }
+          }
+        ]
+      },
+      "VersionReference_MapSetVersionReference_": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.ParseRequest": {
+        "properties": {
+          "fml": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fml"
+        ]
+      },
+      "SnomedDescription": {
+        "properties": {
+          "acceptabilityMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "typeId": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "reviewed": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "conceptId": {
+            "type": "string"
+          },
+          "local": {
+            "type": "boolean"
+          },
+          "term": {
+            "type": "string"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "caseSignificanceId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reviewer": {
+            "type": "string"
+          },
+          "effectiveTime": {
+            "type": "string"
+          },
+          "descriptionId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetSnapshot": {
+        "properties": {
+          "conceptsTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "valueSetVersion": {
+            "$ref": "#/components/schemas/ValueSetVersionReference"
+          },
+          "expansion": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSetVersionConcept"
+            },
+            "type": "array"
+          },
+          "valueSet": {
+            "type": "string"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSetSnapshotDependency"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ImplementationGuideVersion": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/ImplementationGuideGroup"
+            },
+            "type": "array"
+          },
+          "version": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "algorithm": {
+            "type": "string"
+          },
+          "github": {
+            "$ref": "#/components/schemas/ImplementationGuideVersion.ImplementationGuideVersionGithub"
+          },
+          "template": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fhirVersion": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "implementationGuide": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "items": {
+              "$ref": "#/components/schemas/ImplementationGuideVersion.ImplementationGuideVersionDependsOn"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_PageRelation_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PageRelation"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_CodeSystemVersion_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_Concept_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Concept"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Task": {
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/CodeName"
+          },
+          "type": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "assignee": {
+            "type": "string"
+          },
+          "context": {
+            "items": {
+              "$ref": "#/components/schemas/Task.TaskContextItem"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "workflow": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/Task.TaskActivity"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_MapSetVersion_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionMapping": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "concept": {
+            "type": "string"
+          },
+          "mapSet": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ObservationDefinitionMapping.ObservationDefinitionMappingTarget"
+          },
+          "orderNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "relation": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedSearchResult_SnomedConcept_": {
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "searchAfter": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedConcept"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_MapSetConcept_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetConcept"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_AssociationType_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssociationType"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ConceptTreeSearchResult": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QueryResult_ConceptTreeItem_"
+          },
+          {
+            "properties": {
+              "matchedCount": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "StructureDefinitionVersion": {
+        "properties": {
+          "structureDefinitionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fhirId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "contentFormat": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedDescriptionItemResponse.SnomedDescriptionItem": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "term": {
+            "type": "string"
+          },
+          "concept": {
+            "$ref": "#/components/schemas/SnomedConcept"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionMapping.ObservationDefinitionMappingTarget": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DastaSearchParamsMulti": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DastaSearchParams"
+          },
+          {
+            "$ref": "#/components/schemas/QueryParams"
+          },
+          {
+            "properties": {
+              "ciselniky": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "UcumExportRequest": {
+        "properties": {
+          "supplements": {
+            "description": "Optional list of UCUM supplement ids or canonical URLs. When omitted, all UCUM supplements are used.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "description": "Request for exporting UCUM units with supplements",
+        "type": "object"
+      },
+      "SnomedCodeSystemUpgradeRequest": {
+        "properties": {
+          "newDependantVersion": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Provenance.ProvenanceDetail": {
+        "properties": {
+          "changes": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Provenance.ProvenanceChange"
+            }
+          },
+          "messages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "Space.SpaceIntegrationMsDevops": {
+        "properties": {
+          "repo": {
+            "type": "string"
+          },
+          "dirs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "QueryParams": {
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "type": "object"
+      },
+      "ImplementationGuideTransactionRequest": {
+        "properties": {
+          "implementationGuide": {
+            "$ref": "#/components/schemas/ImplementationGuide"
+          },
+          "version": {
+            "$ref": "#/components/schemas/ImplementationGuideVersion"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedBranchRequest": {
+        "properties": {
+          "parent": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "metadata": {}
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionInterpretation": {
+        "properties": {
+          "fhirInterpretationCode": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rangeCategory": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ObservationDefinitionInterpretation.ObservationDefinitionInterpretationState"
+          },
+          "range": {
+            "$ref": "#/components/schemas/ObservationDefinitionInterpretation.ObservationDefinitionInterpretationRange"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ObservationDefinitionInterpretation.ObservationDefinitionInterpretationTarget"
+          },
+          "orderNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "snomedInterpretationCode": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetVersionRuleSet.ValueSetVersionRule.ValueSetRuleFilter": {
+        "properties": {
+          "operator": {
+            "type": "string"
+          },
+          "property": {
+            "$ref": "#/components/schemas/PropertyReference"
+          },
+          "value": {}
+        },
+        "type": "object"
+      },
+      "MapSetVersion.MapSetVersionStatistics": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unmapped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sourceConcepts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveSources": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inactiveTargets": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "equivalent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mapSet": {
+            "type": "string"
+          },
+          "narrower": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "broader": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noMap": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mapSetVersion": {
+            "$ref": "#/components/schemas/MapSetVersionReference"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemController.CodeSystemEntityVersionLinkRequest": {
+        "properties": {
+          "entityVersionIds": {
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetAssociation.MapSetAssociationEntity": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "codeSystemUri": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedRefsetResponse.SnomedRefsetItem": {
+        "properties": {
+          "moduleId": {
+            "type": "string"
+          },
+          "refsetId": {
+            "type": "string"
+          },
+          "referencedComponent": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "additionalFields": {
+            "$ref": "#/components/schemas/SnomedRefsetResponse.SnomedRefsetItem.SnomedRefsetAdditionalFields"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "referencedComponentId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Page.PageSettings": {
+        "properties": {
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "DefinedProperty": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PropertyReference"
+          },
+          {
+            "properties": {
+              "rule": {
+                "$ref": "#/components/schemas/EntityPropertyRule"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "used": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "ValueSetVersionConcept.ValueSetVersionConceptValue": {
+        "properties": {
+          "conceptVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "baseCodeSystemUri": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "codeSystemVersions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "codeSystemUri": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemCompareResult": {
+        "properties": {
+          "changed": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemCompareResult.CodeSystemCompareResultChange"
+            },
+            "type": "array"
+          },
+          "added": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedBranch": {
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "creation": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {},
+          "locked": {
+            "type": "boolean"
+          },
+          "containsContent": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string"
+          },
+          "head": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "base": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedConceptSearchParams": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QueryParams"
+          },
+          {
+            "properties": {
+              "all": {
+                "type": "boolean"
+              },
+              "groupByConcept": {
+                "type": "boolean"
+              },
+              "searchAfter": {
+                "type": "string"
+              },
+              "branch": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "semanticTags": {
+                "type": "string"
+              },
+              "ecl": {
+                "type": "string"
+              },
+              "term": {
+                "type": "string"
+              },
+              "conceptIds": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "language": {
+                "type": "string"
+              },
+              "termActive": {
+                "type": "boolean"
+              },
+              "conceptActive": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "QueryResult_PageLink_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PageLink"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Provenance.ProvenanceContext": {
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/Reference"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Designation": {
+        "properties": {
+          "designationKind": {
+            "type": "string"
+          },
+          "rendering": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "designationTypeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "supplementSource": {
+            "type": "string"
+          },
+          "preferred": {
+            "type": "boolean"
+          },
+          "caseSignificance": {
+            "type": "string"
+          },
+          "designationType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "supplement": {
+            "type": "boolean"
+          },
+          "codeSystemEntityVersionId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemEntityPropertySummary.CodeSystemEntityPropertySummaryItem": {
+        "properties": {
+          "propCnt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "conceptCnt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "propList": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "propertyName": {
+            "type": "string"
+          },
+          "propertyId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedConcept.SnomedConceptName": {
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "lang": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SpaceGithubController.SpaceGithubPullRequest": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files"
+        ]
+      },
+      "ConceptSnapshot": {
+        "properties": {
+          "designation": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptSnapshot.SnapshotDesignation"
+            },
+            "type": "array"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptSnapshot.SnapshotProperty"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "DefinedUnit": {
+        "properties": {
+          "description": {
+            "description": "Human-readable description",
+            "example": "unit l ('liter') (volume) = 1dm3",
+            "type": "string"
+          },
+          "kind": {
+            "readOnly": true,
+            "description": "The kind of concept (always 'UNIT')",
+            "example": "UNIT",
+            "type": "string"
+          },
+          "property": {
+            "description": "Property of the unit",
+            "example": "volume",
+            "type": "string"
+          },
+          "metric": {
+            "description": "Metric flag",
+            "example": true,
+            "type": "boolean"
+          },
+          "printSymbol": {
+            "description": "Printable symbol for the unit",
+            "example": "l",
+            "type": "string"
+          },
+          "special": {
+            "description": "Flags whether this unit is a special UCUM unit requiring custom conversion functions (non-ratio scale)",
+            "example": false,
+            "type": "boolean"
+          },
+          "codeUC": {
+            "description": "The UCUM code (uppercase)",
+            "example": "L",
+            "type": "string"
+          },
+          "code": {
+            "description": "The UCUM code",
+            "example": "l",
+            "type": "string"
+          },
+          "names": {
+            "description": "Unit names",
+            "example": [
+              "liter"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "class": {
+            "description": "Classification of the unit",
+            "example": "iso1000",
+            "type": "string"
+          }
+        },
+        "description": "A UCUM defined unit",
+        "type": "object"
+      },
+      "Tag": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Reference": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ]
+      },
+      "Prefix": {
+        "properties": {
+          "description": {
+            "description": "Human-readable description",
+            "example": "prefix Mi ('mebi') = 1048576",
+            "type": "string"
+          },
+          "kind": {
+            "readOnly": true,
+            "description": "The kind of concept (always 'PREFIX')",
+            "example": "PREFIX",
+            "type": "string"
+          },
+          "printSymbol": {
+            "description": "Printable symbol for the prefix",
+            "example": "Mi",
+            "type": "string"
+          },
+          "codeUC": {
+            "description": "The UCUM code (uppercase)",
+            "example": "MIB",
+            "type": "string"
+          },
+          "code": {
+            "description": "The UCUM code",
+            "example": "Mi",
+            "type": "string"
+          },
+          "names": {
+            "description": "Prefix names",
+            "example": [
+              "mebi"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "description": "A UCUM prefix",
+        "type": "object"
+      },
+      "TransformationDefinitionController.FmlGenerateRequest": {
+        "properties": {
+          "structureMap": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "structureMap"
+        ]
+      },
+      "SnomedCodeSystem.SnomedCodeSystemVersion": {
+        "properties": {
+          "branchPath": {
+            "type": "string"
+          },
+          "shortName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dependantVersionEffectiveTime": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "parentBranchPath": {
+            "type": "string"
+          },
+          "effectiveDate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "importDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.FmlGenerateResult": {
+        "properties": {
+          "fml": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "fml"
+        ]
+      },
+      "SnomedConcept": {
+        "properties": {
+          "moduleId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "conceptId": {
+            "type": "string"
+          },
+          "pt": {
+            "$ref": "#/components/schemas/SnomedConcept.SnomedConceptName"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedConcept.SnomedRelationship"
+            },
+            "type": "array"
+          },
+          "definitionStatus": {
+            "type": "string"
+          },
+          "descriptions": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedDescription"
+            },
+            "type": "array"
+          },
+          "effectiveTime": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "isLeafInferred": {
+            "type": "boolean"
+          },
+          "fsn": {
+            "$ref": "#/components/schemas/SnomedConcept.SnomedConceptName"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinition": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CodeName"
+          },
+          {
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "timePrecision": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "interpretations": {
+                "items": {
+                  "$ref": "#/components/schemas/ObservationDefinitionInterpretation"
+                },
+                "type": "array"
+              },
+              "version": {
+                "type": "string"
+              },
+              "members": {
+                "items": {
+                  "$ref": "#/components/schemas/ObservationDefinitionMember"
+                },
+                "type": "array"
+              },
+              "value": {
+                "$ref": "#/components/schemas/ObservationDefinitionValue"
+              },
+              "structure": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "alias": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "protocol": {
+                "$ref": "#/components/schemas/ObservationDefinitionProtocol"
+              },
+              "publisher": {
+                "type": "string"
+              },
+              "names": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "mappings": {
+                "items": {
+                  "$ref": "#/components/schemas/ObservationDefinitionMapping"
+                },
+                "type": "array"
+              },
+              "category": {
+                "items": {
+                  "$ref": "#/components/schemas/ObservationDefinition.ObservationDefinitionCategory"
+                },
+                "type": "array"
+              },
+              "components": {
+                "items": {
+                  "$ref": "#/components/schemas/ObservationDefinitionComponent"
+                },
+                "type": "array"
+              },
+              "state": {
+                "items": {
+                  "$ref": "#/components/schemas/ObservationDefinitionComponent"
+                },
+                "type": "array"
+              },
+              "id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "status": {
+                "type": "string"
+              },
+              "keywords": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "code": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ImportStatusResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ImportStatusEnum"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "progress": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "AktualEnum": {
+        "type": "string",
+        "enum": [
+          "V",
+          "A",
+          "N"
+        ]
+      },
+      "ObservationDefinition.ObservationDefinitionCategory": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemCompareResult.CodeSystemCompareResultChange": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "diff": {
+            "$ref": "#/components/schemas/CodeSystemCompareResult.CodeSystemCompareResultDiff"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystem": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UniqueResource_CodeSystem_"
+          },
+          {
+            "properties": {
+              "baseCodeSystemUri": {
+                "type": "string"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "baseCodeSystem": {
+                "type": "string"
+              },
+              "configurationAttributes": {
+                "items": {
+                  "$ref": "#/components/schemas/ConfigurationAttribute"
+                },
+                "type": "array"
+              },
+              "content": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CodeSystem.CodeSystemSettings"
+              },
+              "profile": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "valueSet": {
+                "type": "string"
+              },
+              "versions": {
+                "items": {
+                  "$ref": "#/components/schemas/CodeSystemVersion"
+                },
+                "type": "array"
+              },
+              "experimental": {
+                "type": "boolean"
+              },
+              "caseSensitive": {
+                "type": "string"
+              },
+              "lastVersion": {
+                "$ref": "#/components/schemas/CodeSystemVersion"
+              },
+              "uri": {
+                "type": "string"
+              },
+              "permissions": {
+                "$ref": "#/components/schemas/Permissions"
+              },
+              "title": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "hierarchyMeaning": {
+                "type": "string"
+              },
+              "useContext": {
+                "items": {
+                  "$ref": "#/components/schemas/UseContext"
+                },
+                "type": "array"
+              },
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "otherTitle": {
+                "items": {
+                  "$ref": "#/components/schemas/OtherTitle"
+                },
+                "type": "array"
+              },
+              "contacts": {
+                "items": {
+                  "$ref": "#/components/schemas/ContactDetail"
+                },
+                "type": "array"
+              },
+              "properties": {
+                "items": {
+                  "$ref": "#/components/schemas/EntityProperty"
+                },
+                "type": "array"
+              },
+              "copyright": {
+                "$ref": "#/components/schemas/Copyright"
+              },
+              "narrative": {
+                "type": "string"
+              },
+              "sequence": {
+                "type": "string"
+              },
+              "publisher": {
+                "type": "string"
+              },
+              "sourceReference": {
+                "type": "string"
+              },
+              "externalWebSource": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "concepts": {
+                "items": {
+                  "$ref": "#/components/schemas/Concept"
+                },
+                "type": "array"
+              },
+              "replaces": {
+                "type": "string"
+              },
+              "topic": {
+                "$ref": "#/components/schemas/Topic"
+              }
+            }
+          }
+        ]
+      },
+      "StructureDefinition": {
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "contentFormat": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "copyright": {
+            "$ref": "#/components/schemas/Copyright"
+          },
+          "identifiers": {
+            "items": {
+              "$ref": "#/components/schemas/Identifier"
+            },
+            "type": "array"
+          },
+          "useContext": {
+            "items": {
+              "$ref": "#/components/schemas/UseContext"
+            },
+            "type": "array"
+          },
+          "content": {
+            "type": "string"
+          },
+          "title": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "parent": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hierarchyMeaning": {
+            "type": "string"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactDetail"
+            },
+            "type": "array"
+          },
+          "experimental": {
+            "type": "boolean"
+          },
+          "fhirId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "ValidateResponse": {
+        "properties": {
+          "valid": {
+            "description": "Indicates whether the UCUM code passed validation",
+            "example": true,
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "description": "Error message if the UCUM code is invalid",
+            "example": "Invalid UCUM code",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "description": "Response indicating whether the UCUM code is valid and an optional error message",
+        "type": "object"
+      },
+      "TransformationDefinition": {
+        "properties": {
+          "mapping": {
+            "$ref": "#/components/schemas/TransformationDefinition.TransformationDefinitionResource"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/TransformationDefinition.TransformationDefinitionResource"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "testSource": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mapping",
+          "name",
+          "resources"
+        ]
+      },
+      "CodeSystemEntityVersion": {
+        "properties": {
+          "designations": {
+            "items": {
+              "$ref": "#/components/schemas/Designation"
+            },
+            "type": "array"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sysModifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "propertyValues": {
+            "items": {
+              "$ref": "#/components/schemas/EntityPropertyValue"
+            },
+            "type": "array"
+          },
+          "sysModifiedBy": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemVersionReference"
+            },
+            "type": "array"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemAssociation"
+            },
+            "type": "array"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTime": {
+            "type": "string"
+          },
+          "codeSystemBase": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "baseEntityVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "codeSystemEntityId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/ConceptSnapshot"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Range_LocalDate_": {
+        "properties": {
+          "upper": {
+            "type": "string",
+            "format": "date"
+          },
+          "lower": {
+            "type": "string",
+            "format": "date"
+          },
+          "lowerInclusive": {
+            "type": "boolean"
+          },
+          "upperInclusive": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ImplementationGuideVersion.ImplementationGuideVersionDependsOn": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSet": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UniqueResource_ValueSet_"
+          },
+          {
+            "properties": {
+              "experimental": {
+                "type": "boolean"
+              },
+              "profile": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "name": {
+                "type": "string"
+              },
+              "copyright": {
+                "$ref": "#/components/schemas/Copyright"
+              },
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "versions": {
+                "items": {
+                  "$ref": "#/components/schemas/ValueSetVersion"
+                },
+                "type": "array"
+              },
+              "narrative": {
+                "type": "string"
+              },
+              "configurationAttributes": {
+                "items": {
+                  "$ref": "#/components/schemas/ConfigurationAttribute"
+                },
+                "type": "array"
+              },
+              "useContext": {
+                "items": {
+                  "$ref": "#/components/schemas/UseContext"
+                },
+                "type": "array"
+              },
+              "sourceReference": {
+                "type": "string"
+              },
+              "lastVersion": {
+                "$ref": "#/components/schemas/ValueSetVersion"
+              },
+              "purpose": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "contacts": {
+                "items": {
+                  "$ref": "#/components/schemas/ContactDetail"
+                },
+                "type": "array"
+              },
+              "title": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "externalWebSource": {
+                "type": "string"
+              },
+              "publisher": {
+                "type": "string"
+              },
+              "permissions": {
+                "$ref": "#/components/schemas/Permissions"
+              },
+              "snapshots": {
+                "items": {
+                  "$ref": "#/components/schemas/ValueSetSnapshot"
+                },
+                "type": "array"
+              },
+              "replaces": {
+                "type": "string"
+              },
+              "uri": {
+                "type": "string"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "settings": {
+                "$ref": "#/components/schemas/ValueSet.ValueSetSettings"
+              },
+              "topic": {
+                "$ref": "#/components/schemas/Topic"
+              },
+              "otherTitle": {
+                "items": {
+                  "$ref": "#/components/schemas/OtherTitle"
+                },
+                "type": "array"
+              }
+            }
+          }
+        ]
+      },
+      "UniqueResource_CodeSystem_": {
+        "properties": {
+          "id": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ImplementationGuide": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UniqueResource_ImplementationGuide_"
+          },
+          {
+            "properties": {
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "versions": {
+                "items": {
+                  "$ref": "#/components/schemas/ImplementationGuideVersion"
+                },
+                "type": "array"
+              },
+              "licence": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "uri": {
+                "type": "string"
+              },
+              "experimental": {
+                "type": "boolean"
+              },
+              "name": {
+                "type": "string"
+              },
+              "copyright": {
+                "$ref": "#/components/schemas/Copyright"
+              },
+              "publisher": {
+                "type": "string"
+              },
+              "title": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "contacts": {
+                "items": {
+                  "$ref": "#/components/schemas/ContactDetail"
+                },
+                "type": "array"
+              }
+            }
+          }
+        ]
+      },
+      "CodeSystemImportConfiguration": {
+        "properties": {
+          "codeSystemVersionDescription": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "codeSystemDescription": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "cleanConceptRun": {
+            "type": "boolean"
+          },
+          "codeSystemName": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "generateValueSet": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date"
+          },
+          "cleanRun": {
+            "type": "boolean"
+          },
+          "baseCodeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ContactDetail": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "telecoms": {
+            "items": {
+              "$ref": "#/components/schemas/ContactDetail.Telecom"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetAutomapRequest": {
+        "properties": {
+          "targetProperty": {
+            "type": "string"
+          },
+          "mapByDesignation": {
+            "type": "boolean"
+          },
+          "mapByCode": {
+            "type": "boolean"
+          },
+          "targetLanguage": {
+            "type": "string"
+          },
+          "sourceProperty": {
+            "type": "string"
+          },
+          "sourceLanguage": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedImportJob": {
+        "properties": {
+          "branchPath": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "createCodeSystemVersion": {
+            "type": "boolean"
+          },
+          "internalRelease": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "moduleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ContactDetail.Telecom": {
+        "properties": {
+          "system": {
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AssociationType": {
+        "properties": {
+          "reverseName": {
+            "type": "string"
+          },
+          "forwardName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "directed": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "associationKind": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "associationKind",
+          "code",
+          "directed"
+        ]
+      },
+      "Workflow.WorkflowTransition": {
+        "properties": {
+          "to": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StructureDefinitionImportRequest": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RelatedArtifact": {
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/RelatedArtifact.ArtifactAssociation"
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "mapSetVersion": {
+            "$ref": "#/components/schemas/MapSetVersionReference"
+          },
+          "equivalence": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/RelatedArtifact.ArtifactAssociation"
+          },
+          "resolved": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "equivalenceName": {
+            "type": "string"
+          },
+          "propertyValues": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetPropertyValue"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionProtocol": {
+        "properties": {
+          "dataCollectionCircumstances": {
+            "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValue"
+          },
+          "specimen": {
+            "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValue"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "method": {
+            "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValue"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationDefinitionComponent"
+            },
+            "type": "array"
+          },
+          "device": {
+            "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValue"
+          },
+          "position": {
+            "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValue"
+          },
+          "measurementLocation": {
+            "$ref": "#/components/schemas/ObservationDefinitionProtocol.ObservationDefinitionProtocolValue"
+          }
+        },
+        "type": "object"
+      },
+      "LorqueProcess": {
+        "properties": {
+          "resultText": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "started": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processName": {
+            "type": "string"
+          },
+          "initiator": {
+            "type": "string"
+          },
+          "result": {
+            "items": {
+              "type": "string",
+              "format": "byte"
+            },
+            "type": "array"
+          },
+          "resultType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "finished": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_PageContent_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PageContent"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_DefinedProperty_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DefinedProperty"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetVersionRuleSet": {
+        "properties": {
+          "inactive": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/ValueSetVersionRuleSet.ValueSetVersionRule"
+            },
+            "type": "array"
+          },
+          "lockedDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionInterpretation.ObservationDefinitionInterpretationState": {
+        "properties": {
+          "gestationAge": {
+            "$ref": "#/components/schemas/ObservationDefinitionCardinality"
+          },
+          "age": {
+            "$ref": "#/components/schemas/ObservationDefinitionCardinality"
+          },
+          "gender": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "HttpStatus": {
+        "type": "string",
+        "enum": [
+          "CONTINUE",
+          "SWITCHING_PROTOCOLS",
+          "PROCESSING",
+          "EARLY_HINTS",
+          "OK",
+          "CREATED",
+          "ACCEPTED",
+          "NON_AUTHORITATIVE_INFORMATION",
+          "NO_CONTENT",
+          "RESET_CONTENT",
+          "PARTIAL_CONTENT",
+          "MULTI_STATUS",
+          "ALREADY_IMPORTED",
+          "IM_USED",
+          "MULTIPLE_CHOICES",
+          "MOVED_PERMANENTLY",
+          "FOUND",
+          "SEE_OTHER",
+          "NOT_MODIFIED",
+          "USE_PROXY",
+          "SWITCH_PROXY",
+          "TEMPORARY_REDIRECT",
+          "PERMANENT_REDIRECT",
+          "BAD_REQUEST",
+          "UNAUTHORIZED",
+          "PAYMENT_REQUIRED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "METHOD_NOT_ALLOWED",
+          "NOT_ACCEPTABLE",
+          "PROXY_AUTHENTICATION_REQUIRED",
+          "REQUEST_TIMEOUT",
+          "CONFLICT",
+          "GONE",
+          "LENGTH_REQUIRED",
+          "PRECONDITION_FAILED",
+          "REQUEST_ENTITY_TOO_LARGE",
+          "REQUEST_URI_TOO_LONG",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "REQUESTED_RANGE_NOT_SATISFIABLE",
+          "EXPECTATION_FAILED",
+          "I_AM_A_TEAPOT",
+          "ENHANCE_YOUR_CALM",
+          "MISDIRECTED_REQUEST",
+          "UNPROCESSABLE_ENTITY",
+          "LOCKED",
+          "FAILED_DEPENDENCY",
+          "TOO_EARLY",
+          "UPGRADE_REQUIRED",
+          "PRECONDITION_REQUIRED",
+          "TOO_MANY_REQUESTS",
+          "REQUEST_HEADER_FIELDS_TOO_LARGE",
+          "NO_RESPONSE",
+          "BLOCKED_BY_WINDOWS_PARENTAL_CONTROLS",
+          "UNAVAILABLE_FOR_LEGAL_REASONS",
+          "REQUEST_HEADER_TOO_LARGE",
+          "INTERNAL_SERVER_ERROR",
+          "NOT_IMPLEMENTED",
+          "BAD_GATEWAY",
+          "SERVICE_UNAVAILABLE",
+          "GATEWAY_TIMEOUT",
+          "HTTP_VERSION_NOT_SUPPORTED",
+          "VARIANT_ALSO_NEGOTIATES",
+          "INSUFFICIENT_STORAGE",
+          "LOOP_DETECTED",
+          "BANDWIDTH_LIMIT_EXCEEDED",
+          "NOT_EXTENDED",
+          "NETWORK_AUTHENTICATION_REQUIRED",
+          "CONNECTION_TIMED_OUT"
+        ]
+      },
+      "ValueSet.ValueSetSettings": {
+        "properties": {
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "approvalRequired": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemCompareResult.CodeSystemCompareResultDiffItem": {
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "designations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "properties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionCardinality": {
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "CodeName": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ]
+      },
+      "PageContentHistoryItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "spaceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "pageId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "pageContentId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "UcumVersion": {
+        "properties": {
+          "version": {
+            "description": "The version of the UCUM specification",
+            "example": "2.2",
+            "type": "string"
+          },
+          "releaseDate": {
+            "description": "The release date of the UCUM specification",
+            "example": "2024-06-16T21:00:00.000+00:00",
+            "type": "string"
+          }
+        },
+        "description": "A UCUM version",
+        "type": "object"
+      },
+      "Copyright": {
+        "properties": {
+          "jurisdiction": {
+            "type": "string"
+          },
+          "holder": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetVersion": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MapSetVersionReference"
+          },
+          {
+            "$ref": "#/components/schemas/VersionReference_MapSetVersionReference_"
+          },
+          {
+            "properties": {
+              "statistics": {
+                "$ref": "#/components/schemas/MapSetVersion.MapSetVersionStatistics"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "associations": {
+                "items": {
+                  "$ref": "#/components/schemas/MapSetAssociation"
+                },
+                "type": "array"
+              },
+              "identifiers": {
+                "items": {
+                  "$ref": "#/components/schemas/Identifier"
+                },
+                "type": "array"
+              },
+              "supportedLanguages": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "algorithm": {
+                "type": "string"
+              },
+              "releaseDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "scope": {
+                "$ref": "#/components/schemas/MapSetVersion.MapSetVersionScope"
+              },
+              "mapSet": {
+                "type": "string"
+              },
+              "preferredLanguage": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "expirationDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        ]
+      },
+      "SnomedAuthoringStatsResponse": {
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "primitive": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "conceptId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetVersion.MapSetVersionScope": {
+        "properties": {
+          "sourceValueSet": {
+            "$ref": "#/components/schemas/MapSetVersion.MapSetResourceReference"
+          },
+          "targetCodeSystems": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetVersion.MapSetResourceReference"
+            },
+            "type": "array"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "sourceCodeSystems": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetVersion.MapSetResourceReference"
+            },
+            "type": "array"
+          },
+          "targetValueSet": {
+            "$ref": "#/components/schemas/MapSetVersion.MapSetResourceReference"
+          }
+        },
+        "type": "object"
+      },
+      "UniqueResource_UniqueResource_": {
+        "properties": {
+          "id": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_StructureDefinition_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StructureDefinition"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionValue": {
+        "properties": {
+          "usage": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "behaviour": {
+            "type": "string"
+          },
+          "multipleResultsAllowed": {
+            "type": "boolean"
+          },
+          "valueSet": {
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationDefinitionValue.ObservationDefinitionValueItem"
+            },
+            "type": "array"
+          },
+          "expression": {
+            "type": "string"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/ObservationDefinitionUnit"
+          }
+        },
+        "type": "object"
+      },
+      "MapSetController.MapSetVersionDuplicateRequest": {
+        "properties": {
+          "mapSet": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ObservationDefinitionProtocol.ObservationDefinitionProtocolValueConcept": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ImplementationGuidePage": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "$ref": "#/components/schemas/ImplementationGuideGroup"
+          },
+          "space": {
+            "$ref": "#/components/schemas/CodeName"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedConcept.SnomedRelationship": {
+        "properties": {
+          "groupId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "destinationId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SnomedConcept"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "effectiveTime": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/SnomedConcept"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "released": {
+            "type": "boolean"
+          },
+          "relationshipId": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageComment": {
+        "properties": {
+          "comment": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/PageComment.PageCommentOptions"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "text": {
+            "type": "string"
+          },
+          "replies": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "pageContentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdBy": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "comment",
+          "pageContentId"
+        ]
+      },
+      "PageContent": {
+        "properties": {
+          "spaceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pageId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "modifiedBy": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetRuleExpandRequest": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ValueSetExpandRequest"
+          },
+          {
+            "properties": {
+              "rule": {
+                "$ref": "#/components/schemas/ValueSetVersionRuleSet.ValueSetVersionRule"
+              },
+              "inactiveConcepts": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "VersionReference_CodeSystemVersionReference_": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageComment.PageCommentOptions": {
+        "properties": {
+          "lineNumber": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "type": "object"
+      },
+      "UniqueResource_ValueSet_": {
+        "properties": {
+          "id": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "FileAnalysisResponse.FileAnalysisColumn": {
+        "properties": {
+          "columnType": {
+            "type": "string"
+          },
+          "hasValues": {
+            "type": "boolean"
+          },
+          "columnName": {
+            "type": "string"
+          },
+          "columnTypeFormat": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TransformationDefinitionController.ParseResponse": {
+        "properties": {
+          "json": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "json"
+        ]
+      },
+      "MapSetTransactionRequest": {
+        "properties": {
+          "mapSet": {
+            "$ref": "#/components/schemas/MapSet"
+          },
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetProperty"
+            },
+            "type": "array"
+          },
+          "associations": {
+            "items": {
+              "$ref": "#/components/schemas/MapSetAssociation"
+            },
+            "type": "array"
+          },
+          "version": {
+            "$ref": "#/components/schemas/MapSetVersion"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedCodeSystem": {
+        "properties": {
+          "branchPath": {
+            "type": "string"
+          },
+          "shortName": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedCodeSystem.SnomedCodeSystemVersion"
+            },
+            "type": "array"
+          },
+          "dependantVersionEffectiveTime": {
+            "type": "string"
+          },
+          "languages": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/SnomedCodeSystem.SnomedCodeSystemModule"
+            },
+            "type": "array"
+          },
+          "latestVersion": {
+            "$ref": "#/components/schemas/SnomedCodeSystem.SnomedCodeSystemVersion"
+          },
+          "dailyBuildAvailable": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemEntity": {
+        "properties": {
+          "codeSystem": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemEntityVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SpaceGithubService.SpaceGithubAuthResult": {
+        "properties": {
+          "redirectUrl": {
+            "type": "string"
+          },
+          "isAuthenticated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "isAuthenticated",
+          "redirectUrl"
+        ]
+      },
+      "CodeSystemController.CodeSystemConceptPropertyPropagationRequest": {
+        "properties": {
+          "targetConceptIds": {
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "UniqueResource_ImplementationGuide_": {
+        "properties": {
+          "id": {
+            "pattern": "[A-Za-z0-9\\-\\.]{1,64}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RelatedArtifactRequest": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ]
+      },
+      "ConceptSnapshot.SnapshotCoding": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "system": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "display",
+          "system",
+          "version"
+        ]
+      },
+      "QueryResult_NamingSystem_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/NamingSystem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "QueryResult_CodeSystemEntityVersion_": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/QueryResult.SearchResultMeta"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemEntityVersion"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnomedDescriptionItemResponse.SnomedBuckets": {
+        "properties": {
+          "membership": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "bucketConcepts": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SnomedConcept"
+            }
+          },
+          "semanticTags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "module": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "languageNames": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "MapSetProperty": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PropertyReference"
+          },
+          {
+            "properties": {
+              "rule": {
+                "$ref": "#/components/schemas/EntityPropertyRule"
+              },
+              "description": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "definedEntityPropertyId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "mapSet": {
+                "type": "string"
+              },
+              "orderNumber": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "status": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "Package": {
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "spaceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemTransactionRequest": {
+        "properties": {
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/EntityProperty"
+            },
+            "type": "array"
+          },
+          "version": {
+            "$ref": "#/components/schemas/CodeSystemVersion"
+          },
+          "codeSystem": {
+            "$ref": "#/components/schemas/CodeSystem"
+          },
+          "valueSet": {
+            "$ref": "#/components/schemas/ValueSetTransactionRequest"
+          }
+        },
+        "type": "object"
+      },
+      "ValueSetTransactionRequest": {
+        "properties": {
+          "version": {
+            "$ref": "#/components/schemas/ValueSetVersion"
+          },
+          "valueSet": {
+            "$ref": "#/components/schemas/ValueSet"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemEntityPropertySummary": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSystemEntityPropertySummary.CodeSystemEntityPropertySummaryItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ]
+      },
+      "Template": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "contents": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateContent"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CodeSystemUniquenessValidatorRequest": {
+        "properties": {
+          "ignoreEmptyProperties": {
+            "type": "boolean"
+          },
+          "properties": {
+            "type": "boolean"
+          },
+          "versionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "designations": {
+            "type": "boolean"
+          },
+          "codeSystem": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DastaSearchParamsPrehled": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QueryParams"
+          },
+          {
+            "properties": {
+              "idSadyDs": {
+                "type": "string"
+              },
+              "idSadyUzis": {
+                "type": "string"
+              },
+              "vystup": {
+                "$ref": "#/components/schemas/VystupEnum"
+              },
+              "ciselniky": {
+                "type": "string"
+              },
+              "idSadyNclp": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "ValueSet",
+      "description": "ValueSet Resource Interactions"
+    },
+    {
+      "name": "CodeSystem",
+      "description": "CodeSystem Resource Interactions"
+    },
+    {
+      "name": "ConceptMap",
+      "description": "ConceptMap Resource Interactions"
+    }
+  ]
+}

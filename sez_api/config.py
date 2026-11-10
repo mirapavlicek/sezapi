@@ -157,11 +157,24 @@ PEER_URLS: list[str] = [
 # SIMULACE (in-memory engine + builder request obálek). Když jsou nakonfigurovány
 # SUKL_ERECEPT_ENDPOINT + SUKL_REG_ID (+ volitelně certifikát), přepne se na ŽIVÉ volání.
 #
-# DLP (Databáze léčivých přípravků) jsou VEŘEJNÁ otevřená data (opendata.sukl.cz),
-# napojují se reálně bez certifikátu.
+# DLP (Databáze léčivých přípravků) jsou VEŘEJNÁ otevřená data
+# (opendata.sukl.gov.cz – od 23. 10. 2026 výhradně na této adrese, původní
+# opendata.sukl.cz jen přesměrovává), napojují se reálně bez certifikátu.
+#
+# Termíny SÚKL (stav k 10. 11. 2026):
+#   * eRecept – „staré“ endpointy se vypínají 30. 11. 2026; kdo volá živě,
+#     musí mít v SUKL_ERECEPT_ENDPOINT(_TEST) nové URL z dokumentace SÚKL
+#     (SOAP a struktura volání se nemění).
+#   * ePoukaz – od 1. 12. 2026 platí jen verze rozhraní 202605A; verze
+#     202601A, 202601B a 202604A se k 30. 11. 2026 vypínají.
 
 SUKL_ENABLED = _env_bool("SUKL_ENABLED", True)
 SUKL_INTERFACE_VERSION = env("SUKL_INTERFACE_VERSION", "202501A")
+# ePoukaz má vlastní číslování verzí rozhraní (od 1. 12. 2026 jen 202605A).
+SUKL_EPOUKAZ_INTERFACE_VERSION = env("SUKL_EPOUKAZ_INTERFACE_VERSION", "202605A")
+SUKL_EPOUKAZ_VERZE_VYPINANE = ("202601A", "202601B", "202604A")
+SUKL_EPOUKAZ_VYPNUTI_STARYCH = "2026-11-30"
+SUKL_ERECEPT_VYPNUTI_STARYCH_ENDPOINTU = "2026-11-30"
 # Textová identifikace výrobce SW (posílá se v hlavičce eRecept requestu).
 SUKL_VYROBCE = env("SUKL_VYROBCE", "SEZ API Web (mirapavlicek/sezapi)")
 # Registrační ID přidělené SÚKL (12 znaků eRecept / 9 znaků ePoukaz). Prázdné = simulace.
@@ -177,10 +190,13 @@ SUKL_CERT_PASSWORD = env("SUKL_CERT_PASSWORD", "")
 # takže pevná URL po každé aktualizaci zastará. Výchozí "auto" znamená, že se
 # aktuální odkaz najde v katalogu; prázdná hodnota vypne živé načítání (vzorky).
 SUKL_DLP_URL = env("SUKL_DLP_URL", "auto")
-SUKL_DLP_KATALOG = env(
-    "SUKL_DLP_KATALOG",
-    "https://opendata.sukl.cz/?q=katalog/databaze-lecivych-pripravku-dlp",
+# Katalog: stará adresa opendata.sukl.cz/?q=katalog/… po přesunu portálu
+# (23. 10. 2026) odkaz na balík neobsahuje – stránka datové sady je nově zde.
+SUKL_DLP_KATALOG_VYCHOZI = (
+    "https://opendata.sukl.gov.cz/katalog-otevrenych-dat/"
+    "databaze-lecivych-pripravku-dlp"
 )
+SUKL_DLP_KATALOG = env("SUKL_DLP_KATALOG", SUKL_DLP_KATALOG_VYCHOZI)
 SUKL_DLP_CACHE_DIR = env("SUKL_DLP_CACHE_DIR", "/tmp/sukl_dlp")
 
 
@@ -624,7 +640,7 @@ UZIS_LUZKA_CISELNIKY = {
         {"kod": "L37", "nazev": "rehabilitační a fyzikální medicína"},
         {"kod": "L41", "nazev": "urgentní medicína"},
         {"kod": "L43", "nazev": "vnitřní lékařství"},
-        {"kod": "N23", "nazev": "intenzívní medicína"},
+        {"kod": "N23", "nazev": "intenzivní medicína"},
         {"kod": "N33", "nazev": "neonatologie"},
         {"kod": "N39", "nazev": "paliativní medicína"},
     ],

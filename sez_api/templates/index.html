@@ -7396,9 +7396,18 @@ Do ##class(SEZ.IROP.VolaniLog).Vypis("TS-TECH-4")   ; debug log volání</pre>
           léčivých přípravků (DLP)</strong>.
           <div style="margin-top:6px;font-size:12px;color:var(--fg3)">
             eRecept je samostatný systém SÚKL (SOAP, verze <span id="suklVerzeInline">202501A</span>,
+            ePoukaz <span id="suklEpoukazVerzeInline">202605A</span>,
             <a href="https://epreskripce.gov.cz" target="_blank" style="color:var(--accent)">epreskripce.gov.cz</a>)
             a vyžaduje registraci SW u SÚKL + certifikát. Bez těchto přístupů běží v <strong>režimu SIMULACE</strong>.
             DLP jsou <strong>veřejná otevřená data</strong> a fungují reálně (offline fallback = vzorky).
+          </div>
+          <div class="rev-diff" style="margin-top:8px;font-size:12px;line-height:1.7">
+            <span class="rev-tag zmena">Revize 10. 11. 2026</span>
+            <strong>Otevřená data DLP:</strong> <span class="rev-old">opendata.sukl.cz/?q=katalog/…</span> →
+            <span class="rev-new">opendata.sukl.gov.cz/katalog-otevrenych-dat/…</span> (od 23. 10. 2026; stará adresa už balík nenabízí, aktuální balík DLP20261027 platí 1.–30. 11. 2026).<br>
+            <strong>ePoukaz:</strong> verze rozhraní <span class="rev-old">202601A, 202601B, 202604A</span> →
+            <span class="rev-new">jen 202605A od 1. 12. 2026</span> (starší se vypínají 30. 11. 2026).<br>
+            <strong>eRecept:</strong> SÚKL prodloužil termín vypnutí „starých“ endpointů <span class="rev-new">do 30. 11. 2026</span>; živé napojení musí mířit na nové URL z dokumentace SÚKL (SOAP ani struktura volání se nemění).
           </div>
         </div>
       </div>
@@ -18908,6 +18917,7 @@ async function suklInit() {
   const ver = st.sukl_interface_version || '202501A';
   const vb = document.getElementById('suklVerzeBadge'); if (vb) vb.textContent = 'rozhraní ' + ver;
   const vi = document.getElementById('suklVerzeInline'); if (vi) vi.textContent = ver;
+  const ve = document.getElementById('suklEpoukazVerzeInline'); if (ve && st.sukl_epoukaz_interface_version) ve.textContent = st.sukl_epoukaz_interface_version;
   suklPatientChips();
   suklRenderRecent();
 }
@@ -18937,7 +18947,7 @@ async function suklDlpHledat() {
   const r = await api('GET', '/api/sukl/dlp/hledat?' + qs.toString());
   showResult('suklDlpResult', r);
   const src = document.getElementById('suklDlpSource');
-  if (src) src.textContent = 'zdroj: ' + (r?.data?.zdroj === 'opendata' ? 'opendata.sukl.cz' : 'vzorky (offline)') + ' · nalezeno ' + (r?.data?.pocet || 0);
+  if (src) src.textContent = 'zdroj: ' + (r?.data?.zdroj === 'opendata' ? 'opendata.sukl.gov.cz' : 'vzorky (offline)') + ' · nalezeno ' + (r?.data?.pocet || 0);
   const box = document.getElementById('suklDlpTable');
   const rows = r?.data?.vysledky || [];
   if (!rows.length) { box.style.display = 'none'; return; }
