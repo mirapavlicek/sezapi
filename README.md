@@ -156,6 +156,17 @@ git pull
 sudo ./deploy/install.sh
 ```
 
+#### Ověření po nasazení
+
+```bash
+python3 deploy/overeni.py                          # http://127.0.0.1:8004
+python3 deploy/overeni.py http://10.84.7.146:8004  # jiný server
+```
+
+Skript zkontroluje běžící verzi proti `pyproject.toml`, dashboard, pravidla KRP,
+katalogy SZZ a eŽádanek a validaci zpráv eZD. Bránu NCEZ nevolá a neposílá
+žádné údaje pacienta. Návratový kód 0 znamená, že vše prošlo.
+
 ---
 
 ## Instalace (stručný přehled)
