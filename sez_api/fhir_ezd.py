@@ -10,15 +10,22 @@ splnění IROP/NPO):
 
 Prioritní kategorie a závazné technické standardy (HL7 CZ IG):
 
-  ==================== ===================================== ==============
-  Kategorie eZD        Implementation Guide                  Ověřená verze
-  ==================== ===================================== ==============
-  Pacientský souhrn    https://build.fhir.org/ig/HL7-cz/ps/     0.0.1
-  Propouštěcí zpráva   https://build.fhir.org/ig/HL7-cz/hdr/    0.1.0
-  Zpráva z obrazového  https://build.fhir.org/ig/HL7-cz/img/    0.1.0-ballot
+  ==================== ======================================== ===============
+  Kategorie eZD        Implementation Guide                     Ověřená verze
+  ==================== ======================================== ===============
+  Pacientský souhrn    https://build.fhir.org/ig/HL7-cz/ps/     0.0.1 (CI)
+  Propouštěcí zpráva   https://build.fhir.org/ig/HL7-cz/hdr/    0.1.0 (CI 21. 9. 2026)
+  Zpráva z obrazového  https://ig.ezdravi.gov.cz/img/           1.0.0 (portál)
   vyšetření
-  Zpráva o výjezdu ZZS https://build.fhir.org/ig/HL7-cz/cz-ems/ 0.0.2
-  ==================== ===================================== ==============
+  Zpráva o výjezdu ZZS https://build.fhir.org/ig/HL7-cz/cz-ems/ 0.1.0 (CI 5. 11. 2026)
+  Laboratorní zpráva   https://ig.ezdravi.gov.cz/lab/           1.0.0 (portál)
+  ==================== ======================================== ===============
+
+Zdroj verzí (revize 10. 11. 2026): oficiální portál https://ig.ezdravi.gov.cz/
+je dle wiki MZ ČR (3.–4. 11. 2026) závazným místem publikace; vystavuje
+img 1.0.0 a lab 1.0.0. PS, HDR a EMS na portálu nejsou – platí pro ně
+CI build (build.fhir.org). Rozdíly proti předchozí verzi každé kategorie
+nese klíč ``zmeny_verze`` (zobrazuje je GUI builder zpráv).
 
 Legislativní rámec: vyhláška č. 444/2024 Sb., o zdravotnické dokumentaci
 (příloha č. 2 – pacientský souhrn; příloha č. 1 bod 4 – propouštěcí zpráva;
@@ -42,8 +49,10 @@ Poskytuje:
 from __future__ import annotations
 
 import base64
+import re
 import uuid
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 # ---------------------------------------------------------------------------
 # Konstanty dle HL7 CZ IG
@@ -55,6 +64,30 @@ KRZPID_SYSTEM = "https://ncez.mzcr.cz/fhir/sid/krzpid"    # zdravotnický pracov
 ICO_SYSTEM = "https://ncez.mzcr.cz/fhir/sid/ico"          # organizace (IČO)
 PRESENTED_FORM_EXT = "https://hl7.cz/fhir/core/StructureDefinition/presentedForm"
 CZ_PATIENT_PROFILE = "https://hl7.cz/fhir/core/StructureDefinition/cz-patient-core"
+
+# cz-ems 0.1.0 (CI build 5. 11. 2026): časové body výjezdu (A.2.2) jako
+# samostatné Observation; invariant ``mission-time-required`` vyžaduje
+# u dokumentu ve stavu final/amended body 02, 03, 04, 05 a 07, pokud
+# dokument nese sekci časové osy (LOINC 67667-6).
+EMS_CASOVY_BOD_SYSTEM = ("https://ncez.mzcr.cz/terminology/CodeSystem/"
+                         "ems-mission-time-point-cs")
+EMS_CASOVE_BODY = {
+    "01": "Oznámení události",
+    "02": "Výzva",
+    "03": "Výjezd",
+    "04": "Příjezd na místo události",
+    "05": "Odjezd z místa události",
+    "06": "Příjezd do místa předání",
+    "07": "Předání pacienta",
+    "08": "Ukončení výjezdu",
+}
+EMS_CASOVE_BODY_POVINNE = ("02", "03", "04", "05", "07")
+EMS_TIMELINE_LOINC = "67667-6"
+EMS_OBSERVATION_CAS_PROFILE = ("https://hl7.cz/fhir/cz-ems/StructureDefinition/"
+                               "cz-observation-mission-time-ems")
+EMS_ENCOUNTER_PROFILE = "https://hl7.cz/fhir/cz-ems/StructureDefinition/cz-encounter-ems"
+EEHRXF_KATEGORIE_SYSTEM = ("http://hl7.eu/fhir/health-data-api/CodeSystem/"
+                           "eehrxf-document-priority-category-cs")
 
 # Minimální validní jednostránkové PDF (placeholder za PDF/A vizuál L1;
 # reálný SUT dodává svou vizuální podobu dokumentu).
@@ -134,6 +167,10 @@ EZD_KATEGORIE = {
         "nazev": "Propouštěcí zpráva",
         "ig": "hl7.fhir.cz.hdr",
         "ig_verze": "0.1.0",
+        # CI build 2026-09-21: rodič composition-cz-core|1.1.0 → identifier
+        # 1..1, category 1..* se slice document-category 1..1
+        "ig_build": "2026-09-21",
+        "ig_zdroj": "CI build",
         "ig_url": "https://build.fhir.org/ig/HL7-cz/hdr/",
         "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 1 bod 4",
         "bundle_profile": "https://hl7.cz/fhir/hdr/StructureDefinition/cz-bundle-hdr",
@@ -148,12 +185,23 @@ EZD_KATEGORIE = {
         # nikoli 18842-5 (Discharge summary) používaný v číselníku DÚ.
         "type_coding": {"system": LOINC, "code": "34105-7",
                          "display": "Hospital Discharge summary"},
-        "category_codings": [],
+        # category:document-category 1..1 (required binding na ValueSet
+        # document-category; 11503-0 = Lékařské záznamy)
+        "category_codings": [[{"system": LOINC, "code": "11503-0"}]],
         "presented_form_required": True,
         "encounter_required": True,   # Composition.encounter 1..1
         "language_required": False,
-        "identifier_required": False,
+        "identifier_required": True,  # Composition.identifier 1..1
         "confidentiality_required": False,
+        "zmeny_verze": {
+            "z": "0.1.0 (build 10. 7. 2026)", "na": "0.1.0 (build 21. 9. 2026)",
+            "polozky": [
+                {"typ": "zmena", "prvek": "Composition.identifier",
+                 "bylo": "0..1", "je": "1..1 (dědí z composition-cz-core 1.1.0)"},
+                {"typ": "nove", "prvek": "Composition.category:document-category",
+                 "bylo": "bez omezení", "je": "1..1, LOINC 11503-0 (Lékařské záznamy)"},
+            ],
+        },
         # sectionHospitalCourse 1..1 (LOINC 8648-8)
         "required_sections": [
             {"slice": "sectionHospitalCourse", "code": "8648-8",
@@ -189,8 +237,12 @@ EZD_KATEGORIE = {
     "obrazove-vysetreni": {
         "nazev": "Zpráva z obrazového vyšetření",
         "ig": "hl7.fhir.cz.img",
-        "ig_verze": "0.1.0-ballot",
-        "ig_url": "https://build.fhir.org/ig/HL7-cz/img/",
+        "ig_verze": "1.0.0",
+        # Publikováno 5. 8. 2026 na portálu ig.ezdravi.gov.cz (CI cesta
+        # build.fhir.org/ig/HL7-cz/img/ vrací 404)
+        "ig_build": "2026-08-05",
+        "ig_zdroj": "portál ig.ezdravi.gov.cz",
+        "ig_url": "https://ig.ezdravi.gov.cz/img/",
         "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 1 bod 3C",
         "bundle_profile": "https://hl7.cz/fhir/img/StructureDefinition/cz-bundle-imaging",
         "composition_profile": "https://hl7.cz/fhir/img/StructureDefinition/cz-composition-imaging",
@@ -198,20 +250,35 @@ EZD_KATEGORIE = {
         # patternu); 18748-4 = Diagnostic imaging study
         "type_coding": {"system": LOINC, "code": "18748-4",
                          "display": "Diagnostic imaging study"},
-        # Composition.category min=3: document-category + imaging-report
-        # (85430-7) + eEHRxF Medical-Imaging
+        # Composition.category 2..* (slicing open): imaging-report (85430-7)
+        # 1..1 + eEHRxF Medical-Imaging 1..1; diagnostic-service je 0..1
         "category_codings": [
-            [{"system": LOINC, "code": "18748-4"}],  # document-category slice
             [{"system": LOINC, "code": "85430-7"}],  # imaging-report slice
-            [{"system": "http://hl7.eu/fhir/health-data-api/CodeSystem/"
-                        "eehrxf-document-priority-category-cs",
-              "code": "Medical-Imaging"}],
+            [{"system": EEHRXF_KATEGORIE_SYSTEM,
+              "code": "Medical-Imaging"}],           # imaging slice
         ],
         "presented_form_required": False,
         "encounter_required": False,
-        "language_required": True,        # Composition.language 1..1
+        # IG 1.0.0: language i confidentiality jsou 0..1 – generátor je
+        # posílá dál (shodně s příklady IG), validace je bere jako výhradu
+        "language_required": False,
+        "language_recommended": True,
         "identifier_required": True,      # Composition.identifier 1..1
-        "confidentiality_required": True,  # Composition.confidentiality 1..1
+        "confidentiality_required": False,
+        "confidentiality_recommended": True,
+        "zmeny_verze": {
+            "z": "0.1.0-ballot", "na": "1.0.0",
+            "polozky": [
+                {"typ": "zmena", "prvek": "Verze a místo publikace",
+                 "bylo": "0.1.0-ballot, build.fhir.org/ig/HL7-cz/img/",
+                 "je": "1.0.0 (5. 8. 2026), ig.ezdravi.gov.cz/img/"},
+                {"typ": "zmena", "prvek": "Composition.category",
+                 "bylo": "3 povinné (vč. 18748-4)",
+                 "je": "2..*: 85430-7 + Medical-Imaging"},
+                {"typ": "zmena", "prvek": "Composition.language, confidentiality",
+                 "bylo": "1..1 (chyba při absenci)", "je": "0..1 (jen výhrada)"},
+            ],
+        },
         # section min=4; povinné slice: imagingstudy/order/history/procedure
         "required_sections": [
             {"slice": "imagingstudy", "code": "18726-0",
@@ -237,7 +304,11 @@ EZD_KATEGORIE = {
     "vyjezd-zzs": {
         "nazev": "Zpráva o výjezdu ZZS",
         "ig": "hl7.fhir.cz.ems",
-        "ig_verze": "0.0.2",
+        "ig_verze": "0.1.0",
+        # CI build 2026-11-05 (22 commitů 29. 10.–5. 11. 2026); na portálu
+        # ig.ezdravi.gov.cz ani v registru balíčků IG zatím není
+        "ig_build": "2026-11-05",
+        "ig_zdroj": "CI build",
         "ig_url": "https://build.fhir.org/ig/HL7-cz/cz-ems/",
         "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 1 bod 6B",
         "bundle_profile": "https://hl7.cz/fhir/cz-ems/StructureDefinition/cz-bundle-ems",
@@ -248,21 +319,31 @@ EZD_KATEGORIE = {
         "presented_form_required": True,
         "encounter_required": False,
         "language_required": False,
-        "identifier_required": False,
+        "identifier_required": True,   # 0.1.0: rodič composition-cz-core → 1..1
         "confidentiality_required": False,
+        # invariant mission-time-required (viz EMS_CASOVE_BODY_POVINNE)
+        "mission_time_required": True,
         "required_sections": [
             {"slice": "mission", "code": "67664-3", "title": "Výjezd"},
         ],
         "min_sections": 1,
         "optional_sections": [
             {"slice": "dispatch", "code": "67660-1", "title": "Výzva / dispečink"},
-            {"slice": "timeline", "code": "67667-6", "title": "Časová osa výjezdu"},
+            {"slice": "timeline", "code": "67667-6", "title": "Časová osa výjezdu",
+             "napoveda": ("Řádek = kód časového bodu a čas, např. "
+                          "„02 2026-07-18T18:42:00+02:00“. Kódy: 01 oznámení, "
+                          "02 výzva, 03 výjezd, 04 příjezd na místo, 05 odjezd "
+                          "z místa, 06 příjezd do místa předání, 07 předání "
+                          "pacienta, 08 ukončení. Povinné (cz-ems 0.1.0): "
+                          "02, 03, 04, 05, 07.")},
             {"slice": "patientHx", "code": "11329-0", "title": "Anamnéza"},
+            {"slice": "presentIllness", "code": "10164-2", "title": "Nynější onemocnění"},
             {"slice": "allergies", "code": "48765-2", "title": "Alergie a intolerance"},
             {"slice": "alert", "code": "75310-3", "title": "Upozornění"},
             {"slice": "findings", "code": "29545-1", "title": "Nález na místě"},
             {"slice": "procedure", "code": "29554-3", "title": "Provedené výkony"},
-            {"slice": "significantProcedures", "code": "10185-7", "title": "Významné výkony"},
+            # cz-ems 0.1.0: slice significantProcedures (10185-7) odstraněn –
+            # obsah se slučuje do „Provedené výkony“ (viz section_aliases)
             {"slice": "medicalDevices", "code": "57080-4", "title": "Zdravotnické prostředky"},
             {"slice": "diagnosticSummary", "code": "11450-4", "title": "Diagnostický souhrn"},
             {"slice": "courseOfTreatment", "code": "18682-5", "title": "Průběh ošetření"},
@@ -270,36 +351,108 @@ EZD_KATEGORIE = {
             {"slice": "payers", "code": "48768-6", "title": "Plátci"},
             {"slice": "attachments", "code": "34109-9", "title": "Přílohy"},
         ],
+        "section_aliases": {"significantProcedures": "procedure"},
+        "zrusene_sekce": [
+            {"slice": "significantProcedures", "code": "10185-7",
+             "title": "Významné výkony", "chyba": False,
+             "duvod": "v cz-ems 0.1.0 už není pojmenovaný slice – použijte "
+                      "„Provedené výkony“ (29554-3)"},
+        ],
+        "zmeny_verze": {
+            "z": "0.0.2", "na": "0.1.0",
+            "polozky": [
+                {"typ": "zmena", "prvek": "Composition.identifier",
+                 "bylo": "0..1", "je": "1..1 (rodič composition-cz-core 1.1.0)"},
+                {"typ": "zruseno", "prvek": "Sekce significantProcedures (10185-7)",
+                 "bylo": "volitelná sekce", "je": "odstraněna – obsah do 29554-3"},
+                {"typ": "nove", "prvek": "Sekce presentIllness (10164-2)",
+                 "bylo": "–", "je": "volitelná sekce „Nynější onemocnění“"},
+                {"typ": "nove", "prvek": "Invariant mission-time-required",
+                 "bylo": "časová osa jen textem",
+                 "je": "u final/amended musí sekce 67667-6 odkazovat "
+                       "Observation s časy bodů 02, 03, 04, 05 a 07"},
+            ],
+        },
         "du_typ_kod": "67796-3",
     },
     "laboratorni-vysetreni": {
         "nazev": "Laboratorní zpráva",
         "ig": "hl7.fhir.cz.lab",
-        "ig_verze": "0.5.0",
-        "ig_url": "https://build.fhir.org/ig/HL7-cz/cz-lab/",
+        "ig_verze": "1.0.0",
+        # Publikováno 14. 8. 2026 na portálu ig.ezdravi.gov.cz; CI build
+        # (build.fhir.org/ig/HL7-cz/cz-lab/) zůstává na 0.5.0 ze 4. 8. 2026
+        "ig_build": "2026-08-14",
+        "ig_zdroj": "portál ig.ezdravi.gov.cz",
+        "ig_url": "https://ig.ezdravi.gov.cz/lab/",
         "legislativa": "vyhláška č. 444/2024 Sb., příloha č. 1 bod 3B",
         "bundle_profile": "https://hl7.cz/fhir/lab/StructureDefinition/cz-bundle-lab",
-        "composition_profile": "https://hl7.cz/fhir/lab/StructureDefinition/cz-composition-lab-report",
-        # Composition.type má binding na cz-lab-report-types-VS (bez fixního
-        # patternu); 11502-2 = Laboratory report
+        # IG 1.0.0 přejmenoval canonical profilu (cz-composition-lab-report →
+        # composition-cz-lab; rodič Composition-eu-lab)
+        "composition_profile": "https://hl7.cz/fhir/lab/StructureDefinition/composition-cz-lab",
+        "composition_profile_aliasy": [
+            "https://hl7.cz/fhir/lab/StructureDefinition/cz-composition-lab-report",
+        ],
+        "composition_profile_zmena": "přejmenováno v IG 1.0.0 ze 14. 8. 2026",
+        # Composition.type má preferred binding na ValueSet
+        # cz-lab-report-types; 11502-2 = Laboratory report
         "type_coding": {"system": LOINC, "code": "11502-2",
                          "display": "Laboratory report"},
-        "category_codings": [],
+        # category:documentCategory 1..1, pattern LOINC 11502-2
+        "category_codings": [[{"system": LOINC, "code": "11502-2"}]],
         "presented_form_required": False,
         "encounter_required": False,
-        "language_required": True,        # Composition.language 1..1
-        "identifier_required": False,
+        "language_required": False,       # IG 1.0.0: 0..1
+        "language_recommended": True,
+        "identifier_required": True,      # Composition.identifier 1..1
         "confidentiality_required": False,
-        # cz-composition-lab-report: section 1..*; slices attachment (77599-9)
-        # a annotations (48767-8) jsou 0..*. Laboratorní výsledky nesou
-        # DiagnosticReport + Observation (Bundle entry), zde je textová sekce.
+        # composition-cz-lab: section 1..*, kód sekce z ValueSetu
+        # cz-lab-section-codes (druh laboratorního vyšetření). Slices
+        # annotations (48767-8) a attachment (77599-9) mají v 1.0.0 max 0.
+        # Výsledky nesou DiagnosticReport + Observation (Bundle entry),
+        # zde je textová sekce; validace přijme kteroukoli sekci s kódem
+        # druhu vyšetření (``alternativy``).
         "required_sections": [
-            {"slice": "annotations", "code": "48767-8", "title": "Komentář k výsledkům"},
+            {"slice": "laboratorniNalez", "code": "26436-6",
+             "title": "Laboratorní nález",
+             "alternativy": ["18719-5", "18723-7", "18725-2", "18717-9",
+                             "18722-9", "18728-6"]},
         ],
         "min_sections": 1,
         "optional_sections": [
-            {"slice": "attachment", "code": "77599-9", "title": "Přílohy"},
+            {"slice": "biochemie", "code": "18719-5", "title": "Biochemie"},
+            {"slice": "hematologie", "code": "18723-7", "title": "Hematologie"},
+            {"slice": "mikrobiologie", "code": "18725-2", "title": "Mikrobiologie"},
+            {"slice": "transfuzni", "code": "18717-9", "title": "Transfuzní vyšetření"},
+            {"slice": "reprodukcni", "code": "18722-9", "title": "Reprodukční vyšetření"},
+            {"slice": "toxikologie", "code": "18728-6", "title": "Toxikologie"},
         ],
+        "section_aliases": {"annotations": "laboratorniNalez"},
+        "zrusene_sekce": [
+            {"slice": "annotations", "code": "48767-8",
+             "title": "Komentář k výsledkům", "chyba": True,
+             "duvod": "v cz-lab 1.0.0 má slice annotations max 0"},
+            {"slice": "attachment", "code": "77599-9",
+             "title": "Přílohy", "chyba": True,
+             "duvod": "v cz-lab 1.0.0 má slice attachment max 0"},
+        ],
+        "zmeny_verze": {
+            "z": "0.5.0", "na": "1.0.0",
+            "polozky": [
+                {"typ": "zmena", "prvek": "Composition profil (canonical)",
+                 "bylo": "…/cz-composition-lab-report",
+                 "je": "…/composition-cz-lab"},
+                {"typ": "zruseno", "prvek": "Sekce annotations (48767-8), attachment (77599-9)",
+                 "bylo": "povinná / volitelná sekce", "je": "max 0 – nesmí se posílat"},
+                {"typ": "nove", "prvek": "Sekce dle druhu vyšetření",
+                 "bylo": "–", "je": "26436-6, 18719-5, 18723-7, 18725-2, …"},
+                {"typ": "nove", "prvek": "Composition.category:documentCategory",
+                 "bylo": "bez kategorie", "je": "1..1, LOINC 11502-2"},
+                {"typ": "zmena", "prvek": "Composition.identifier",
+                 "bylo": "0..1", "je": "1..1"},
+                {"typ": "zmena", "prvek": "Composition.language",
+                 "bylo": "1..1 (chyba při absenci)", "je": "0..1 (jen výhrada)"},
+            ],
+        },
         # Bundle.entry:diagnosticReport 1..1 (povinné dle cz-bundle-lab)
         "diagnostic_report_required": True,
         "du_typ_kod": "11502-2",
@@ -328,6 +481,8 @@ def katalog_zprav() -> list[dict]:
             "nazev": meta["nazev"],
             "ig": meta["ig"],
             "ig_verze": meta["ig_verze"],
+            "ig_build": meta.get("ig_build"),
+            "ig_zdroj": meta.get("ig_zdroj", "CI build"),
             "ig_url": meta["ig_url"],
             "legislativa": meta["legislativa"],
             "composition_profile": meta["composition_profile"],
@@ -341,8 +496,13 @@ def katalog_zprav() -> list[dict]:
                 "identifier": bool(meta.get("identifier_required")),
                 "confidentiality": bool(meta.get("confidentiality_required")),
                 "diagnosticReport": bool(meta.get("diagnostic_report_required")),
+                "category": [c[0]["code"] for c in meta["category_codings"]],
+                "casoveBodyVyjezdu": (list(EMS_CASOVE_BODY_POVINNE)
+                                      if meta.get("mission_time_required") else []),
                 "min_sekci": meta.get("min_sections", 1),
             },
+            "zrusene_sekce": meta.get("zrusene_sekce", []),
+            "zmeny_verze": meta.get("zmeny_verze"),
             "sekce": sekce_katalog(kat),
         }
         for kat, meta in EZD_KATEGORIE.items()
@@ -362,6 +522,48 @@ def _section(code: str, title: str, text: str = None) -> dict:
     }
 
 
+_EMS_CAS_RE = re.compile(
+    r"^\s*(0[1-8])\s*[:=\-–]?\s*"
+    r"(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?"
+    r"(?:Z|[+-]\d{2}:?\d{2})?)(?=\s|$)")
+
+
+def ems_casove_body(radky) -> dict[str, str]:
+    """Vyčte z řádků sekce časové osy výjezdu ZZS časové body (A.2.2).
+
+    Řádek má tvar ``<kód 01–08> <datum a čas ISO 8601> [popis]``, např.
+    ``02 2026-07-18T18:42:00+02:00 výzva``. Čas bez časové zóny se bere
+    jako místní čas ČR (Europe/Prague). Ostatní řádky zůstávají jen
+    v textu sekce. Vrací ``{kód: dateTime}`` (při opakování kódu platí
+    poslední výskyt).
+    """
+    if radky is None:
+        return {}
+    if isinstance(radky, str):
+        radky = radky.splitlines()
+    body: dict[str, str] = {}
+    for radek in radky:
+        m = _EMS_CAS_RE.match(str(radek))
+        if not m:
+            continue
+        text = m.group(2).replace(" ", "T")
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        try:
+            cas = datetime.fromisoformat(text)
+        except ValueError:
+            continue
+        if cas.tzinfo is None:
+            cas = cas.replace(tzinfo=ZoneInfo("Europe/Prague"))
+        body[m.group(1)] = cas.isoformat(timespec="seconds")
+    return body
+
+
+def ems_chybejici_casove_body(body) -> list[str]:
+    """Povinné časové body (02, 03, 04, 05, 07), které v ``body`` chybí."""
+    return [k for k in EMS_CASOVE_BODY_POVINNE if k not in (body or {})]
+
+
 def minimal_pdf_base64() -> str:
     """Base64 minimálního validního PDF (placeholder za PDF/A vizuál)."""
     return base64.b64encode(_MINIMAL_PDF).decode()
@@ -374,7 +576,8 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
                      title: str = None,
                      bundle_identifier: str = None,
                      sekce: dict = None,
-                     autor: dict = None) -> dict:
+                     autor: dict = None,
+                     cislo_vyjezdu: str = None) -> dict:
     """Sestaví FHIR R4 document Bundle konformní s HL7 CZ IG (úroveň L1).
 
     ``kategorie`` je jeden z klíčů :data:`EZD_KATEGORIE`. Hlavička
@@ -386,6 +589,11 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
     doplní vždy – i bez textu, s poznámkou o nedostupnosti informace.
     Volitelné sekce se přidají jen tehdy, mají-li obsah.
     ``autor`` může nést ``{"jmeno", "prijmeni", "titul"}`` pro Practitioner.
+
+    Zpráva o výjezdu ZZS (cz-ems 0.1.0): řádky sekce ``timeline`` ve tvaru
+    ``<kód 01–08> <čas ISO 8601>`` se převedou na Observation časových bodů
+    výjezdu (viz :func:`ems_casove_body`) a sekce na ně odkáže; s nimi
+    vznikne i Encounter výjezdu s číslem ``cislo_vyjezdu``.
     """
     meta = EZD_KATEGORIE.get(kategorie)
     if meta is None:
@@ -467,6 +675,7 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
         return text or None
 
     sekce_list = []
+    sekce_timeline = None
     for s in meta["required_sections"]:
         sekce_list.append(_section(
             s["code"], s["title"],
@@ -475,6 +684,14 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
         text = _obsah(s["slice"])
         if text:
             sekce_list.append(_section(s["code"], s["title"], text))
+            if s["code"] == EMS_TIMELINE_LOINC:
+                sekce_timeline = sekce_list[-1]
+
+    casove_body = {}
+    if meta.get("mission_time_required") and sekce_timeline is not None:
+        hodnota = sekce.get("timeline")
+        casove_body = ems_casove_body(
+            hodnota if isinstance(hodnota, (list, tuple)) else str(hodnota))
 
     composition = {
         "resourceType": "Composition",
@@ -491,12 +708,13 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
     if meta["category_codings"]:
         composition["category"] = [{"coding": [dict(c) for c in codings]}
                                     for codings in meta["category_codings"]]
-    if meta.get("language_required"):
+    if meta.get("language_required") or meta.get("language_recommended"):
         composition["language"] = "cs"
     if meta.get("identifier_required"):
         composition["identifier"] = {"system": "urn:ietf:rfc:3986",
                                       "value": f"urn:uuid:{uuid.uuid4()}"}
-    if meta.get("confidentiality_required"):
+    if (meta.get("confidentiality_required")
+            or meta.get("confidentiality_recommended")):
         composition["confidentiality"] = "N"
 
     # presentedForm – vizuální podoba (PDF/A) dle L1
@@ -527,6 +745,37 @@ def build_ezd_bundle(kategorie: str, *, rid: str, autor_krzpid: str, ico: str,
         }
         composition["encounter"] = {"reference": enc_uuid}
         entries.append({"fullUrl": enc_uuid, "resource": encounter_resource})
+
+    if casove_body:
+        # cz-observation-mission-time-ems: subject 1..1, encounter 1..1
+        # (cz-encounter-ems: identifier:dispatchNumber 1..1, class EMER)
+        cislo = cislo_vyjezdu or f"VYJEZD-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:8]}"
+        composition["encounter"] = {"reference": enc_uuid}
+        entries.append({"fullUrl": enc_uuid, "resource": {
+            "resourceType": "Encounter",
+            "meta": {"profile": [EMS_ENCOUNTER_PROFILE]},
+            "identifier": [{"use": "official", "value": cislo}],
+            "status": "finished",
+            "class": {"system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                       "code": "EMER", "display": "emergency"},
+            "subject": {"reference": pat_uuid},
+            "serviceProvider": {"reference": org_uuid},
+        }})
+        odkazy = []
+        for kod in sorted(casove_body):
+            obs_uuid = f"urn:uuid:{uuid.uuid4()}"
+            odkazy.append({"reference": obs_uuid})
+            entries.append({"fullUrl": obs_uuid, "resource": {
+                "resourceType": "Observation",
+                "meta": {"profile": [EMS_OBSERVATION_CAS_PROFILE]},
+                "status": "final",
+                "code": {"coding": [{"system": EMS_CASOVY_BOD_SYSTEM, "code": kod,
+                                      "display": EMS_CASOVE_BODY[kod]}]},
+                "subject": {"reference": pat_uuid},
+                "encounter": {"reference": enc_uuid},
+                "valueDateTime": casove_body[kod],
+            }})
+        sekce_timeline["entry"] = odkazy
 
     if meta.get("diagnostic_report_required"):
         dr_resource = {
@@ -608,7 +857,14 @@ UKAZKY = {
         "sekce": {
             "mission": ["Výzva 18:42, výjezd RLP, místo: Ústí nad Labem, Hrnčířská 12"],
             "dispatch": ["Priorita 1 – bezvědomí, nedýchá (dle volajícího)"],
-            "timeline": ["18:42 výzva", "18:48 na místě", "19:15 předání na UP"],
+            "timeline": ["01 2026-07-18T18:41:00+02:00 oznámení události",
+                         "02 2026-07-18T18:42:00+02:00 výzva",
+                         "03 2026-07-18T18:43:00+02:00 výjezd",
+                         "04 2026-07-18T18:48:00+02:00 příjezd na místo události",
+                         "05 2026-07-18T19:05:00+02:00 odjezd z místa události",
+                         "06 2026-07-18T19:13:00+02:00 příjezd do místa předání",
+                         "07 2026-07-18T19:15:00+02:00 předání pacienta na UP",
+                         "08 2026-07-18T19:40:00+02:00 ukončení výjezdu"],
             "findings": ["Pacient nereagující, bez dechu, GCS 3, komorová fibrilace"],
             "procedure": ["KPR 12 min, defibrilace 3×, intubace, adrenalin 3 mg i.v."],
             "diagnosticSummary": ["I46.9 – Zástava srdce, NS (ROSC v 19:02)"],
@@ -618,10 +874,15 @@ UKAZKY = {
     "laboratorni-vysetreni": {
         "title": "Laboratorní zpráva – biochemie a KO",
         "sekce": {
-            "annotations": [
+            "laboratorniNalez": [
+                "Odběr 18. 7. 2026 07:10, žilní krev; výsledky uvolněny 18. 7. 2026 10:35",
+            ],
+            "biochemie": [
                 "Glukóza 12,4 mmol/l (ref. 3,9–5,6) – zvýšeno",
                 "HbA1c 68 mmol/mol (ref. do 42) – zvýšeno",
                 "CRP 84 mg/l (ref. do 5) – zvýšeno",
+            ],
+            "hematologie": [
                 "Leukocyty 13,8 ×10⁹/l (ref. 4,0–10,0) – zvýšeno",
             ],
         },
@@ -672,6 +933,37 @@ def detect_kategorie(bundle: dict) -> str | None:
             if any(p in profiles for p in znama):
                 return kat
     return None
+
+
+def _ems_kontrola_casu(bundle: dict, sections: list) -> list[str]:
+    """Invariant ``mission-time-required`` (cz-ems 0.1.0): sekce časové osy
+    (67667-6) musí odkazovat samostatné Observation s ``valueDateTime``
+    pro každý z bodů 02, 03, 04, 05 a 07; každá Observation nese právě
+    jeden kód časového bodu."""
+    zdroje = {e.get("fullUrl"): e.get("resource") or {}
+              for e in bundle.get("entry", []) or []}
+    chyby = []
+    for sekce in sections:
+        if not _coding_present(sekce.get("code"), LOINC, EMS_TIMELINE_LOINC):
+            continue
+        nalezene = set()
+        for odkaz in sekce.get("entry") or []:
+            res = zdroje.get((odkaz or {}).get("reference")) or {}
+            if res.get("resourceType") != "Observation" or not res.get("valueDateTime"):
+                continue
+            kody = [c.get("code") for c in (res.get("code") or {}).get("coding", []) or []
+                    if c.get("system") == EMS_CASOVY_BOD_SYSTEM]
+            if len(kody) == 1:
+                nalezene.add(str(kody[0]))
+        chybi = [k for k in EMS_CASOVE_BODY_POVINNE if k not in nalezene]
+        if chybi:
+            popis = ", ".join(f"{k} {EMS_CASOVE_BODY[k]}" for k in chybi)
+            chyby.append(
+                "Sekce časové osy výjezdu (LOINC 67667-6) neodkazuje Observation "
+                f"s časem pro povinné body: {popis} (invariant "
+                "mission-time-required, cz-ems 0.1.0; řádek sekce ve tvaru "
+                "„02 2026-07-18T18:42:00+02:00“)")
+    return chyby
 
 
 def _first_resource(bundle: dict, resource_type: str) -> dict | None:
@@ -749,8 +1041,10 @@ def validate_ezd_bundle(bundle, kategorie: str = None) -> dict:
                     warnings.append(
                         "Composition.meta.profile používá starší canonical "
                         f"{[a for a in aliasy if a in profiles][0]} – aktuální "
-                        f"je {meta['composition_profile']} (přejmenováno "
-                        "v CI buildu IG 10. 7. 2026)")
+                        f"je {meta['composition_profile']} ("
+                        + meta.get("composition_profile_zmena",
+                                   "přejmenováno v CI buildu IG 10. 7. 2026")
+                        + ")")
                 else:
                     warnings.append(
                         f"Composition.meta.profile nedeklaruje {meta['composition_profile']}")
@@ -766,10 +1060,19 @@ def validate_ezd_bundle(bundle, kategorie: str = None) -> dict:
 
             if meta.get("language_required") and not comp.get("language"):
                 errors.append("Composition.language chybí (dle IG 1..1)")
+            elif meta.get("language_recommended") and not comp.get("language"):
+                warnings.append(
+                    "Composition.language chybí (dle IG 0..1, příklady IG "
+                    "jej uvádějí)")
             if meta.get("identifier_required") and not comp.get("identifier"):
                 errors.append("Composition.identifier chybí (dle IG 1..1)")
             if meta.get("confidentiality_required") and not comp.get("confidentiality"):
                 errors.append("Composition.confidentiality chybí (dle IG 1..1)")
+            elif (meta.get("confidentiality_recommended")
+                    and not comp.get("confidentiality")):
+                warnings.append(
+                    "Composition.confidentiality chybí (dle IG 0..1, příklady "
+                    "IG jej uvádějí)")
             if meta.get("encounter_required") and not comp.get("encounter"):
                 errors.append("Composition.encounter chybí (dle IG 1..1)")
 
@@ -795,12 +1098,22 @@ def validate_ezd_bundle(bundle, kategorie: str = None) -> dict:
                     f"Composition.section má {len(sections)} sekcí, "
                     f"dle IG minimálně {meta['min_sections']}")
             for req in meta["required_sections"]:
-                found = any(_coding_present(s.get("code"), LOINC, req["code"])
-                             for s in sections)
+                kody = [req["code"], *req.get("alternativy", [])]
+                found = any(_coding_present(s.get("code"), LOINC, k)
+                             for s in sections for k in kody)
                 if not found:
                     errors.append(
                         f"Chybí povinná sekce {req['slice']} "
-                        f"(LOINC {req['code']} – {req['title']})")
+                        f"(LOINC {' / '.join(kody)} – {req['title']})")
+            for zr in meta.get("zrusene_sekce", []):
+                if any(_coding_present(s.get("code"), LOINC, zr["code"])
+                        for s in sections):
+                    zprava = (f"Sekce {zr['slice']} (LOINC {zr['code']} – "
+                              f"{zr['title']}): {zr['duvod']}")
+                    (errors if zr.get("chyba") else warnings).append(zprava)
+            if (meta.get("mission_time_required")
+                    and comp.get("status") in ("final", "amended")):
+                errors.extend(_ems_kontrola_casu(bundle, sections))
             for s in sections:
                 if not (s.get("text") or s.get("entry") or s.get("section")):
                     warnings.append(

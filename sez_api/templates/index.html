@@ -5112,11 +5112,15 @@ openssl dgst -sha256 -hex dokument.pdf</code></pre>
             <thead><tr><th>Prioritní kategorie eZD</th><th>Legislativní rámec</th><th>Technický standard (IG)</th><th>Profil Composition</th></tr></thead>
             <tbody>
               <tr><td>Pacientský souhrn</td><td>vyhl. č. 444/2024 Sb., příloha č. 2</td><td><a href="https://build.fhir.org/ig/HL7-cz/ps/" target="_blank">HL7-cz/ps</a> (0.0.1)</td><td><code>cz-composition-ps</code> (LOINC 60591-5)</td></tr>
-              <tr><td>Propouštěcí zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 4</td><td><a href="https://build.fhir.org/ig/HL7-cz/hdr/" target="_blank">HL7-cz/hdr</a> (0.1.0)</td><td><code>cz-composition-hdr</code> (LOINC 34105-7, encounter + sekce Průběh hospitalizace povinné)</td></tr>
-              <tr><td>Zpráva z obrazového vyšetření</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3C</td><td><a href="https://build.fhir.org/ig/HL7-cz/img/" target="_blank">HL7-cz/img</a> (0.1.0-ballot)</td><td><code>cz-composition-imaging</code> (3 kategorie, 4 povinné sekce, DiagnosticReport v Bundle)</td></tr>
-              <tr><td>Zpráva o výjezdu ZZS</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 6B</td><td><a href="https://build.fhir.org/ig/HL7-cz/cz-ems/" target="_blank">HL7-cz/cz-ems</a> (0.0.2)</td><td><code>cz-composition-ems</code> (LOINC 67796-3)</td></tr>
+              <tr><td>Propouštěcí zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 4</td><td><a href="https://build.fhir.org/ig/HL7-cz/hdr/" target="_blank">HL7-cz/hdr</a> (0.1.0, build <span class="rev-old">10. 7. 2026</span> → <span class="rev-new">21. 9. 2026</span>)</td><td><code>composition-cz-hdr</code> (LOINC 34105-7, encounter + sekce Průběh hospitalizace povinné; <span class="rev-new">nově identifier 1..1 a kategorie 11503-0</span>)</td></tr>
+              <tr><td>Zpráva z obrazového vyšetření</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3C</td><td><a href="https://ig.ezdravi.gov.cz/img/" target="_blank">hl7.fhir.cz.img</a> (<span class="rev-old">0.1.0-ballot</span> → <span class="rev-new">1.0.0, portál</span>)</td><td><code>cz-composition-imaging</code> (<span class="rev-old">3 kategorie</span> → <span class="rev-new">2 kategorie: 85430-7 + Medical-Imaging</span>, 4 povinné sekce, DiagnosticReport v Bundle)</td></tr>
+              <tr><td>Zpráva o výjezdu ZZS</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 6B</td><td><a href="https://build.fhir.org/ig/HL7-cz/cz-ems/" target="_blank">HL7-cz/cz-ems</a> (<span class="rev-old">0.0.2</span> → <span class="rev-new">0.1.0, build 5. 11. 2026</span>)</td><td><code>cz-composition-ems</code> (LOINC 67796-3; <span class="rev-new">identifier 1..1, časové body výjezdu 02/03/04/05/07 jako Observation</span>)</td></tr>
+              <tr><td>Laboratorní zpráva</td><td>vyhl. č. 444/2024 Sb., příl. 1 bod 3B</td><td><a href="https://ig.ezdravi.gov.cz/lab/" target="_blank">hl7.fhir.cz.lab</a> (<span class="rev-old">0.5.0</span> → <span class="rev-new">1.0.0, portál</span>)</td><td><span class="rev-old"><code>cz-composition-lab-report</code></span> → <span class="rev-new"><code>composition-cz-lab</code></span> (LOINC 11502-2; identifier 1..1, kategorie 11502-2, sekce dle druhu vyšetření)</td></tr>
             </tbody>
           </table>
+          <p style="font-size:11px;color:var(--fg3);margin:8px 0 0">
+            <span class="rev-tag zmena">Revize 10. 11. 2026</span> Závazným místem publikace IG je portál <a href="https://ig.ezdravi.gov.cz/" target="_blank" style="color:#1e40af">ig.ezdravi.gov.cz</a> (core 1.0.0, terminology 0.3.0, img 1.0.0, lab 1.0.0, order 1.0.0, img-order 1.0.0). PS, HDR a EMS na portálu nejsou – platí pro ně CI build. Podrobné rozdíly ukazuje builder v záložce Zprávy eZD.
+          </p>
         </div>
         <div class="card" style="background:linear-gradient(135deg,#f5f3ff 0%,#f8fafc 100%);border-color:#ddd6fe">
           <div class="card-title" style="color:#5b21b6">InterSystems IRIS – třídy pro testovací volání</div>
@@ -17229,9 +17233,10 @@ async function zpravyInit() {
   const el = document.getElementById('zpravyTypy');
   el.innerHTML = _zpTypy.map(t => {
     const povinnych = t.sekce.filter(s => s.povinna).length;
+    const zmena = t.zmeny_verze ? ' <span class="rev-tag zmena" title="Změna IG proti předchozí verzi">změna IG</span>' : '';
     return '<div class="zp-typ" data-kat="' + esc(t.kategorie) + '" onclick="zpravyVybrat(\'' + esc(t.kategorie) + '\')" ' +
       'style="cursor:pointer;padding:12px;border:2px solid var(--border);border-radius:8px;background:var(--bg2);transition:all .15s">' +
-      '<div style="font-weight:700;font-size:13px;margin-bottom:4px">' + esc(t.nazev) + '</div>' +
+      '<div style="font-weight:700;font-size:13px;margin-bottom:4px">' + esc(t.nazev) + zmena + '</div>' +
       '<div style="font-size:11px;color:var(--fg3);font-family:var(--mono)">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</div>' +
       '<div style="font-size:11px;color:var(--fg3);margin-top:4px">LOINC <code>' + esc(t.type_coding.code) + '</code> · ' +
       t.sekce.length + ' sekcí (' + povinnych + ' povinných)</div></div>';
@@ -17255,18 +17260,31 @@ function zpravyVybrat(kat) {
   if (p.identifier) pozadavky.push('identifier');
   if (p.confidentiality) pozadavky.push('confidentiality');
   if (p.diagnosticReport) pozadavky.push('DiagnosticReport v Bundle');
+  if ((p.category || []).length) pozadavky.push('category ' + p.category.join(' + '));
+  if ((p.casoveBodyVyjezdu || []).length) pozadavky.push('časové body výjezdu ' + p.casoveBodyVyjezdu.join(', ') + ' (je-li sekce časové osy)');
+  const tagy = { nove: 'nové', zmena: 'změna', zruseno: 'zrušeno', oprava: 'oprava' };
+  let zmeny = '';
+  if (t.zmeny_verze && (t.zmeny_verze.polozky || []).length) {
+    zmeny = '<div class="rev-diff" style="margin-top:8px;font-size:12px"><strong>Změny IG:</strong> ' +
+      '<span class="rev-old">' + esc(t.zmeny_verze.z) + '</span> → <span class="rev-new">' + esc(t.zmeny_verze.na) + '</span>' +
+      '<table class="rev-table" style="margin-top:6px"><thead><tr><th>Prvek</th><th>Bylo</th><th>Je</th></tr></thead><tbody>' +
+      t.zmeny_verze.polozky.map(z => '<tr><td><span class="rev-tag ' + esc(z.typ) + '">' + esc(tagy[z.typ] || z.typ) + '</span>' + esc(z.prvek) +
+        '</td><td><span class="rev-old">' + esc(z.bylo) + '</span></td><td><span class="rev-new">' + esc(z.je) + '</span></td></tr>').join('') +
+      '</tbody></table></div>';
+  }
   const doc = document.getElementById('zpravyDoc');
   doc.style.display = 'block';
   doc.innerHTML =
     '<div style="font-weight:700;color:#5b21b6;margin-bottom:6px">' + esc(t.nazev) + '</div>' +
-    '<strong>Standard:</strong> <a href="' + esc(t.ig_url) + '" target="_blank">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</a> · ' +
+    '<strong>Standard:</strong> <a href="' + esc(t.ig_url) + '" target="_blank">' + esc(t.ig) + ' ' + esc(t.ig_verze) + '</a>' +
+    ' <span style="color:var(--fg3)">(' + esc(t.ig_zdroj || 'CI build') + (t.ig_build ? ', ' + esc(t.ig_build) : '') + ')</span> · ' +
     '<strong>Legislativa:</strong> ' + esc(t.legislativa) + '<br>' +
     '<strong>Composition profil:</strong> <code>' + esc(t.composition_profile) + '</code><br>' +
     '<strong>Bundle profil:</strong> <code>' + esc(t.bundle_profile) + '</code><br>' +
     '<strong>Typ dokumentu:</strong> LOINC <code>' + esc(t.type_coding.code) + '</code> ' + esc(t.type_coding.display || '') +
     ' · <strong>kód pro DÚ:</strong> <code>' + esc(t.du_typ_kod) + '</code><br>' +
     '<strong>Povinné prvky profilu:</strong> ' + (pozadavky.length ? esc(pozadavky.join(', ')) : 'jen základní hlavička') +
-    ' · minimálně <strong>' + p.min_sekci + '</strong> sekcí';
+    ' · minimálně <strong>' + p.min_sekci + '</strong> sekcí' + zmeny;
   document.getElementById('zpravyFormCard').style.display = '';
   document.getElementById('zpravySekceCard').style.display = '';
   document.getElementById('zpravyVysledekCard').style.display = '';
@@ -17292,6 +17310,7 @@ function zpravyRenderSekce() {
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' + badge +
       '<strong style="font-size:12px">' + esc(s.title) + '</strong>' +
       '<code style="font-size:10px;color:var(--fg3)">LOINC ' + esc(s.code) + ' · ' + esc(s.slice) + '</code></div>' +
+      (s.napoveda ? '<div style="font-size:11px;color:#92400e;margin-bottom:4px">' + esc(s.napoveda) + '</div>' : '') +
       '<textarea data-slice="' + esc(s.slice) + '" oninput="zpravySekceInput(this)" rows="2" ' +
       'style="width:100%;font-size:12px;font-family:inherit" ' +
       'placeholder="Každý řádek = jedna položka sekce">' + esc(val) + '</textarea></div>';

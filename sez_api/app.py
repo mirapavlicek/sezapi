@@ -7642,9 +7642,12 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
     """Sestaví FHIR Bundle pro výjezdovou zprávu ZZS (LOINC 67796-3).
 
     Hlavička dle HL7 CZ EMS IG (cz-composition-ems / cz-bundle-ems, L1):
-    meta.profile, category 18682-5, presentedForm, sekce s LOINC kódy
-    dle profilu (mission 67664-3, findings 29545-1, procedure 29554-3,
-    diagnosticSummary 11450-4) + klinické zdroje (Encounter/Condition/Procedure).
+    meta.profile, identifier (cz-ems 0.1.0: 1..1), category 18682-5,
+    presentedForm, sekce s LOINC kódy dle profilu (mission 67664-3,
+    findings 29545-1, procedure 29554-3, diagnosticSummary 11450-4)
+    + klinické zdroje (Encounter/Condition/Procedure). Sekci časové osy
+    (67667-6) dokument nenese – invariant mission-time-required se tak
+    neuplatní.
     """
     ems_meta = _fhir_ezd.EZD_KATEGORIE["vyjezd-zzs"]
     comp_uuid = f"urn:uuid:{uuid.uuid4()}"
@@ -7675,6 +7678,8 @@ def _build_zzs_fhir_bundle(rid: str, autor: str, ico_zzs: str, ico_prijemce: str
             {"fullUrl": comp_uuid, "resource": {
                 "resourceType": "Composition", "status": "final",
                 "meta": {"profile": [ems_meta["composition_profile"]]},
+                "identifier": {"system": "urn:ietf:rfc:3986",
+                                "value": f"urn:uuid:{uuid.uuid4()}"},
                 "extension": [{
                     "url": _fhir_ezd.PRESENTED_FORM_EXT,
                     "valueAttachment": {"contentType": "application/pdf",
@@ -10405,6 +10410,7 @@ class ZpravaRequest(BaseModel):
     autor_data: Optional[dict] = None
     sekce: Optional[dict] = None
     pdf_base64: Optional[str] = None
+    cislo_vyjezdu: Optional[str] = None
 
 
 @app.post("/api/zpravy/nahled")
@@ -10416,7 +10422,8 @@ async def zpravy_nahled(req: ZpravaRequest):
             req.kategorie, rid=req.rid, autor_krzpid=req.autor, ico=req.ico,
             pzs_nazev=req.pzs_nazev, title=req.title,
             pacient=req.pacient, autor=req.autor_data,
-            sekce=req.sekce, pdf_base64=req.pdf_base64)
+            sekce=req.sekce, pdf_base64=req.pdf_base64,
+            cislo_vyjezdu=req.cislo_vyjezdu)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     v = _fhir_ezd.validate_ezd_bundle(bundle, kategorie=req.kategorie)
@@ -10485,7 +10492,8 @@ async def zpravy_odeslat_du(req: ZpravaRequest):
             req.kategorie, rid=req.rid, autor_krzpid=req.autor, ico=req.ico,
             pzs_nazev=req.pzs_nazev, title=req.title,
             pacient=req.pacient, autor=req.autor_data,
-            sekce=req.sekce, pdf_base64=req.pdf_base64)
+            sekce=req.sekce, pdf_base64=req.pdf_base64,
+            cislo_vyjezdu=req.cislo_vyjezdu)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 

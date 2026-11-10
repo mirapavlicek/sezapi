@@ -4,8 +4,8 @@ Metodiky testování EHR fáze I (IROP/NPO) a HL7 CZ Implementation Guides:
 
   - Pacientský souhrn        HL7-cz/ps      0.0.1   (LOINC 60591-5)
   - Propouštěcí zpráva       HL7-cz/hdr     0.1.0   (LOINC 34105-7)
-  - Zpráva z obraz. vyšetření HL7-cz/img    0.1.0-b (LOINC 18748-4)
-  - Zpráva o výjezdu ZZS     HL7-cz/cz-ems  0.0.2   (LOINC 67796-3)
+  - Zpráva z obraz. vyšetření HL7-cz/img    1.0.0   (LOINC 18748-4)
+  - Zpráva o výjezdu ZZS     HL7-cz/cz-ems  0.1.0   (LOINC 67796-3)
 
 Offline – bez síťové závislosti.
 Spuštění:  python3 -m pytest tests/test_fhir_ezd.py -v
@@ -123,10 +123,11 @@ def test_ps_presented_form_a_ips_sekce():
 def test_img_kategorie_sekce_a_diagnostic_report():
     bundle = _build("obrazove-vysetreni")
     comp = _composition(bundle)
-    assert comp["language"] == "cs", "cz-composition-imaging: language 1..1"
+    # IG 1.0.0: language a confidentiality 0..1 (generátor je posílá dál)
+    assert comp["language"] == "cs"
     assert comp.get("identifier"), "identifier 1..1"
-    assert comp.get("confidentiality"), "confidentiality 1..1"
-    assert len(comp.get("category", [])) >= 3, "category min=3"
+    assert comp.get("confidentiality")
+    assert len(comp.get("category", [])) >= 2, "category 2..*"
     cat_codes = {c["code"] for cat in comp["category"] for c in cat["coding"]}
     assert "85430-7" in cat_codes
     assert "Medical-Imaging" in cat_codes

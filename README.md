@@ -361,10 +361,27 @@ závazných standardů MZ – **pět typů zpráv**:
 | Typ zprávy | HL7 CZ IG | LOINC | Legislativa |
 |---|---|---|---|
 | Pacientský souhrn | `hl7.fhir.cz.ps` 0.0.1 | 60591-5 | vyhl. 444/2024 Sb., příl. 2 |
-| Propouštěcí zpráva | `hl7.fhir.cz.hdr` 0.1.0 | 34105-7 | příl. 1 bod 4 |
-| Zpráva z obrazového vyšetření | `hl7.fhir.cz.img` 0.1.0-ballot | 18748-4 | příl. 1 bod 3C |
-| Zpráva o výjezdu ZZS | `hl7.fhir.cz.ems` 0.0.2 | 67796-3 | příl. 1 bod 6B |
-| Laboratorní zpráva | `hl7.fhir.cz.lab` 0.5.0 | 11502-2 | příl. 1 bod 3B |
+| Propouštěcí zpráva | `hl7.fhir.cz.hdr` 0.1.0 (CI build 21. 9. 2026) | 34105-7 | příl. 1 bod 4 |
+| Zpráva z obrazového vyšetření | `hl7.fhir.cz.img` 1.0.0 (portál) | 18748-4 | příl. 1 bod 3C |
+| Zpráva o výjezdu ZZS | `hl7.fhir.cz.ems` 0.1.0 (CI build 5. 11. 2026) | 67796-3 | příl. 1 bod 6B |
+| Laboratorní zpráva | `hl7.fhir.cz.lab` 1.0.0 (portál) | 11502-2 | příl. 1 bod 3B |
+
+Verze odpovídají revizi z 10. 11. 2026. Závazným místem publikace je portál
+[ig.ezdravi.gov.cz](https://ig.ezdravi.gov.cz/); PS, HDR a EMS na něm nejsou,
+proto se u nich vychází z CI buildu. Co se proti předchozí verzi změnilo:
+
+| Typ zprávy | Bylo | Je |
+|---|---|---|
+| Propouštěcí zpráva | `identifier` 0..1, bez kategorie | `identifier` 1..1, `category` 11503-0 |
+| Obrazové vyšetření | 0.1.0-ballot, 3 povinné kategorie, `language`/`confidentiality` 1..1 | 1.0.0, 2 kategorie (85430-7 + Medical-Imaging), `language`/`confidentiality` 0..1 |
+| Výjezd ZZS | 0.0.2, `identifier` 0..1, sekce `significantProcedures`, časová osa textem | 0.1.0, `identifier` 1..1, sekce `presentIllness`, časové body 02/03/04/05/07 jako Observation |
+| Laboratorní zpráva | 0.5.0, profil `cz-composition-lab-report`, sekce `annotations`/`attachment` | 1.0.0, profil `composition-cz-lab`, sekce dle druhu vyšetření, `identifier` 1..1, `category` 11502-2 |
+
+Časová osa výjezdu ZZS se zadává po řádcích ve tvaru
+`<kód 01–08> <čas ISO 8601>`, např. `02 2026-07-18T18:42:00+02:00`.
+Builder z řádků vytvoří Observation časových bodů a Encounter výjezdu.
+Dokument ve stavu `final` se sekcí časové osy bez bodů 02, 03, 04, 05 a 07
+validací neprojde (invariant `mission-time-required`).
 
 Ovládání: vyberete typ (zobrazí se dokumentace profilu – povinné prvky,
 kanonické URL, kód pro DÚ), vyplníte údaje a sekce (povinné jsou vždy
