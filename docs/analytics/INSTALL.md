@@ -77,7 +77,7 @@ Gateway interně provede výměnu za access token vůči JSU.
 
 ```objectscript
 // V IRIS Terminal:
-Do ##class(SEZ.API.Installer).TestConnection("25488627_KrajskaZdravotniVerejnyTest", , "/certs/krajska_zdravotni.pfx", "heslo", "85cf28c4-c190-406f-bc96-f92ad25b3202")
+Do ##class(SEZ.API.Installer).TestConnection("25488627_KrajskaZdravotniVerejnyTest04", , "/certs/krajska_zdravotni.pfx", "heslo-k-pfx")
 ```
 
 ### Režim client_secret (starší, méně doporučený)
@@ -91,10 +91,11 @@ Do ##class(SEZ.API.Installer).TestConnection("VAS_CLIENT_ID", "VAS_CLIENT_SECRET
 ### Konfigurace (private_key_jwt)
 
 ```objectscript
-Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest", , "25488627")
+Set config = ##class(SEZ.API.Config).%New("25488627_KrajskaZdravotniVerejnyTest04", , "25488627")
 Set config.P12CertFile = "/certs/krajska_zdravotni.pfx"
 Set config.P12CertPassword = "heslo-k-pfx"
-Set config.CertUID = "85cf28c4-c190-406f-bc96-f92ad25b3202"
+// config.CertUID (kid) nastavte jen u certifikátu registrovaného s UID na portálu EZCA;
+// u veřejného testovacího certifikátu „test 04“ wiki UID neuvádí.
 ```
 
 ### Vyhledání pacienta podle RID

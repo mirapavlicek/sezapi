@@ -15,7 +15,7 @@ Jednoduchá .NET 9 konzolová aplikace, která:
 ```
 {
   "Jwt": {
-    "ClientId": "25488627_KrajskaZdravotniVerejnyTest",
+    "ClientId": "25488627_KrajskaZdravotniVerejnyTest04",
     "Audience": "https://jsuint-auth-t2.csez.cz/connect/token"
   },
   "Certificate": {

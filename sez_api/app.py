@@ -2317,7 +2317,7 @@ async def elp2_opravneni(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# ELP v3 – Elektronické posudky v3.0.1
+# ELP v3 – Elektronické posudky v3.0.3
 # ---------------------------------------------------------------------------
 
 @app.get("/api/elp3/ciselniky")
@@ -2626,7 +2626,7 @@ def _ez_sim_seed():
 
 def _ez_legacy_endpoint_error(endpoint_name: str) -> JSONResponse:
     return error_response(
-        f"Aktuální eŽádanky API v1.11.17 endpoint {endpoint_name} už nepublikuje. "
+        f"Aktuální eŽádanky API v1.11.25 endpoint {endpoint_name} už nepublikuje. "
         "Použijte pouze operace dostupné ve swaggeru aktuální verze.",
         410,
     )
@@ -4666,7 +4666,15 @@ async def debug_jwt():
             "KRP": {
                 "name": "Kmenový registr pacientů",
                 "base": "/krp",
-                "version": "v3.0.x (v1 vypnuto 14. 8. 2026, v1 i v2 vypnuto k 15. 9. 2026)",
+                "version": "v3.0.6 (v1 vypnuto 14. 8. 2026; o provozu v2 si zdroje odporují)",
+                "note": ("Revize 10. 11. 2026 – Standard EZ Kmenové registry 1.3 (platnost od 3. 11. 2026): "
+                         "dočasný RID = „D“ + devítimístné číslo dělitelné 13 a nedělitelné 11; hromadné "
+                         "ztotožnění nejvýše 10 000 pacientů v dávce; ve jméně a příjmení jen písmena, "
+                         "spojovník, apostrof a mezera; univerzální hledání jen v kombinacích kap. 4.5.1. "
+                         "Pravidla drží sez_api.kzr_pravidla a GET /api/krp/pravidla. Vypnutí v2: Novinky "
+                         "27. 8. 2026 je oznámily k 15. 9. 2026, plán vývoje z 3. 11. 2026 s v2 dál počítá "
+                         "a přehled dostupnosti PROD z 10. 11. 2026 vede v2.0 jako běžící – stav brány "
+                         "není z tohoto prostředí ověřen."),
                 "endpoints": [
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid", "desc": "Vyhledání pacienta podle RID"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/jmeno_prijmeni_rc", "desc": "Vyhledání podle jména a RČ"},
@@ -4680,7 +4688,7 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/mapovani_rid", "desc": "Mapování RID (aktuální ↔ historické)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_pojisteni", "desc": "Historie pojištění"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/historie_registrujicich_lekaru", "desc": "Historie registrujících lékařů"},
-                    {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/generovat/docasny_rid", "desc": "Generování dočasného RID (DRID) – pro pacienta bez zjištěné totožnosti, ne pro novorozence"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/priradit/docasny_rid", "desc": "Přiřazení DRID ke skutečnému RID"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zalozit/pacient", "desc": "Založení nového pacienta (novorozenec do 3 měsíců, cizinec)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zmenit/pacient", "desc": "Změna údajů pacienta"},
@@ -4688,8 +4696,8 @@ async def debug_jwt():
                     {"method": "POST", "path": "/krp/api/v3/pacient/slouceni/zadost", "desc": "Žádost o sloučení pacientů"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/rozdeleni/zadost", "desc": "Žádost o rozdělení pacientů"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/zruseni/zadost", "desc": "Zrušení žádosti"},
-                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost"},
-                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání (jen v2, ve v3.0.0 endpoint není; v2 vypnuto k 15. 9. 2026)"},
+                    {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/zadost", "desc": "Hromadné ztotožnění — žádost (nejvýše 10 000 pacientů v dávce)"},
+                    {"method": "POST", "path": "/krp/api/v2/pacient/ztotoznihromadne/vykonani", "desc": "Hromadné ztotožnění — vykonání (jen v2, ve v3 endpoint není; vypnutí v2 oznámeno k 15. 9. 2026)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky", "desc": "Hromadné ztotožnění — výsledky"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/ztotoznihromadne/vysledky/soubor", "desc": "Hromadné ztotožnění — výsledky (CSV soubor)"},
                     {"method": "POST", "path": "/krp/api/v3/ciselnik/country_service_context", "desc": "Číselník CountryServiceContext"},
@@ -4734,7 +4742,7 @@ async def debug_jwt():
             "KRPZS": {
                 "name": "Kmenový registr poskytovatelů zdravotních služeb",
                 "base": "/krpzs",
-                "version": "v2.0.2",
+                "version": "v2.0.4",
                 "endpoints": [
                     {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/ico", "desc": "Vyhledání poskytovatele podle IČO"},
                     {"method": "POST", "path": "/krpzs/api/v2/Poskytovatel/hledat/nazev", "desc": "Vyhledání podle názvu"},
@@ -4758,7 +4766,7 @@ async def debug_jwt():
                 "name": "Registr oprávnění",
                 "base": "/registrOpravneni",
                 "version": "v1.0.7",
-                "note": "v1.0.7 (duben 2026): rozšíření GET /Opravneni/Over o EHS osoby a opt-in/opt-out – backward compatible. Endpoint /Osoby/Opravnujici/{rid} byl v PROD dočasně odstraněn z externího API PZS.",
+                "note": "v1.0.7 (duben 2026): rozšíření GET /Opravneni/Over o EHS osoby a opt-in/opt-out – backward compatible. Endpoint /Osoby/Opravnujici/{rid} byl 20. 4. 2026 dočasně odstraněn z externího API PZS; plán vývoje z 3. 11. 2026 ho vrací do konce roku 2026 s jiným významem (osoby, které pacient po přihlášení přes NIA zastupuje). Kontrakt zatím není zveřejněn, klient metodu nemá.",
                 "endpoints": [
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Opravneni/Over", "desc": "Ověření oprávnění zdravotníka / zástupce (rozšířeno v 1.0.7)"},
                     {"method": "GET", "path": "/registrOpravneni/api/v1/Ciselniky/SluzbyEZ", "desc": "Číselník služeb eZdraví"},
@@ -4770,8 +4778,11 @@ async def debug_jwt():
             "TermX": {
                 "name": "Terminologický server (FHIR)",
                 "base": "/terminologie",
-                "version": "v1.0.5 (T2) / v1.1.0 (apio)",
-                "note": ("Gateway: /terminologie/... BEZ /fhir (dle swaggeru v1.0.5 i v1.1.0; "
+                "version": "v1.0.5 (T2 i apio; apio ji do 8. 10. 2026 vedlo jako v1.1.0)",
+                "note": ("Revize 10. 11. 2026: PROD katalog apio přejmenoval specifikaci na „Terminologie "
+                          "v1.0.5“ – cesty beze změny, $lookup a $validate-code mají navíc volitelné "
+                          "displayLanguage a useSupplement; /metadata na apio vrací 404, /manifest 200. "
+                          "Gateway: /terminologie/... BEZ /fhir (dle swaggeru v1.0.5 i v1.1.0; "
                           "legacy /terminologie/fhir po upgrade T2 vrací 406 – klient prefix "
                           "autodetekuje) | Veřejný mirror: termx-api-t2-pub.csez.cz/fhir (mTLS) "
                           "| Open API bez přihlášení: apio.csez.gov.cz/apidoc"),
@@ -4790,8 +4801,8 @@ async def debug_jwt():
                     {"method": "GET", "path": "/terminologie/CodeSystem/$lookup", "desc": "Lookup kódu v CodeSystemu"},
                     {"method": "GET", "path": "/terminologie/ConceptMap/{id}", "desc": "Mapování konceptů"},
                     {"method": "GET", "path": "/terminologie/ConceptMap/$translate", "desc": "Překlad konceptů (sourceCode/targetSystem)"},
-                    {"method": "GET", "path": "/terminologie/manifest", "desc": "Manifest obsahu serveru (v1.1.0)"},
-                    {"method": "GET", "path": "/terminologie/metadata", "desc": "FHIR capability statement"},
+                    {"method": "GET", "path": "/terminologie/manifest", "desc": "Manifest obsahu serveru (lastUpdate, effectiveDate)"},
+                    {"method": "GET", "path": "/terminologie/metadata", "desc": "FHIR capability statement (na PROD apio vrací 404)"},
                     {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/medical-document-type/$expand", "desc": "Typ zdravotního dokumentu (veřejný)"},
                     {"method": "GET", "path": TERMX_PUB_BASE + "/ValueSet/stav-zasilky/$expand", "desc": "Stav zásilky (veřejný)"},
                 ],
@@ -4799,8 +4810,8 @@ async def debug_jwt():
             "DU": {
                 "name": "Dočasné úložiště",
                 "base": "/docasneUloziste",
-                "version": "v1.11.17",
-                "note": "v1.11.17 (Popis API DÚ v1.2, 5. 6. 2026) – přidána služba ZpochybniZasilku + kapitola Notifikace; patch zpřesnění validací (BC). Akce nad zásilkou používají Id+VerzeRadku v query parametrech. DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami.",
+                "version": "v1.11.27",
+                "note": "v1.11.27 dle swaggeru brány T2 z 13. 10. 2026 (7 cest, kontrakt beze změny). Popis API DÚ v1.2 (5. 6. 2026) – přidána služba ZpochybniZasilku + kapitola Notifikace; patch zpřesnění validací (BC). Akce nad zásilkou používají Id+VerzeRadku v query parametrech. DÚ používá speciální retry s alternativními kid/x5t JWT hlavičkami.",
                 "endpoints": [
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/UlozZasilku", "desc": "Uložení nové zásilky (eZD)"},
                     {"method": "POST", "path": "/docasneUloziste/api/v1/Zasilka/VyhledejZasilku", "desc": "Vyhledání zásilek"},
@@ -4874,14 +4885,17 @@ async def debug_jwt():
             "ELP": {
                 "name": "Elektronické posudky (v1 + v2)",
                 "base": "/elektronickePosudky",
-                "version": "v1.0.7 + v2.0.9",
+                "version": "v1.0.7 + v2.0.11",
                 "note": ("Standard 2.2 (10. 4. 2026), v2.0.7+ zpřísněné validace: "
                          "datum vystavení max. 3 dny zpětně a ne v budoucnosti, "
                          "datum platnosti ne v minulosti a max. 100 let od vystavení "
                          "(2 roky pro 70+), max. 300 znaků doplňujícího textu, "
                          "PDF pouze pro platný posudek, zneplatnit může jen vystavující PZS. "
                          "v2.0.8 + 2.0.9 přidávají interní endpointy online/offline validace "
-                         "(EzKarta), nejsou v B2B PZS API."),
+                         "(EzKarta), nejsou v B2B PZS API. v2.0.11 (květen 2026): validace odbornosti "
+                         "PZS. 9. 11. 2026 (PROD): upraven formát validačních hlášek offline validace "
+                         "a přenos neplatných a zneplatněných posudků do registru řidičů – dle Novinek "
+                         "bez dopadu na funkčnost."),
                 "endpoints": [
                     {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v1)"},
                     {"method": "POST", "path": "/elektronickePosudky/api/v1/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v1)"},
@@ -4941,7 +4955,7 @@ async def debug_jwt():
             "Notifikace": {
                 "name": "Notifikační služby",
                 "base": "/notifikace",
-                "version": "v1.0.5",
+                "version": "v1.0.9",
                 "endpoints": [
                     {"method": "GET",  "path": "/notifikace/api/v1/notifikace/ping", "desc": "Ping (health check)"},
                     {"method": "POST", "path": "/notifikace/api/v1/notifikace/odeslat", "desc": "Odeslat notifikaci"},
@@ -5005,7 +5019,7 @@ async def debug_jwt():
             "EZCA2_SpravaCertifikatu": {
                 "name": "EZCA II – Správa certifikátů (NOVÁ služba)",
                 "base": "/ezca2Certifikaty",
-                "version": "v1.0.2",
+                "version": "v1.0.8",
                 "note": ("Nově oddělená samostatná služba na T2 gateway pro životní cyklus systémových "
                          "EZCA II certifikátů. Gateway prefix: /ezca2Certifikaty (dle servers[0].url v swagger). "
                          "Doporučený proces: vystavit/preregistrovat/obnovit → sledovat /stav → /stahnout. "
@@ -5040,13 +5054,14 @@ async def debug_jwt():
                 ],
             },
             "KRP_v3": {
-                "name": "KRP v3.0.0 (NOVÁ MAJOR – paralelně s v2)",
+                "name": "KRP v3.0.6 (Standard KZR 1.3)",
                 "base": "/krp",
-                "version": "v3.0.0",
+                "version": "v3.0.6",
                 "note": ("BREAKING změny: 1) Odstraněna diakritika v atributech (např. DatumNarození → DatumNarozeni). "
                          "2) Cesty používají snake_case (např. /pacient/hledat/jmeno_prijmeni_rc místo "
                          "/jmeno-prijmeni-rc). 3) MatkaNovorozence.DatumNarozeni typ změněn z date-time na date. "
-                         "Verze v2.0.2 zůstává paralelně dostupná."),
+                         "Tělo požadavků je u v2 a v3 shodné. Odběry notifikací dle swaggeru 3.0.6: "
+                         "predmet, prijemci, subjektId; zrušení přes idSubskripce."),
                 "endpoints": [
                     {"method": "POST", "path": "/krp/api/v3/ciselnik/{nazev}", "desc": "Číselník (country_service_context, druh_dokladu, pohlavi, stat, zdravotni_pojistovna)"},
                     {"method": "POST", "path": "/krp/api/v3/pacient/hledat/rid", "desc": "Hledat podle RID (POST s body)"},
@@ -5078,16 +5093,18 @@ async def debug_jwt():
                 ],
             },
             "SZZ_v2": {
-                "name": "SZZ v2.0.1 – Prevence + Screeningy (NOVÉ moduly)",
+                "name": "SZZ v2.0.7 – Prevence + Screeningy",
                 "base": "/sdilenyZdravotniZaznam",
-                "version": "v2.0.1",
+                "version": "v2.0.7",
                 "note": ("BREAKING: ze společného SZZ v1 vznikla samostatná verze v2 s oddělenými moduly: "
                          "PREVENCE (5 typů: kardiovaskulární rizika, HPV očkování, prev. prohlídky všeob. praktik / "
                          "gynekolog / PLDD) a SCREENINGY (10 typů: kolorektální karcinom TOKS, prsu mammografie/biopsie, "
                          "děložního hrdla cytologie/HPV/expertní kolposkopie, prostaty PSA/MRI, plic LDCT, "
                          "aneurysma USG). U alergií v2 odstraněno CasZjisteni z requestu/response. "
                          "U TOKS přibyl typ POCT analyzátoru. Souhrnné POST endpointy /prevence/vyhledat a /screeningy/vyhledat "
-                         "vrátí všechny záznamy pacienta podle RID. SZZ v1 zůstává paralelně dostupná."),
+                         "vrátí všechny záznamy pacienta podle RID. SZZ v1 zůstává paralelně dostupná. "
+                         "Od v2.0.4 (T2 11. 6., PROD 29. 6. 2026) dalších pět screeningů: koloskopie, "
+                         "vstupní PSA, urologické a bioptické vyšetření prostaty, pneumologické vyšetření."),
                 "endpoints": [
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v2/ciselniky", "desc": "Číselníky v2"},
                     {"method": "GET",  "path": "/sdilenyZdravotniZaznam/api/v2/ciselniky/{kod}/polozky", "desc": "Položky číselníku v2"},
@@ -5108,20 +5125,55 @@ async def debug_jwt():
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPrsuBiopsie", "desc": "SCREENING: karcinom prsu – biopsie"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPlicLdct", "desc": "SCREENING: karcinom plic – LDCT"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/aneurysmaAbdominalniAortyUsg", "desc": "SCREENING: aneurysma břišní aorty – USG"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/kolorektalniKarcinomKoloskopie", "desc": "SCREENING: kolorektální karcinom – koloskopie (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyVstupniPsa", "desc": "SCREENING: karcinom prostaty – vstupní PSA (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyUrologickeVysetreni", "desc": "SCREENING: karcinom prostaty – urologické vyšetření (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomProstatyBioptickeVysetreni", "desc": "SCREENING: karcinom prostaty – bioptické vyšetření (od v2.0.4)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/screeningy/karcinomPlicPneumologickeVysetreni", "desc": "SCREENING: karcinom plic – pneumologické vyšetření (od v2.0.4)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/emergentniZaznam/vyhledat", "desc": "EMERG. ZÁZNAM v2: souhrnné vyhledat (alergie bez CasZjisteni)"},
                     {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v2/emergentniZaznam/pdf", "desc": "EMERG. ZÁZNAM v2: PDF"},
                 ],
             },
+            "SZZ_v3": {
+                "name": "SZZ v3.0.5 – Standard EZ SZZ 3.1",
+                "base": "/sdilenyZdravotniZaznam",
+                "version": "v3.0.5",
+                "note": ("Standard EZ SZZ 3.1 (23. 10. 2026) je dle wiki platný pro SZZ od verze 3.0.5. "
+                         "Účast ve screeningu je samostatný záznam: služby /screeningy/*Ucast (T2 od "
+                         "20. 10. 2026; POST, PUT, PATCH zneplatnit/zpochybnit/obnovit, bez /vyhledat), "
+                         "z preventivní prohlídky VPL byly položky účasti odebrány. Swagger 3.0.5 "
+                         "z 13. 10. 2026 je starší a tyto cesty ještě neobsahuje; datum nasazení na PROD "
+                         "není známé. Ostatní moduly mají stejné cesty jako v2 pod /api/v3; klient SZZv3, "
+                         "backend /api/szz3/*."),
+                "endpoints": [
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/prevence/vyhledat", "desc": "Souhrnné vyhledání prevencí pacienta"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/vyhledat", "desc": "Souhrnné vyhledání screeningů pacienta (včetně záznamů účasti)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/karcinomProstatyUcast", "desc": "ÚČAST: screening karcinomu prostaty (muži 50–69 let) – Standard 3.1"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/karcinomPlicUcast", "desc": "ÚČAST: screening karcinomu plic (55–74 let) – Standard 3.1"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/aneurysmaAbdominalniAortyUcast", "desc": "ÚČAST: screening aneurysmatu abdominální aorty (muži 65–67 let, nejvýše jeden platný záznam) – Standard 3.1"},
+                    {"method": "PUT", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/{typ}Ucast/{id}", "desc": "ÚČAST: aktualizace záznamu"},
+                    {"method": "PATCH", "path": "/sdilenyZdravotniZaznam/api/v3/screeningy/{typ}Ucast/{id}/zneplatnit", "desc": "ÚČAST: zneplatnění (stejně zpochybnit, obnovit)"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/emergentniZaznam/vyhledat", "desc": "Emergentní záznam v3: souhrnné vyhledání"},
+                    {"method": "POST", "path": "/sdilenyZdravotniZaznam/api/v3/emergentniZaznam/pdf", "desc": "Emergentní záznam v3: PDF"},
+                ],
+            },
             "ELP_v3": {
-                "name": "ELP v3.0.0 (interní – nejen pro PZS B2B)",
+                "name": "ELP v3.0.3 – Elektronické posudky v3",
                 "base": "/elektronickePosudky",
-                "version": "v3.0.0",
-                "note": ("INTERNÍ API systému ELP – určeno pro Národní portál, EZKartu a interní aplikace. "
-                         "Pro PZS B2B používáme dál v1 (v1.0.7) a v2 (v2.0.9). v3.0.0 obsahuje pouze 2 "
-                         "číselníkové endpointy + interní validační endpointy."),
+                "version": "v3.0.3",
+                "note": ("Od v3.0.1 (PROD 30. 5. 2026) swagger v3 obsahuje i služby posudků, ne jen "
+                         "číselníky; národní kódy jsou v jednom poli. v1 (v1.0.7) a v2 (v2.0.11) běží "
+                         "souběžně. Klient ELPv3."),
                 "endpoints": [
                     {"method": "GET", "path": "/elektronickePosudky/api/v3/ciselniky", "desc": "Číselníky v3"},
                     {"method": "GET", "path": "/elektronickePosudky/api/v3/ciselniky/{kod}/polozky", "desc": "Položky číselníku v3"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni", "desc": "Uložit posudek (v3)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/vyhledat", "desc": "Vyhledat posudky (v3)"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}", "desc": "Detail posudku (v3)"},
+                    {"method": "PATCH", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}/zneplatnit", "desc": "Zneplatnit (v3)"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}/pdf", "desc": "PDF (v3)"},
+                    {"method": "GET", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/{id}/historie", "desc": "Historie (v3)"},
+                    {"method": "POST", "path": "/elektronickePosudky/api/v3/posudky/ridicskeOpravneni/zalozeni/opravneni", "desc": "Ověřit oprávnění pracovníka (v3)"},
                 ],
             },
             "RO_NCPeH": {
@@ -5254,6 +5306,11 @@ async def debug_jwt():
                 {"name": "Autentizace k API gateway", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/160530443"},
                 {"name": "Novinky v aplikacích EZ a dostupnosti služeb", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/393642129"},
                 {"name": "Plán vývoje CSEZ", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/524517377"},
+                {"name": "Plán vývoje – stav k 3. 11. 2026", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/1040646145"},
+                {"name": "Plánované výpadky prostředí T2 a Produkce", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/1044774914"},
+                {"name": "Dostupnost služeb (eZdraví)", "url": "https://www.ezdravi.gov.cz/katalog-sluzeb/dostupnost"},
+                {"name": "Statistiky (eZdraví)", "url": "https://www.ezdravi.gov.cz/statistiky"},
+                {"name": "HL7 CZ implementační příručky (závazný portál)", "url": "https://ig.ezdravi.gov.cz/"},
                 {"name": "FAQ", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/190251018"},
                 {"name": "Kmenové zdravotnické registry", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/48136196"},
                 {"name": "Notifikace", "url": "https://mzcr.atlassian.net/wiki/spaces/EPZS/pages/55935032"},
@@ -5338,9 +5395,11 @@ async def reference_dotnet():
         "source": "Aplikace_NET9_TestovaciPZS_ver02",
         "description": "Oficiální testovací .NET 9 aplikace od MZČR pro ověření připojení k SEZ API",
         "config": {
-            "clientId": "25488627_KrajskaZdravotniVerejnyTest",
+            # Veřejný testovací certifikát NCEZ obměňuje čtvrtletně; „test 04“
+            # platí 7. 10. 2026 – 7. 1. 2027 (stránka Autentizace k API gateway).
+            "clientId": "25488627_KrajskaZdravotniVerejnyTest04",
             "audience": "https://jsuint-auth-t2.csez.cz/connect/token",
-            "certificate": "Certifikat_systémový_Krajská_zdravotní_ICO_25488627.pfx",
+            "certificate": "krajska zdravotni verejny test 04 25488627.pfx",
             "gateway": "https://gwy-ext-sec-t2.csez.cz",
             "test_endpoint": "/notifikace/api/v1/kanaly/katalog",
         },

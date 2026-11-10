@@ -2587,7 +2587,7 @@ class ELPv2:
 
 
 class ELPv3:
-    """ELP v3.0.1 – Elektronické posudky pro řidičská oprávnění (path /api/v3)."""
+    """ELP v3.0.3 – Elektronické posudky pro řidičská oprávnění (path /api/v3)."""
     BASE = "/elektronickePosudky"
 
     def __init__(self, client: SEZClient):

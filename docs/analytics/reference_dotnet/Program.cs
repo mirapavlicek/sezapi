@@ -54,7 +54,7 @@ try
       .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
       .Build();
 
-  var clientId = configuration["Jwt:ClientId"] ?? "25488627_KrajskaZdravotniVerejnyTest";
+  var clientId = configuration["Jwt:ClientId"] ?? "25488627_KrajskaZdravotniVerejnyTest04";
   var audience = configuration["Jwt:Audience"] ?? "https://jsuint-auth-t2.csez.cz/connect/token";
   var certFileName = configuration["Certificate:Path"] ?? "client-cert.pfx";
   var certPassword = configuration["Certificate:Password"] ?? "hesloCertifikatu";
